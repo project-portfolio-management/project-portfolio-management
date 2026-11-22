@@ -133,11 +133,18 @@ async fn someone_on_leave_reports_null_not_zero_percent() {
     // whatever date is more than 28 calendar days past it — found 2026-09-18,
     // when a `spent_on` written for an August run finally aged out.
     let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
-    let spent_on = (today - project_portfolio_management::datetime::Duration::days(5)).to_string();
-    let leave_starts_on =
-        (today - project_portfolio_management::datetime::Duration::days(90)).to_string();
-    let leave_ends_on =
-        (today + project_portfolio_management::datetime::Duration::days(90)).to_string();
+    let spent_on = (today
+        .checked_sub_signed(project_portfolio_management::datetime::Duration::days(5))
+        .unwrap())
+    .to_string();
+    let leave_starts_on = (today
+        .checked_sub_signed(project_portfolio_management::datetime::Duration::days(90))
+        .unwrap())
+    .to_string();
+    let leave_ends_on = (today
+        .checked_add_signed(project_portfolio_management::datetime::Duration::days(90))
+        .unwrap())
+    .to_string();
     request::<App, _, _>(|request, _ctx| async move {
         let plan = create_plan!(request, "Utilization plan");
         let worker = "person:bbbbbbbb-0000-0000-0000-000000000001";
@@ -236,7 +243,10 @@ async fn no_declared_capacity_is_not_zero_utilization() {
 async fn a_team_under_five_is_withheld_and_a_team_of_five_is_reported() {
     super::isolate_search_index();
     let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
-    let spent_on = (today - project_portfolio_management::datetime::Duration::days(5)).to_string();
+    let spent_on = (today
+        .checked_sub_signed(project_portfolio_management::datetime::Duration::days(5))
+        .unwrap())
+    .to_string();
     request::<App, _, _>(|request, _ctx| async move {
         let plan = create_plan!(request, "Small cell plan");
         // Declared capacity large enough that the minutes floor is cleared,

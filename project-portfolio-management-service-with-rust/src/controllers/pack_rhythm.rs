@@ -244,8 +244,10 @@ pub async fn run_due(ctx: &AppContext, today: Date) -> Result<Swept> {
     let mut out = Swept::default();
     for s in due {
         // Claim first: only the sweep that moves the date does the work.
-        let next =
-            first_run(s.day_of_month, today).unwrap_or(today + crate::datetime::Duration::days(28));
+        // No first run and no date 28 days on (past the last date a `Date` holds): the schedule is left as it is.
+        let Some(next) = first_run(s.day_of_month, today).or_else(|| today.plus_days(28)) else {
+            continue;
+        };
         let claimed = sqlx::query(
             "UPDATE director_pack_schedules SET next_run_date = $1, last_run_on = $2
              WHERE pid = $3 AND next_run_date = $4",

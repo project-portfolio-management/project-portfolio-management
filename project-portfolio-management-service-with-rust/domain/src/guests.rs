@@ -118,9 +118,17 @@ mod tests {
     fn a_grant_dies_on_expiry_or_revocation() {
         let now = Timestamp::now();
         assert!(grant_live(None, false, now));
-        assert!(grant_live(Some(now + Duration::hours(1)), false, now));
+        assert!(grant_live(
+            Some(now.checked_add_signed(Duration::hours(1)).unwrap()),
+            false,
+            now
+        ));
         assert!(
-            !grant_live(Some(now - Duration::seconds(1)), false, now),
+            !grant_live(
+                Some(now.checked_sub_signed(Duration::seconds(1)).unwrap()),
+                false,
+                now
+            ),
             "expired"
         );
         assert!(!grant_live(None, true, now), "revoked");

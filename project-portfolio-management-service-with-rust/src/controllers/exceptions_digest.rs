@@ -148,8 +148,8 @@ async fn get_digest(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Res
 }
 
 /// Monday of the week `today` falls in.
-fn week_start(today: Date) -> Date {
-    today - crate::datetime::Duration::days(i64::from(today.weekday().num_days_from_monday()))
+fn week_start(today: Date) -> Option<Date> {
+    today.minus_days(i64::from(today.weekday().num_days_from_monday()))
 }
 
 /// What a run of [`send_weekly`] did.
@@ -176,7 +176,7 @@ pub async fn send_weekly(ctx: &AppContext, recipients: &[String]) -> Result<Sent
     let digest = gather(ctx, &super::tolerances::system_caller()).await?;
     let message = rules::message(&digest);
     let since = week_start(digest.as_of)
-        .and_hms_opt(0, 0, 0)
+        .and_then(|monday| monday.and_hms_opt(0, 0, 0))
         .map(|d| d.and_utc());
     for who in recipients {
         if crate::notification_prefs::recipient_sub(who).is_none() {
@@ -243,8 +243,8 @@ mod tests {
     #[test]
     fn a_week_starts_on_monday() {
         let monday = Date::from_ymd_opt(2026, 10, 26).unwrap();
-        assert_eq!(week_start(monday), monday);
+        assert_eq!(week_start(monday), Some(monday));
         let sunday = Date::from_ymd_opt(2026, 11, 1).unwrap();
-        assert_eq!(week_start(sunday), monday);
+        assert_eq!(week_start(sunday), Some(monday));
     }
 }

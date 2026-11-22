@@ -77,6 +77,7 @@ async fn week_entries(
     person: &str,
     monday: Date,
 ) -> Result<Vec<time_entries::Model>> {
+    let sunday = super::date_offset(monday, 6, "the week")?;
     Ok(sqlx::query_as(
         "SELECT * FROM time_entries
          WHERE actor_ref = $1 AND deleted_at IS NULL AND spent_on >= $2 AND spent_on <= $3
@@ -85,7 +86,7 @@ async fn week_entries(
     )
     .bind(person)
     .bind(monday)
-    .bind(monday + crate::datetime::Duration::days(6))
+    .bind(sunday)
     .bind(ROW_CAP)
     .fetch_all(crate::db::pool(ctx))
     .await?)
@@ -120,11 +121,13 @@ async fn week_row(
 
 /// Whether `person`'s week containing `date` is approved (and so locked).
 pub(crate) async fn week_is_locked(ctx: &AppContext, person: &str, date: Date) -> Result<bool> {
-    Ok(
-        week_row(&mut crate::db::pool(ctx), person, rules::monday_of(date))
-            .await?
-            .is_some_and(|r| r.status == "approved"),
-    )
+    // A week that starts before the first date a `Date` holds has no row, so it is not locked.
+    let Some(monday) = rules::monday_of(date) else {
+        return Ok(false);
+    };
+    Ok(week_row(&mut crate::db::pool(ctx), person, monday)
+        .await?
+        .is_some_and(|r| r.status == "approved"))
 }
 
 /// `GET /api/timesheets` query.
@@ -402,9 +405,10 @@ async fn time_report(
         unprocessable("group_by must be person, plan, category, billable or month")
     })?;
     let to = p.to.unwrap_or_else(crate::tz::deployment_today);
-    let from = p
-        .from
-        .unwrap_or_else(|| to - crate::datetime::Duration::days(89));
+    let from = match p.from {
+        Some(from) => from,
+        None => super::date_before(to, 89, "to")?,
+    };
     if from > to {
         return Err(unprocessable("from must not be after to"));
     }

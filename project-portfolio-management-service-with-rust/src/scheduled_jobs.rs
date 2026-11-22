@@ -67,7 +67,7 @@ impl Job {
 
     /// How long after a run started the job may run again, in minutes.
     #[must_use]
-    pub const fn interval_minutes(self) -> i64 {
+    pub const fn interval_minutes(self) -> i32 {
         match self {
             Self::ExceptionBreaches => 5,
             Self::ThresholdSweep => 60,
@@ -128,7 +128,11 @@ async fn claim(ctx: &AppContext, job: Job, now: Timestamp) -> Result<Option<Uuid
     if !got.flatten().unwrap_or(false) {
         return Ok(None);
     }
-    let since = now - crate::datetime::Duration::minutes(job.interval_minutes());
+    let Some(since) =
+        now.checked_sub_signed(crate::datetime::Duration::minutes(job.interval_minutes()))
+    else {
+        return Ok(None);
+    };
     let recent: Option<i64> = sqlx::query_scalar(
         "SELECT id FROM scheduled_job_runs WHERE job = $1 AND started_at > $2 ORDER BY id DESC LIMIT 1",
     )

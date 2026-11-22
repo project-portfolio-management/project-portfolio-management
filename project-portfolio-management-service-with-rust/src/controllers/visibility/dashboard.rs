@@ -180,7 +180,10 @@ pub(super) async fn at_a_glance(
                     .filter(|a| a.person_ref == *person)
                     .map(|a| (a.percent, a.start_date, a.end_date))
                     .collect();
-                rules::summed_percent(&theirs, today, today + crate::datetime::Days::new(30)) > 100
+                let horizon = today
+                    .checked_add_days(crate::datetime::Days::new(30))
+                    .unwrap_or(crate::datetime::Date::MAX);
+                rules::summed_percent(&theirs, today, horizon) > 100
             })
             .count()
     };

@@ -42,7 +42,12 @@ pub fn day_window(day: Date, tz: Tz) -> (Timestamp, Timestamp) {
             match tz.from_local_datetime(&t) {
                 crate::datetime::LocalResult::Single(x) => return x.to_utc(),
                 crate::datetime::LocalResult::Ambiguous(first, _) => return first.to_utc(),
-                crate::datetime::LocalResult::None => t += Duration::minutes(15),
+                crate::datetime::LocalResult::None => {
+                    match t.checked_add_signed(Duration::minutes(15)) {
+                        Some(later) => t = later,
+                        None => return crate::datetime::Timestamp::MAX_UTC,
+                    }
+                }
             }
         }
     };

@@ -1031,7 +1031,8 @@ async fn due_scheduled_actions_record_notify_expiry_and_malformed_outcomes() {
         let plan_pid: uuid::Uuid = create_plan!(request, "Due action plan").parse().unwrap();
         let due_at: project_portfolio_management::datetime::OffsetDateTime =
             (project_portfolio_management::datetime::Timestamp::now()
-                - project_portfolio_management::datetime::Duration::days(1))
+                .checked_sub_signed(project_portfolio_management::datetime::Duration::days(1))
+                .unwrap())
             .into();
         let cases = [
             (

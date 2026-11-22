@@ -34,8 +34,13 @@ fn ttl() -> crate::datetime::Duration {
         .ok()
         .and_then(|v| v.trim().parse::<i64>().ok())
         .unwrap_or(30);
-    crate::datetime::Duration::days(days.max(1))
+    // A count of days past the range of a `Duration` reads as the default, 30 (the documented default above).
+    crate::datetime::Duration::try_days(days.max(1))
+        .unwrap_or_else(|| crate::datetime::Duration::days(DEFAULT_TTL_DAYS))
 }
+
+/// The default lifetime of a scheduled report file, in days.
+const DEFAULT_TTL_DAYS: i32 = 30;
 
 /// JSON view of a report schedule, including the outcome of its last run.
 fn view(s: &report_schedules::Model) -> serde_json::Value {
@@ -238,8 +243,12 @@ pub async fn run_due(ctx: &AppContext, limit: u64) -> Result<Swept> {
     .await?;
     let mut out = Swept::default();
     for s in due {
-        let next = rules::after_run(&s.cadence, s.anchor_date, today)
-            .unwrap_or(today + crate::datetime::Duration::days(1));
+        // No next run and no day after `today` (past the last date a `Date` holds): the schedule is left as it is.
+        let Some(next) =
+            rules::after_run(&s.cadence, s.anchor_date, today).or_else(|| today.succ_opt())
+        else {
+            continue;
+        };
         // The claim: only one sweeper moves the date off the value it read.
         let claimed = sqlx::query(
             "UPDATE report_schedules SET next_run_date = $1 WHERE pid = $2 AND next_run_date = $3",
@@ -318,6 +327,9 @@ async fn run_one(ctx: &AppContext, s: &report_schedules::Model) -> std::result::
         .await
         .map_err(|e| e.to_string())?
         .map_err(|e| format!("could not store the file: {e}"))?;
+    let expires_at = Timestamp::now()
+        .checked_add_signed(ttl())
+        .ok_or_else(|| "the report expiry is outside the range of dates".to_string())?;
     // The artifact row, the schedule's outcome and the audit row are one change (the stored bytes are not: a refused
     // change leaves an unreferenced blob, which nothing reads).
     let mut tx = crate::db::begin(ctx).await.map_err(|e| e.to_string())?;
@@ -334,7 +346,7 @@ async fn run_one(ctx: &AppContext, s: &report_schedules::Model) -> std::result::
     .bind(sha)
     .bind(key)
     .bind(&s.owner)
-    .bind(crate::datetime::OffsetDateTime::from(Timestamp::now() + ttl()))
+    .bind(crate::datetime::OffsetDateTime::from(expires_at))
     .fetch_one(tx.conn())
     .await
     .map_err(|e| e.to_string())?;

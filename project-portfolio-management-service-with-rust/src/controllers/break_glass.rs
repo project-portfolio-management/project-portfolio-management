@@ -72,11 +72,12 @@ async fn preconditions(
             "that plan is not private: there is nothing to open",
         ));
     }
+    let day_ago = super::timestamp_before(now, 1, "the day window")?;
     let recent: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM break_glass_grants WHERE sub = $1 AND created_at > $2",
     )
     .bind(sub)
-    .bind(now - crate::datetime::Duration::days(1))
+    .bind(day_ago)
     .fetch_one(crate::db::pool(ctx))
     .await?;
     if u64::try_from(recent).unwrap_or(0) >= rules::MAX_PER_DAY {
@@ -144,7 +145,11 @@ async fn open(
     }
     let now = Timestamp::now();
     let plan = preconditions(&ctx, b.plan_pid, &sub, now).await?;
-    let expires = rules::expires_at(now, b.minutes);
+    let Some(expires) = rules::expires_at(now, b.minutes) else {
+        return Err(super::unprocessable_entity(
+            "minutes is outside the range of dates",
+        ));
+    };
     let minutes = b.minutes.unwrap_or(rules::DEFAULT_MINUTES);
     // The grant and the notice stand or fall together.
     let mut tx = crate::db::begin(&ctx).await?;

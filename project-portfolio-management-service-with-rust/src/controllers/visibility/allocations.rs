@@ -229,9 +229,11 @@ pub(super) async fn commit_allocation(
     // The person's committed load with this booking made firm, over its own span.
     let today = crate::tz::deployment_today();
     let from = allocation.start_date.unwrap_or(today);
-    let to = allocation
-        .end_date
-        .unwrap_or(from + crate::datetime::Days::new(365));
+    let to = allocation.end_date.unwrap_or_else(|| {
+        // A year on, or the last date a `Date` holds when a year on is past it.
+        from.checked_add_days(crate::datetime::Days::new(365))
+            .unwrap_or(crate::datetime::Date::MAX)
+    });
     let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx)
         .await?
         .iter()
@@ -351,7 +353,11 @@ pub(super) async fn capacity(
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let today = crate::tz::deployment_today();
     let from = params.from.unwrap_or(today);
-    let to = params.to.unwrap_or(from + crate::datetime::Days::new(30));
+    let to = params.to.unwrap_or_else(|| {
+        // Thirty days on, or the last date a `Date` holds when that is past it.
+        from.checked_add_days(crate::datetime::Days::new(30))
+            .unwrap_or(crate::datetime::Date::MAX)
+    });
     if to < from {
         return Err(unprocessable("to is before from"));
     }

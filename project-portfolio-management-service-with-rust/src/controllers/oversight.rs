@@ -126,7 +126,11 @@ fn window(query: &WindowQuery) -> (crate::datetime::Timestamp, crate::datetime::
         .from
         .as_deref()
         .and_then(|raw| parse_instant(raw, false))
-        .unwrap_or(to - crate::datetime::Days::new(90));
+        .unwrap_or_else(|| {
+            // Ninety days back, or `to` itself when that is before the first instant a `Timestamp` holds.
+            to.checked_sub_days(crate::datetime::Days::new(90))
+                .unwrap_or(to)
+        });
     (from, to)
 }
 

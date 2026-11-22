@@ -291,7 +291,12 @@ async fn a_roadmap_is_reviewed_only_on_purpose_and_stale_after_the_period() {
         )
         .unwrap();
         let ago = |n: i64| {
-            (today - project_portfolio_management::datetime::Duration::days(n)).to_string()
+            (today
+                .checked_sub_signed(
+                    project_portfolio_management::datetime::Duration::try_days(n).unwrap(),
+                )
+                .unwrap())
+            .to_string()
         };
         assert_eq!(
             stale_state(&request, &product).await,

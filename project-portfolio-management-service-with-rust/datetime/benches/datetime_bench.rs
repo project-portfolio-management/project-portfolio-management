@@ -184,12 +184,14 @@ fn bench_date_ops(c: &mut Criterion) {
     });
     // Day steps: `expand_absences`, `days_of`, `next_after("daily")`. One day crosses a month about one time in
     // thirty; thirty days always does.
-    op(&mut group, "add_one_day", &dates, |d| d + Duration::days(1));
+    op(&mut group, "add_one_day", &dates, |d| {
+        d.checked_add_signed(Duration::days(1)).unwrap()
+    });
     op(&mut group, "add_seven_days", &dates, |d| {
-        d + Duration::days(7)
+        d.checked_add_signed(Duration::days(7)).unwrap()
     });
     op(&mut group, "add_thirty_days", &dates, |d| {
-        d + Duration::days(30)
+        d.checked_add_signed(Duration::days(30)).unwrap()
     });
     op(&mut group, "jiff_add_thirty_days", &jiff_dates, |d| {
         d.checked_add(jiff::SignedDuration::from_hours(30 * 24))
@@ -199,10 +201,16 @@ fn bench_date_ops(c: &mut Criterion) {
     op(&mut group, "pred_opt", &dates, |d| d.pred_opt());
     // `timesheets::monday_of` and `days_of`: back to the Monday, then the seven days.
     op(&mut group, "monday_of", &dates, |d| {
-        d - Duration::days(i64::from(d.weekday().num_days_from_monday()))
+        d.checked_sub_signed(
+            Duration::try_days(i64::from(d.weekday().num_days_from_monday())).unwrap(),
+        )
+        .unwrap()
     });
     op(&mut group, "days_of_week", &dates, |d| {
-        std::array::from_fn::<Date, 7, _>(|i| d + Duration::days(i64::try_from(i).unwrap_or(0)))
+        std::array::from_fn::<Date, 7, _>(|i| {
+            d.checked_add_signed(Duration::try_days(i64::try_from(i).unwrap_or(0)).unwrap())
+                .unwrap()
+        })
     });
     // ISO weeks: `timesheets::week_start` (`from_isoywd_opt`) and a date's week.
     op(&mut group, "from_isoywd_opt", &weeks, |(y, w)| {
@@ -223,7 +231,11 @@ fn bench_date_ops(c: &mut Criterion) {
         } else {
             (d.year(), d.month() + 1)
         };
-        (Date::from_ymd_opt(y, m, 1).expect("a first of the month") - Duration::days(1)).day()
+        (Date::from_ymd_opt(y, m, 1)
+            .expect("a first of the month")
+            .checked_sub_signed(Duration::days(1))
+            .unwrap())
+        .day()
     });
     // `financial_year::year_of`'s step back to the last day of a year.
     op(&mut group, "ordinal", &dates, |d| d.ordinal());
@@ -233,13 +245,20 @@ fn bench_date_ops(c: &mut Criterion) {
 fn bench_duration_ops(c: &mut Criterion) {
     let mut group = c.benchmark_group("duration_ops");
     let counts: Vec<i64> = (0..1_000_i64).map(|i| i * 3 - 900).collect();
-    let durations: Vec<Duration> = counts.iter().map(|n| Duration::days(*n)).collect();
-    op(&mut group, "days", &counts, Duration::days);
+    let durations: Vec<Duration> = counts
+        .iter()
+        .map(|n| Duration::try_days(*n).unwrap())
+        .collect();
+    op(&mut group, "try_days", &counts, |n| {
+        Duration::try_days(n).unwrap()
+    });
     op(&mut group, "num_days", &durations, |d| d.num_days());
-    op(&mut group, "add", &durations, |d| d + Duration::days(1));
-    op(&mut group, "neg", &durations, |d| -d);
+    op(&mut group, "add", &durations, |d| {
+        d.checked_add(&Duration::days(1)).unwrap()
+    });
+    op(&mut group, "neg", &durations, |d| d.checked_neg().unwrap());
     op(&mut group, "hours_to_days", &counts, |n| {
-        Duration::hours(n * 7).num_days()
+        Duration::try_hours(n * 7).unwrap().num_days()
     });
     group.finish();
 }

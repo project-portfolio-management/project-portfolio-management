@@ -46,7 +46,7 @@ const ENTITY: &str = "plans";
 /// Default import size cap: 50 MiB.
 const DEFAULT_IMPORT_MAX: usize = 50 * 1024 * 1024;
 /// A `running` job not touched for this long is considered abandoned.
-const LEASE_SECS: i64 = 600;
+const LEASE_SECS: i32 = 600;
 /// Plans one export may carry.
 const MAX_EXPORT_ROWS: u64 = 100_000;
 
@@ -69,8 +69,13 @@ fn ttl() -> crate::datetime::Duration {
         .ok()
         .and_then(|v| v.trim().parse::<i64>().ok())
         .unwrap_or(24);
-    crate::datetime::Duration::hours(hours.max(1))
+    // A count of hours past the range of a `Duration` reads as the default, 24 (the documented default above).
+    crate::datetime::Duration::try_hours(hours.max(1))
+        .unwrap_or_else(|| crate::datetime::Duration::hours(DEFAULT_TTL_HOURS))
 }
+
+/// The default lifetime of a stored artifact, in hours.
+const DEFAULT_TTL_HOURS: i32 = 24;
 
 /// Whether the caller is an administrator under the plan-access rules (used to let admins see every job).
 fn is_admin(caller: &MaybeAuthUser) -> bool {
@@ -105,6 +110,9 @@ async fn store_artifact(
         .await
         .map_err(|e| Error::string(&e.to_string()))?
         .map_err(|e| Error::string(&format!("could not store the file: {e}")))?;
+    let expires_at = crate::datetime::Timestamp::now()
+        .checked_add_signed(ttl())
+        .ok_or_else(|| Error::string("the artifact expiry is outside the range of dates"))?;
     // The columns the insert set before SQ-1, no more.
     Ok(sqlx::query_as(
         "INSERT INTO artifacts
@@ -120,9 +128,7 @@ async fn store_artifact(
     .bind(sha)
     .bind(key)
     .bind(actor)
-    .bind(crate::datetime::OffsetDateTime::from(
-        crate::datetime::Timestamp::now() + ttl(),
-    ))
+    .bind(crate::datetime::OffsetDateTime::from(expires_at))
     .fetch_one(crate::db::pool(ctx))
     .await?)
 }
@@ -909,10 +915,13 @@ pub async fn run_sweep(ctx: &AppContext) -> Result<serde_json::Value> {
         .await?;
         deleted += 1;
     }
+    let lease_cutoff = now
+        .checked_sub_signed(crate::datetime::Duration::seconds(LEASE_SECS))
+        .ok_or_else(|| Error::string("the lease cutoff is outside the range of dates"))?;
     // Unordered, as before.
     let stale: Vec<bulk_jobs::Model> =
         sqlx::query_as("SELECT * FROM bulk_jobs WHERE status = 'running' AND updated_at < $1")
-            .bind(now - crate::datetime::Duration::seconds(LEASE_SECS))
+            .bind(lease_cutoff)
             .fetch_all(crate::db::pool(ctx))
             .await?;
     let mut requeued = 0usize;

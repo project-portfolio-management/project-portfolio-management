@@ -30,7 +30,7 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -230,7 +230,9 @@ fn over_days(input: &Input, res: &CpmResult) -> Vec<OverDay> {
         let (Some(first), Some(last)) = (first, last) else {
             continue;
         };
-        let last = last.min(first + Duration::days(MAX_SPAN_DAYS));
+        let last = first
+            .plus_days(MAX_SPAN_DAYS)
+            .map_or(last, |cap| last.min(cap));
         let mut day = first;
         while day <= last {
             let active: Vec<usize> = idxs
@@ -265,7 +267,10 @@ fn over_days(input: &Input, res: &CpmResult) -> Vec<OverDay> {
                     });
                 }
             }
-            day += Duration::days(1);
+            day = match day.succ_opt() {
+                Some(next) => next,
+                None => break,
+            };
         }
     }
     out.sort_by(|a, b| a.day.cmp(&b.day).then_with(|| a.person.cmp(&b.person)));
@@ -291,7 +296,7 @@ fn runs(
                 Some(r)
                     if r.demand == d.demand
                         && r.capacity == d.capacity
-                        && r.to + Duration::days(1) == d.day =>
+                        && r.to.succ_opt() == Some(d.day) =>
                 {
                     r.to = d.day;
                     for t in tasks {
@@ -560,6 +565,7 @@ pub fn propose(input: &Input, params: Params) -> Result<Proposal, CpmError> {
 mod tests {
     use super::*;
     use crate::cpm::Kind;
+    use crate::datetime::Duration;
 
     fn id(n: u128) -> Uuid {
         Uuid::from_u128(n)
@@ -844,7 +850,11 @@ mod tests {
                 .map(|i| Node {
                     pid: id(i as u128 + 1),
                     duration: Some(1 + rng.int(5)),
-                    planned_start: Some(monday() + Duration::days(rng.int(10))),
+                    planned_start: Some(
+                        monday()
+                            .checked_add_signed(Duration::try_days(rng.int(10)).unwrap())
+                            .unwrap(),
+                    ),
                     ..Node::default()
                 })
                 .collect();

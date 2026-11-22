@@ -997,7 +997,7 @@ async fn earned_value_is_computed_per_currency_and_says_when_it_cannot() {
         let none = ev().await;
         assert_eq!((none["absent"].as_str(), none["blocks"].is_null()), (Some("no_baseline"), true));
         let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
-        let day = |n: i64| (today + project_portfolio_management::datetime::Duration::days(n)).to_string();
+        let day = |n: i64| (today.checked_add_signed(project_portfolio_management::datetime::Duration::try_days(n).unwrap()).unwrap()).to_string();
         // GBP: 10 calendar days ending today at 1 000, then the next 10 calendar days at 3 000. BAC 4 000, PV today 1 000.
         request
             .post(&format!("/api/plans/{p}/budget-baselines"))
@@ -1107,7 +1107,7 @@ async fn ev_plan(
     request
         .post(&format!("/api/plans/{p}/budget-baselines"))
         .json(&json!({ "currency": currency, "periods": [{
-            "period_start": (today - project_portfolio_management::datetime::Duration::days(9)).to_string(), "period_end": today.to_string(), "planned_minor": planned }] }))
+            "period_start": (today.checked_sub_signed(project_portfolio_management::datetime::Duration::days(9)).unwrap()).to_string(), "period_end": today.to_string(), "planned_minor": planned }] }))
         .await
         .assert_status_ok();
     for i in 0..done + todo {
@@ -1147,7 +1147,7 @@ async fn evm_forecasts_name_their_formula_and_the_series_and_rollup_stay_honest(
         let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
         let p = plan["pid"].as_str().unwrap().to_string();
         let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
-        let day = |n: i64| (today + project_portfolio_management::datetime::Duration::days(n)).to_string();
+        let day = |n: i64| (today.checked_add_signed(project_portfolio_management::datetime::Duration::try_days(n).unwrap()).unwrap()).to_string();
         request
             .post(&format!("/api/plans/{p}/budget-baselines"))
             .json(&json!({ "currency": "GBP", "periods": [
@@ -2159,7 +2159,7 @@ async fn kpis_derive_status_from_readings_and_okrs_can_be_listed_edited_and_dele
     request::<App, _, _>(|request, _ctx| async move {
         use axum::http::StatusCode as S;
         let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
-        let day = |n: i64| (today - project_portfolio_management::datetime::Duration::days(n)).to_string();
+        let day = |n: i64| (today.checked_sub_signed(project_portfolio_management::datetime::Duration::try_days(n).unwrap()).unwrap()).to_string();
 
         // ── KPIs ──
         // The red line must sit on the worse side of the target.
@@ -2197,7 +2197,7 @@ async fn kpis_derive_status_from_readings_and_okrs_can_be_listed_edited_and_dele
         read(dp.clone(), 0, day(0)).await.assert_status_ok();
         assert_eq!(request.get(&format!("/api/kpis/{dp}")).await.json::<Value>()["status"], "green");
         // A future date is refused.
-        let future = (today + project_portfolio_management::datetime::Duration::days(3)).to_string();
+        let future = (today.checked_add_signed(project_portfolio_management::datetime::Duration::days(3)).unwrap()).to_string();
         read(kp.clone(), 99, future).await.assert_status(S::UNPROCESSABLE_ENTITY);
 
         // A correction is a newer reading for the same day; the status follows it.
@@ -3102,7 +3102,7 @@ async fn earned_value_can_take_its_actual_cost_from_recorded_labour() {
         let plan: Value = request.post("/api/plans").json(&json!({ "kind": "Project", "name": "Apollo" })).await.json();
         let p = plan["pid"].as_str().unwrap().to_string();
         let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
-        let day = |n: i64| (today + project_portfolio_management::datetime::Duration::days(n)).to_string();
+        let day = |n: i64| (today.checked_add_signed(project_portfolio_management::datetime::Duration::try_days(n).unwrap()).unwrap()).to_string();
         request.post(&format!("/api/plans/{p}/budget-baselines")).json(&json!({ "currency": "GBP", "periods": [
             { "period_start": day(-9), "period_end": day(0), "planned_minor": 1000 },
             { "period_start": day(1), "period_end": day(10), "planned_minor": 3000 } ] })).await.assert_status_ok();

@@ -5,7 +5,7 @@
 //! [`Duration`]'s whole days (toward zero) move it by days; the difference of two dates is whole days.
 
 use core::fmt;
-use core::ops::{Add, AddAssign, Sub, SubAssign};
+use core::ops::Sub;
 use core::str::FromStr;
 
 use jiff::civil;
@@ -147,22 +147,6 @@ impl Default for NaiveDateTime {
     #[inline]
     fn default() -> NaiveDateTime {
         NaiveDateTime(civil::DateTime::constant(1970, 1, 1, 0, 0, 0, 0))
-    }
-}
-
-impl Add<Duration> for NaiveDateTime {
-    type Output = NaiveDateTime;
-    #[inline]
-    fn add(self, rhs: Duration) -> NaiveDateTime {
-        self.checked_add_signed(rhs)
-            .expect("`NaiveDateTime + Duration` overflowed")
-    }
-}
-
-impl AddAssign<Duration> for NaiveDateTime {
-    #[inline]
-    fn add_assign(&mut self, rhs: Duration) {
-        *self = *self + rhs;
     }
 }
 
@@ -466,6 +450,20 @@ impl Date {
         self.add_days(-i64::try_from(days.0).ok()?)
     }
 
+    /// `n` days after this date (a negative `n` is before it), or `None` past the range of a date.
+    #[must_use]
+    #[inline]
+    pub fn plus_days(self, n: i64) -> Option<Date> {
+        self.checked_add_signed(Duration::try_days(n)?)
+    }
+
+    /// `n` days before this date (a negative `n` is after it), or `None` past the range of a date.
+    #[must_use]
+    #[inline]
+    pub fn minus_days(self, n: i64) -> Option<Date> {
+        self.checked_sub_signed(Duration::try_days(n)?)
+    }
+
     /// Moved by the duration's whole days (toward zero), or `None` out of range.
     #[must_use]
     #[inline]
@@ -484,7 +482,7 @@ impl Date {
     #[must_use]
     #[inline]
     pub fn signed_duration_since(self, rhs: Date) -> Duration {
-        Duration::days(self.days_since(rhs))
+        Duration::of_date_span_days(self.days_since(rhs))
     }
 
     /// Midnight-based date and time, or `None` if the time of day is out of range.
@@ -568,74 +566,6 @@ impl FromStr for Date {
     #[inline]
     fn from_str(s: &str) -> ParseResult<Date> {
         parse::date(s).map(Date)
-    }
-}
-
-impl Add<Duration> for Date {
-    type Output = Date;
-    #[inline]
-    fn add(self, rhs: Duration) -> Date {
-        self.checked_add_signed(rhs)
-            .expect("`Date + Duration` overflowed")
-    }
-}
-
-impl Sub<Duration> for Date {
-    type Output = Date;
-    #[inline]
-    fn sub(self, rhs: Duration) -> Date {
-        self.checked_sub_signed(rhs)
-            .expect("`Date - Duration` overflowed")
-    }
-}
-
-impl AddAssign<Duration> for Date {
-    #[inline]
-    fn add_assign(&mut self, rhs: Duration) {
-        *self = *self + rhs;
-    }
-}
-
-impl SubAssign<Duration> for Date {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Duration) {
-        *self = *self - rhs;
-    }
-}
-
-impl Add<Days> for Date {
-    type Output = Date;
-    #[inline]
-    fn add(self, days: Days) -> Date {
-        self.checked_add_days(days)
-            .expect("`Date + Days` out of range")
-    }
-}
-
-impl Sub<Days> for Date {
-    type Output = Date;
-    #[inline]
-    fn sub(self, days: Days) -> Date {
-        self.checked_sub_days(days)
-            .expect("`Date - Days` out of range")
-    }
-}
-
-impl Add<Months> for Date {
-    type Output = Date;
-    #[inline]
-    fn add(self, months: Months) -> Date {
-        self.checked_add_months(months)
-            .expect("`Date + Months` out of range")
-    }
-}
-
-impl Sub<Months> for Date {
-    type Output = Date;
-    #[inline]
-    fn sub(self, months: Months) -> Date {
-        self.checked_sub_months(months)
-            .expect("`Date - Months` out of range")
     }
 }
 
@@ -803,7 +733,12 @@ mod tests {
         );
         assert_eq!(d(9999, 12, 31).succ_opt(), None);
         assert_eq!(d(2026, 3, 1) - d(2026, 2, 1), Duration::days(28));
-        assert_eq!(d(2026, 10, 30) + Duration::hours(-36), d(2026, 10, 29));
+        assert_eq!(
+            d(2026, 10, 30)
+                .checked_add_signed(Duration::hours(-36))
+                .unwrap(),
+            d(2026, 10, 29)
+        );
         assert_eq!(Date::from_num_days_from_ce_opt(1), Some(d(1, 1, 1)));
         assert_eq!(
             Date::from_num_days_from_ce_opt(3_652_059),
@@ -898,7 +833,7 @@ mod tests {
             local.and_utc(),
             "2024-02-29T23:59:58Z".parse::<crate::Timestamp>().unwrap()
         );
-        local += Duration::seconds(2);
+        local = local.checked_add_signed(Duration::seconds(2)).unwrap();
         assert_eq!(local.date(), d(2024, 3, 1));
         assert_eq!(NaiveDateTime::default().date(), d(1970, 1, 1));
         assert_eq!(
@@ -911,11 +846,23 @@ mod tests {
         );
 
         let mut moved = leap;
-        moved += Duration::days(1);
-        moved -= Duration::days(1);
+        moved = moved.checked_add_signed(Duration::days(1)).unwrap();
+        moved = moved.checked_sub_signed(Duration::days(1)).unwrap();
         assert_eq!(moved, leap);
-        assert_eq!(leap + Days::new(1) - Days::new(1), leap);
-        assert_eq!(leap + Months::new(1) - Months::new(1), leap);
+        assert_eq!(
+            leap.checked_add_days(Days::new(1))
+                .unwrap()
+                .checked_sub_days(Days::new(1))
+                .unwrap(),
+            leap
+        );
+        assert_eq!(
+            leap.checked_add_months(Months::new(1))
+                .unwrap()
+                .checked_sub_months(Months::new(1))
+                .unwrap(),
+            leap
+        );
         assert_eq!(
             leap.checked_sub_signed(Duration::days(1)),
             Some(d(2024, 2, 28))

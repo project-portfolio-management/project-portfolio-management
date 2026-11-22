@@ -730,7 +730,8 @@ async fn series(
             .map(|r| r.end)
             .chain(mine.iter().map(|s| s.as_of))
             .collect();
-        dates.push(start - crate::datetime::Duration::days(1));
+        // No day before the first date a `Date` holds, so no opening point then.
+        dates.extend(start.pred_opt());
         dates.sort_unstable();
         dates.dedup();
         let points: Vec<serde_json::Value> = dates

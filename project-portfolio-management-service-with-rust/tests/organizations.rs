@@ -377,7 +377,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
             let body = json!({ "value": v, "kind": "self", "rationale": "As the team sees it this week" });
             async move { request.put(&format!("/api/plans/{prog}/delivery-confidence")).add_header(writer.0, writer.1).json(&body).await.assert_status_ok(); }
         };
-        let earlier = (first - project_portfolio_management::datetime::Months::new(1)).format("%Y-%m").to_string();
+        let earlier = (first.checked_sub_months(project_portfolio_management::datetime::Months::new(1)).unwrap()).format("%Y-%m").to_string();
         conf("green").await;
         let e: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": earlier, "audience": "partner" })).await.json();
         let ep = e["pid"].as_str().unwrap().to_string();
@@ -457,7 +457,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         for bad in [json!({ "action": "override", "reason": "The sponsor accepts the risk" }), json!({ "action": "override", "reason": "The sponsor accepts the risk", "expiry": "2020-01-01" }), json!({ "action": "stop", "reason": "short" }), json!({ "action": "pause", "reason": "Pausing for the safety case", "expiry": "2999-01-01" })] {
             assert_eq!(with!(request.post(&format!("/api/exceptions/{ex_pid}/threshold-decision")), writer).json(&bad).await.status_code(), 422, "{bad}");
         }
-        let soon = (project_portfolio_management::datetime::Timestamp::now().date_naive() + project_portfolio_management::datetime::Duration::days(30)).to_string();
+        let soon = (project_portfolio_management::datetime::Timestamp::now().date_naive().checked_add_signed(project_portfolio_management::datetime::Duration::days(30)).unwrap()).to_string();
         with!(request.post(&format!("/api/exceptions/{ex_pid}/threshold-decision")), writer).json(&json!({ "action": "override", "reason": "The sponsor accepts the risk", "expiry": soon })).await.assert_status_ok();
         assert_eq!(with!(request.post(&format!("/api/exceptions/{ex_pid}/threshold-decision")), writer).json(&json!({ "action": "stop", "reason": "Decided twice by mistake" })).await.status_code(), 409);
         let r3 = sweep_call(&request, &writer).await;
@@ -690,7 +690,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
         let lf = project_portfolio_management::deescalation::last_finished(today);
         let lf1 = lf.previous();
-        let day = |q: project_portfolio_management::deescalation::Quarter| (q.start() + project_portfolio_management::datetime::Duration::days(20)).to_string();
+        let day = |q: project_portfolio_management::deescalation::Quarter| (q.start().checked_add_signed(project_portfolio_management::datetime::Duration::days(20)).unwrap()).to_string();
         let tpl: Value = with!(request.get("/api/scorecard-template"), writer).await.json();
         assert!(tpl["measures"].as_array().unwrap().iter().all(|m| m.get("target_value").is_none()), "the template carries no targets");
         let sc: Value = with!(request.post("/api/scorecards"), writer).json(&json!({ "name": "Recovery outcomes", "for_deescalation": true })).await.json();
@@ -756,7 +756,7 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         assert_eq!(one["kpis"].as_array().unwrap().len(), 2);
         let keys: Vec<&str> = one["kpis"].as_array().unwrap().iter().filter_map(|k| k["template_key"].as_str()).collect();
         assert_eq!(keys, ["milestones_met_on_time", "open_critical_issues"], "{one}");
-        let d10: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": (first - project_portfolio_management::datetime::Months::new(3)).format("%Y-%m").to_string(), "audience": "executive" })).await.json();
+        let d10: Value = with!(request.post("/api/director-packs"), issuer).json(&json!({ "period": (first.checked_sub_months(project_portfolio_management::datetime::Months::new(3)).unwrap()).format("%Y-%m").to_string(), "audience": "executive" })).await.json();
         let pack10: Value = with!(request.get(&format!("/api/director-packs/{}", d10["pid"].as_str().unwrap())), issuer).await.json();
         assert_eq!(pack10["body"]["outcomes"]["level"]["level"], "Level 2");
         assert!(pack10["body"]["outcomes"]["criteria"][0]["quarters"][0]["link"].is_null(), "the pack carries no evidence link");

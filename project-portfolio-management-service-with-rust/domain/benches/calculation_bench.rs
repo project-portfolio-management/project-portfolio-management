@@ -730,7 +730,11 @@ fn bench_timestamps(c: &mut Criterion) {
             weeks
                 .iter()
                 .filter_map(|s| timesheets::week_start(black_box(s)))
-                .map(|monday| timesheets::days_of(timesheets::monday_of(monday)).len())
+                .map(|monday| {
+                    timesheets::monday_of(monday)
+                        .and_then(timesheets::days_of)
+                        .map_or(0, |week| week.len())
+                })
                 .sum::<usize>()
         });
     });

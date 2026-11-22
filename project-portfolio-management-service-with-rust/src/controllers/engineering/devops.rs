@@ -175,7 +175,8 @@ pub(super) async fn devops_metrics(
     let scope = super::super::plan_access::HiddenScope::of(&ctx, &caller).await?;
     let months = i64::from(query.months.unwrap_or(3).clamp(1, 24));
     let now = crate::datetime::Timestamp::now();
-    let window_start = now - crate::datetime::Days::new(u64::try_from(months * 31).unwrap_or(93));
+    // `months` is 1 to 24, so `months * 31` is at most 744.
+    let window_start = super::super::timestamp_before(now, months * 31, "months")?;
     let rows = scope.keep(
         sqlx::query_as::<_, devops_events::Model>("SELECT * FROM devops_events")
             .fetch_all(crate::db::pool(&ctx))

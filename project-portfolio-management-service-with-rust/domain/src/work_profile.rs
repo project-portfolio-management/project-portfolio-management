@@ -22,7 +22,7 @@
 //!   about a quarter, a plateau, a ramp down over about a quarter;
 //! * `custom` — percentages summing to 100, stretched evenly over the business days.
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 use serde::Serialize;
 
 use crate::portfolio_resources::{self as pr, Period};
@@ -227,7 +227,10 @@ pub fn periods(from: Date, to: Date, grain: Grain) -> Result<Vec<Period>, String
             let mut d = from;
             while d <= to {
                 out.push(Period { from: d, to: d });
-                d += Duration::days(1);
+                d = match d.succ_opt() {
+                    Some(next) => next,
+                    None => break,
+                };
             }
             Ok(out)
         }

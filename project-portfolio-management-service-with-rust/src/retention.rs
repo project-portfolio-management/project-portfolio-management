@@ -130,10 +130,11 @@ pub fn env_overrides() -> Result<Vec<(String, i64)>, String> {
     deployment_overrides(|k| std::env::var(k).ok())
 }
 
-/// The instant before which a record is past its period.
+/// The instant before which a record is past its period, or `None` when that is before the first instant a
+/// `Timestamp` holds (nothing is past its period then).
 #[must_use]
-pub fn cutoff(now: Timestamp, days: i64) -> Timestamp {
-    now - Duration::days(days)
+pub fn cutoff(now: Timestamp, days: i64) -> Option<Timestamp> {
+    now.checked_sub_signed(Duration::try_days(days)?)
 }
 
 /// A period given on the command line: a whole number of calendar days, at least 1.
@@ -280,8 +281,11 @@ mod tests {
 
     #[test]
     fn the_cutoff_is_calendar_days_back() {
-        assert_eq!(cutoff(at(10), 9), at(1));
-        assert_eq!(cutoff(at(10), 90), at(10) - Duration::days(90));
+        assert_eq!(cutoff(at(10), 9), Some(at(1)));
+        assert_eq!(
+            cutoff(at(10), 90),
+            at(10).checked_sub_signed(Duration::days(90))
+        );
     }
 
     #[test]
@@ -289,7 +293,7 @@ mod tests {
         assert_eq!(parse_days("notifications", " 45 "), Ok(45));
         assert_eq!(parse_days("notifications", "36500"), Ok(MAX_DAYS));
         // The ceiling is safe to subtract from a real date.
-        assert!(cutoff(at(10), MAX_DAYS) < at(10));
+        assert!(cutoff(at(10), MAX_DAYS).unwrap() < at(10));
         for bad in [
             "0",
             "-3",

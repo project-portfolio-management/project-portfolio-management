@@ -5,7 +5,6 @@
 //! form is used, as before). Its whole-unit counts (`num_days`, `num_hours`, …) truncate toward zero.
 
 use core::fmt;
-use core::ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign};
 
 use jiff::SignedDuration;
 
@@ -113,70 +112,70 @@ impl Duration {
         Duration::of(n, 1_000_000)
     }
 
-    /// `n` weeks.
-    ///
-    /// # Panics
-    ///
-    /// Past the range.
-    #[must_use]
+    /// `whole` seconds a unit long, `n` of them, for a count that is an `i32`. RCA-EXC-2: `n` is at most 2^31 and a unit
+    /// is at most a week (604 800 s), so the product is under 1.4e15, inside `i64` and inside the range `of` allows
+    /// (`i64::MAX / 1000`, 9.2e15). It cannot overflow, and no check is needed.
     #[inline]
-    pub const fn weeks(n: i64) -> Duration {
-        Duration::try_weeks(n).expect("Duration::weeks out of bounds")
+    const fn of_i32(n: i32, secs_per_unit: i64) -> Duration {
+        Duration(SignedDuration::from_secs((n as i64) * secs_per_unit))
     }
 
-    /// `n` days.
-    ///
-    /// # Panics
-    ///
-    /// Past the range.
+    /// `n` weeks. The count is an `i32`, so no count is out of range; for an `i64` count use [`Duration::try_weeks`].
     #[must_use]
     #[inline]
-    pub const fn days(n: i64) -> Duration {
-        Duration::try_days(n).expect("Duration::days out of bounds")
+    pub const fn weeks(n: i32) -> Duration {
+        Duration::of_i32(n, 7 * 86_400)
     }
 
-    /// `n` hours.
-    ///
-    /// # Panics
-    ///
-    /// Past the range.
+    /// `n` days. The count is an `i32`, so no count is out of range; for an `i64` count use [`Duration::try_days`].
     #[must_use]
     #[inline]
-    pub const fn hours(n: i64) -> Duration {
-        Duration::try_hours(n).expect("Duration::hours out of bounds")
+    pub const fn days(n: i32) -> Duration {
+        Duration::of_i32(n, 86_400)
     }
 
-    /// `n` minutes.
-    ///
-    /// # Panics
-    ///
-    /// Past the range.
+    /// `n` hours. The count is an `i32`, so no count is out of range; for an `i64` count use [`Duration::try_hours`].
     #[must_use]
     #[inline]
-    pub const fn minutes(n: i64) -> Duration {
-        Duration::try_minutes(n).expect("Duration::minutes out of bounds")
+    pub const fn hours(n: i32) -> Duration {
+        Duration::of_i32(n, 3600)
     }
 
-    /// `n` seconds.
-    ///
-    /// # Panics
-    ///
-    /// Past the range.
+    /// `n` minutes. The count is an `i32`, so no count is out of range; for an `i64` count use
+    /// [`Duration::try_minutes`].
     #[must_use]
     #[inline]
-    pub const fn seconds(n: i64) -> Duration {
-        Duration::try_seconds(n).expect("Duration::seconds out of bounds")
+    pub const fn minutes(n: i32) -> Duration {
+        Duration::of_i32(n, 60)
     }
 
-    /// `n` milliseconds.
-    ///
-    /// # Panics
-    ///
-    /// Never: every `i64` count of milliseconds is in range.
+    /// `n` seconds. The count is an `i32`, so no count is out of range; for an `i64` count use
+    /// [`Duration::try_seconds`].
+    #[must_use]
+    #[inline]
+    pub const fn seconds(n: i32) -> Duration {
+        Duration::of_i32(n, 1)
+    }
+
+    /// `n` milliseconds: every `i64` count of milliseconds is in range.
     #[must_use]
     #[inline]
     pub const fn milliseconds(n: i64) -> Duration {
-        Duration::try_milliseconds(n).expect("Duration::milliseconds out of bounds")
+        Duration(SignedDuration::from_millis(n))
+    }
+
+    /// A whole number of days between two dates. RCA-EXC-2: a `Date` spans under 3.7 million days, so `n * 86_400` is under
+    /// 3.2e11, far inside `i64` and inside the range `of` allows.
+    #[inline]
+    pub(crate) const fn of_date_span_days(n: i64) -> Duration {
+        Duration(SignedDuration::from_secs(n * 86_400))
+    }
+
+    /// The span between two instants. RCA-EXC-2: two instants in jiff's range are less than 20 000 years (6.3e11 s) apart,
+    /// inside the range `of` allows (`i64::MAX / 1000` seconds, 9.2e15), so the span is a valid `Duration` as it is.
+    #[inline]
+    pub(crate) const fn of_instant_span(span: SignedDuration) -> Duration {
+        Duration(span)
     }
 
     /// `n` microseconds.
@@ -292,7 +291,14 @@ impl Duration {
         Duration::from_total_nanos(self.total_nanos() - rhs.total_nanos())
     }
 
-    /// The product, or `None` past the range.
+    /// The negation, or `None` past the range.
+    #[must_use]
+    #[inline]
+    pub fn checked_neg(&self) -> Option<Duration> {
+        self.0.checked_neg().map(Duration)
+    }
+
+    /// Times `rhs`, or `None` past the range.
     #[must_use]
     #[inline]
     pub fn checked_mul(&self, rhs: i32) -> Option<Duration> {
@@ -368,76 +374,6 @@ impl Duration {
     }
 }
 
-impl Neg for Duration {
-    type Output = Duration;
-    #[inline]
-    fn neg(self) -> Duration {
-        Duration(-self.0)
-    }
-}
-
-impl Add for Duration {
-    type Output = Duration;
-    #[inline]
-    fn add(self, rhs: Duration) -> Duration {
-        self.checked_add(&rhs)
-            .expect("`Duration + Duration` overflowed")
-    }
-}
-
-impl Sub for Duration {
-    type Output = Duration;
-    #[inline]
-    fn sub(self, rhs: Duration) -> Duration {
-        self.checked_sub(&rhs)
-            .expect("`Duration - Duration` overflowed")
-    }
-}
-
-impl AddAssign for Duration {
-    #[inline]
-    fn add_assign(&mut self, rhs: Duration) {
-        *self = *self + rhs;
-    }
-}
-
-impl SubAssign for Duration {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Duration) {
-        *self = *self - rhs;
-    }
-}
-
-impl Mul<i32> for Duration {
-    type Output = Duration;
-    #[inline]
-    fn mul(self, rhs: i32) -> Duration {
-        self.checked_mul(rhs).expect("`Duration * i32` overflowed")
-    }
-}
-
-impl Div<i32> for Duration {
-    type Output = Duration;
-    #[inline]
-    fn div(self, rhs: i32) -> Duration {
-        self.checked_div(rhs).expect("`i32` is zero")
-    }
-}
-
-impl core::iter::Sum for Duration {
-    #[inline]
-    fn sum<I: Iterator<Item = Duration>>(iter: I) -> Duration {
-        iter.fold(Duration::zero(), |a, b| a + b)
-    }
-}
-
-impl<'a> core::iter::Sum<&'a Duration> for Duration {
-    #[inline]
-    fn sum<I: Iterator<Item = &'a Duration>>(iter: I) -> Duration {
-        iter.fold(Duration::zero(), |a, b| a + *b)
-    }
-}
-
 /// As the older type's derived `Debug`: seconds rounded down and a non-negative nanosecond part.
 impl fmt::Debug for Duration {
     #[inline]
@@ -455,7 +391,14 @@ impl fmt::Display for Duration {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (secs, _) = self.floor_parts();
-        let (abs, sign) = if secs < 0 { (-*self, "-") } else { (*self, "") };
+        let (abs, sign) = if secs < 0 {
+            let Some(abs) = self.checked_neg() else {
+                return f.write_str("out of range");
+            };
+            (abs, "-")
+        } else {
+            (*self, "")
+        };
         let (secs, nanos) = abs.floor_parts();
         write!(f, "{sign}P")?;
         if secs == 0 && nanos == 0 {
@@ -533,7 +476,9 @@ mod tests {
                 .checked_add(&Duration::nanoseconds(1))
                 .is_none()
         );
-        assert_eq!(Duration::MIN, -Duration::MAX);
+        assert_eq!(Duration::MAX.checked_neg(), Some(Duration::MIN));
+        // The range is symmetric (`MIN` is `-MAX`), so negation never leaves it.
+        assert_eq!(Duration::MIN.checked_neg(), Some(Duration::MAX));
     }
 
     #[test]
@@ -554,14 +499,19 @@ mod tests {
 
     #[test]
     fn constructors_counts_checked_arithmetic_and_operators_agree() {
-        let d = Duration::weeks(2)
-            + Duration::days(3)
-            + Duration::hours(4)
-            + Duration::minutes(5)
-            + Duration::seconds(6)
-            + Duration::milliseconds(7)
-            + Duration::microseconds(8)
-            + Duration::nanoseconds(9);
+        let d = [
+            Duration::weeks(2),
+            Duration::days(3),
+            Duration::hours(4),
+            Duration::minutes(5),
+            Duration::seconds(6),
+            Duration::milliseconds(7),
+            Duration::microseconds(8),
+            Duration::nanoseconds(9),
+        ]
+        .iter()
+        .try_fold(Duration::zero(), |sum, part| sum.checked_add(part))
+        .unwrap();
         assert_eq!(d.num_weeks(), 2);
         assert_eq!(d.num_days(), 17);
         assert_eq!(d.num_hours(), 412);
@@ -574,7 +524,7 @@ mod tests {
         assert!((d.as_seconds_f64() - 1_483_506.007_008_009).abs() < f64::EPSILON);
         assert!(!d.is_zero());
         assert!(Duration::zero().is_zero());
-        assert_eq!((-d).abs(), d);
+        assert_eq!(d.checked_neg().unwrap().abs(), d);
 
         assert_eq!(
             Duration::seconds(4).checked_add(&Duration::seconds(3)),
@@ -600,23 +550,17 @@ mod tests {
         assert_eq!(Duration::MAX.checked_mul(2), None);
         assert_eq!(Duration::MIN.checked_sub(&Duration::nanoseconds(1)), None);
 
-        let mut assigned = Duration::seconds(10);
-        assigned += Duration::seconds(2);
-        assigned -= Duration::seconds(1);
-        assert_eq!(assigned, Duration::seconds(11));
-        assert_eq!(Duration::seconds(3) * 4, Duration::seconds(12));
-        assert_eq!(Duration::seconds(9) / 3, Duration::seconds(3));
+        let assigned = Duration::seconds(10)
+            .checked_add(&Duration::seconds(2))
+            .and_then(|d| d.checked_sub(&Duration::seconds(1)));
+        assert_eq!(assigned, Some(Duration::seconds(11)));
         assert_eq!(
-            vec![Duration::seconds(1), Duration::seconds(2)]
-                .into_iter()
-                .sum::<Duration>(),
-            Duration::seconds(3)
+            Duration::seconds(3).checked_mul(4),
+            Some(Duration::seconds(12))
         );
         assert_eq!(
-            [Duration::seconds(2), Duration::seconds(3)]
-                .iter()
-                .sum::<Duration>(),
-            Duration::seconds(5)
+            Duration::seconds(9).checked_div(3),
+            Some(Duration::seconds(3))
         );
 
         assert_eq!(

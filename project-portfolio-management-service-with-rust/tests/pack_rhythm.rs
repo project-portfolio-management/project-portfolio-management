@@ -205,7 +205,7 @@ async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are
         let early = {
             let first = today.with_day(1).unwrap();
             let two_back = first.checked_sub_months(project_portfolio_management::datetime::Months::new(2)).unwrap();
-            two_back + project_portfolio_management::datetime::Duration::days(2)
+            two_back.checked_add_signed(project_portfolio_management::datetime::Duration::days(2)).unwrap()
         };
         let d: Value = with!(request.post("/api/director-packs"), editor)
             .json(&json!({ "period": early.format("%Y-%m").to_string(), "audience": "executive", "cut_off": format!("{early}T12:00:00Z") })).await.json();

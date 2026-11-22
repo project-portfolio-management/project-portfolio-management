@@ -262,7 +262,7 @@ async fn calendar(
     }
     // PL-4: the owner's own planned slots, as timed events (UTC). Slots on a
     // task that is gone are skipped; recent and future ones only.
-    let cutoff = crate::datetime::Timestamp::now() - crate::datetime::Duration::days(7);
+    let cutoff = super::timestamp_before(crate::datetime::Timestamp::now(), 7, "the feed window")?;
     let slots: Vec<planned_slots::Model> = sqlx::query_as(
         "SELECT * FROM planned_slots
          WHERE sub = $1 AND deleted_at IS NULL AND ends_at > $2

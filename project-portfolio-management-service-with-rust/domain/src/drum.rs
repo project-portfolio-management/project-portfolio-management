@@ -11,7 +11,7 @@
 
 #![expect(missing_docs)]
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -63,12 +63,12 @@ const MAX_CANDIDATES: usize = 400;
 const MAX_DELAY_DAYS: i64 = 1_500;
 
 /// A copy of a segment moved by whole calendar days, with the same load.
-fn shift(s: &Segment, days: i64) -> Segment {
-    Segment {
-        start: s.start + Duration::days(days),
-        end: s.end + Duration::days(days),
+fn shift(s: &Segment, days: i64) -> Option<Segment> {
+    Some(Segment {
+        start: s.start.plus_days(days)?,
+        end: s.end.plus_days(days)?,
         milli_fte: s.milli_fte,
-    }
+    })
 }
 
 /// Total milli-FTE asked on one day by all segments covering it (ends inclusive).
@@ -120,8 +120,17 @@ pub fn stagger(projects: &[Project], capacity_milli: i64, buffer_days: i64) -> V
             .flat_map(|(_, _, s)| s.iter().copied())
             .collect();
         let fits = |delay: i64| {
+            // A move past the range of a `Date` is not a fit.
+            let Some(moved) = p
+                .segments
+                .iter()
+                .map(|s| shift(s, delay))
+                .collect::<Option<Vec<_>>>()
+            else {
+                return false;
+            };
             let mut all = all_placed.clone();
-            all.extend(p.segments.iter().map(|s| shift(s, delay)));
+            all.extend(moved);
             peak(&all) <= capacity_milli
         };
         let placement = |outcome: Outcome, delay: i64, explanation: String| Placement {
@@ -132,7 +141,8 @@ pub fn stagger(projects: &[Project], capacity_milli: i64, buffer_days: i64) -> V
             last_use: last,
             peak_milli_fte: own_peak,
             delay_days: delay,
-            proposed_first_use: first + Duration::days(delay),
+            // A project that cannot be moved keeps its first use.
+            proposed_first_use: first.plus_days(delay).unwrap_or(first),
             explanation,
         };
         let needs = format!(
@@ -176,11 +186,9 @@ pub fn stagger(projects: &[Project], capacity_milli: i64, buffer_days: i64) -> V
         let mut candidates: Vec<(i64, String)> = placed
             .iter()
             .flat_map(|(_, name, segs)| {
-                segs.iter().map(move |s| {
-                    (
-                        (s.end + Duration::days(1 + buffer_days) - first).num_days(),
-                        name.clone(),
-                    )
+                segs.iter().filter_map(move |s| {
+                    let free_from = s.end.plus_days(1 + buffer_days)?;
+                    Some(((free_from - first).num_days(), name.clone()))
                 })
             })
             .filter(|(d, _)| *d > 0 && *d <= MAX_DELAY_DAYS)
@@ -188,9 +196,20 @@ pub fn stagger(projects: &[Project], capacity_milli: i64, buffer_days: i64) -> V
         candidates.sort();
         candidates.dedup_by_key(|c| c.0);
         candidates.truncate(MAX_CANDIDATES);
-        if let Some((d, after)) = candidates.into_iter().find(|(d, _)| fits(*d)) {
+        // `fits` moved every segment, so the move below succeeds too; a miss reads as no slot.
+        let slot = candidates
+            .into_iter()
+            .find(|(d, _)| fits(*d))
+            .and_then(|(d, after)| {
+                let moved = p
+                    .segments
+                    .iter()
+                    .map(|s| shift(s, d))
+                    .collect::<Option<Vec<Segment>>>()?;
+                Some((d, after, moved))
+            });
+        if let Some((d, after, moved)) = slot {
             {
-                let moved: Vec<Segment> = p.segments.iter().map(|s| shift(s, d)).collect();
                 placed.push((p.plan, p.name.clone(), moved));
                 out.push(placement(
                     Outcome::Staggered,

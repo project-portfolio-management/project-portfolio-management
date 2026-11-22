@@ -6,7 +6,7 @@
 //! and **recorded absences** narrow it (their work happens only where both
 //! work). Lag and float stay in the plan's business days.
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 
 use crate::cpm::{CalendarError, WorkCalendar};
 
@@ -81,7 +81,7 @@ pub fn expand_absences(periods: &[(Date, Date)]) -> Vec<Date> {
             continue;
         }
         let days = (*to - *from).num_days().min(MAX_ABSENCE_DAYS);
-        out.extend((0..=days).map(|i| *from + Duration::days(i)));
+        out.extend((0..=days).map_while(|i| from.plus_days(i)));
     }
     out.sort_unstable();
     out.dedup();
@@ -91,6 +91,7 @@ pub fn expand_absences(periods: &[(Date, Date)]) -> Vec<Date> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::datetime::Duration;
 
     fn d(y: i32, m: u32, day: u32) -> Date {
         Date::from_ymd_opt(y, m, day).unwrap()
@@ -117,7 +118,11 @@ mod tests {
         );
         assert_eq!(problems("1111100", &[d(1960, 1, 1)]).len(), 1);
         let many: Vec<Date> = (0..=i64::try_from(MAX_HOLIDAYS).unwrap())
-            .map(|i| d(2026, 1, 1) + Duration::days(i))
+            .map(|i| {
+                d(2026, 1, 1)
+                    .checked_add_signed(Duration::try_days(i).unwrap())
+                    .unwrap()
+            })
             .collect();
         assert_eq!(problems("1111100", &many).len(), 1, "too many");
     }

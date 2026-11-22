@@ -467,9 +467,7 @@ fn span(from: Date, to: Date) -> Vec<Date> {
         return Vec::new();
     }
     let n = (to - from).num_days().min(366);
-    (0..=n)
-        .map(|i| from + crate::datetime::Duration::days(i))
-        .collect()
+    (0..=n).map_while(|i| from.plus_days(i)).collect()
 }
 
 /// Parse an MSPDI document.
@@ -1040,9 +1038,21 @@ mod tests {
         assert_eq!(per_hour_minor(1.0e20, Some(2), 480), None);
 
         let day = d(2026, 1, 1);
-        assert!(span(day, day - crate::datetime::Duration::days(1)).is_empty());
+        assert!(
+            span(
+                day,
+                day.checked_sub_signed(crate::datetime::Duration::days(1))
+                    .unwrap()
+            )
+            .is_empty()
+        );
         assert_eq!(
-            span(day, day + crate::datetime::Duration::days(999)).len(),
+            span(
+                day,
+                day.checked_add_signed(crate::datetime::Duration::days(999))
+                    .unwrap()
+            )
+            .len(),
             367
         );
     }

@@ -553,7 +553,14 @@ async fn act_schedule(
     else {
         return ("failed", serde_json::json!({ "reason": "no in_days" }));
     };
-    let due_at = crate::datetime::Timestamp::now() + crate::datetime::Duration::days(days);
+    let Some(due_at) = crate::datetime::Duration::try_days(days)
+        .and_then(|offset| crate::datetime::Timestamp::now().checked_add_signed(offset))
+    else {
+        return (
+            "failed",
+            serde_json::json!({ "reason": "in_days is outside the range of dates" }),
+        );
+    };
     match cap_models::schedule_on(
         &mut crate::db::pool(ctx),
         cap_models::NewScheduledAction {
@@ -1176,8 +1183,11 @@ async fn create_scheduled_action(
         &payload.subject_pid.to_string(),
     )
     .await?;
-    let due_at =
-        crate::datetime::Timestamp::now() + crate::datetime::Duration::days(payload.in_days);
+    let due_at = super::timestamp_offset(
+        crate::datetime::Timestamp::now(),
+        payload.in_days,
+        "in_days",
+    )?;
     let mut tx = crate::db::begin(&ctx).await?;
     let row = cap_models::schedule_on(
         &mut tx,

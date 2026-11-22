@@ -16,7 +16,7 @@
 
 // SEC-I3: the runner runs SQL files; forbid unsafe.
 #![forbid(unsafe_code)]
-// Production code does not panic (spec/arithmetic): an `Option` or a `Result` is handled, never unwrapped. Tests may.
+// Production code does not panic (spec/rust-checked-arithmetic, RCA-P-1 and RCA-NONE-1): an `Option` or a `Result` is handled, never unwrapped. Tests may.
 #![cfg_attr(
     not(test),
     deny(

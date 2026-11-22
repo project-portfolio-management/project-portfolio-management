@@ -192,7 +192,9 @@ async fn the_bridge_keeps_one_owner_per_fact() {
             .with_day(1)
             .unwrap()
     };
-    let next = first + project_portfolio_management::datetime::Months::new(1);
+    let next = first
+        .checked_add_months(project_portfolio_management::datetime::Months::new(1))
+        .unwrap();
     let (month, month2) = (
         first.format("%Y-%m").to_string(),
         next.format("%Y-%m").to_string(),

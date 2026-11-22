@@ -124,7 +124,7 @@ async fn earned_value_over_the_threshold_keeps_its_promises() {
         // A project with a baseline of `bac` (half before today, half after), four tasks of which two are
         // done, and `ac` spent: EV is half the BAC.
         let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
-        let day = |n: i64| (today + project_portfolio_management::datetime::Duration::days(n)).to_string();
+        let day = |n: i64| (today.checked_add_signed(project_portfolio_management::datetime::Duration::try_days(n).unwrap()).unwrap()).to_string();
         let costed = |parent: String, name: &'static str, bac: i64, ac: i64| {
             let (request, writer, day) = (&request, writer.clone(), day);
             let mk = &mk;

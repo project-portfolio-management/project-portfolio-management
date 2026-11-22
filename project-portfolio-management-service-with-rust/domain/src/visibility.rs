@@ -134,10 +134,18 @@ pub fn violations(items: &[ScheduleItem], edges: &[ScheduleEdge]) -> Vec<Violati
         let (Some(pred_end), Some(succ_start)) = (pred.end, succ.start) else {
             continue;
         };
+        // An earliest start outside the range of a `Date` cannot be reported as a date, so the edge is not checked.
         let earliest = if edge.lag_days >= 0 {
-            pred_end + crate::datetime::Days::new(u64::try_from(edge.lag_days).unwrap_or(0))
+            pred_end.checked_add_days(crate::datetime::Days::new(
+                u64::try_from(edge.lag_days).unwrap_or(0),
+            ))
         } else {
-            pred_end - crate::datetime::Days::new(u64::try_from(-edge.lag_days).unwrap_or(0))
+            pred_end.checked_sub_days(crate::datetime::Days::new(u64::from(
+                edge.lag_days.unsigned_abs(),
+            )))
+        };
+        let Some(earliest) = earliest else {
+            continue;
         };
         if succ_start < earliest {
             out.push(Violation {

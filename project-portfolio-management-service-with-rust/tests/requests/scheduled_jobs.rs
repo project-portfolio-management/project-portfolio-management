@@ -85,9 +85,10 @@ async fn two_schedulers_run_a_job_once_and_a_disabled_scheduler_runs_nothing() {
         ));
         // After the interval it runs again.
         let later = now
-            + project_portfolio_management::datetime::Duration::minutes(
+            .checked_add_signed(project_portfolio_management::datetime::Duration::minutes(
                 Job::ExceptionBreaches.interval_minutes() + 1,
-            );
+            ))
+            .unwrap();
         assert!(matches!(
             run_job(&ctx, Job::ExceptionBreaches, later).await.unwrap(),
             Ran::Ok(_)

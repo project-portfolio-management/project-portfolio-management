@@ -2,7 +2,7 @@
 //! on-track / at-risk / off-track call with a narrative; when the next one is due, and whether it is overdue, follows
 //! from the dates alone. DB-free and clock-free: every function is told the date.
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// The calls an update can make.
@@ -52,23 +52,24 @@ pub struct Standing {
 }
 
 /// Where a plan stands on `today`. `last_update_on` is the date of its latest update (if any) and `cadence_set_on`
-/// the date its cadence was set; the clock starts from whichever is later, so setting a new cadence restarts it.
+/// the date its cadence was set; the clock starts from whichever is later, so setting a new cadence restarts it. `None`
+/// when the due date is past the last date a `Date` holds.
 #[must_use]
 pub fn standing(
     cadence_days: i32,
     cadence_set_on: Date,
     last_update_on: Option<Date>,
     today: Date,
-) -> Standing {
+) -> Option<Standing> {
     let from = last_update_on.map_or(cadence_set_on, |u| u.max(cadence_set_on));
-    let due_on = from + Duration::days(i64::from(cadence_days));
+    let due_on = from.plus_days(i64::from(cadence_days))?;
     let late = (today - due_on).num_days();
-    Standing {
+    Some(Standing {
         due_on,
         due: today >= due_on,
         overdue: today > due_on,
         days_overdue: late.max(0),
-    }
+    })
 }
 
 #[cfg(test)]
@@ -100,16 +101,16 @@ mod tests {
 
     #[test]
     fn with_no_update_the_clock_runs_from_when_the_cadence_was_set() {
-        let s = standing(7, d(10, 1), None, d(10, 7));
+        let s = standing(7, d(10, 1), None, d(10, 7)).unwrap();
         assert_eq!(s.due_on, d(10, 8));
         assert!(!s.due && !s.overdue);
-        let s = standing(7, d(10, 1), None, d(10, 8));
+        let s = standing(7, d(10, 1), None, d(10, 8)).unwrap();
         assert!(s.due && !s.overdue && s.days_overdue == 0);
     }
 
     #[test]
     fn an_update_restarts_the_clock_and_lateness_is_counted_in_days() {
-        let s = standing(7, d(10, 1), Some(d(10, 10)), d(10, 20));
+        let s = standing(7, d(10, 1), Some(d(10, 10)), d(10, 20)).unwrap();
         assert_eq!(s.due_on, d(10, 17));
         assert!(s.due && s.overdue);
         assert_eq!(s.days_overdue, 3);
@@ -117,7 +118,7 @@ mod tests {
 
     #[test]
     fn setting_a_new_cadence_restarts_the_clock_even_after_an_old_update() {
-        let s = standing(14, d(10, 20), Some(d(10, 1)), d(10, 25));
+        let s = standing(14, d(10, 20), Some(d(10, 1)), d(10, 25)).unwrap();
         assert_eq!(s.due_on, d(11, 3));
         assert!(!s.due);
     }

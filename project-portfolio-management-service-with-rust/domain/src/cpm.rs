@@ -28,7 +28,7 @@
 
 use std::collections::{BTreeSet, HashMap};
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -159,14 +159,19 @@ impl WorkCalendar {
         // Smallest day offset whose *next* day has index > `index`.
         while lo < hi {
             let mid = lo + (hi - lo) / 2;
-            let next = EPOCH + Duration::days(mid + 1);
-            if self.index_of(next).is_some_and(|i| i > index) {
+            // A day past the last date a `Date` holds is past every index.
+            let past = EPOCH
+                .plus_days(mid + 1)
+                .and_then(|next| self.index_of(next))
+                .is_none_or(|i| i > index);
+            if past {
                 hi = mid;
             } else {
                 lo = mid + 1;
             }
         }
-        EPOCH + Duration::days(lo)
+        // A day past the last date a `Date` holds reads as the last date.
+        EPOCH.plus_days(lo).unwrap_or(Date::MAX)
     }
 }
 
@@ -501,7 +506,7 @@ pub fn analyze_with(
         match own(i) {
             Some(e) if d > 0 && finish > 0 => {
                 let x = calendar.date_of(finish - 1);
-                let last = e.index_of(x + Duration::days(1)).unwrap_or(0) - 1;
+                let last = x.succ_opt().and_then(|next| e.index_of(next)).unwrap_or(0) - 1;
                 if last < 0 {
                     return (finish - d, finish);
                 }
@@ -861,6 +866,7 @@ pub fn diff(before: &CpmResult, after: &CpmResult) -> Vec<Moved> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::datetime::Duration;
 
     #[test]
     fn epoch_is_the_first_monday_of_1970() {
@@ -1093,7 +1099,7 @@ mod tests {
         // B is planned to start at 1 but its predecessor finishes at 4.
         let n = vec![
             anchored(1, 4, MON()),
-            anchored(2, 2, MON() + Duration::days(1)),
+            anchored(2, 2, MON().checked_add_signed(Duration::days(1)).unwrap()),
         ];
         let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
         assert_eq!(get(&r, 2).pushed_days, 3);
@@ -1144,7 +1150,7 @@ mod tests {
             if cal.is_working(day) {
                 assert_eq!(cal.date_of(cal.index_of(day).unwrap()), day, "{day}");
             }
-            day += Duration::days(1);
+            day = day.succ_opt().unwrap();
         }
         assert_eq!(cal.index_of(d(1969, 12, 31)), None);
     }
@@ -1201,10 +1207,13 @@ mod tests {
         let n = vec![constrained(
             anchored(1, 3, MON()),
             ConstraintKind::Snet,
-            MON() + Duration::days(4),
+            MON().checked_add_signed(Duration::days(4)).unwrap(),
         )];
         let r = run(&n, &[]);
-        assert_eq!(get(&r, 1).early_start, MON() + Duration::days(4));
+        assert_eq!(
+            get(&r, 1).early_start,
+            MON().checked_add_signed(Duration::days(4)).unwrap()
+        );
         assert_eq!(get(&r, 1).total_float, 0);
     }
 
@@ -1213,13 +1222,17 @@ mod tests {
         // A(3) -> B(4); B must finish no later than day 5 but cannot before day 7.
         let n = vec![
             anchored(1, 3, MON()),
-            constrained(node(2, 4), ConstraintKind::Fnlt, MON() + Duration::days(4)),
+            constrained(
+                node(2, 4),
+                ConstraintKind::Fnlt,
+                MON().checked_add_signed(Duration::days(4)).unwrap(),
+            ),
         ];
         let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
         let b = get(&r, 2);
         assert_eq!(
             b.early_finish,
-            MON() + Duration::days(6),
+            MON().checked_add_signed(Duration::days(6)).unwrap(),
             "early dates are untouched by FNLT"
         );
         assert!(b.total_float < 0, "negative float: {b:?}");
@@ -1231,7 +1244,11 @@ mod tests {
     fn snlt_gives_negative_float_when_logic_starts_it_too_late() {
         let n = vec![
             anchored(1, 5, MON()),
-            constrained(node(2, 2), ConstraintKind::Snlt, MON() + Duration::days(2)),
+            constrained(
+                node(2, 2),
+                ConstraintKind::Snlt,
+                MON().checked_add_signed(Duration::days(2)).unwrap(),
+            ),
         ];
         let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
         assert_eq!(get(&r, 2).total_float, -3, "starts at 5, must start by 2");
@@ -1242,10 +1259,13 @@ mod tests {
         let n = vec![constrained(
             anchored(1, 2, MON()),
             ConstraintKind::Fnet,
-            MON() + Duration::days(9),
+            MON().checked_add_signed(Duration::days(9)).unwrap(),
         )];
         let r = run(&n, &[]);
-        assert_eq!(get(&r, 1).early_finish, MON() + Duration::days(9));
+        assert_eq!(
+            get(&r, 1).early_finish,
+            MON().checked_add_signed(Duration::days(9)).unwrap()
+        );
     }
 
     #[test]
@@ -1253,13 +1273,17 @@ mod tests {
         // B must start on day 1, but A (4 business days) forces day 4.
         let n = vec![
             anchored(1, 4, MON()),
-            constrained(node(2, 2), ConstraintKind::Mso, MON() + Duration::days(1)),
+            constrained(
+                node(2, 2),
+                ConstraintKind::Mso,
+                MON().checked_add_signed(Duration::days(1)).unwrap(),
+            ),
         ];
         let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
         let b = get(&r, 2);
         assert_eq!(
             b.early_start,
-            MON() + Duration::days(1),
+            MON().checked_add_signed(Duration::days(1)).unwrap(),
             "the pin wins over logic"
         );
         assert!(b.hard_conflict, "and the conflict is reported");
@@ -1267,7 +1291,11 @@ mod tests {
         // Without a conflict the flag stays off.
         let n = vec![
             anchored(1, 1, MON()),
-            constrained(node(2, 2), ConstraintKind::Mso, MON() + Duration::days(5)),
+            constrained(
+                node(2, 2),
+                ConstraintKind::Mso,
+                MON().checked_add_signed(Duration::days(5)).unwrap(),
+            ),
         ];
         assert!(!get(&run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]), 2).hard_conflict);
     }
@@ -1277,25 +1305,34 @@ mod tests {
         let n = vec![constrained(
             node(1, 3),
             ConstraintKind::Mfo,
-            MON() + Duration::days(7),
+            MON().checked_add_signed(Duration::days(7)).unwrap(),
         )];
         let r = run(&n, &[]);
-        assert_eq!(get(&r, 1).early_finish, MON() + Duration::days(7));
-        assert_eq!(get(&r, 1).early_start, MON() + Duration::days(5));
+        assert_eq!(
+            get(&r, 1).early_finish,
+            MON().checked_add_signed(Duration::days(7)).unwrap()
+        );
+        assert_eq!(
+            get(&r, 1).early_start,
+            MON().checked_add_signed(Duration::days(5)).unwrap()
+        );
     }
 
     #[test]
     fn a_deadline_makes_negative_float_but_never_moves_an_early_date() {
         let mut b = node(2, 4);
-        b.deadline = Some(MON() + Duration::days(5));
+        b.deadline = Some(MON().checked_add_signed(Duration::days(5)).unwrap());
         let n = vec![anchored(1, 3, MON()), b];
         let r = run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]);
         assert_eq!(
             get(&r, 2).early_start,
-            MON() + Duration::days(3),
+            MON().checked_add_signed(Duration::days(3)).unwrap(),
             "early dates ignore the deadline"
         );
-        assert_eq!(get(&r, 2).early_finish, MON() + Duration::days(6));
+        assert_eq!(
+            get(&r, 2).early_finish,
+            MON().checked_add_signed(Duration::days(6)).unwrap()
+        );
         assert_eq!(
             get(&r, 2).total_float,
             -1,
@@ -1303,7 +1340,7 @@ mod tests {
         );
         // A comfortable deadline leaves float untouched.
         let mut b = node(2, 4);
-        b.deadline = Some(MON() + Duration::days(30));
+        b.deadline = Some(MON().checked_add_signed(Duration::days(30)).unwrap());
         let n = vec![anchored(1, 3, MON()), b];
         assert_eq!(
             get(&run(&n, &[edge(1, 1, 2, Kind::Fs, 0)]), 2).total_float,
@@ -1465,11 +1502,17 @@ mod tests {
                     if next(5) == 0 {
                         n.constraint = Some(Constraint {
                             kind: kinds[next(4) as usize],
-                            date: MON() + Duration::days(next(40) as i64),
+                            date: MON()
+                                .checked_add_signed(Duration::try_days(next(40) as i64).unwrap())
+                                .unwrap(),
                         });
                     }
                     if next(6) == 0 {
-                        n.deadline = Some(MON() + Duration::days(next(60) as i64));
+                        n.deadline = Some(
+                            MON()
+                                .checked_add_signed(Duration::try_days(next(60) as i64).unwrap())
+                                .unwrap(),
+                        );
                     }
                     n
                 })
@@ -1542,7 +1585,13 @@ mod tests {
             let nodes: Vec<Node> = (1..=count)
                 .map(|i| {
                     if i == 1 || next(4) == 0 {
-                        anchored(i, next(6) as i64, MON() + Duration::days(next(10) as i64))
+                        anchored(
+                            i,
+                            next(6) as i64,
+                            MON()
+                                .checked_add_signed(Duration::try_days(next(10) as i64).unwrap())
+                                .unwrap(),
+                        )
                     } else {
                         node(i, next(6) as i64)
                     }

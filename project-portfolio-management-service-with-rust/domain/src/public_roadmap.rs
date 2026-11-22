@@ -439,7 +439,11 @@ mod tests {
     #[test]
     fn calendar_day_42_is_fresh_and_day_43_is_stale() {
         let today = crate::datetime::Date::from_ymd_opt(2026, 11, 14).unwrap();
-        let ago = |n| today - crate::datetime::Duration::days(n);
+        let ago = |n| {
+            today
+                .checked_sub_signed(crate::datetime::Duration::try_days(n).unwrap())
+                .unwrap()
+        };
         assert_eq!(freshness(None, today, 42), "unknown");
         assert_eq!(freshness(Some(ago(42)), today, 42), "fresh");
         assert_eq!(freshness(Some(ago(43)), today, 42), "stale");

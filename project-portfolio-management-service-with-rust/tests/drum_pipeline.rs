@@ -99,9 +99,11 @@ async fn two_projects_needing_the_drum_are_staggered_and_nothing_is_moved() {
             .unwrap()
     };
     let month = first.format("%Y-%m").to_string();
-    let last = (first + project_portfolio_management::datetime::Months::new(1))
-        .pred_opt()
-        .unwrap();
+    let last = (first
+        .checked_add_months(project_portfolio_management::datetime::Months::new(1))
+        .unwrap())
+    .pred_opt()
+    .unwrap();
     let month_days = (last - first).num_days() + 1;
     request::<App, _, _>(|request, ctx| async move {
         macro_rules! with { ($rb:expr, $who:expr) => { $rb.add_header($who.0.clone(), $who.1.clone()) }; }

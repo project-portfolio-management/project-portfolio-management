@@ -7,7 +7,7 @@
 
 #![expect(missing_docs)]
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// One task's stamps.
@@ -57,13 +57,13 @@ pub fn flow(items: &[Item], as_of: Date, weeks: u32) -> Option<Flow> {
     };
     let burn_up: Vec<Point> = (0..weeks)
         .rev()
-        .map(|w| at(as_of - Duration::days(i64::from(w) * 7)))
+        .filter_map(|w| as_of.minus_days(i64::from(w) * 7).map(at))
         .collect();
     let recent = items
         .iter()
         .filter(|i| {
             i.done
-                .is_some_and(|x| x <= as_of && x > as_of - Duration::days(28))
+                .is_some_and(|x| x <= as_of && as_of.minus_days(28).is_none_or(|from| x > from))
         })
         .count();
     let now = at(as_of);

@@ -77,7 +77,8 @@ async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them
         )
         .bind(
             project_portfolio_management::tz::deployment_today()
-                - project_portfolio_management::datetime::Duration::days(10),
+                .checked_sub_signed(project_portfolio_management::datetime::Duration::days(10))
+                .unwrap(),
         )
         .bind(Some(who.clone()))
         .bind(row.id)
@@ -125,7 +126,8 @@ async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them
         // An hour either side: an update's time is the database's clock, the cut-off's is the caller's, and on a
         // developer machine with a containerised database the two can differ by more than a test should assume.
         let before_post = project_portfolio_management::datetime::Timestamp::now()
-            - project_portfolio_management::datetime::Duration::hours(1);
+            .checked_sub_signed(project_portfolio_management::datetime::Duration::hours(1))
+            .unwrap();
         let posted: Value = request
             .post(&format!("/api/plans/{p}/status-updates"))
             .json(&json!({ "status": "at_risk", "narrative": "Supplier slipped a fortnight" }))
@@ -170,7 +172,8 @@ async fn updates_are_due_then_overdue_then_reminded_once_and_the_pack_reads_them
             &ctx,
             &include,
             project_portfolio_management::datetime::Timestamp::now()
-                + project_portfolio_management::datetime::Duration::minutes(1),
+                .checked_add_signed(project_portfolio_management::datetime::Duration::minutes(1))
+                .unwrap(),
         )
         .await
         .unwrap();

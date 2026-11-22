@@ -438,7 +438,11 @@ mod tests {
     #[test]
     fn the_due_date_cannot_precede_the_raised_date() {
         let mut d = draft();
-        d.due_date = Some(day(1) - crate::datetime::Days::new(1));
+        d.due_date = Some(
+            day(1)
+                .checked_sub_days(crate::datetime::Days::new(1))
+                .unwrap(),
+        );
         assert_eq!(problems(&d).len(), 1);
     }
 

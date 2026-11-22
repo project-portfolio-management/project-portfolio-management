@@ -24,7 +24,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -137,7 +137,10 @@ pub fn periods(from: Date, to: Date, grain: Grain) -> Result<Vec<Period>, String
     while start <= to {
         let natural_end = match grain {
             Grain::Week => {
-                start + Duration::days(6 - i64::from(start.weekday().num_days_from_monday()))
+                // Past the last date a `Date` holds, the period ends at `to` (the `min(to)` below).
+                start
+                    .plus_days(6 - i64::from(start.weekday().num_days_from_monday()))
+                    .unwrap_or(to)
             }
             Grain::Month => {
                 let (y, m) = if start.month() == 12 {
@@ -145,7 +148,7 @@ pub fn periods(from: Date, to: Date, grain: Grain) -> Result<Vec<Period>, String
                 } else {
                     (start.year(), start.month() + 1)
                 };
-                Date::from_ymd_opt(y, m, 1).map_or(to, |d| d - Duration::days(1))
+                Date::from_ymd_opt(y, m, 1).map_or(to, |d| d.pred_opt().unwrap_or(to))
             }
         };
         let end = natural_end.min(to);
@@ -156,7 +159,10 @@ pub fn periods(from: Date, to: Date, grain: Grain) -> Result<Vec<Period>, String
         if out.len() > MAX_PERIODS {
             return Err(format!("the window has more than {MAX_PERIODS} periods"));
         }
-        start = end + Duration::days(1);
+        start = match end.succ_opt() {
+            Some(next) => next,
+            None => break,
+        };
     }
     Ok(out)
 }
@@ -298,7 +304,10 @@ pub fn plan(
                 let mut day = p.from;
                 while day <= p.to {
                     supply += i64::from(capacity_on(&person.ranges, day));
-                    day += Duration::days(1);
+                    day = match day.succ_opt() {
+                        Some(next) => next,
+                        None => break,
+                    };
                 }
                 let row = rows.entry(key.clone()).or_insert_with(|| Row {
                     key: key.clone(),
@@ -381,7 +390,10 @@ fn working_days(
         if working(day) {
             n += 1;
         }
-        day += Duration::days(1);
+        day = match day.succ_opt() {
+            Some(next) => next,
+            None => break,
+        };
     }
     n
 }

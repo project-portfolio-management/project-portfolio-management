@@ -160,7 +160,12 @@ async fn all_cadences(ctx: &AppContext) -> Result<Vec<cadences::Model>> {
 }
 
 /// Whether the plan's update cadence is being kept, from the cadence, its last update and today.
-fn standing_of(c: &cadences::Model, last: Option<&updates::Model>, today: Date) -> Standing {
+/// `None` when the due date is past the last date a `Date` holds.
+fn standing_of(
+    c: &cadences::Model,
+    last: Option<&updates::Model>,
+    today: Date,
+) -> Option<Standing> {
     rules::standing(c.cadence_days, c.set_on, last.map(|u| u.posted_on), today)
 }
 
@@ -359,7 +364,7 @@ async fn get_status(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
             None => None,
         },
         "cadence_days": cadence.as_ref().map(|c| c.cadence_days),
-        "standing": cadence.as_ref().map(|c| standing_of(c, last.as_ref(), today)),
+        "standing": cadence.as_ref().and_then(|c| standing_of(c, last.as_ref(), today)),
     }))
 }
 
@@ -380,7 +385,9 @@ async fn due(State(ctx): State<AppContext>, caller: MaybeAuthUser) -> Result<Res
     let mut out = Vec::new();
     for c in all.iter().filter(|c| readable.contains(&c.plan_pid)) {
         let last = latest_before(&ctx, c.plan_pid, None).await?;
-        let s = standing_of(c, last.as_ref(), today);
+        let Some(s) = standing_of(c, last.as_ref(), today) else {
+            continue;
+        };
         if s.due {
             out.push((
                 s.days_overdue,
@@ -437,7 +444,9 @@ async fn remind_in_view(
     };
     for c in all.iter().filter(in_view) {
         let last = latest_before(ctx, c.plan_pid, None).await?;
-        let s = standing_of(c, last.as_ref(), today);
+        let Some(s) = standing_of(c, last.as_ref(), today) else {
+            continue;
+        };
         if !s.due || c.reminded_for.is_some_and(|r| r >= s.due_on) {
             continue;
         }

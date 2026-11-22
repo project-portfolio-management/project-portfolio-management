@@ -414,7 +414,7 @@ pub(crate) fn working_days_of(
         if cal.is_working(d) {
             days.push(d);
         }
-        d += crate::datetime::Duration::days(1);
+        d = d.succ_opt()?;
     }
     Some(days)
 }

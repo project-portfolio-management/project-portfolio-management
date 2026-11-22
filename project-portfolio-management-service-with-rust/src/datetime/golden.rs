@@ -135,9 +135,10 @@ fn add_days(d: Date, n: i64) -> Option<Date> {
     }
 }
 
-/// `date + Duration::seconds(secs)`: whole days only, toward zero.
+/// `date.checked_add_signed(Duration::try_seconds(secs).unwrap()).unwrap()`: whole days only, toward zero.
 fn date_plus_seconds(d: Date, secs: i64) -> Date {
-    d + crate::datetime::Duration::seconds(secs)
+    d.checked_add_signed(crate::datetime::Duration::try_seconds(secs).unwrap())
+        .unwrap()
 }
 
 /// `(a - b).num_days()` for dates.
@@ -157,7 +158,8 @@ fn instant_difference(a: Utc, b: Utc) -> (i64, i64, i64, i64) {
 }
 
 fn utc_plus_days(t: Utc, n: i64) -> Utc {
-    t + crate::datetime::Duration::days(n)
+    t.checked_add_signed(crate::datetime::Duration::try_days(n).unwrap())
+        .unwrap()
 }
 
 fn weekday_from_monday(d: Date) -> u32 {

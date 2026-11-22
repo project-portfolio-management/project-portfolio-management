@@ -21,16 +21,20 @@ pub fn week_start(iso: &str) -> Option<Date> {
     Date::from_isoywd_opt(year.parse().ok()?, week.parse().ok()?, Weekday::Mon)
 }
 
-/// The Monday of the ISO week containing `date`.
+/// The Monday of the ISO week containing `date`, or `None` when that Monday is before the first date a `Date` holds.
 #[must_use]
-pub fn monday_of(date: Date) -> Date {
-    date - crate::datetime::Duration::days(i64::from(date.weekday().num_days_from_monday()))
+pub fn monday_of(date: Date) -> Option<Date> {
+    date.minus_days(i64::from(date.weekday().num_days_from_monday()))
 }
 
-/// The seven dates of the week starting `monday`.
+/// The seven dates of the week starting `monday`, or `None` when the week runs past the last date a `Date` holds.
 #[must_use]
-pub fn days_of(monday: Date) -> [Date; 7] {
-    std::array::from_fn(|i| monday + crate::datetime::Duration::days(i64::try_from(i).unwrap_or(0)))
+pub fn days_of(monday: Date) -> Option<[Date; 7]> {
+    let mut days = [monday; 7];
+    for (offset, day) in days.iter_mut().enumerate() {
+        *day = monday.plus_days(i64::try_from(offset).ok()?)?;
+    }
+    Some(days)
 }
 
 /// One time entry as the roll-ups see it.
@@ -107,10 +111,10 @@ pub struct Grid {
 }
 
 /// Build the grid for entries falling in the week starting `monday`.
-/// Entries outside the week are ignored.
+/// Entries outside the week are ignored. `None` when the week runs past the last date a `Date` holds.
 #[must_use]
-pub fn grid(entries: &[Entry], monday: Date) -> Grid {
-    let days = days_of(monday);
+pub fn grid(entries: &[Entry], monday: Date) -> Option<Grid> {
+    let days = days_of(monday)?;
     let mut rows: Vec<GridRow> = Vec::new();
     let mut day_totals = [0i64; 7];
     let mut split = Split::default();
@@ -139,14 +143,14 @@ pub fn grid(entries: &[Entry], monday: Date) -> Grid {
     }
     rows.sort_by_key(|r| r.plan_pid);
     let any = !rows.is_empty();
-    Grid {
+    Some(Grid {
         days,
         rows,
         day_totals,
         split,
         total: any.then(|| split.total()),
         reason: (!any).then_some("no_entries"),
-    }
+    })
 }
 
 /// How a time report is grouped.
@@ -324,8 +328,8 @@ mod tests {
         assert_eq!(week_start("2026-W41"), Some(d(5)));
         assert_eq!(week_start("2026-W54"), None);
         assert_eq!(week_start("nope"), None);
-        assert_eq!(monday_of(d(8)), d(5), "a Thursday");
-        assert_eq!(monday_of(d(5)), d(5), "a Monday is its own");
+        assert_eq!(monday_of(d(8)), Some(d(5)), "a Thursday");
+        assert_eq!(monday_of(d(5)), Some(d(5)), "a Monday is its own");
     }
 
     #[test]
@@ -338,7 +342,8 @@ mod tests {
                 e(1, 12, 999, true), /* next week */
             ],
             d(5),
-        );
+        )
+        .unwrap();
         assert_eq!(g.rows.len(), 2);
         assert_eq!(g.day_totals[0], 90);
         assert_eq!(g.day_totals[2], 45);
@@ -355,7 +360,7 @@ mod tests {
 
     #[test]
     fn an_empty_week_is_none_with_a_reason_not_zero() {
-        let g = grid(&[], d(5));
+        let g = grid(&[], d(5)).unwrap();
         assert_eq!((g.total, g.reason), (None, Some("no_entries")));
         assert!(g.rows.is_empty());
     }

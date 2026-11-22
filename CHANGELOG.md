@@ -14,6 +14,23 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 22 November (date and time crate: no panicking operators)
+
+- Followed `spec/rust-checked-arithmetic/index.md` (the maintainer's, with `RCA-*` ids), which replaced my earlier, shorter
+  `spec/arithmetic/index.md`. Where they differ, the maintainer's wins: `unwrap_or` with a declared fallback is allowed
+  (RCA-P-7); `saturating_*`, `wrapping_*`, `clamp` and `as` are not.
+- `datetime` crate: the panicking operators on dates, instants and durations (`date + duration`, `+=`, `*`, `/`, unary `-`,
+  `Sum`) and the constructors that panicked are gone (RCA-TIME-3, RCA-DOM-3). `Duration::days`, `hours`, `minutes`,
+  `seconds` and `weeks` take an `i32`, so no count is out of range; `checked_*`, `plus_days`, `minus_days` and
+  `checked_neg` replace the operators. About 75 call sites in the domain and service crates changed, each with a stated
+  outcome at the edge of the date range (stop, skip, refuse with 422, or no result). The crate now denies `unwrap_used`,
+  `expect_used`, `panic`, `unreachable`, `todo` and `unimplemented`, as the other three do.
+- Not done: the other RCA lints (`arithmetic_side_effects`, `as_conversions`, `indexing_slicing`, the cast and float lints,
+  `allow_attributes`) are not denied (about 2,100 sites); the `disallowed-methods` of RCA-ENF-2 are not set (130 `sum` and
+  `product`, 211 `unwrap_or_default`); about 110 `saturating_*`, `wrapping_*` and `overflowing_*` and 30 `clamp` uses
+  remain (RCA-INT-4); release `overflow-checks` is not on (RCA-ENF-4); no declared fallback is cited in code yet
+  (RCA-NONE-3); no property tests (RCA-TEST-3).
+
 ## 22 November (arithmetic spec: math must not panic)
 
 - Service, domain and migration crates: no `unwrap`, `expect`, `panic!` or `unreachable!` in production code, denied by lint (62

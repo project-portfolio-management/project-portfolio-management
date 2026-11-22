@@ -9,6 +9,28 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — no panicking date, time or duration operators (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-TIME-3, RCA-DOM-3, RCA-AGG-1): the `datetime` crate no longer has `date + duration`,
+  `+=`, `-=`, `*`, `/`, unary `-` or `Sum` for `Date`, `NaiveDateTime`, `Timestamp`, `OffsetDateTime` and `Duration`, nor
+  the constructors that panicked past the range. `Duration::weeks`, `days`, `hours`, `minutes` and `seconds` take an
+  `i32` (never out of range); `Duration::try_*` take an `i64`; `Date::plus_days` and `minus_days`, `checked_neg` and the
+  existing `checked_*` replace the rest. `Timestamp::from_timestamp_nanos` returns an `Option`. The crate now denies
+  `unwrap_used`, `expect_used`, `panic`, `unreachable`, `todo` and `unimplemented` for non-test code, like the other three.
+- About 75 call sites changed. At the edge of the date range a result is now: a stop in a day loop, a skipped item, an
+  absent value (JSON `null`), or `422` naming the figure (`date_offset`, `date_before`, `timestamp_offset`,
+  `timestamp_before` in `controllers/mod.rs`). Signatures that became fallible: `break_glass::expires_at`,
+  `timesheets::monday_of`, `days_of` and `grid`, `status_updates::standing`, `plan_templates::shift`,
+  `retention::cutoff`, `financial_year::year_of`. `Job::interval_minutes` is an `i32`. `email.rs` and `sinks.rs` back-off no
+  longer use `saturating_pow`. About 55 test and bench lines were rewritten to the checked forms.
+- Not done: the other RCA lints and `disallowed-methods` (RCA-ENF-1, RCA-ENF-2), about 2,100 sites, are not denied; about
+  110 `saturating_*`, `wrapping_*` and `overflowing_*` and 30 `clamp` uses remain; release `overflow-checks` is not set;
+  fallbacks that now stand in a few places (`Date::MAX` or `Date::MIN` for a window past the range, `unwrap_or(0)` in
+  calendar code) do not yet cite a declaration (RCA-NONE-3); the new edge behaviour has no dedicated tests, apart from the
+  `year_of` range edge and the `checked_neg` pair.
+- Not verified: the database-backed suites (`-- --ignored`) were not run. Run: fmt, clippy `-D warnings` on every target,
+  1,402 library tests, and the database-free integration tests (after the licence fix).
+
 ### Tests — the licence test allows a README symlink (2026-11-22)
 
 - `tests/licence_files.rs`: each `LICENSES/<id>/` may also hold `README.md`, as long as it is a symlink to `index.md` (the

@@ -124,7 +124,10 @@ async fn resource_plan(
 ) -> Result<Response> {
     let today = crate::tz::deployment_today();
     let from = q.from.unwrap_or(today);
-    let to = q.to.unwrap_or(from + crate::datetime::Days::new(89));
+    let to = q.to.unwrap_or_else(|| {
+        from.checked_add_days(crate::datetime::Days::new(89))
+            .unwrap_or(crate::datetime::Date::MAX)
+    });
     let grain = match q.period.as_deref() {
         None => Grain::Month,
         Some(p) => Grain::parse(p).ok_or_else(|| unprocessable("period must be week or month"))?,
@@ -261,7 +264,10 @@ async fn hours(
 ) -> Result<Response> {
     let today = crate::tz::deployment_today();
     let to = q.to.unwrap_or(today);
-    let from = q.from.unwrap_or(to - crate::datetime::Days::new(27));
+    let from = q.from.unwrap_or_else(|| {
+        to.checked_sub_days(crate::datetime::Days::new(27))
+            .unwrap_or(crate::datetime::Date::MIN)
+    });
     if to < from {
         return Err(unprocessable("to is before from"));
     }
@@ -568,9 +574,10 @@ async fn resolve_placeholder(
     if allocation.booking == "committed" {
         let today = crate::tz::deployment_today();
         let from = allocation.start_date.unwrap_or(today);
-        let to = allocation
-            .end_date
-            .unwrap_or(from + crate::datetime::Days::new(365));
+        let to = allocation.end_date.unwrap_or_else(|| {
+            from.checked_add_days(crate::datetime::Days::new(365))
+                .unwrap_or(crate::datetime::Date::MAX)
+        });
         let mut allocs: Vec<crate::availability::Alloc> = vis_models::all_allocations(&ctx)
             .await?
             .iter()

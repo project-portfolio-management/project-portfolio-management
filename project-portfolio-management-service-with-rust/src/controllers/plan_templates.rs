@@ -458,7 +458,7 @@ async fn from_template(
     }
     let start = b.start_date;
     let date_of = |days: Option<i64>| match (start, days) {
-        (Some(s), Some(d)) => Some(rules::shift(s, d)),
+        (Some(s), Some(d)) => rules::shift(s, d),
         _ => None,
     };
 

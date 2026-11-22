@@ -134,7 +134,11 @@ mod tests {
             decision_problems(
                 "override",
                 "Sponsor accepts the risk",
-                Some(d(6, 2) + crate::datetime::Duration::days(400)),
+                Some(
+                    d(6, 2)
+                        .checked_add_signed(crate::datetime::Duration::days(400))
+                        .unwrap()
+                ),
                 today
             ),
             ["an override may last at most a year"]

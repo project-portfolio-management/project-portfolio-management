@@ -116,10 +116,10 @@ pub fn offset(base: Date, date: Date) -> i64 {
     (date - base).num_days()
 }
 
-/// `base` shifted by `days`.
+/// `base` shifted by `days`, or `None` past the range of a `Date`.
 #[must_use]
-pub fn shift(base: Date, days: i64) -> Date {
-    base + crate::datetime::Duration::days(days)
+pub fn shift(base: Date, days: i64) -> Option<Date> {
+    base.plus_days(days)
 }
 
 /// Strip everything that identifies a plan or names a person, keeping its
@@ -171,7 +171,7 @@ mod tests {
     fn offsets_round_trip_including_negative() {
         let base = d(10, 5);
         for date in [d(10, 5), d(10, 20), d(9, 28)] {
-            assert_eq!(shift(base, offset(base, date)), date);
+            assert_eq!(shift(base, offset(base, date)), Some(date));
         }
         assert_eq!(offset(base, d(9, 28)), -7);
     }

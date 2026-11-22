@@ -13,7 +13,7 @@
 
 use std::collections::BTreeMap;
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 use serde::{Deserialize, Serialize};
 
 /// What a case is for.
@@ -144,7 +144,7 @@ pub fn template_problems(items: &[Seed]) -> Vec<String> {
 /// An item's due date: the effective date plus its offset.
 #[must_use]
 pub fn due_date(effective: Date, offset_days: i64) -> Option<Date> {
-    effective.checked_add_signed(Duration::days(offset_days))
+    effective.plus_days(offset_days)
 }
 
 /// What progress needs to know of an item.

@@ -440,7 +440,7 @@ async fn plan_flow(
     if window_days <= 0 || window_days > 3650 {
         return Err(refuse("window_days must be between 1 and 3650"));
     }
-    let since = now - crate::datetime::Duration::days(window_days);
+    let since = super::timestamp_before(now, window_days, "window_days")?;
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (rows, transitions) = load_board(&ctx, item.pid, None).await?;
     let classes = classes_for(&ctx, item.pid).await;

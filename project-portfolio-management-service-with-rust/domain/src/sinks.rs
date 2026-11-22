@@ -273,11 +273,16 @@ pub fn next_attempt(
     if attempts >= MAX_ATTEMPTS {
         return None;
     }
+    // The back-off is 5^(attempt - 1) minutes, capped at 360 (six hours): a power past `i64` is past the cap.
     let minutes = 5_i64
-        .saturating_pow(u32::try_from(attempts.max(1) - 1).unwrap_or(0))
-        .min(360);
-    Some(now + crate::datetime::Duration::minutes(minutes))
+        .checked_pow(u32::try_from(attempts.max(1) - 1).unwrap_or(0))
+        .unwrap_or(MAX_BACKOFF_MINUTES)
+        .min(MAX_BACKOFF_MINUTES);
+    now.checked_add_signed(crate::datetime::Duration::try_minutes(minutes)?)
 }
+
+/// The longest wait between two attempts to deliver a notification, in minutes.
+const MAX_BACKOFF_MINUTES: i64 = 360;
 
 #[cfg(test)]
 mod tests {

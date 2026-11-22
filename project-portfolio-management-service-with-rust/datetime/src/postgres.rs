@@ -137,7 +137,7 @@ impl<'r> Decode<'r, Postgres> for Date {
             PgValueFormat::Binary => {
                 let days: i32 = <i32 as Decode<Postgres>>::decode(value)?;
                 Date(PG_EPOCH_DATE)
-                    .checked_add_signed(crate::Duration::days(i64::from(days)))
+                    .checked_add_signed(crate::Duration::days(days))
                     .ok_or_else(|| format!("date out of range: {days} days from 2000-01-01").into())
             }
             PgValueFormat::Text => Ok(Date::parse_from_str(value.as_str()?, "%Y-%m-%d")?),

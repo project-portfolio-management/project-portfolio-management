@@ -13,6 +13,9 @@ use std::sync::{Arc, Mutex, OnceLock, PoisonError, RwLock};
 use crate::datetime::{Duration, Timestamp};
 use async_trait::async_trait;
 
+/// The longest wait between two attempts to send an email, in minutes.
+const MAX_BACKOFF_MINUTES: i64 = 360;
+
 /// One message to one recipient.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Message {
@@ -325,12 +328,14 @@ pub fn after(result: &Result<(), SendError>, attempts: i32, now: Timestamp) -> A
             next: None,
         },
         Err(SendError::Transient(_)) => {
+            // 5^(attempt - 1) minutes, capped at 360 (six hours): a power past `i64` is past the cap.
             let minutes = 5_i64
-                .saturating_pow(u32::try_from(attempts.max(1) - 1).unwrap_or(0))
-                .min(360);
+                .checked_pow(u32::try_from(attempts.max(1) - 1).unwrap_or(0))
+                .unwrap_or(MAX_BACKOFF_MINUTES)
+                .min(MAX_BACKOFF_MINUTES);
             After {
                 status: "retry",
-                next: Some(now + Duration::minutes(minutes)),
+                next: Duration::try_minutes(minutes).and_then(|wait| now.checked_add_signed(wait)),
             }
         }
     }
@@ -406,10 +411,19 @@ mod tests {
         let one = after(&t, 1, now);
         assert_eq!(
             (one.status, one.next),
-            ("retry", Some(now + Duration::minutes(1)))
+            (
+                "retry",
+                Some(now.checked_add_signed(Duration::minutes(1)).unwrap())
+            )
         );
-        assert_eq!(after(&t, 2, now).next, Some(now + Duration::minutes(5)));
-        assert_eq!(after(&t, 3, now).next, Some(now + Duration::minutes(25)));
+        assert_eq!(
+            after(&t, 2, now).next,
+            Some(now.checked_add_signed(Duration::minutes(5)).unwrap())
+        );
+        assert_eq!(
+            after(&t, 3, now).next,
+            Some(now.checked_add_signed(Duration::minutes(25)).unwrap())
+        );
         assert_eq!(
             after(&t, MAX_ATTEMPTS, now).status,
             "failed",
@@ -503,7 +517,7 @@ mod tests {
         let transient = Err(SendError::Transient("down".into()));
         assert_eq!(
             after(&transient, -100, now).next,
-            Some(now + Duration::minutes(1))
+            Some(now.checked_add_signed(Duration::minutes(1)).unwrap())
         );
         assert_eq!(after(&transient, 100, now).status, "failed");
     }

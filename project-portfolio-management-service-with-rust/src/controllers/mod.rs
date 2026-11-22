@@ -139,6 +139,66 @@ pub(crate) fn unprocessable_entity(message: &str) -> axa::Error {
     )
 }
 
+/// `date` moved by `days` (a negative count is earlier), or `422` naming `figure` when the result is outside the range of
+/// a date. The error says the date could not be computed; it carries no number (RCA-ERR-4).
+///
+/// # Errors
+///
+/// `422` when the result is outside the range of a `Date`.
+pub(crate) fn date_offset(
+    date: crate::datetime::Date,
+    days: i64,
+    figure: &str,
+) -> axa::Result<crate::datetime::Date> {
+    date.plus_days(days)
+        .ok_or_else(|| unprocessable_entity(&format!("{figure} is outside the range of dates")))
+}
+
+/// `at` moved by `days` (a negative count is earlier), or `422` naming `figure` when the result is outside the range of
+/// a timestamp.
+///
+/// # Errors
+///
+/// `422` when the result is outside the range of a `Timestamp`.
+pub(crate) fn timestamp_offset(
+    at: crate::datetime::Timestamp,
+    days: i64,
+    figure: &str,
+) -> axa::Result<crate::datetime::Timestamp> {
+    crate::datetime::Duration::try_days(days)
+        .and_then(|offset| at.checked_add_signed(offset))
+        .ok_or_else(|| unprocessable_entity(&format!("{figure} is outside the range of dates")))
+}
+
+/// `date` moved `days` earlier, or `422` naming `figure` when the result is outside the range of a date.
+///
+/// # Errors
+///
+/// `422` when the result is outside the range of a `Date`.
+pub(crate) fn date_before(
+    date: crate::datetime::Date,
+    days: i64,
+    figure: &str,
+) -> axa::Result<crate::datetime::Date> {
+    date.minus_days(days)
+        .ok_or_else(|| unprocessable_entity(&format!("{figure} is outside the range of dates")))
+}
+
+/// `at` moved `days` earlier, or `422` naming `figure` when the result is outside the range of a timestamp.
+///
+/// # Errors
+///
+/// `422` when the result is outside the range of a `Timestamp`.
+pub(crate) fn timestamp_before(
+    at: crate::datetime::Timestamp,
+    days: i64,
+    figure: &str,
+) -> axa::Result<crate::datetime::Timestamp> {
+    crate::datetime::Duration::try_days(days)
+        .and_then(|offset| at.checked_sub_signed(offset))
+        .ok_or_else(|| unprocessable_entity(&format!("{figure} is outside the range of dates")))
+}
+
 /// A pid from the path, or `404` when it is not a UUID (a malformed id names nothing).
 ///
 /// # Errors

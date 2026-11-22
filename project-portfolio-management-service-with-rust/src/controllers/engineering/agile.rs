@@ -136,7 +136,8 @@ pub(super) async fn standup(
     headers: HeaderMap,
 ) -> Result<Response> {
     let item = super::super::governance::find_item(&ctx, &pid).await?;
-    let since = crate::datetime::Timestamp::now() - crate::datetime::Days::new(1);
+    let since =
+        super::super::timestamp_before(crate::datetime::Timestamp::now(), 1, "the day window")?;
     let item_tasks = plan_tasks(&ctx, item.pid).await?;
     let task_pids: std::collections::HashSet<Uuid> =
         item_tasks.iter().map(|task| task.pid).collect();

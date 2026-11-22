@@ -11,7 +11,7 @@
 use core::cmp::Ordering;
 use core::fmt;
 use core::hash::{Hash, Hasher};
-use core::ops::{Add, AddAssign, Sub, SubAssign};
+use core::ops::Sub;
 use core::str::FromStr;
 
 use jiff::tz::Offset;
@@ -264,8 +264,7 @@ macro_rules! instant_methods {
 }
 
 fn duration_between(a: jiff::Timestamp, b: jiff::Timestamp) -> Duration {
-    // Any two instants in range are less than 20 000 years apart, well inside a `Duration`.
-    Duration::from_jiff(a.duration_since(b)).expect("a difference of two instants fits a Duration")
+    Duration::of_instant_span(a.duration_since(b))
 }
 
 impl Timestamp {
@@ -350,17 +349,12 @@ impl Timestamp {
         from_nanos(i128::from(micros) * 1000).map(Timestamp)
     }
 
-    /// `nanos` nanoseconds after 1970-01-01T00:00:00Z.
-    ///
-    /// # Panics
-    ///
-    /// Never: every `i64` count of nanoseconds (1677 to 2262) is in range.
+    /// `nanos` nanoseconds after 1970-01-01T00:00:00Z. Every `i64` count (1677 to 2262) is in range, so `None` is not
+    /// expected; it is returned, not panicked on.
     #[must_use]
     #[inline]
-    pub fn from_timestamp_nanos(nanos: i64) -> Timestamp {
-        Timestamp(
-            from_nanos(i128::from(nanos)).expect("every i64 count of nanoseconds is in range"),
-        )
+    pub fn from_timestamp_nanos(nanos: i64) -> Option<Timestamp> {
+        from_nanos(i128::from(nanos)).map(Timestamp)
     }
 
     /// Read strictly as RFC 3339 (see [`crate::parse`]), converted to UTC.
@@ -608,111 +602,11 @@ impl PartialOrd<OffsetDateTime> for Timestamp {
     }
 }
 
-impl Add<Duration> for Timestamp {
-    type Output = Timestamp;
-    #[inline]
-    fn add(self, rhs: Duration) -> Timestamp {
-        self.checked_add_signed(rhs)
-            .expect("`Timestamp + Duration` overflowed")
-    }
-}
-
-impl Sub<Duration> for Timestamp {
-    type Output = Timestamp;
-    #[inline]
-    fn sub(self, rhs: Duration) -> Timestamp {
-        self.checked_sub_signed(rhs)
-            .expect("`Timestamp - Duration` overflowed")
-    }
-}
-
-impl AddAssign<Duration> for Timestamp {
-    #[inline]
-    fn add_assign(&mut self, rhs: Duration) {
-        *self = *self + rhs;
-    }
-}
-
-impl SubAssign<Duration> for Timestamp {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Duration) {
-        *self = *self - rhs;
-    }
-}
-
-impl Add<Days> for Timestamp {
-    type Output = Timestamp;
-    #[inline]
-    fn add(self, days: Days) -> Timestamp {
-        self.checked_add_days(days)
-            .expect("`Timestamp + Days` out of range")
-    }
-}
-
-impl Sub<Days> for Timestamp {
-    type Output = Timestamp;
-    #[inline]
-    fn sub(self, days: Days) -> Timestamp {
-        self.checked_sub_days(days)
-            .expect("`Timestamp - Days` out of range")
-    }
-}
-
-impl Add<Months> for Timestamp {
-    type Output = Timestamp;
-    #[inline]
-    fn add(self, months: Months) -> Timestamp {
-        self.checked_add_months(months)
-            .expect("`Timestamp + Months` out of range")
-    }
-}
-
-impl Sub<Months> for Timestamp {
-    type Output = Timestamp;
-    #[inline]
-    fn sub(self, months: Months) -> Timestamp {
-        self.checked_sub_months(months)
-            .expect("`Timestamp - Months` out of range")
-    }
-}
-
 impl Sub<Timestamp> for Timestamp {
     type Output = Duration;
     #[inline]
     fn sub(self, rhs: Timestamp) -> Duration {
         duration_between(self.0, rhs.0)
-    }
-}
-
-impl Add<Duration> for OffsetDateTime {
-    type Output = OffsetDateTime;
-    #[inline]
-    fn add(self, rhs: Duration) -> OffsetDateTime {
-        self.checked_add_signed(rhs)
-            .expect("`OffsetDateTime + Duration` overflowed")
-    }
-}
-
-impl Sub<Duration> for OffsetDateTime {
-    type Output = OffsetDateTime;
-    #[inline]
-    fn sub(self, rhs: Duration) -> OffsetDateTime {
-        self.checked_sub_signed(rhs)
-            .expect("`OffsetDateTime - Duration` overflowed")
-    }
-}
-
-impl AddAssign<Duration> for OffsetDateTime {
-    #[inline]
-    fn add_assign(&mut self, rhs: Duration) {
-        *self = *self + rhs;
-    }
-}
-
-impl SubAssign<Duration> for OffsetDateTime {
-    #[inline]
-    fn sub_assign(&mut self, rhs: Duration) {
-        *self = *self - rhs;
     }
 }
 
@@ -910,9 +804,10 @@ mod tests {
     }
 
     #[test]
+    #[expect(clippy::too_many_lines)] // one walk through every accessor and format
     fn timestamp_accessors_constructors_arithmetic_and_formats_are_consistent() {
         let mut t = Timestamp::with_ymd_and_hms(2024, 2, 29, 23, 58, 57).unwrap();
-        t += Duration::milliseconds(654);
+        t = t.checked_add_signed(Duration::milliseconds(654)).unwrap();
         assert_eq!(
             (
                 t.year(),
@@ -954,10 +849,25 @@ mod tests {
         );
 
         let original = t;
-        t -= Duration::milliseconds(654);
-        assert_eq!(t + Duration::milliseconds(654), original);
-        assert_eq!(t + Days::new(1) - Days::new(1), t);
-        assert_eq!(t + Months::new(1) - Months::new(1), t);
+        t = t.checked_sub_signed(Duration::milliseconds(654)).unwrap();
+        assert_eq!(
+            t.checked_add_signed(Duration::milliseconds(654)).unwrap(),
+            original
+        );
+        assert_eq!(
+            t.checked_add_days(Days::new(1))
+                .unwrap()
+                .checked_sub_days(Days::new(1))
+                .unwrap(),
+            t
+        );
+        assert_eq!(
+            t.checked_add_months(Months::new(1))
+                .unwrap()
+                .checked_sub_months(Months::new(1))
+                .unwrap(),
+            t
+        );
         assert_eq!(t.checked_add_days(Days::new(1)).unwrap().day(), 1);
         assert_eq!(t.checked_sub_days(Days::new(1)).unwrap().day(), 28);
         assert_eq!(
@@ -992,7 +902,9 @@ mod tests {
             1500
         );
         assert_eq!(
-            Timestamp::from_timestamp_nanos(-1).timestamp_nanos_opt(),
+            Timestamp::from_timestamp_nanos(-1)
+                .unwrap()
+                .timestamp_nanos_opt(),
             Some(-1)
         );
         assert_eq!(Timestamp::default(), Timestamp::UNIX_EPOCH);
@@ -1030,11 +942,17 @@ mod tests {
             utc
         );
 
-        local += Duration::seconds(2);
-        local -= Duration::seconds(1);
+        local = local.checked_add_signed(Duration::seconds(2)).unwrap();
+        local = local.checked_sub_signed(Duration::seconds(1)).unwrap();
         assert_eq!(local - parsed, Duration::seconds(1));
-        assert_eq!(parsed + Duration::seconds(1), local);
-        assert_eq!(local - Duration::seconds(1), parsed);
+        assert_eq!(
+            parsed.checked_add_signed(Duration::seconds(1)).unwrap(),
+            local
+        );
+        assert_eq!(
+            local.checked_sub_signed(Duration::seconds(1)).unwrap(),
+            parsed
+        );
         assert_eq!(
             OffsetDateTime::default(),
             Timestamp::UNIX_EPOCH.fixed_offset()

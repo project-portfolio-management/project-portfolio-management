@@ -5,7 +5,7 @@
 //! view). A run that was missed (the server was down for a week) runs **once**
 //! and then moves to the next future date: it never replays every missed day.
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 
 /// Cadences.
 pub const CADENCES: &[&str] = &["daily", "weekly", "monthly"];
@@ -20,8 +20,8 @@ pub const MAX_PER_PERSON: u64 = 20;
 #[must_use]
 pub fn next_after(cadence: &str, anchor: Date, after: Date) -> Option<Date> {
     match cadence {
-        "daily" => Some(after + Duration::days(1)),
-        "weekly" => Some(after + Duration::days(7)),
+        "daily" => after.plus_days(1),
+        "weekly" => after.plus_days(7),
         "monthly" => {
             let (mut y, mut m) = (after.year(), after.month());
             loop {
@@ -49,7 +49,7 @@ fn last_day(y: i32, m: u32) -> Option<u32> {
     } else {
         Date::from_ymd_opt(y, m + 1, 1)?
     };
-    Some((first_next - Duration::days(1)).day())
+    Some(first_next.pred_opt()?.day())
 }
 
 /// After a run on `today`: the next date to run (always in the future, so a

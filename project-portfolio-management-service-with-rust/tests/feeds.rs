@@ -292,7 +292,8 @@ async fn feeds_authenticate_by_token_are_stable_and_revocable() {
         sqlx::query("UPDATE feed_tokens SET created_at = $1 WHERE token_hash = $2")
             .bind(
                 project_portfolio_management::datetime::Timestamp::now()
-                    - project_portfolio_management::datetime::Duration::days(366),
+                    .checked_sub_signed(project_portfolio_management::datetime::Duration::days(366))
+                    .unwrap(),
             )
             .bind(project_portfolio_management::feeds::hash_token(&second))
             .execute(project_portfolio_management::db::pool(&ctx))

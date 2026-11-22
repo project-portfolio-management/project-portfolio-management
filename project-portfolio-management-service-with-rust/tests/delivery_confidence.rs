@@ -251,7 +251,7 @@ async fn confidence_exceptions_and_the_map_keep_their_promises() {
         // fixed period (this was "2026-10") stops containing it on the first day of the next month.
         let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
         let this_month = today.format("%Y-%m").to_string();
-        let last_month = (today.with_day(1).unwrap() - project_portfolio_management::datetime::Duration::days(1)).format("%Y-%m").to_string();
+        let last_month = (today.with_day(1).unwrap().checked_sub_signed(project_portfolio_management::datetime::Duration::days(1)).unwrap()).format("%Y-%m").to_string();
         let draft = |period: String| {
             let (request, issuer) = (&request, issuer.clone());
             async move {

@@ -18,9 +18,9 @@ async fn claims_cite_checked_sources_and_the_numbers_are_counted_as_published() 
         let today = project_portfolio_management::tz::deployment_today();
         let on = |d: i64| {
             if d < 0 {
-                today - Days::new(d.unsigned_abs())
+                today.checked_sub_days(Days::new(d.unsigned_abs())).unwrap()
             } else {
-                today + Days::new(d.unsigned_abs())
+                today.checked_add_days(Days::new(d.unsigned_abs())).unwrap()
             }
             .to_string()
         };

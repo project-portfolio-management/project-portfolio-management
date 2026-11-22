@@ -384,7 +384,8 @@ mod tests {
                     Some(d(2026, 10, 5)),
                     Some(
                         d(2026, 10, 9)
-                            + crate::datetime::Duration::days(i64::try_from(n).unwrap() - 2),
+                            .plus_days(i64::try_from(n).unwrap() - 2)
+                            .unwrap(),
                     ),
                     Some(5),
                 )

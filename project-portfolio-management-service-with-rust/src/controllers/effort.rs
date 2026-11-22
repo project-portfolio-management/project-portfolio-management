@@ -372,7 +372,7 @@ async fn utilization(
         .window_days
         .filter(|d| *d > 0 && *d <= 366)
         .unwrap_or(DEFAULT_WINDOW_DAYS);
-    let since = crate::tz::deployment_today() - crate::datetime::Duration::days(window_days);
+    let since = super::date_before(crate::tz::deployment_today(), window_days, "window_days")?;
 
     let entries = scope.keep(
         sqlx::query_as::<_, time_entries::Model>(

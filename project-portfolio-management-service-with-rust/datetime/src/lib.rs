@@ -32,6 +32,19 @@
 //! With the `sqlx` feature, the types bind and decode as Postgres `timestamptz` and `date` exactly as sqlx's
 //! `chrono` feature did ([`postgres`]).
 
+// Production code does not panic (spec/rust-checked-arithmetic): an `Option` or a `Result` is handled, never unwrapped.
+#![cfg_attr(
+    not(test),
+    deny(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::unreachable,
+        clippy::todo,
+        clippy::unimplemented
+    )
+)]
+
 mod date;
 mod duration;
 mod error;

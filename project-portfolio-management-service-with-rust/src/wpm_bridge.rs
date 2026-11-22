@@ -898,7 +898,9 @@ mod tests {
             peer_event_id(pool, plan, d("2026-11-01"), at),
             "the same version, the same id"
         );
-        let later = at + crate::datetime::Duration::microseconds(1);
+        let later = at
+            .checked_add_signed(crate::datetime::Duration::microseconds(1))
+            .unwrap();
         assert_ne!(
             a,
             peer_event_id(pool, plan, d("2026-11-01"), later),
@@ -1117,7 +1119,9 @@ mod tests {
             send_demand(&figure).await,
             ("sent", "WPM took the figure".to_string())
         );
-        let later = at + crate::datetime::Duration::seconds(5);
+        let later = at
+            .checked_add_signed(crate::datetime::Duration::seconds(5))
+            .unwrap();
         let zero = send(0, later);
         assert_eq!(
             send_demand(&zero).await,

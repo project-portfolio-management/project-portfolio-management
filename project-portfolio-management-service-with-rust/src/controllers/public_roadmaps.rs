@@ -101,7 +101,7 @@ pub(crate) fn freshness_view(r: &roadmaps::Model) -> Value {
     json!({
         "state": rules::freshness(r.reviewed_on, today, days),
         "stale_after_days": days,
-        "stale_from": r.reviewed_on.map(|d| d + crate::datetime::Duration::days(days + 1)),
+        "stale_from": r.reviewed_on.and_then(|d| d.plus_days(days + 1)),
         "today": today,
     })
 }

@@ -181,7 +181,9 @@ pub fn breached(
     now: Timestamp,
     window_hours: i64,
 ) -> bool {
-    completed_at.unwrap_or(now) - opened_at > Duration::hours(window_hours)
+    // A window past the range of a `Duration` is never breached.
+    Duration::try_hours(window_hours)
+        .is_some_and(|window| completed_at.unwrap_or(now) - opened_at > window)
 }
 
 #[cfg(test)]
@@ -295,7 +297,11 @@ mod tests {
     #[test]
     fn the_clock_is_pinned_at_47h59_48h00_and_48h01() {
         let opened = Timestamp::with_ymd_and_hms(2026, 10, 1, 9, 0, 0).unwrap();
-        let at = |mins: i64| opened + Duration::minutes(mins);
+        let at = |mins: i64| {
+            opened
+                .checked_add_signed(Duration::try_minutes(mins).unwrap())
+                .unwrap()
+        };
         assert!(!breached(opened, None, at(47 * 60 + 59), 48), "47h59");
         assert!(
             !breached(opened, None, at(48 * 60), 48),

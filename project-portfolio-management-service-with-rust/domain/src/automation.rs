@@ -456,18 +456,18 @@ pub fn propose_shifts(
         .iter()
         .map(|s| {
             let lag = crate::datetime::Days::new(u64::try_from(s.lag_days.max(0)).unwrap_or(0));
-            let old_earliest = old_end + lag;
-            let already_violated = s.current_start.is_some_and(|start| start < old_earliest);
+            // An earliest start past the last date a `Date` holds is later than any start, so the successor is violated.
+            let already_violated = s.current_start.is_some_and(|start| {
+                old_end
+                    .checked_add_days(lag)
+                    .is_none_or(|earliest| start < earliest)
+            });
             ProposedShift {
                 edge_pid: s.edge_pid,
                 successor_pid: s.successor_pid,
                 delta_days,
-                proposed_start: s.current_start.and_then(|d| {
-                    d.checked_add_signed(crate::datetime::Duration::days(delta_days))
-                }),
-                proposed_end: s.current_end.and_then(|d| {
-                    d.checked_add_signed(crate::datetime::Duration::days(delta_days))
-                }),
+                proposed_start: s.current_start.and_then(|d| d.plus_days(delta_days)),
+                proposed_end: s.current_end.and_then(|d| d.plus_days(delta_days)),
                 already_violated,
             }
         })
@@ -796,8 +796,12 @@ mod tests {
         let now = crate::datetime::OffsetDateTime::parse_from_rfc3339("2026-07-22T12:00:00Z")
             .expect("fixed timestamp")
             .to_utc();
-        let earlier = now - crate::datetime::Duration::minutes(1);
-        let later = now + crate::datetime::Duration::minutes(1);
+        let earlier = now
+            .checked_sub_signed(crate::datetime::Duration::minutes(1))
+            .unwrap();
+        let later = now
+            .checked_add_signed(crate::datetime::Duration::minutes(1))
+            .unwrap();
         assert!(is_due("pending", earlier, now));
         assert!(is_due("pending", now, now), "due exactly now is due");
         assert!(!is_due("pending", later, now));

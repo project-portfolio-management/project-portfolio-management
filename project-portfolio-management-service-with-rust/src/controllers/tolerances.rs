@@ -172,7 +172,10 @@ fn measure_resources(readable: &[allocations::Model], plan: Uuid, today: Date) -
     if people.is_empty() {
         return Measure::none("no named, committed people are booked on the plan");
     }
-    let to = today + crate::datetime::Days::new(BOOKING_WINDOW_DAYS - 1);
+    let Some(to) = today.checked_add_days(crate::datetime::Days::new(BOOKING_WINDOW_DAYS - 1))
+    else {
+        return Measure::none("the booking window is outside the range of dates");
+    };
     let worst = people
         .iter()
         .map(|person| {
@@ -636,7 +639,7 @@ pub(crate) fn system_caller() -> MaybeAuthUser {
 pub async fn raise_all_needed(ctx: &AppContext, quiet_days: i64) -> Result<usize> {
     let caller = system_caller();
     let today = crate::tz::deployment_today();
-    let since = today - crate::datetime::Duration::days(quiet_days);
+    let since = super::date_before(today, quiet_days, "quiet_days")?;
     let plans = live_plans(ctx).await?;
     let allocs = readable_allocations(ctx, &caller).await?;
     let mut raised = 0;

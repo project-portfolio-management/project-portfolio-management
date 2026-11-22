@@ -9,7 +9,7 @@
 //! Ranges for one person may not overlap; that is what makes "the range in force
 //! on a day" a single answer.
 
-use crate::datetime::{Date, Duration};
+use crate::datetime::Date;
 use serde::Serialize;
 
 /// Capacity when no range applies.
@@ -102,7 +102,9 @@ pub struct Load {
 /// demand exceeds capacity. A window longer than [`MAX_WINDOW_DAYS`] is clamped.
 #[must_use]
 pub fn load(from: Date, to: Date, allocs: &[Alloc], ranges: &[Range]) -> Load {
-    let to = to.min(from + Duration::days(MAX_WINDOW_DAYS));
+    let to = from
+        .plus_days(MAX_WINDOW_DAYS)
+        .map_or(to, |cap| to.min(cap));
     let mut out = Load {
         peak_demand: 0,
         min_capacity: DEFAULT_PERCENT,
@@ -125,7 +127,7 @@ pub fn load(from: Date, to: Date, allocs: &[Alloc], ranges: &[Range]) -> Load {
                 Some(last)
                     if last.demand == demand
                         && last.capacity == capacity
-                        && last.to + Duration::days(1) == day =>
+                        && last.to.succ_opt() == Some(day) =>
                 {
                     last.to = day;
                 }
@@ -137,7 +139,10 @@ pub fn load(from: Date, to: Date, allocs: &[Alloc], ranges: &[Range]) -> Load {
                 }),
             }
         }
-        day += Duration::days(1);
+        day = match day.succ_opt() {
+            Some(next) => next,
+            None => break,
+        };
     }
     out
 }

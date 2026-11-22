@@ -48,7 +48,10 @@ pub fn check(link: &Link, now: Timestamp) -> Result<(), Refusal> {
     if link.revoked_at.is_some() {
         return Err(Refusal::Revoked);
     }
-    if now >= link.issued_at + Duration::days(link.lifetime_days) {
+    // A lifetime that runs past the last instant a `Timestamp` holds never ends.
+    let expiry = Duration::try_days(link.lifetime_days)
+        .and_then(|lifetime| link.issued_at.checked_add_signed(lifetime));
+    if expiry.is_some_and(|expiry| now >= expiry) {
         return Err(Refusal::Expired);
     }
     if link.single_use && link.redeemed_at.is_some() {
@@ -80,11 +83,18 @@ mod tests {
         let l = link(false);
         assert_eq!(check(&l, issued()), Ok(()));
         assert_eq!(
-            check(&l, issued() + Duration::days(10) - Duration::seconds(1)),
+            check(
+                &l,
+                issued()
+                    .checked_add_signed(Duration::days(10))
+                    .unwrap()
+                    .checked_sub_signed(Duration::seconds(1))
+                    .unwrap()
+            ),
             Ok(())
         );
         assert_eq!(
-            check(&l, issued() + Duration::days(10)),
+            check(&l, issued().checked_add_signed(Duration::days(10)).unwrap()),
             Err(Refusal::Expired)
         );
     }
@@ -104,7 +114,10 @@ mod tests {
             redeemed_at: Some(issued()),
             ..link(false)
         };
-        assert_eq!(check(&l, issued() + Duration::days(1)), Ok(()));
+        assert_eq!(
+            check(&l, issued().checked_add_signed(Duration::days(1)).unwrap()),
+            Ok(())
+        );
     }
 
     #[test]

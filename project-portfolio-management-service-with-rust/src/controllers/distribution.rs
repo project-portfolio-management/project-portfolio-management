@@ -121,7 +121,11 @@ async fn flow_distribution(
         .window_days
         .filter(|d| *d > 0 && *d <= 3650)
         .unwrap_or(DEFAULT_WINDOW_DAYS);
-    let since = crate::datetime::Timestamp::now() - crate::datetime::Duration::days(window_days);
+    let since = super::timestamp_before(
+        crate::datetime::Timestamp::now(),
+        window_days,
+        "window_days",
+    )?;
     let declared = intent();
 
     let (items, scanned_plans, capped) = if params.rollup.unwrap_or(false) {

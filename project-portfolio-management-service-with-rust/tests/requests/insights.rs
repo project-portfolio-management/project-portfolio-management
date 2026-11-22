@@ -646,10 +646,14 @@ async fn engineering_tasks_sprints_and_views() {
         // window, with room before it for the "before any completion"
         // assertion.
         let today = project_portfolio_management::datetime::Timestamp::now().date_naive();
-        let starts_on =
-            (today - project_portfolio_management::datetime::Duration::days(6)).to_string();
-        let ends_on =
-            (today + project_portfolio_management::datetime::Duration::days(7)).to_string();
+        let starts_on = (today
+            .checked_sub_signed(project_portfolio_management::datetime::Duration::days(6))
+            .unwrap())
+        .to_string();
+        let ends_on = (today
+            .checked_add_signed(project_portfolio_management::datetime::Duration::days(7))
+            .unwrap())
+        .to_string();
         let sprint: Value = request
             .post(&format!("/api/plans/{pid}/sprints"))
             .json(&json!({ "name": "Sprint 1", "starts_on": starts_on,

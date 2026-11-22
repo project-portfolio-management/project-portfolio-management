@@ -49,10 +49,11 @@ pub fn problems(
     out
 }
 
-/// When a grant opened at `now` ends.
+/// When a grant opened at `now` ends, or `None` when that is past the last instant a `Timestamp` holds.
 #[must_use]
-pub fn expires_at(now: Timestamp, minutes: Option<i64>) -> Timestamp {
-    now + Duration::minutes(minutes.unwrap_or(DEFAULT_MINUTES).clamp(1, MAX_MINUTES))
+pub fn expires_at(now: Timestamp, minutes: Option<i64>) -> Option<Timestamp> {
+    let minutes = minutes.unwrap_or(DEFAULT_MINUTES).clamp(1, MAX_MINUTES);
+    now.checked_add_signed(Duration::try_minutes(minutes)?)
 }
 
 /// Whether a grant is in force at `now`: not revoked, and not yet expired.
@@ -119,10 +120,10 @@ mod tests {
 
     #[test]
     fn the_window_is_capped_at_four_hours_whatever_is_asked() {
-        assert_eq!(expires_at(at(9, 0), None), at(10, 0));
-        assert_eq!(expires_at(at(9, 0), Some(30)), at(9, 30));
-        assert_eq!(expires_at(at(9, 0), Some(10_000)), at(13, 0));
-        assert_eq!(expires_at(at(9, 0), Some(-3)), at(9, 1));
+        assert_eq!(expires_at(at(9, 0), None), Some(at(10, 0)));
+        assert_eq!(expires_at(at(9, 0), Some(30)), Some(at(9, 30)));
+        assert_eq!(expires_at(at(9, 0), Some(10_000)), Some(at(13, 0)));
+        assert_eq!(expires_at(at(9, 0), Some(-3)), Some(at(9, 1)));
     }
 
     #[test]

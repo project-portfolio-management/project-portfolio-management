@@ -382,7 +382,10 @@ async fn draft(
     }
     let now = Timestamp::now();
     let cut_off = b.cut_off.unwrap_or(now);
-    if cut_off > now || cut_off < now - crate::datetime::Duration::days(400) {
+    // A cut-off is at most 400 days back; a bound before the first instant a `Timestamp` holds is no bound.
+    let oldest =
+        crate::datetime::Duration::try_days(400).and_then(|span| now.checked_sub_signed(span));
+    if cut_off > now || oldest.is_some_and(|oldest| cut_off < oldest) {
         return Err(refuse(
             StatusCode::UNPROCESSABLE_ENTITY,
             "unprocessable_entity",

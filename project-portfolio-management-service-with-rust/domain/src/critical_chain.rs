@@ -276,7 +276,11 @@ mod tests {
         let path: Vec<Uuid> = run(&plain, &edges).chains[0].clone();
         assert_eq!(path, [id(1), id(2)]);
         let mut levelled = plain;
-        levelled[3].planned_start = Some(day() + crate::datetime::Duration::days(5));
+        levelled[3].planned_start = Some(
+            day()
+                .checked_add_signed(crate::datetime::Duration::days(5))
+                .unwrap(),
+        );
         let r = run(&levelled, &edges);
         let out = find(&levelled, &edges, &r, &who(&[(2, "x"), (4, "x")]));
         let Outcome::Chain(c) = out else {
@@ -353,7 +357,15 @@ mod tests {
         // B starts three days after the person finished A: they were not waiting for A.
         let nodes = [
             node(1, 2, Some(day())),
-            node(2, 2, Some(day() + crate::datetime::Duration::days(5))),
+            node(
+                2,
+                2,
+                Some(
+                    day()
+                        .checked_add_signed(crate::datetime::Duration::days(5))
+                        .unwrap(),
+                ),
+            ),
         ];
         let r = run(&nodes, &[]);
         let Outcome::Chain(c) = find(&nodes, &[], &r, &who(&[(1, "x"), (2, "x")])) else {

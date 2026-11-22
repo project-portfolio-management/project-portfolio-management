@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Security — url 2.5.9 for RUSTSEC-2026-0592 (2026-11-22)
+
+- `Cargo.lock`: `url` 2.5.8 to 2.5.9 and `form_urlencoded` 1.2.2 to 1.2.3 (which 2.5.9 needs). `Url::origin()` on nested
+  `blob:` URLs overflowed the stack, and `cargo deny` failed CI on it.
+- Not done to the usual rule: both crates were published about 40 hours before the lock, inside the 2-day minimum age
+  in the maintainer's cargo config, so the lock used `CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow` for this one
+  update, at the maintainer's choice. Not verified: the service tests were not rerun on the new versions (CI does).
+
 ### Changed — no panic in production code of the service, domain and migration crates (2026-11-22)
 
 - `spec/arithmetic/index.md`: arithmetic must not panic or wrap. The three crates now deny `clippy::unwrap_used`,

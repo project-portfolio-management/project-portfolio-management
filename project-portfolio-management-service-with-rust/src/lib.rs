@@ -151,6 +151,7 @@ pub mod scheduled_jobs;
 pub mod scheduler;
 /// Tantivy full-text search: index schema, engine, and query surface.
 pub mod search;
+pub mod settings;
 /// Point-in-time estate snapshots (board / CRO trends).
 pub mod snapshots;
 pub mod starter_templates;

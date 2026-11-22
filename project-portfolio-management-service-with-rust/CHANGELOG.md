@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — an invalid numeric setting stops start-up (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-IN-4, RCA-IN-2): `settings::validate` checks nineteen numeric environment settings
+  at `App::context`; one supplied outside its range or not a whole number refuses to start and names the setting
+  (service spec SET-1). Before, each reader silently used its default, the nearest bound or "off".
+- **Behaviour change:** `BULK_TTL_HOURS=0`, `SCHEDULER_MINUTES=hourly`, `RATE_LIMIT` counts of `0` and the like no longer
+  start the service. Blank still means absent.
+- Not done: the ranges are mine and wide, and need the maintainers' review. The readers still contain their old
+  `unwrap_or(default)`, now reachable only for an absent value; their `filter`, `max(1)` and "unparsable" doc comments
+  were not rewritten. String and boolean settings, and settings read with other names (the `*_ENV` constants of other
+  modules), were not surveyed. The `unwrap_or` in `ttl()` was not changed. No test starts the service with a bad setting.
+
 ### Changed — overflowing guards, periods and counters are errors, not bounds (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-4, RCA-P-10): FIG-1 (a total past its type is reported at the bound)

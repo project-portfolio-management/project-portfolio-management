@@ -1893,3 +1893,31 @@ plus `unwrap_or(bound)` and cites the rule; none wraps, saturates silently or pa
 
 Tests: `a_total_past_the_range_is_at_the_bound_on_its_side`, `a_total_inside_the_range_is_exact`,
 `a_count_taken_from_a_smaller_count_is_zero` (domain `figures`); `an_absent_figure_is_its_default_and_an_out_of_range_one_is_refused` (`controllers::within`), `the_limit_is_refused_outside_its_range`, `trials_outside_their_range_are_refused_not_moved_to_a_bound`, `expires_at` in `break_glass`, and `tests/requests/oversight.rs` (`review_days`, database-gated).
+
+## Settings: valid ranges (SET-1, from `spec/rust-checked-arithmetic` RCA-IN-4)
+
+Each numeric environment setting below is a whole number in its range. Absent, or blank (declared here to mean absent),
+it takes the default its reader states. Supplied outside its range, or not a whole number, the service does not start,
+and the error names the setting and its range (`src/settings.rs` `validate`, called by `App::context`); it is never
+replaced by the default, the nearest bound or "off". `0` where the range starts at `0` means the feature is off.
+
+| Setting (`PROJECT_PORTFOLIO_MANAGEMENT_` …) | Range | Absent |
+| --- | --- | --- |
+| `WORKER_SKILLS_CACHE_TTL_SECONDS` | 0 to 604 800 | 300 |
+| `EVENT_RELAY_INTERVAL_SECS` | 1 to 86 400 | 5 |
+| `GENERAL_PER_MINUTE`, `GENERAL_BURST`, `EXPENSIVE_PER_MINUTE`, `EXPENSIVE_BURST`, `FAILURES_PER_MINUTE` | 1 to 1 000 000 | 600, 200, 30, 10, 6 |
+| `PASETO_KEYS_REFRESH_SECS` | 0 to 604 800 | the reader's default |
+| `CPM_FULL_MAX_TASKS` | 1 to 10 000 000 | 5 000 |
+| `BULK_MAX_BYTES`, `ATTACHMENT_MAX_BYTES` | 1 to 4 294 967 296 | 50 MiB, 10 MiB |
+| `BULK_TTL_HOURS` | 1 to 8 760 | 24 |
+| `REPORT_TTL_DAYS`, `STALL_DAYS` | 1 to 3 650 | 30, the reader's default |
+| `MAX_SCHEDULE_BASELINES` | 1 to 10 000 | the reader's default |
+| `SINKS_TICK_SECS` | 0 to 86 400 | 5 |
+| `EXCEPTION_WINDOW_HOURS` | 1 to 720 | the reader's default |
+| `SNAPSHOT_HOURS` | 0 to 8 760 | 0 (off) |
+| `SCHEDULER_MINUTES` | 0 to 525 600 | off |
+
+The ranges are the implementer's, chosen wide so no working deployment is refused (RCA-DECL-3: they need the
+maintainers' review). A value that used to be accepted and is now refused: `BULK_TTL_HOURS=0` (was raised to 1),
+`SCHEDULER_MINUTES=hourly` (was "off, with a warning"), and anything above a maximum. Tests:
+`an_invalid_setting_is_refused_by_name_and_an_absent_one_is_not` (`settings`).

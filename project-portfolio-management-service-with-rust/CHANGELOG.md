@@ -9,6 +9,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — checked-arithmetic enforcement: clippy bans, release overflow checks, CI grep (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-ENF-2, RCA-ENF-4, RCA-ENF-5): `clippy.toml` now bans `core::num::Saturating`,
+  `core::num::Wrapping`, `Duration::from_secs_f64` and `from_secs_f32`, `Instant::duration_since` and
+  `Instant::saturating_duration_since`; the release profile has `overflow-checks = true`; and CI's API job fails on
+  `saturating_*`, `wrapping_*` or `overflowing_*` anywhere in `src`, `domain/src`, `datetime/src` and `migration`
+  (the last `wrapping_*` was the property-test generator in `leveling.rs`, now the vetted `schedule_risk::Rng`).
+- Not done: `Iterator::sum` and `product` (59 hits in the domain crate alone, RCA-AGG-1), `Option::unwrap_or_default`
+  (28 in the domain crate; about 211 in the workspace) and `Ord::clamp` (14 in the domain crate) are **not** banned, because the code
+  still uses them and `-D warnings` would fail; that is the module-by-module adoption (RCA-ENF-3). The ENF-5 grep for
+  unwrapped checked results, `arithmetic_side_effects`, `as_conversions` and `indexing_slicing` are not enabled.
+  `overflow-checks` was not benchmarked. The CI step was not run in CI yet (the grep was run locally and finds nothing).
+
 ### Changed — the simulations' generator comes from `rand_pcg`, not hand-written wrapping code (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-INT-4, RCA-EXC-3): `schedule_risk::Rng` (also used by the cost and joint risk

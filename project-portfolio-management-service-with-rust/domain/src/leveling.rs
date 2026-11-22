@@ -822,15 +822,11 @@ mod tests {
         assert_eq!(p.moves[0].pid, id(2));
     }
 
-    /// A small deterministic generator for the property test.
-    struct Lcg(u64);
+    /// A small deterministic generator for the property test: the simulations' vetted generator, not wrapping code.
+    struct Lcg(crate::schedule_risk::Rng);
     impl Lcg {
         fn next(&mut self, n: u64) -> u64 {
-            self.0 = self
-                .0
-                .wrapping_mul(6_364_136_223_846_793_005)
-                .wrapping_add(1_442_695_040_888_963_407);
-            (self.0 >> 33) % n
+            self.0.next_u64() % n
         }
         fn int(&mut self, n: u32) -> i64 {
             i64::from(u32::try_from(self.next(u64::from(n))).unwrap())
@@ -843,7 +839,7 @@ mod tests {
     #[test]
     fn a_proposal_never_breaks_a_dependency_or_the_finish() {
         let cal = WorkCalendar::mon_fri();
-        let mut rng = Lcg(7);
+        let mut rng = Lcg(crate::schedule_risk::Rng::new(7));
         for _ in 0..150 {
             let n = 3 + rng.idx(8);
             let nodes: Vec<Node> = (0..n)

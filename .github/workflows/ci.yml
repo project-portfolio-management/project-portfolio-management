@@ -50,6 +50,8 @@ jobs:
       # `--all` and `--workspace`: the service and its `domain` crate (the pure modules) together.
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      # spec/rust-checked-arithmetic RCA-ENF-5: no saturating, wrapping or overflowing arithmetic anywhere in the workspace.
+      - run: "! grep -rnwE '(saturating|wrapping|overflowing)_[a-z0-9_]+' --include='*.rs' src domain/src datetime/src migration"
       - run: cargo test --workspace --lib
       # The migration crate's own checks: the embedded files are sqlx's reading of migrations/, one per old migration name.
       - run: cargo clippy -p project-portfolio-management-migration --all-targets -- -D warnings

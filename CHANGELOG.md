@@ -16,6 +16,9 @@ It is pre-1.0; the first release cut from the root release workflow is
 
 ## 22 November (arithmetic spec: math must not panic)
 
+- `spec/arithmetic/index.md` now also says a `checked_*` result is never unwrapped (`.unwrap()`, `.expect()`): the `None` is
+  handled, passed up or turned into an error. Enforced for production code by the `unwrap_used` and `expect_used` lints once
+  denied; not yet denied, so not yet enforced.
 - Added `spec/arithmetic/index.md`: arithmetic must not panic or wrap; integer maths uses the `checked_*` functions and
   returns `None` (or an error) where the result does not fit, for example `255_u8.checked_add(1)` is `None`. It also
   covers dates and durations, narrowing conversions, floats, what is out of scope (tests, build scripts) and how it is

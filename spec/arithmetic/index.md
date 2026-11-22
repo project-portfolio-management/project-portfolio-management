@@ -16,24 +16,29 @@ handle.
 4. **Return `None` (or an error), do not panic or wrap.** Each `checked_*` function returns `Option<T>`; the result is
    `None` where the operation does not fit. For example, `255_u8.checked_add(1)` is `None`, where `255_u8 + 1` panics in
    a debug build and gives `0` in a release build.
-5. **The caller decides what `None` means.** A function whose answer can be missing returns `Option<T>` or
+5. **Never unwrap a `checked_*` result.** `x.checked_add(y).unwrap()`, `.expect("…")` and any other way of turning the
+   `None` back into a panic put the panic back: it is the bare `+` with more typing. The `Option` is handled: matched,
+   passed up with `?`, or turned into a stated error with `ok_or` / `ok_or_else`. Only the reading of the result may
+   say what it means; the call that produced it does not get to hide it. The same holds for `try_from`, `try_into` and
+   every `try_*` function (their `Err` is handled, not unwrapped).
+6. **The caller decides what `None` means.** A function whose answer can be missing returns `Option<T>` or
    `Result<T, E>` and passes the failure on. A request handler turns it into a stated error response (for the numbers a
    caller sent, a `400` or `422` naming the field; for a number the service computed, a `500` and a log line), never a
    dropped connection. A figure that cannot be computed is shown as "not computed, and why", the project's rule for every
    figure (see [`../07-non-functional-requirements.md`](../07-non-functional-requirements.md)).
-6. **No default that hides the failure.** `checked_add(..).unwrap_or(0)`, `saturating_*` and `wrapping_*` change a wrong
+7. **No default that hides the failure.** `checked_add(..).unwrap_or(0)`, `saturating_*` and `wrapping_*` change a wrong
    answer into a plausible one. They are allowed only where the clamp is the stated meaning of the value (a progress
    bar held to 0–100, a retry count capped), with a comment that says so.
-7. **Dates and durations follow the same rule.** Adding a duration, a number of days or a number of months to a date or
+8. **Dates and durations follow the same rule.** Adding a duration, a number of days or a number of months to a date or
    an instant returns `Option` (`checked_add_signed`, `checked_add_days`, `checked_add_months` and the like). The
    panicking operators (`date + duration`) and constructors (`Duration::days(n)` past the range) do not exist in the
    date and time crate; the `try_*` constructors do.
-8. **Conversions do not truncate.** A narrowing conversion uses `try_from` / `try_into` (and handles the `Err`), not
+9. **Conversions do not truncate.** A narrowing conversion uses `try_from` / `try_into` (and handles the `Err`), not
    `as`, which cuts the high bits without a sound. `as` stays for widening, for float-to-integer where the range is
    checked first, and for a value the code has just bounded.
-9. **Floating point.** A float result that is `NaN` or infinite is a failure, not a figure: the function returns `None`
+10. **Floating point.** A float result that is `NaN` or infinite is a failure, not a figure: the function returns `None`
    (or an error) rather than carrying the value on. Division by a zero or near-zero divisor is checked before it is done.
-10. **Money and time-valued figures** (costs, earned value, durations, dates) are the first place this applies, because a
+11. **Money and time-valued figures** (costs, earned value, durations, dates) are the first place this applies, because a
     wrong figure there is reported as a fact.
 
 ## What is not covered
@@ -48,11 +53,12 @@ handle.
 ## Enforcement
 
 - **Lints.** The service, domain, date and time and migration crates deny, for non-test code, `clippy::unwrap_used`,
-  `clippy::expect_used`, `clippy::panic`, `clippy::unreachable`, `clippy::todo` and `clippy::unimplemented`, and then
+  `clippy::expect_used` (which is what refuses an unwrapped `checked_*` result in production code), `clippy::panic`, `clippy::unreachable`, `clippy::todo` and `clippy::unimplemented`, and then
   `clippy::indexing_slicing` and `clippy::arithmetic_side_effects`. The matcher already has no site that the first set
   and `indexing_slicing` find.
 - **Tests.** A `checked_*` result of `None` has a test that asserts it for each function that can return it (the edge of
-  the type: `u8::MAX + 1`, `i64::MIN / -1`, a date past the last one the type holds, a divisor of zero).
+  the type: `u8::MAX + 1`, `i64::MIN / -1`, a date past the last one the type holds, a divisor of zero). A test compares
+  the whole `Option` (`assert_eq!(x.checked_add(1), None)`), it does not unwrap it.
 - **A panic that gets through** must not drop the connection: the service answers a request whose handler panicked with a
   `500` and logs it, so one bad request cannot take a worker down silently. This is a backstop, not permission to
   panic.

@@ -707,7 +707,7 @@ pub(crate) async fn build_map(
         .filter(|p| include.contains(&p.pid))
         .cloned()
         .collect();
-    let rag = super::insights::rag_by_pid(&scoped, &risk_rows, &budget_rows, &deps, today);
+    let rag = super::insights::rag_by_pid(&scoped, &risk_rows, &budget_rows, &deps, today)?;
     let aims: HashMap<Uuid, String> = {
         let marked: HashSet<Uuid> =
             sqlx::query_scalar::<_, Uuid>("SELECT objective_pid FROM strategic_aims")

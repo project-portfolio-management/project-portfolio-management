@@ -186,6 +186,7 @@ pub(crate) async fn authorized_board_pack(
 /// # Errors
 ///
 /// Propagates database errors.
+#[expect(clippy::too_many_lines)] // one linear pipeline: load, derive, shape
 async fn board_pack_body(
     ctx: &AppContext,
     query: &WindowQuery,
@@ -201,7 +202,7 @@ async fn board_pack_body(
         (e.predecessor_pid, e.successor_pid)
     });
     let today = crate::tz::deployment_today();
-    let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today);
+    let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today)?;
 
     // Current portfolio health summary (worst member colour per bucket).
     let mut status_counts =
@@ -277,7 +278,10 @@ async fn board_pack_body(
                 .is_some_and(|at| at.to_utc() >= from && at.to_utc() <= to)
         })
         .collect();
-    let released_money = insights::variance_by_currency(&money_lines(&released));
+    let released_money = super::or_overflow(
+        insights::variance_by_currency(&money_lines(&released)),
+        "released benefit money",
+    )?;
 
     let body = serde_json::json!({
         "as_of": crate::datetime::Timestamp::now(),
@@ -1130,16 +1134,19 @@ async fn regulator_extract(
             .iter()
             .filter(|b| member_pids.contains(&b.plan_pid))
             .collect();
-        let spend = insights::variance_by_currency(&money_lines(&lines))
-            .into_iter()
-            .map(|row| {
-                serde_json::json!({
-                    "currency": row.currency,
-                    "planned_minor": row.planned_minor,
-                    "actual_minor": row.actual_minor,
-                })
+        let spend = super::or_overflow(
+            insights::variance_by_currency(&money_lines(&lines)),
+            "portfolio spend",
+        )?
+        .into_iter()
+        .map(|row| {
+            serde_json::json!({
+                "currency": row.currency,
+                "planned_minor": row.planned_minor,
+                "actual_minor": row.actual_minor,
             })
-            .collect::<Vec<_>>();
+        })
+        .collect::<Vec<_>>();
         let mut benefits_per_currency: std::collections::BTreeMap<&str, (i64, i64)> =
             std::collections::BTreeMap::new();
         for benefit in benefit_rows

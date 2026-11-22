@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the budget variance reports no figure instead of a bound (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `insights::variance_by_currency` and `group_report` return
+  `Option`, `None` when a per-currency total or `planned − actual` does not fit an `i64`. `controllers::or_overflow`
+  turns that into a `500` (logged with the figure's name) in the executive health, financial variance and exposure,
+  alignment, board pack, regulator extract and grouped-report routes; `rag_by_pid` returns a `Result`; the estate
+  snapshot returns a `sqlx` protocol error. A new test, `amounts_that_overflow_give_no_figure`, covers the domain side.
+- Not done: the remaining `Figure::total_add` / `total_mul` / signed `total_sub` sites (about 65: financials, evm,
+  earned value, benefit validation, strategy, value, tba, capacity heatmap, team utilization). The `500` paths are untested
+  end to end (database-gated). Two handlers got `#[expect(clippy::too_many_lines)]` for the extra `?` lines.
+
 ### Changed — the effort roll-up reports no total instead of a bound (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `effort::totals` returns `Option<EffortTotals>`, `None` when a total

@@ -139,6 +139,21 @@ pub(crate) fn unprocessable_entity(message: &str) -> axa::Error {
     )
 }
 
+/// `value`, or a `500` when it is `None`: a total over stored amounts did not fit an `i64`, so the amounts are corrupt
+/// and there is no figure to report (RCA-IN-6), not a bound. `figure` names it in the log.
+///
+/// # Errors
+///
+/// `500` when `value` is `None`.
+pub(crate) fn or_overflow<T>(value: Option<T>, figure: &str) -> Result<T, axa::Error> {
+    value.ok_or_else(|| {
+        tracing::error!(figure, "the stored amounts do not total: out of range");
+        axa::Error::Message(format!(
+            "{figure}: the stored amounts are outside the range of a total"
+        ))
+    })
+}
+
 /// A query figure that must lie in `lo..=hi`: `default` when it is absent (RCA-IN-3), `422` naming `name` and the range
 /// when it is supplied outside the range (RCA-IN-2, RCA-IN-5). It is never moved to a bound or replaced by the default.
 ///

@@ -56,7 +56,7 @@ pub(crate) fn rag_by_pid(
     budget_rows: &[budget_lines::Model],
     dependency_rows: &[crate::models::_entities::plan_dependencies::Model],
     today: crate::datetime::Date,
-) -> std::collections::BTreeMap<Uuid, &'static str> {
+) -> Result<std::collections::BTreeMap<Uuid, &'static str>> {
     let facts: Vec<rules::ScheduleItem> = items.iter().map(schedule_item).collect();
     let edges: Vec<rules::ScheduleEdge> = dependency_rows
         .iter()
@@ -74,7 +74,7 @@ pub(crate) fn rag_by_pid(
         .collect();
     items
         .iter()
-        .map(|item| {
+        .map(|item| -> Result<(Uuid, &'static str)> {
             let member_risks: Vec<_> = risk_rows
                 .iter()
                 .filter(|r| r.plan_pid == item.pid)
@@ -98,9 +98,12 @@ pub(crate) fn rag_by_pid(
                     actual_minor: b.actual_minor,
                 })
                 .collect();
-            let overrun = insights::variance_by_currency(&member_budgets)
-                .iter()
-                .any(|row| row.overrun);
+            let overrun = super::or_overflow(
+                insights::variance_by_currency(&member_budgets),
+                "member budgets",
+            )?
+            .iter()
+            .any(|row| row.overrun);
             let target = item
                 .data
                 .get("target_date")
@@ -115,7 +118,7 @@ pub(crate) fn rag_by_pid(
                 overrun,
                 violated.contains(&item.pid),
             );
-            (item.pid, colour)
+            Ok((item.pid, colour))
         })
         .collect()
 }
@@ -141,6 +144,7 @@ pub(crate) fn category_risks<'r>(
 /// RAG rollup, overdue milestones, escalated risks, open-risk
 /// exposure, overrun currencies, and member counts. The bucket status
 /// is the worst member colour. Derivation matches `/api/at-a-glance`.
+#[expect(clippy::too_many_lines)] // one linear pipeline: load, derive, shape
 #[debug_handler]
 async fn executive_health(
     State(ctx): State<AppContext>,
@@ -156,7 +160,7 @@ async fn executive_health(
     let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
-    let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today);
+    let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today)?;
 
     // Buckets: each portfolio item (itself + the items under it), plus
     // an `unassigned` bucket for parentless non-portfolio items.
@@ -220,11 +224,12 @@ async fn executive_health(
                 actual_minor: b.actual_minor,
             })
             .collect();
-        let overrun_currencies: Vec<String> = insights::variance_by_currency(&lines)
-            .into_iter()
-            .filter(|row| row.overrun)
-            .map(|row| row.currency)
-            .collect();
+        let overrun_currencies: Vec<String> =
+            super::or_overflow(insights::variance_by_currency(&lines), "budget lines")?
+                .into_iter()
+                .filter(|row| row.overrun)
+                .map(|row| row.currency)
+                .collect();
         // Staleness: calendar days since the newest member update (audit-visible
         // activity would be finer; member `updated_at` is the honest
         // floor the row store carries).
@@ -500,14 +505,19 @@ async fn financial_variance(
         planned_minor: b.planned_minor,
         actual_minor: b.actual_minor,
     };
-    let group = |key_of: &dyn Fn(&budget_lines::Model) -> String| -> Vec<(String, Vec<insights::VarianceRow>)> {
+    let group = |key_of: &dyn Fn(&budget_lines::Model) -> String| -> Result<Vec<(String, Vec<insights::VarianceRow>)>> {
         let mut per: std::collections::BTreeMap<String, Vec<insights::MoneyLine>> =
             std::collections::BTreeMap::new();
         for row in &budget_rows {
             per.entry(key_of(row)).or_default().push(line_of(row));
         }
         per.into_iter()
-            .map(|(key, lines)| (key, insights::variance_by_currency(&lines)))
+            .map(|(key, lines)| {
+                Ok((
+                    key,
+                    super::or_overflow(insights::variance_by_currency(&lines), "budget lines")?,
+                ))
+            })
             .collect()
     };
 
@@ -517,8 +527,8 @@ async fn financial_variance(
             .copied()
             .unwrap_or("unknown")
             .to_string()
-    });
-    let by_category = group(&|b| b.category.clone());
+    })?;
+    let by_category = group(&|b| b.category.clone())?;
     let mut by_portfolio = Vec::new();
     {
         let mut per: std::collections::BTreeMap<Option<Uuid>, Vec<insights::MoneyLine>> =
@@ -530,7 +540,7 @@ async fn financial_variance(
         for (bucket, lines) in per {
             by_portfolio.push(serde_json::json!({
                 "portfolio": bucket.and_then(|pid| portfolio_items.get(&pid)).map(|p| item_ref(p)),
-                "variance": insights::variance_by_currency(&lines),
+                "variance": super::or_overflow(insights::variance_by_currency(&lines), "budget lines")?,
             }));
         }
     }
@@ -564,7 +574,7 @@ async fn financial_exposure(
             actual_minor: b.actual_minor,
         })
         .collect();
-    let per_currency = insights::variance_by_currency(&lines);
+    let per_currency = super::or_overflow(insights::variance_by_currency(&lines), "budget lines")?;
     let currencies: Vec<serde_json::Value> = per_currency
         .into_iter()
         .map(|row| {
@@ -622,7 +632,7 @@ async fn technology_dependency_risk(
     let dependency_rows = scope.keep_edges(vis_models::all_dependencies(&ctx).await?, |e| {
         (e.predecessor_pid, e.successor_pid)
     });
-    let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today);
+    let rag = rag_by_pid(&items, &risk_rows, &budget_rows, &dependency_rows, today)?;
     let by_pid: std::collections::BTreeMap<Uuid, &plans::Model> =
         items.iter().map(|i| (i.pid, i)).collect();
 
@@ -815,11 +825,14 @@ async fn executive_alignment(
             actual_minor: b.actual_minor,
         })
         .collect();
-    let unaligned_spend = insights::variance_by_currency(&unaligned_lines);
+    let unaligned_spend = super::or_overflow(
+        insights::variance_by_currency(&unaligned_lines),
+        "unaligned budget lines",
+    )?;
     let mut unaligned_items: Vec<(i64, serde_json::Value)> = items
         .iter()
         .filter(|i| !aligned.contains(&i.pid))
-        .map(|item| {
+        .map(|item| -> Result<(i64, serde_json::Value)> {
             let lines: Vec<insights::MoneyLine> = budget_rows
                 .iter()
                 .filter(|b| b.plan_pid == item.pid)
@@ -829,13 +842,14 @@ async fn executive_alignment(
                     actual_minor: b.actual_minor,
                 })
                 .collect();
-            let per_currency = insights::variance_by_currency(&lines);
+            let per_currency =
+                super::or_overflow(insights::variance_by_currency(&lines), "plan budget lines")?;
             let rank = per_currency
                 .iter()
                 .map(|r| r.planned_minor)
                 .max()
                 .unwrap_or(0);
-            (
+            Ok((
                 rank,
                 serde_json::json!({
                     "item": item_ref(item),
@@ -846,9 +860,9 @@ async fn executive_alignment(
                         }))
                         .collect::<Vec<_>>(),
                 }),
-            )
+            ))
         })
-        .collect();
+        .collect::<Result<_>>()?;
     unaligned_items.sort_by_key(|(rank, _)| std::cmp::Reverse(*rank));
     let unaligned_items: Vec<serde_json::Value> = unaligned_items
         .into_iter()

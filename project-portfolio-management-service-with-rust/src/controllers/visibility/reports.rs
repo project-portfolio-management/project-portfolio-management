@@ -326,7 +326,10 @@ async fn run_grouped(
             (value, money)
         })
         .collect();
-    let groups = crate::insights::group_report(entries);
+    let groups = super::super::or_overflow(
+        crate::insights::group_report(entries),
+        "grouped budget lines",
+    )?;
     if format == Some("csv") {
         let mut csv = format!(
             "{},plans,currency,planned_minor,actual_minor,remaining_minor,line_count\n",

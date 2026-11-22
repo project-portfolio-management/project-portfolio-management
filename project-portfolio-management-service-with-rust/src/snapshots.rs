@@ -46,7 +46,9 @@ pub async fn capture_on(db: &mut impl crate::db::Session) -> Result<insight_snap
             actual_minor: b.actual_minor,
         })
         .collect();
-    let money = insights::variance_by_currency(&lines);
+    let money = insights::variance_by_currency(&lines).ok_or_else(|| {
+        sqlx::Error::Protocol("the stored budget amounts are outside the range of a total".into())
+    })?;
     let portfolios = items
         .iter()
         .filter(|i| i.kind.as_deref() == Some("Portfolio"))

@@ -7,7 +7,6 @@
 //! per-currency lines never merge, ratios carry their numerator and
 //! denominator, and absent data is `None`, never `0`.
 
-use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use serde::Serialize;
@@ -63,24 +62,27 @@ pub fn portfolio_of(
 }
 
 /// Aggregate money lines into one variance row per currency
-/// (deterministic order: currency code ascending).
+/// (deterministic order: currency code ascending). `None` when a total or a difference does not fit an `i64`: the stored
+/// amounts are corrupt, and there is no figure (RCA-IN-6, RCA-P-3), not a bound.
 #[must_use]
-pub fn variance_by_currency(lines: &[MoneyLine]) -> Vec<VarianceRow> {
+pub fn variance_by_currency(lines: &[MoneyLine]) -> Option<Vec<VarianceRow>> {
     let mut per: BTreeMap<&str, (i64, i64, usize)> = BTreeMap::new();
     for line in lines {
         let entry = per.entry(line.currency.as_str()).or_default();
-        entry.0 = entry.0.total_add(line.planned_minor);
-        entry.1 = entry.1.total_add(line.actual_minor);
+        entry.0 = entry.0.checked_add(line.planned_minor)?;
+        entry.1 = entry.1.checked_add(line.actual_minor)?;
         entry.2 += 1;
     }
     per.into_iter()
-        .map(|(currency, (planned, actual, count))| VarianceRow {
-            currency: currency.to_string(),
-            planned_minor: planned,
-            actual_minor: actual,
-            remaining_minor: planned.total_sub(actual),
-            overrun: actual > planned,
-            line_count: count,
+        .map(|(currency, (planned, actual, count))| {
+            Some(VarianceRow {
+                currency: currency.to_string(),
+                planned_minor: planned,
+                actual_minor: actual,
+                remaining_minor: planned.checked_sub(actual)?,
+                overrun: actual > planned,
+                line_count: count,
+            })
         })
         .collect()
 }
@@ -99,9 +101,10 @@ pub struct ReportGroup {
 }
 
 /// Group `(group value, money lines)` entries — one per selected plan —
-/// into [`ReportGroup`]s, ordered by group value ascending.
+/// into [`ReportGroup`]s, ordered by group value ascending. `None` when a group's money does not fit (see
+/// [`variance_by_currency`]).
 #[must_use]
-pub fn group_report(entries: Vec<(String, Vec<MoneyLine>)>) -> Vec<ReportGroup> {
+pub fn group_report(entries: Vec<(String, Vec<MoneyLine>)>) -> Option<Vec<ReportGroup>> {
     let mut per: BTreeMap<String, (usize, Vec<MoneyLine>)> = BTreeMap::new();
     for (value, lines) in entries {
         let entry = per.entry(value).or_default();
@@ -109,10 +112,12 @@ pub fn group_report(entries: Vec<(String, Vec<MoneyLine>)>) -> Vec<ReportGroup> 
         entry.1.extend(lines);
     }
     per.into_iter()
-        .map(|(value, (count, lines))| ReportGroup {
-            value,
-            count,
-            money: variance_by_currency(&lines),
+        .map(|(value, (count, lines))| {
+            Some(ReportGroup {
+                value,
+                count,
+                money: variance_by_currency(&lines)?,
+            })
         })
         .collect()
 }
@@ -250,7 +255,8 @@ mod tests {
             ),
             ("active".into(), vec![line("GBP", 10, 5)]),
             ("closed".into(), vec![]),
-        ]);
+        ])
+        .expect("small amounts fit");
         assert_eq!(groups.len(), 2);
         let active = &groups[0];
         assert_eq!((active.value.as_str(), active.count), ("active", 2));
@@ -281,7 +287,8 @@ mod tests {
                 planned_minor: 7_000,
                 actual_minor: 7_000,
             },
-        ]);
+        ])
+        .expect("small amounts fit");
         assert_eq!(rows.len(), 2, "one row per currency, never merged");
         let gbp = &rows[0];
         assert_eq!(
@@ -298,9 +305,27 @@ mod tests {
             currency: "EUR".into(),
             planned_minor: 100,
             actual_minor: 101,
-        }]);
+        }])
+        .expect("small amounts fit");
         assert!(overrun[0].overrun);
         assert_eq!(overrun[0].remaining_minor, -1);
+    }
+
+    /// RCA-IN-6: amounts that do not total are corrupt data, so there is no figure; never a bound.
+    #[test]
+    fn amounts_that_overflow_give_no_figure() {
+        assert!(variance_by_currency(&[line("GBP", i64::MAX, 0), line("GBP", 1, 0)]).is_none());
+        assert!(
+            variance_by_currency(&[line("GBP", i64::MIN, 1)]).is_none(),
+            "planned - actual"
+        );
+        assert!(
+            group_report(vec![(
+                "a".into(),
+                vec![line("GBP", i64::MAX, 0), line("GBP", 1, 0)]
+            )])
+            .is_none()
+        );
     }
 
     #[test]

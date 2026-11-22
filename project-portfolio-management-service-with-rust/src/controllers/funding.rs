@@ -395,7 +395,7 @@ pub(crate) async fn money_section(
             .iter()
             .filter_map(|n| forecasts.get(n).cloned())
             .collect();
-        let roll = crate::financials::rollup_forecast(&fs);
+        let roll = super::or_overflow(crate::financials::rollup_forecast(&fs), "forecast roll-up")?;
         programmes.push(serde_json::json!({
             "plan_pid": p.pid, "name": p.name,
             "by_funding_source": by_programme.get(&p.pid).map_or_default(|v| v.iter().map(|r| row_json(r, &names)).collect::<Vec<_>>()),

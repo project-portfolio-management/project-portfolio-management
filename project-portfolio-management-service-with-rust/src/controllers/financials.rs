@@ -258,9 +258,13 @@ fn to_i64(value: Option<sqlx::types::Decimal>) -> Option<i64> {
 /// Build one plan's forecast from its live inputs.
 pub(crate) async fn forecast_of(ctx: &AppContext, plan_pid: Uuid) -> Result<rules::Forecast> {
     let mut all = forecasts_of(ctx, &[plan_pid]).await?;
-    Ok(all
-        .remove(&plan_pid)
-        .unwrap_or_else(|| rules::forecast(&[], None, None, crate::tz::deployment_today())))
+    match all.remove(&plan_pid) {
+        Some(forecast) => Ok(forecast),
+        None => super::or_overflow(
+            rules::forecast(&[], None, None, crate::tz::deployment_today()),
+            "plan forecast",
+        ),
+    }
 }
 
 /// Every plan's forecast in `plan_pids` from its live inputs, in four statements however many plans there are
@@ -342,17 +346,18 @@ pub(crate) async fn forecasts_of(
         lines_of.entry(plan).or_default().push((currency, actual));
     }
     let today = crate::tz::deployment_today();
-    Ok(plan_pids
+    plan_pids
         .iter()
         .map(|pid| {
             let lines = lines_of.get(pid).map_or_default(Vec::as_slice);
             let tpc = tpc_of.get(pid).map(|(c, v)| (c.as_str(), *v));
-            (
-                *pid,
+            let forecast = super::or_overflow(
                 rules::forecast(lines, tpc, baseline_of.get(pid), today),
-            )
+                "plan forecast",
+            )?;
+            Ok((*pid, forecast))
         })
-        .collect())
+        .collect()
 }
 
 /// `GET /api/plans/{pid}/financials/forecast` — one plan's EAC/ETC.
@@ -436,7 +441,7 @@ async fn rollup(
     let pids: Vec<Uuid> = walk.nodes.iter().map(|n| n.pid).collect();
     let mut by_pid = forecasts_of(&ctx, &pids).await?;
     let forecasts: Vec<rules::Forecast> = pids.iter().filter_map(|p| by_pid.remove(p)).collect();
-    let rollup = rules::rollup_forecast(&forecasts);
+    let rollup = super::or_overflow(rules::rollup_forecast(&forecasts), "forecast roll-up")?;
 
     let body = serde_json::json!({
         "as_of": crate::datetime::Timestamp::now(),

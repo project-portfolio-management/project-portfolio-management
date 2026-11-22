@@ -753,7 +753,7 @@ async fn series(
             })
             .collect();
         curves.push(serde_json::json!({
-            "currency": b.currency, "baseline_version": b.version, "bac_minor": ev::bac(&periods),
+            "currency": b.currency, "baseline_version": b.version, "bac_minor": super::or_overflow(ev::bac(&periods), "budget at completion")?,
             "snapshots": mine.len(), "points": points,
         }));
     }
@@ -845,14 +845,17 @@ pub(crate) async fn rollup_over(
         match compute_with(ctx, *plan, as_of, source).await? {
             Outcome::Figures { blocks, .. } => {
                 for (cur, _, b) in &blocks {
-                    evm::add(
-                        &mut totals,
-                        cur,
-                        b.bac_minor,
-                        b.pv_minor,
-                        b.ev_minor,
-                        b.ac_minor,
-                    );
+                    super::or_overflow(
+                        evm::add(
+                            &mut totals,
+                            cur,
+                            b.bac_minor,
+                            b.pv_minor,
+                            b.ev_minor,
+                            b.ac_minor,
+                        ),
+                        "portfolio earned value totals",
+                    )?;
                     let variants = evm::eac_variants(
                         b.bac_minor,
                         b.ev_minor,

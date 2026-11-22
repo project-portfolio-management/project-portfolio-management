@@ -22,7 +22,6 @@
 //! Integer minor units, ISO-4217 currency codes, no float — the same
 //! posture as every other money figure in this crate.
 
-use crate::figures::Figure;
 use serde::{Deserialize, Serialize};
 
 /// One period of a budget baseline: planned cost for one window.
@@ -60,12 +59,14 @@ impl Baseline {
     /// share — this service has no record of how much of a period's
     /// work is done, only whether the window has passed, and
     /// inventing a pro-ration would be a fabricated precision.
+    ///
+    /// `None` when the periods do not total within an `i64`: the stored amounts are corrupt (RCA-IN-6).
     #[must_use]
-    pub fn remaining_planned_minor(&self, today: crate::datetime::Date) -> i64 {
+    pub fn remaining_planned_minor(&self, today: crate::datetime::Date) -> Option<i64> {
         self.periods
             .iter()
             .filter(|p| p.period_end >= today)
-            .fold(0_i64, |acc, p| acc.total_add(p.planned_minor))
+            .try_fold(0_i64, |acc, p| acc.checked_add(p.planned_minor))
     }
 }
 
@@ -139,19 +140,22 @@ pub struct Forecast {
 /// more durable record (frozen at approval; a TPC observation can
 /// lapse) — falling back to the latest TPC observation's own currency
 /// when there is no baseline at all.
+///
+/// `None` when the plan's amounts do not total within an `i64`: the stored amounts are corrupt (RCA-IN-6), so there is
+/// no forecast, not a bound.
 #[must_use]
 pub fn forecast(
     actual_lines: &[(String, i64)],
     tpc_cec: Option<(&str, i64)>,
     baseline: Option<&Baseline>,
     today: crate::datetime::Date,
-) -> Forecast {
+) -> Option<Forecast> {
     let currency = baseline
         .map(|b| b.currency.clone())
         .or_else(|| tpc_cec.map(|(c, _)| c.to_string()));
 
     let Some(currency) = currency else {
-        return Forecast {
+        return Some(Forecast {
             currency: None,
             actual_minor: 0,
             excluded_other_currency_minor: 0,
@@ -160,29 +164,30 @@ pub fn forecast(
             estimate_at_completion_minor: None,
             baseline_version: None,
             absent: Some(ForecastAbsent::NoCurrencySignal),
-        };
+        });
     };
 
     let actual_minor = actual_lines
         .iter()
         .filter(|(c, _)| *c == currency)
-        .fold(0_i64, |acc, (_, m)| acc.total_add(*m));
+        .try_fold(0_i64, |acc, (_, m)| acc.checked_add(*m))?;
     let excluded_other_currency_minor = actual_lines
         .iter()
         .filter(|(c, _)| *c != currency)
-        .fold(0_i64, |acc, (_, m)| acc.total_add(*m));
+        .try_fold(0_i64, |acc, (_, m)| acc.checked_add(*m))?;
 
     let (etc, source) = match tpc_cec.filter(|(c, _)| *c == currency) {
         Some((_, cec)) => (Some(cec), Some(EtcSource::Tpc)),
-        None => baseline.map_or((None, None), |b| {
-            (
-                Some(b.remaining_planned_minor(today)),
+        None => match baseline {
+            Some(b) => (
+                Some(b.remaining_planned_minor(today)?),
                 Some(EtcSource::BaselineRemaining),
-            )
-        }),
+            ),
+            None => (None, None),
+        },
     };
 
-    Forecast {
+    Some(Forecast {
         currency: Some(currency),
         actual_minor,
         excluded_other_currency_minor,
@@ -191,7 +196,7 @@ pub fn forecast(
         estimate_at_completion_minor: etc.and_then(|e| actual_minor.checked_add(e)),
         baseline_version: baseline.map(|b| b.version),
         absent: None,
-    }
+    })
 }
 
 /// One currency's aggregate forecast across a walked containment
@@ -236,8 +241,10 @@ pub struct Rollup {
 
 /// Build the per-currency rollup from a walked subtree's individual
 /// forecasts.
+///
+/// `None` when a currency's totals do not fit an `i64`: the stored amounts are corrupt (RCA-IN-6).
 #[must_use]
-pub fn rollup_forecast(forecasts: &[Forecast]) -> Rollup {
+pub fn rollup_forecast(forecasts: &[Forecast]) -> Option<Rollup> {
     let mut per: std::collections::BTreeMap<&str, RollupForecastRow> =
         std::collections::BTreeMap::new();
     let mut no_currency_signal = 0_usize;
@@ -253,24 +260,60 @@ pub fn rollup_forecast(forecasts: &[Forecast]) -> Rollup {
             estimate_at_completion_minor: 0,
             plans: 0,
         });
-        row.actual_minor = row.actual_minor.total_add(f.actual_minor);
+        row.actual_minor = row.actual_minor.checked_add(f.actual_minor)?;
+        // A forecast with a currency always has an estimate (see `ForecastAbsent`), so `unwrap_or(0)` is a missing
+        // optional addend of a sum, not an unknown total.
         row.estimate_to_complete_minor = row
             .estimate_to_complete_minor
-            .total_add(f.estimate_to_complete_minor.unwrap_or(0));
+            .checked_add(f.estimate_to_complete_minor.unwrap_or(0))?;
         row.estimate_at_completion_minor = row
             .estimate_at_completion_minor
-            .total_add(f.estimate_at_completion_minor.unwrap_or(0));
+            .checked_add(f.estimate_at_completion_minor.unwrap_or(0))?;
         row.plans += 1;
     }
-    Rollup {
+    Some(Rollup {
         rows: per.into_values().collect(),
         no_currency_signal,
-    }
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The forecast of small amounts, which always fits.
+    fn forecast(
+        actual_lines: &[(String, i64)],
+        tpc_cec: Option<(&str, i64)>,
+        baseline: Option<&Baseline>,
+        today: crate::datetime::Date,
+    ) -> Forecast {
+        super::forecast(actual_lines, tpc_cec, baseline, today).expect("small amounts fit")
+    }
+
+    /// The roll-up of small amounts, which always fits.
+    fn rollup_forecast(forecasts: &[Forecast]) -> Rollup {
+        super::rollup_forecast(forecasts).expect("small amounts fit")
+    }
+
+    /// RCA-IN-6: amounts that do not total give no forecast and no roll-up; never a bound.
+    #[test]
+    fn amounts_that_overflow_give_no_forecast() {
+        let lines = [("GBP".to_string(), i64::MAX), ("GBP".to_string(), 1)];
+        assert!(
+            super::forecast(&lines, Some(("GBP", 0)), None, crate::datetime::Date::MIN).is_none()
+        );
+        let big = Forecast {
+            actual_minor: i64::MAX,
+            ..forecast(
+                &[("GBP".to_string(), 1)],
+                Some(("GBP", 0)),
+                None,
+                crate::datetime::Date::MIN,
+            )
+        };
+        assert!(super::rollup_forecast(&[big.clone(), big]).is_none());
+    }
 
     fn date(y: i32, m: u32, d: u32) -> crate::datetime::Date {
         crate::datetime::Date::from_ymd_opt(y, m, d).unwrap()

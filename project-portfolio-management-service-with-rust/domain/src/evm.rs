@@ -17,7 +17,6 @@
 //! Money is minor units in `i64`, ratios basis points, arithmetic `i128` and
 //! integer. Undefined is `None` with a reason, never zero.
 
-use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use serde::Serialize;
@@ -422,6 +421,9 @@ pub struct Totals {
 
 /// Add one plan's figures into the currency's totals — **never across currencies**
 /// (the map is keyed by currency).
+///
+/// `None` when a total does not fit an `i64`: the amounts are corrupt, and the currency's totals are left unchanged
+/// from the failing figure on (RCA-IN-6); the caller treats it as an error, not a bound.
 pub fn add(
     totals: &mut BTreeMap<String, Totals>,
     currency: &str,
@@ -429,16 +431,17 @@ pub fn add(
     pv: i64,
     ev: i64,
     ac: Option<i64>,
-) {
+) -> Option<()> {
     let t = totals.entry(currency.to_string()).or_default();
-    t.bac_minor = t.bac_minor.total_add(bac);
-    t.pv_minor = t.pv_minor.total_add(pv);
-    t.ev_minor = t.ev_minor.total_add(ev);
+    t.bac_minor = t.bac_minor.checked_add(bac)?;
+    t.pv_minor = t.pv_minor.checked_add(pv)?;
+    t.ev_minor = t.ev_minor.checked_add(ev)?;
     t.plans += 1;
     match ac {
-        Some(a) => t.ac_minor = t.ac_minor.total_add(a),
+        Some(a) => t.ac_minor = t.ac_minor.checked_add(a)?,
         None => t.plans_without_ac += 1,
     }
+    Some(())
 }
 
 /// An SPI or CPI from totals, in basis points; `None` when the denominator is zero.
@@ -737,9 +740,9 @@ mod tests {
     #[test]
     fn totals_never_cross_currencies_and_say_when_cost_is_partial() {
         let mut t = BTreeMap::new();
-        add(&mut t, "GBP", 1_000, 400, 300, Some(350));
-        add(&mut t, "GBP", 2_000, 800, 900, None);
-        add(&mut t, "USD", 5_000, 1_000, 500, Some(600));
+        add(&mut t, "GBP", 1_000, 400, 300, Some(350)).expect("fits");
+        add(&mut t, "GBP", 2_000, 800, 900, None).expect("fits");
+        add(&mut t, "USD", 5_000, 1_000, 500, Some(600)).expect("fits");
         let gbp = &t["GBP"];
         assert_eq!(
             (gbp.bac_minor, gbp.pv_minor, gbp.ev_minor, gbp.ac_minor),

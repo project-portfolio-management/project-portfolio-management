@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — forecasts and earned-value totals report no figure instead of a bound (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `financials::forecast`, `rollup_forecast` and
+  `Baseline::remaining_planned_minor`, `earned_value::bac` and `evm::add` return `Option` and are `None` when a total
+  does not fit an `i64`; the financials, funding, earned-value and portfolio routes answer `500` through
+  `or_overflow`. A test, `amounts_that_overflow_give_no_forecast`, covers the forecast and roll-up; the unit tests of
+  small amounts go through local wrappers.
+- Not done: `earned_value::block` returns `None` both for a baseline with no periods and for one whose budget overflows,
+  so a caller cannot tell them apart (the overflow is not a `500` there). The sums in the earned-value controller
+  (`budget_ac`, `labour_ac`, the slot totals), `benefit_validation`, `strategy`, `value`, `tba`, `capacity_heatmap` and
+  team utilization (about 50 sites) still use `Figure`. The `500` paths are untested end to end (database-gated).
+
 ### Changed — the budget variance reports no figure instead of a bound (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `insights::variance_by_currency` and `group_report` return

@@ -27,7 +27,6 @@
 //! pro-rate.
 
 use crate::datetime::Date;
-use crate::figures::Figure;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -231,12 +230,13 @@ pub struct Period {
     pub planned_minor: i64,
 }
 
-/// Budget at completion: the sum of the baseline's periods.
+/// Budget at completion: the sum of the baseline's periods. `None` when it does not fit an `i64`: the stored amounts are
+/// corrupt (RCA-IN-6).
 #[must_use]
-pub fn bac(periods: &[Period]) -> i64 {
+pub fn bac(periods: &[Period]) -> Option<i64> {
     periods
         .iter()
-        .fold(0_i64, |a, p| a.total_add(p.planned_minor))
+        .try_fold(0_i64, |a, p| a.checked_add(p.planned_minor))
 }
 
 /// The first day of the baseline, or `None` with no periods.
@@ -338,7 +338,7 @@ pub struct Block {
 ///
 /// `numerator` / `denominator` are the plan's exact percent complete
 /// ([`PercentComplete`]); `ac_minor` is `None` when actual cost cannot be stated.
-/// Returns `None` for a baseline with no periods.
+/// Returns `None` for a baseline with no periods, or whose budget does not fit an `i64` (corrupt stored amounts).
 #[must_use]
 pub fn block(
     periods: &[Period],
@@ -348,7 +348,7 @@ pub fn block(
     as_of: Date,
 ) -> Option<Block> {
     let start = baseline_start(periods)?;
-    let bac_minor = bac(periods);
+    let bac_minor = bac(periods)?;
     let ev = if denominator == 0 {
         0
     } else {
@@ -565,7 +565,7 @@ mod tests {
         );
         assert_eq!(pv_after(&p, s, 20), 4_000);
         assert_eq!(pv_after(&p, s, 99), 4_000, "never more than the budget");
-        assert_eq!(bac(&p), 4_000);
+        assert_eq!(bac(&p), Some(4_000));
     }
 
     #[test]

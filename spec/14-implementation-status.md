@@ -33,9 +33,9 @@ no network, database or compilation; counts are source lines, not test runs):
 | Documented API paths | 559 | path keys in the service's `openapi.json` |
 | Service tests | 1757, plus 343 `#[ignore]`d (database or container gated) | `#[test]` and `#[tokio::test]` lines; `#[ignore]` lines, in `src`, `tests`, `migration/src`, `domain/src`, `datetime/src` |
 | Matcher tests | 92, plus 0 `#[ignore]`d | the same patterns in the matcher `src` and `tests` |
-| Front-end unit tests (vitest) | 1223 | `it(` / `test(` lines in `tests/unit` |
+| Front-end unit tests (vitest) | 1224 | `it(` / `test(` lines in `tests/unit` |
 | Front-end end-to-end tests (Playwright) | 615 | `test(` lines in `tests/e2e` |
-| Locales | 14 | entries of `LOCALES` in `src/lib/locales.ts` |
+| Locales | 17 | entries of `LOCALES` in `src/lib/locales.ts` |
 
 **Task boxes in [`tasks.md`](../tasks.md)** (ticked / open, by prefix):
 

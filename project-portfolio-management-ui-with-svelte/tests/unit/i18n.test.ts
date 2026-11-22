@@ -24,6 +24,7 @@ describe("i18n catalog", () => {
   it("supports exactly the required locales, sorted by code", () => {
     expect([...LOCALES]).toEqual([
       "ar-001",
+      "bn-001",
       "cy-001",
       "de-001",
       "de-de",
@@ -31,15 +32,18 @@ describe("i18n catalog", () => {
       "es-001",
       "fr-001",
       "hi-001",
+      "id-001",
       "ja-001",
       "ko-001",
       "pt-001",
       "ru-001",
+      "vi-001",
       "zh-001",
       "zh-cn",
     ]);
     expect(LOCALE_LABELS).toEqual({
       "ar-001": "العربية",
+      "bn-001": "বাংলা",
       "cy-001": "Cymraeg",
       "de-001": "Deutsch",
       "de-de": "Deutsch - Deutschland",
@@ -47,10 +51,12 @@ describe("i18n catalog", () => {
       "es-001": "Español",
       "fr-001": "Français",
       "hi-001": "हिन्दी",
+      "id-001": "Bahasa Indonesia",
       "ja-001": "日本語",
       "ko-001": "한국어",
       "pt-001": "Português",
       "ru-001": "Русский",
+      "vi-001": "Tiếng Việt",
       "zh-001": "中文",
       "zh-cn": "中文 - 中国",
     });

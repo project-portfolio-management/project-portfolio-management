@@ -392,17 +392,17 @@ built inside a catalogue string or a column with its own `format` were not each 
 `LocalePicker` (`lily-design-system-svelte-locale-picker`) sets `lang`
 and `dir` on `<html>` and switches the active translation catalogue, so
 selecting a locale changes the displayed language. Supported locales
-(14, `src/lib/locales.ts`): `ar-001`, `cy-001`, `de-001`, `de-de`, `en-001`,
-`es-001`, `fr-001`, `hi-001`, `ja-001`, `ko-001`, `pt-001`, `ru-001`, `zh-001`, `zh-cn`; `ar-001` is **RTL**. The
+(17, `src/lib/locales.ts`): `ar-001`, `bn-001`, `cy-001`, `de-001`, `de-de`, `en-001`,
+`es-001`, `fr-001`, `hi-001`, `id-001`, `ja-001`, `ko-001`, `pt-001`, `ru-001`, `vi-001`, `zh-001`, `zh-cn`; `ar-001` is **RTL**. The
 locale is the first path segment (`/de-001/plans`). Strings come from
 `src/lib/i18n.svelte.ts` (navigation, forms) and one page catalogue per
-language (`i18n-pages.ts` English, `i18n-pages.<cy|ar|de|es|fr|hi|ja|ko|pt|ru|zh>.ts`;
+language (`i18n-pages.ts` English, `i18n-pages.<cy|ar|bn|de|es|fr|hi|id|ja|ko|pt|ru|vi|zh>.ts`;
 `de-de` and `zh-cn` share their language's). **Every locale is complete
 (WW-1.1, NFR-19):** each page catalogue is typed as a complete record of the
 English keys, `tests/unit/catalogue-coverage.test.ts` checks keys,
 placeholders and copied English for each, and `tests/e2e/every-locale.spec.ts`
 opens every page route in every locale. A missing key would still fall back
-to English at run time. English and Welsh are bundled; the other ten page
+to English at run time. English and Welsh are bundled; the other thirteen page
 catalogues are loaded only for their own locale (`loadLocale`, awaited by
 the root layout's load), so a page does not carry every language. Every translation is a machine draft, recorded
 unreviewed per locale in `governance/translation-reviews/` (Welsh in
@@ -419,6 +419,16 @@ in `i18n.svelte.ts` hold no plural group); Japanese and Korean have one plural f
 ship unreviewed; `src/app.css` puts Japanese and Korean faces first for `lang="ja"` and `lang="ko"`, and no font is
 bundled. Not verified: the pages in each language in a browser, apart from the test run; the longer words (Russian
 and Portuguese) against the layouts.
+
+**Bengali, Indonesian and Vietnamese (added 2026-11-22).** Each has one world locale (`bn-001`, `id-001`, `vi-001`)
+and no regional one, so `bn-BD`, `bn-IN`, `id-ID` and `vi-VN` read it (`normalizeLocale`). Their text was written in 26 chunks
+of about 300 strings by nine agents, checked by script for keys and placeholders, and read by nobody. **Stated limits:**
+all three have one plural form here, so `_one` and `_other` read the same; Indonesian keeps many everyday words that are the
+same as English (70 counted values; the limit in `catalogue-coverage.test.ts` may only fall); a few Bengali names and codes
+carry a transliteration beside them; the widget words come from Lily's `bn-001`, `id-001` and `vi-001` packs, which ship
+unreviewed; no font rule is added for Bengali and no font is bundled. Not verified: the pages in each language in a browser,
+apart from the test run; Bengali conjuncts and longer Vietnamese words against the layouts; the terms against the docs
+glossaries (one Bengali agent read only the start of the Bengali one).
 
 **Right-to-left (WW-1.15).** `ar-001` sets `dir="rtl"`. Stylesheets use logical properties only
 (`margin-inline-start`, `border-inline-start`, `text-align: start`, …) so the layout mirrors;

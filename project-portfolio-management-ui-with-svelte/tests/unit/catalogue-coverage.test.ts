@@ -12,14 +12,17 @@ import { parse } from "svelte/compiler";
 import { PAGES_EN } from "../../src/lib/i18n-pages";
 import { PAGES_CY } from "../../src/lib/i18n-pages.cy";
 import { PAGES_AR } from "../../src/lib/i18n-pages.ar";
+import { PAGES_BN } from "../../src/lib/i18n-pages.bn";
 import { PAGES_DE } from "../../src/lib/i18n-pages.de";
 import { PAGES_ES } from "../../src/lib/i18n-pages.es";
 import { PAGES_FR } from "../../src/lib/i18n-pages.fr";
 import { PAGES_HI } from "../../src/lib/i18n-pages.hi";
+import { PAGES_ID } from "../../src/lib/i18n-pages.id";
 import { PAGES_JA } from "../../src/lib/i18n-pages.ja";
 import { PAGES_KO } from "../../src/lib/i18n-pages.ko";
 import { PAGES_PT } from "../../src/lib/i18n-pages.pt";
 import { PAGES_RU } from "../../src/lib/i18n-pages.ru";
+import { PAGES_VI } from "../../src/lib/i18n-pages.vi";
 import { PAGES_ZH } from "../../src/lib/i18n-pages.zh";
 
 /** English strings that are correct, unchanged, in Welsh (names, units, codes, symbols). */
@@ -161,14 +164,17 @@ describe("the Welsh page catalogue", () => {
 // `SAME_LIMIT` may only fall, so a new English string copied across unchanged fails.
 const OTHERS = {
   ar: PAGES_AR,
+  bn: PAGES_BN,
   de: PAGES_DE,
   es: PAGES_ES,
   fr: PAGES_FR,
   hi: PAGES_HI,
+  id: PAGES_ID,
   ja: PAGES_JA,
   ko: PAGES_KO,
   pt: PAGES_PT,
   ru: PAGES_RU,
+  vi: PAGES_VI,
   zh: PAGES_ZH,
 } as const;
 /** Code and identifiers shown as written in every language. */
@@ -176,14 +182,17 @@ const CODE = new Set(["organization:…", "HTTP {status}", "bearer sub"]);
 /** Upper bound on strings identical to English and not on the name list, per language. It may only fall. */
 const SAME_LIMIT: Record<keyof typeof OTHERS, number> = {
   ar: 0,
+  bn: 2,
   de: 114,
   es: 52,
   fr: 137,
   hi: 0,
+  id: 70,
   ja: 0,
   ko: 3,
   pt: 29,
   ru: 4,
+  vi: 7,
   zh: 0,
 };
 

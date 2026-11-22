@@ -22,9 +22,9 @@ outdir = root / "governance" / "translation-reviews"
 PAIR = re.compile(r'^\s*"([^"]+)":\s*("(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\')\s*,?\s*$', re.M)
 # Locale -> its page catalogue file. A regional locale shares its language's page catalogue.
 PAGES = {
-    "ar-001": "ar", "de-001": "de", "de-de": "de", "es-001": "es",
-    "fr-001": "fr", "hi-001": "hi", "ja-001": "ja", "ko-001": "ko", "pt-001": "pt",
-    "ru-001": "ru", "zh-001": "zh", "zh-cn": "zh",
+    "ar-001": "ar", "bn-001": "bn", "de-001": "de", "de-de": "de", "es-001": "es",
+    "fr-001": "fr", "hi-001": "hi", "id-001": "id", "ja-001": "ja", "ko-001": "ko", "pt-001": "pt",
+    "ru-001": "ru", "vi-001": "vi", "zh-001": "zh", "zh-cn": "zh",
 }
 FIELDS = ["key", "english", "translation", "reviewed_by", "reviewed_on", "verdict"]
 

@@ -9,6 +9,7 @@ are what the software does today and are checked by tests where a test can check
 | Locale | Language | State |
 |---|---|---|
 | `en-001` | English (source language) | Complete |
+| `bn-001` | Bengali (বাংলা) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/bn-001.md)) |
 | `cy-001` | Welsh (Cymraeg) | **Complete in text, draft in review**: every interface text exists in Welsh. It was drafted for this release and has **not yet been reviewed by a professional Welsh translator** (see the [review record](welsh-translation-review.md)). |
 | `ar-001` | Arabic (العربية), right to left | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/ar-001.md)) |
 | `de-001` | German (Deutsch) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/de-001.md)) |
@@ -16,10 +17,12 @@ are what the software does today and are checked by tests where a test can check
 | `es-001` | Spanish (Español) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/es-001.md)) |
 | `fr-001` | French (Français) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/fr-001.md)) |
 | `hi-001` | Hindi (हिन्दी) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/hi-001.md)) |
+| `id-001` | Indonesian (Bahasa Indonesia) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/id-001.md)) |
 | `ja-001` | Japanese (日本語) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/ja-001.md)) |
 | `ko-001` | Korean (한국어) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/ko-001.md)) |
 | `pt-001` | Portuguese (Português) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/pt-001.md)) |
 | `ru-001` | Russian (Русский) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/ru-001.md)) |
+| `vi-001` | Vietnamese (Tiếng Việt) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/vi-001.md)) |
 | `zh-001` | Chinese, Simplified (中文) | **Complete in text, machine draft, not reviewed** ([record](translation-reviews/zh-001.md)); Traditional Chinese readers get Simplified, a stated limit (WW-1.14) |
 | `zh-cn` | Chinese (China) | as `zh-001`, whose page text it shares ([record](translation-reviews/zh-cn.md)) |
 

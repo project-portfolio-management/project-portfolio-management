@@ -17,6 +17,9 @@ const CASES: [string, string][] = [
   ["ko-KR", "/ko-001"],
   ["pt-BR", "/pt-001"],
   ["ru-RU", "/ru-001"],
+  ["bn-BD", "/bn-001"],
+  ["id-ID", "/id-001"],
+  ["vi-VN", "/vi-001"],
   ["sw-KE", "/en-001"],
 ];
 

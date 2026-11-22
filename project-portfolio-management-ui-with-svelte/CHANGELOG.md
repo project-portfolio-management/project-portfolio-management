@@ -9,6 +9,22 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — Bengali, Indonesian and Vietnamese (WW-1.1, 2026-11-22)
+
+- Three locales, `bn-001`, `id-001` and `vi-001` (now 17), each with a page catalogue (`i18n-pages.<bn|id|vi>.ts`, loaded only
+  for its locale), an interface block in `i18n.svelte.ts` (320 strings), Lily's label pack, and a review record and working
+  file in `governance/translation-reviews/` (7,496 texts each), with rows in the language statement. A browser asking for
+  `bn-BD`, `bn-IN`, `id-ID` or `vi-VN` now lands on its world locale; they used to get English.
+- Written by Claude (the AI assistant) as machine drafts: nine agents, each translating about 300 strings at a time and
+  checking keys and placeholders with a script. **No translation is reviewed by a speaker or a translator.**
+- Stated limits: one plural form each, so `_one` and `_other` read the same; Indonesian keeps 70 values that equal the English
+  (loanwords, names, codes; counted in `catalogue-coverage.test.ts`, which may only fall), Bengali 2 and Vietnamese 7; Bengali
+  names and codes carry a transliteration in a few places; no Bengali font rule.
+- Not verified: no page was read in a browser in any of the three languages; Bengali conjuncts and long Vietnamese
+  words against the layouts; the terms against the docs glossaries (the agent for Bengali chunks 17 to 24 read only the
+  start of its glossary, and the agents chose their own terms where it had none); Lily's three label packs are unreviewed;
+  the whole Playwright suite after this change.
+
 ### Added — Japanese, Korean, Portuguese and Russian (WW-1.1, 2026-11-21)
 
 - Four locales, `ja-001`, `ko-001`, `pt-001` and `ru-001` (now 14), each with a page catalogue (`i18n-pages.<ja|ko|pt|ru>.ts`,

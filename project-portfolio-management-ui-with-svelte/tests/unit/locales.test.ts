@@ -161,7 +161,7 @@ describe("navigator.language on the root route", () => {
     expect(normalizeLocale("zh-Hans-CN")).toBe("zh-001");
   });
   it("languages with no catalogue are null, so the next preference is tried", () => {
-    for (const tag of ["sw-KE", "yo", "tr", "fa", "ur", "bn", "id", "it", "nl"])
+    for (const tag of ["sw-KE", "yo", "tr", "fa", "ur", "it", "nl"])
       expect(normalizeLocale(tag), tag).toBeNull();
     expect(localeFromAcceptLanguage("sw-KE,sw;q=0.9,fr;q=0.5")).toBe("fr-001");
   });
@@ -171,6 +171,12 @@ describe("navigator.language on the root route", () => {
     expect(normalizeLocale("pt-BR")).toBe("pt-001");
     expect(normalizeLocale("pt_PT")).toBe("pt-001");
     expect(normalizeLocale("ru-BY")).toBe("ru-001");
+  });
+  it("Bengali, Indonesian and Vietnamese read their world locale, whatever the region", () => {
+    expect(normalizeLocale("bn-BD")).toBe("bn-001");
+    expect(normalizeLocale("bn_IN")).toBe("bn-001");
+    expect(normalizeLocale("id-ID")).toBe("id-001");
+    expect(normalizeLocale("vi")).toBe("vi-001");
   });
   it("a language the app does not have resolves to nothing, so the default applies", () => {
     expect(normalizeLocale("sw-TZ")).toBeNull();

@@ -9,6 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Tests — the licence test allows a README symlink (2026-11-22)
+
+- `tests/licence_files.rs`: each `LICENSES/<id>/` may also hold `README.md`, as long as it is a symlink to `index.md` (the
+  repository now carries such symlinks). Any other extra file still fails. It was red since the symlinks were added.
+- Not done: `spec/licenses/index.md` does not mention the symlink. Not verified beyond the six `licence_files` tests.
+
 ### Security — url 2.5.9 for RUSTSEC-2026-0592 (2026-11-22)
 
 - `Cargo.lock`: `url` 2.5.8 to 2.5.9 and `form_urlencoded` 1.2.2 to 1.2.3 (which 2.5.9 needs). `Url::origin()` on nested

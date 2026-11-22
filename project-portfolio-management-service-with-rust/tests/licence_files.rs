@@ -93,10 +93,21 @@ fn the_licences_directory_holds_only_the_expression_s_licences() {
             })
             .collect();
         files.sort();
+        // `README.md` may be there as a symlink to `index.md`, so a viewer that opens a folder's README shows the
+        // text. It is the same file, not a second licence text.
+        if files == ["README.md", "index.md"] {
+            let link = std::fs::read_link(entry.path().join("README.md"));
+            assert_eq!(
+                link.ok().as_deref(),
+                Some(Path::new("index.md")),
+                "LICENSES/{name}/README.md must be a symlink to index.md"
+            );
+            continue;
+        }
         assert_eq!(
             files,
             ["index.md"],
-            "LICENSES/{name} holds more than index.md"
+            "LICENSES/{name} holds more than index.md (and a README.md symlink to it)"
         );
     }
 }

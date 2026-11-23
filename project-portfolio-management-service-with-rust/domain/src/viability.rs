@@ -7,7 +7,6 @@
 //! The recurring rule of this crate holds: **no benefit recorded is `Unmeasured`, never `NotViable`.** A plan that has not yet
 //! estimated its benefits has not failed. Flows are one currency; the caller withholds a mixed set before it gets here.
 
-use crate::figures::Figure;
 use serde::{Deserialize, Serialize};
 
 /// Basis points in 100 percent.
@@ -100,16 +99,17 @@ fn present_value(amount: i64, period: u32, rate_bp: u32) -> Option<i128> {
 }
 
 /// Where a running total, which was negative before `period`, first reaches zero: linear inside the period.
-fn crossing(before: i128, flow: i128, period: u32, last_out: u32) -> Payback {
+fn crossing(before: i128, flow: i128, period: u32, last_out: u32) -> Option<Payback> {
     // `before` < 0 and `before + flow` >= 0, so `flow` > 0.
     let need = -before;
     let fraction = need * BP / flow;
-    let whole = period.total_sub(last_out).total_sub(1);
+    // `period > last_out` (the caller checks), so this is at least zero; `None` would be a broken contract (RCA-P-9).
+    let whole = period.checked_sub(last_out)?.checked_sub(1)?;
     let fraction_bp = u32::try_from(fraction).unwrap_or(0).min(9_999);
-    Payback {
+    Some(Payback {
         periods: whole,
         fraction_bp,
-    }
+    })
 }
 
 /// The first point the running total, adding the flows in period order (each discounted by `rate_bp`), reaches zero after money has
@@ -123,7 +123,7 @@ fn payback_of(flows: &[Flow], rate_bp: u32, last_out: u32) -> Option<Payback> {
         let before = total;
         total += value;
         if before < 0 && total >= 0 && value > 0 && f.period > last_out {
-            return Some(crossing(before, value, f.period, last_out));
+            return crossing(before, value, f.period, last_out);
         }
     }
     None

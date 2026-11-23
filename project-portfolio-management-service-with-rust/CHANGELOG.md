@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — heatmap, phase and payback figures report no figure instead of a bound (2026-11-23)
+
+- `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `capacity_heatmap::verdict` and `linked_verdict`,
+  `phase::durations` and the payback `crossing` in `viability` return `Option`; the heatmap and phase routes answer `500`
+  through `or_overflow`. The heatmap's `supply - demand` was a plain subtraction (a release panic on overflow) and is now
+  `checked_sub`. Tests: `figures_that_overflow_give_no_reading`, and `durations_report_every_phase` asserts `None` for spans that
+  do not total.
+- Not done: team and group utilization in `effort` (three `Figure` sums and `total_sub`; an overflow needs a way to say
+  "out of range" in `Unavailable`, which the UI maps and translates), and the unsigned count differences (FIG-2:
+  `handling_marks`, `status_updates`, `cohort`, `gauges`, `report_schedules`, `product_flow`, `engineering`), which each
+  need a stated reason. The `500` paths are untested end to end (database-gated).
+
 ### Changed — benefit and baseline totals in the controllers answer 500 instead of a bound (2026-11-23)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): the per-currency benefit target and realized totals in the board

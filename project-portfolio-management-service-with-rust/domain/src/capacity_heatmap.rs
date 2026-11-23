@@ -8,8 +8,6 @@
 
 #![expect(missing_docs)]
 
-use crate::figures::Figure;
-
 /// Milli-FTE from percent-days over `days` calendar days: `percent_days / (100 × days) × 1000`,
 /// rounded to the nearest whole milli-FTE.
 #[must_use]
@@ -53,17 +51,18 @@ pub struct Verdict {
     pub partner_delivery_short: bool,
 }
 
-/// Read a cell. Supply under demand is a shortfall; supply under 110 % of demand is tight.
+/// Read a cell. Supply under demand is a shortfall; supply under 110 % of demand is tight. `None` when a total or the gap
+/// does not fit an `i64`: the stored figures are corrupt (RCA-IN-6).
 #[must_use]
-pub fn verdict(i: &Inputs) -> Verdict {
-    let demand = i.own_demand.total_add(i.partner_demand);
+pub fn verdict(i: &Inputs) -> Option<Verdict> {
+    let demand = i.own_demand.checked_add(i.partner_demand)?;
     let supply = if i.own_supply.is_none() && i.partner_committed.is_none() {
         None
     } else {
         Some(
             i.own_supply
                 .unwrap_or(0)
-                .total_add(i.partner_committed.unwrap_or(0)),
+                .checked_add(i.partner_committed.unwrap_or(0))?,
         )
     };
     let short = matches!((i.partner_committed, i.partner_delivered), (Some(c), Some(d)) if d < c);
@@ -77,22 +76,26 @@ pub fn verdict(i: &Inputs) -> Verdict {
         }
         Some(_) => ("enough", "enough", "circle", "green"),
     };
-    Verdict {
+    let gap = match supply {
+        Some(s) => Some(s.checked_sub(demand)?),
+        None => None,
+    };
+    Some(Verdict {
         state,
         word,
         shape,
         colour,
         demand,
         supply,
-        gap: supply.map(|s| s - demand),
+        gap,
         partner_delivery_short: short,
-    }
+    })
 }
 
 /// Read a cell of a pool linked to the workforce service (FB-2): demand is this service's, supply is the
 /// workforce service's figure (`None` when hidden there or unknown), and nothing entered here is added to it.
 #[must_use]
-pub fn linked_verdict(i: &Inputs, peer_supply: Option<i64>) -> Verdict {
+pub fn linked_verdict(i: &Inputs, peer_supply: Option<i64>) -> Option<Verdict> {
     let demand_only = Inputs {
         own_demand: i.own_demand,
         partner_demand: i.partner_demand,
@@ -100,17 +103,17 @@ pub fn linked_verdict(i: &Inputs, peer_supply: Option<i64>) -> Verdict {
         partner_committed: None,
         partner_delivered: None,
     };
-    let v = verdict(&demand_only);
+    let v = verdict(&demand_only)?;
     if peer_supply.is_some() {
-        return v;
+        return Some(v);
     }
-    Verdict {
+    Some(Verdict {
         state: "supply_unknown",
         word: "supply unknown",
         shape: "question mark",
         colour: "grey",
         ..v
-    }
+    })
 }
 
 /// The first day of the month `n` months after `from` (a first of a month).
@@ -129,6 +132,27 @@ pub fn parse_month(s: &str) -> Option<crate::datetime::Date> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The reading of small figures, which always fits.
+    fn verdict(i: &Inputs) -> Verdict {
+        super::verdict(i).expect("small figures fit")
+    }
+
+    /// The linked reading of small figures, which always fits.
+    fn linked_verdict(i: &Inputs, peer_supply: Option<i64>) -> Verdict {
+        super::linked_verdict(i, peer_supply).expect("small figures fit")
+    }
+
+    /// RCA-IN-6: figures that do not total give no reading; never a bound.
+    #[test]
+    fn figures_that_overflow_give_no_reading() {
+        assert!(super::verdict(&i(i64::MAX, 1, None, None, None)).is_none());
+        assert!(super::verdict(&i(0, 0, Some(i64::MAX), Some(1), None)).is_none());
+        assert!(
+            super::verdict(&i(1, 0, Some(i64::MIN), None, None)).is_none(),
+            "supply - demand"
+        );
+    }
 
     fn i(od: i64, pd: i64, os: Option<i64>, pc: Option<i64>, pdl: Option<i64>) -> Inputs {
         Inputs {

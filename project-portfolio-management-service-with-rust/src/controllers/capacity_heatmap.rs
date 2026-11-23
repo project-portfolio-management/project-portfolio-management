@@ -995,12 +995,15 @@ pub(crate) async fn heatmap(
         let mut out_cells = Vec::new();
         for (mi, month) in month_names.iter().enumerate() {
             let cell = cells.remove(&(*pid, mi)).unwrap_or_default();
-            let here = rules::verdict(&cell.inputs);
+            let here = super::or_overflow(rules::verdict(&cell.inputs), "capacity cell")?;
             let reading = pid.and_then(|p| peer.get(&p)).and_then(|r| r.get(mi));
-            let v = reading.map_or_else(
-                || here.clone(),
-                |r| rules::linked_verdict(&cell.inputs, r.milli),
-            );
+            let v = match reading {
+                None => here.clone(),
+                Some(r) => super::or_overflow(
+                    rules::linked_verdict(&cell.inputs, r.milli),
+                    "capacity cell",
+                )?,
+            };
             let i = &cell.inputs;
             let mut j = serde_json::json!({
                 "month": month, "state": v.state, "word": v.word, "shape": v.shape, "colour": v.colour,

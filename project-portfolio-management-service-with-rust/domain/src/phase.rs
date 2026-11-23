@@ -21,7 +21,6 @@
 //!   that basis would teach operators to misreport the phase, which
 //!   costs more than it buys.
 
-use crate::figures::Figure;
 use project_portfolio_management_matcher::PlanPhase;
 use serde::{Deserialize, Serialize};
 
@@ -128,8 +127,10 @@ pub struct PhaseDuration {
 /// and reports the visit count, because a plan that returned to
 /// Planning twice is a different story from one that sat there once for
 /// the same total.
+///
+/// `None` when a span or a phase's total does not fit an `i64`: the stored times are corrupt (RCA-IN-6).
 #[must_use]
-pub fn durations(transitions: &[TransitionFact], as_of_ms: i64) -> Vec<PhaseDuration> {
+pub fn durations(transitions: &[TransitionFact], as_of_ms: i64) -> Option<Vec<PhaseDuration>> {
     let mut ordered: Vec<TransitionFact> = transitions.to_vec();
     ordered.sort_by_key(|t| t.at_ms);
 
@@ -149,21 +150,26 @@ pub fn durations(transitions: &[TransitionFact], as_of_ms: i64) -> Vec<PhaseDura
             .get(index + 1)
             .map_or(as_of_ms, |next| next.at_ms)
             .max(entry.at_ms);
-        let span = end.total_sub(entry.at_ms);
+        let span = end.checked_sub(entry.at_ms)?;
         let slot = entry.to.ordinal();
-        rows[slot].ms = rows[slot].ms.total_add(span);
+        rows[slot].ms = rows[slot].ms.checked_add(span)?;
         rows[slot].visits += 1;
     }
 
     if let Some(last) = ordered.last() {
         rows[last.to.ordinal()].current = true;
     }
-    rows
+    Some(rows)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The durations of times that total within an `i64`.
+    fn durations_of(transitions: &[TransitionFact], as_of_ms: i64) -> Vec<PhaseDuration> {
+        durations(transitions, as_of_ms).expect("small times fit")
+    }
 
     /// One step forward is the only permitted advance.
     #[test]
@@ -266,7 +272,7 @@ mod tests {
     /// even at zero** — an empty phase is a finding, not a missing row.
     #[test]
     fn durations_report_every_phase() {
-        let rows = durations(
+        let rows = durations_of(
             &[t(PlanPhase::Initiating, 0), t(PlanPhase::Planning, 100)],
             300,
         );
@@ -285,7 +291,7 @@ mod tests {
     /// stories.
     #[test]
     fn revisits_are_counted_not_merged_away() {
-        let rows = durations(
+        let rows = durations_of(
             &[
                 t(PlanPhase::Planning, 0),
                 t(PlanPhase::Executing, 50),
@@ -302,16 +308,21 @@ mod tests {
     /// panic (security invariant 2).
     #[test]
     fn unsorted_and_skewed_input_is_total() {
-        let rows = durations(
+        let rows = durations_of(
             &[t(PlanPhase::Planning, 100), t(PlanPhase::Initiating, 0)],
             50,
         );
         assert!(rows.iter().all(|r| r.ms >= 0));
         // as_of before the last transition: the open interval is zero,
         // never negative.
-        let skewed = durations(&[t(PlanPhase::Executing, i64::MAX)], i64::MIN);
+        let skewed = durations(&[t(PlanPhase::Executing, i64::MAX)], i64::MIN).expect("fits");
         assert!(skewed.iter().all(|r| r.ms >= 0));
-        let empty = durations(&[], 0);
+        // Spans that do not total give no durations, not a bound.
+        assert!(
+            durations(&[t(PlanPhase::Executing, i64::MIN)], i64::MAX).is_none(),
+            "i64::MAX - i64::MIN"
+        );
+        let empty = durations(&[], 0).expect("fits");
         assert_eq!(empty.len(), 5);
         assert!(empty.iter().all(|r| r.ms == 0 && !r.current));
     }

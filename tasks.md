@@ -3829,6 +3829,56 @@ give a supplier evidence for the obligations SA-O1 to SA-O9, which no commit can
   (`src/deployment_id.rs`; unit tests and `tests/cli.rs`; `compose.yaml` defaults to `local-stack`; the deployment
   guide's table). **Not built:** the `deployment` table, the first-start write, the comparison, the rename task.
 
+## Mobile devices (MD-n, [spec/mobile-apps.md](spec/mobile-apps.md) MA-8), proposed 2026-11-23
+
+Why: the mobile apps must run on phones and tablets, and on managed and personal (BYOD) devices, from one build of each
+(MA-8). The first slice has phone layouts, a device-only token store and no permission beyond the network; the rest of MA-8
+is not built, and none of it has been tried on a managed device. The ids are `MD-n` so they do not clash with the spec's
+section ids `MA-n`. Each task says what it does not cover. Order: MD-7, MD-3, MD-1 and MD-2, then MD-4, MD-6, MD-5.
+
+- [ ] **MD-1 (M, iOS and Android) — Tablet layouts (MA-8.1).** On a tablet, the plans list and the plan screen sit side by
+  side (a list and its detail), in portrait and landscape and in a split-screen or multi-window layout (iPad Split View and
+  Slide Over; Android multi-window), and a resize keeps the selection and any text typed. **Acceptance:** at one tablet size
+  per platform, no content is clipped and focus order is right at the largest text size, in both orientations; the
+  accessibility audit of MA-4 passes at that size. **Not covered:** foldable hinge handling, desktop windowing modes, and
+  external keyboards beyond what the system gives.
+- [ ] **MD-2 (M, iOS and Android) — Managed app configuration (MA-8.3).** Read the server settings (the service's base URL,
+  the issuer URL, the client id, the redirect path) from the platform's managed app configuration (iOS
+  `com.apple.configuration.managed`; Android managed configurations, with an app restrictions file). A value so supplied is
+  shown as managed and cannot be edited; one not supplied stays editable; changing the configuration while the app runs is
+  taken up at the next launch. **Acceptance:** a unit test of the rule (managed wins and is locked; absent stays editable) on
+  each platform, and the key names written in each app's spec. **Not covered:** testing against a real management service
+  (MD-5), certificate or single-sign-on extensions pushed by a management service, and managed distribution (packaging).
+- [ ] **MD-3 (S) — Confirm and test the backup and sync exclusions (MA-8.4).** Read the Android `backup_rules.xml` and
+  `data_extraction_rules.xml` (their contents were not read when MA-8 was written) and confirm the token store and the
+  preferences are excluded from cloud backup and from device transfer. On iOS the token is a device-only Keychain item;
+  the server settings sit in ordinary preferences, which iOS backs up, so either keep them out of backups or change MA-8.4
+  to say the settings, which are not secrets, may be backed up (decide, and change the spec in the same commit).
+  **Acceptance:** a test on each platform fails if the token store gains a backup or sync path, and the spec and the code
+  agree. **Not covered:** a restore onto a second device.
+- [ ] **MD-4 (M) — UI tests on a phone size and a tablet size (MA-8.7).** The UI tests of MA-6 run on one phone size and
+  one tablet size per app, in both orientations, and run the accessibility audit on each. **Acceptance:** the run is a
+  command in each app's spec, and a failing audit at the tablet size fails it. **Not covered:** a CI job on a macOS or
+  Android-emulator runner (MA-7), and a device farm.
+- [ ] **MD-5 (S, needs a test device) — Try it on a managed device and a personal one (MA-8.2, MA-8.3, MA-8.5, MA-8.6).**
+  Enrol one test phone or tablet per platform in a management service, push the managed configuration, sign in, and
+  confirm the settings are locked; then revoke the session or refresh token at the identity provider and confirm the next
+  refresh signs the app out. On a personal device with no enrolment, install, sign in and confirm there is no permission
+  prompt. If the provider has a device-compliance policy, try one that requires it, and say what happened.
+  **Acceptance:** a dated record in `operations/` naming the devices, OS versions, management service, identity provider
+  and policy, and listing what was not tried. **Not covered:** any provider or management service not named in the record;
+  nothing in it is a claim about others.
+- [ ] **MD-6 (S, docs) — An operator's guide for managed and personal devices.** `operations/mobile-devices.md`: the
+  managed configuration keys of MD-2 and an example for each platform, how to distribute the apps privately, how to end a
+  person's access (revoke at the identity provider; the app holds only a token), what the service does not do (MA-8.6: it
+  does not tell a managed device from a personal one), and what a personal device may and may not be asked to do (MA-8.2).
+  **Acceptance:** linked from the operations index and `llms.json`; `generate-llms.py --check` passes. Depends on MD-2 for
+  the key names. **Not covered:** the steps of any particular management product.
+- [ ] **MD-7 (S) — State the minimum operating-system versions and device classes.** MA-8 leaves the minimums to each app.
+  Record the minimum iOS and iPadOS version and the minimum Android version, and the tablet classes the layouts target, in
+  each app's `spec/index.md`, equal to the build settings. **Acceptance:** each app's spec states them and a test or a
+  check fails if the build setting differs. **Not covered:** testing on every version in the range.
+
 ## Coverage work in progress (2026-11-20)
 
 - [ ] **CQ-coverage-95 — Raise service-workspace line coverage to at least 95%.** The authoritative database run is

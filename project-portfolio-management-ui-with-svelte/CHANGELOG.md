@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — four Lily packages (2026-11-23)
+
+- `svelte-headless` 0.11.0 to 0.13.1, `svelte-locale-translations` 0.5.0 to 0.6.0, `svelte-picker-bar` 0.7.0 to 0.10.0 and
+  `themes` 0.6.2 to 0.9.0. No source change was needed. The review records under `governance/` name pack version 0.6.0; each
+  pack still ships `"reviewed": false`, and no review of any pack is claimed. pnpm also tidied the release-age exclusions in
+  `pnpm-workspace.yaml`.
+- **Checked locally:** lint, `svelte-check`, 1,623 unit tests, and all 1,536 Playwright tests (chromium, mobile, every locale),
+  the last on a quiet machine: a first run alongside the database suites failed three axe tests on a missing `h1`, which pass
+  alone and in the full re-run, so I take it as load, not a regression.
+- **Not done:** the pinned Lily commit the mobile apps build against (`scripts/fetch-lily.sh`) is unchanged; the other Lily
+  packages (calendar, data grid, gantt, kanban, share picker) were already current.
+
 ### Added — Bengali, Indonesian and Vietnamese (WW-1.1, 2026-11-22)
 
 - Three locales, `bn-001`, `id-001` and `vi-001` (now 17), each with a page catalogue (`i18n-pages.<bn|id|vi>.ts`, loaded only

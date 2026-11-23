@@ -121,6 +121,18 @@ mod tests {
     }
 
     #[test]
+    fn a_short_pool_is_named_with_its_months_in_the_sentence() {
+        let r = Refusal::ConstraintPoolOver {
+            pool: "Data".to_string(),
+            months: vec!["2026-11".to_string(), "2026-12".to_string()],
+        };
+        assert_eq!(
+            r.message(),
+            "the Data pool is short of supply in 2026-11, 2026-12"
+        );
+    }
+
+    #[test]
     fn only_an_active_programme_in_executing_or_controlling_uses_a_place() {
         assert!(in_delivery(Some("executing"), "active"));
         assert!(in_delivery(Some("controlling"), "active"));

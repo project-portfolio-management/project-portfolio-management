@@ -117,6 +117,22 @@ pub fn is_approver(approver_ref: &str, sub: Option<&str>) -> bool {
 mod tests {
     use super::*;
 
+    #[test]
+    fn every_refusal_has_a_sentence() {
+        assert_eq!(
+            Refusal::NotPending("approved".to_string()).message(),
+            "the request is already approved; a decision is final"
+        );
+        assert_eq!(
+            Refusal::CommentRequired.message(),
+            "a rejection must say why (comment is required)"
+        );
+        assert_eq!(
+            Refusal::CommentTooLong.message(),
+            format!("comment: exceeds {MAX_TEXT} characters")
+        );
+    }
+
     const U1: &str = "3f2c6b7e-0000-4000-8000-000000000001";
     const U2: &str = "3f2c6b7e-0000-4000-8000-000000000002";
 

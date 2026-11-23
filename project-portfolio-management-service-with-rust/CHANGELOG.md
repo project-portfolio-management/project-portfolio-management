@@ -9,6 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — tests for four domain sentences and tokens (2026-11-23)
+
+- `start_control::Refusal::message` (the pool sentence), `approvals::Refusal::message`, `scheduling_rules::Rule::parse` and
+  `token`, and `ccpm_estimates::Rule::name` each have a test (11 uncovered lines before, by a database-free `make coverage`
+  run on `7cc13e33`: domain 96.28%, datetime 97.66%).
+- **Not done:** the other uncovered domain lines are readers of environment variables (`working_time`, `start_control::limit`,
+  `ccpm_estimates::configured_rule`, `deployment_moves::default_approver`), which fall back on a bad value (RCA-IN-4). They
+  are a separate slice (validate at start-up), not tested by setting the environment. The coverage figures were not
+  re-measured after these tests, and the service crate and the database suites were not measured.
+
 ### Changed — the tests run under cargo-nextest (2026-11-23)
 
 - `.config/nextest.toml` (profiles `default`, `ci` and `db`) and CI: the unit tests, the migration tests, the database-free

@@ -177,6 +177,12 @@ pub fn problems(duration: Option<i64>, aggressive: Option<i64>, safe: Option<i64
 mod tests {
     use super::*;
 
+    #[test]
+    fn each_rule_has_its_setting_name() {
+        assert_eq!(Rule::ExplicitOnly.name(), "explicit_only");
+        assert_eq!(Rule::HalfOfSafe.name(), "half_of_safe");
+    }
+
     type Seen = (Option<(i64, Source)>, Option<(i64, Source)>, State);
 
     fn fig(r: &Resolved) -> Seen {

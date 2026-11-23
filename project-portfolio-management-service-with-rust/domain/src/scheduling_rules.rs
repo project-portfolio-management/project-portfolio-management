@@ -271,6 +271,15 @@ pub fn complete(
 mod tests {
     use super::*;
 
+    #[test]
+    fn a_rule_parses_from_its_token_and_back() {
+        for token in ["fixed_units", "fixed_duration", "fixed_work"] {
+            assert_eq!(Rule::parse(token).map(Rule::token), Some(token));
+        }
+        assert_eq!(Rule::parse("fixed_effort"), None);
+        assert_eq!(Rule::parse(""), None);
+    }
+
     fn t(d: i64, u: i64, w: i64) -> Triple {
         Triple {
             duration_days: d,

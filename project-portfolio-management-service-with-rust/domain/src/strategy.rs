@@ -2,7 +2,6 @@
 //! the idea funnel tokens, scenario evaluation arithmetic, OKR weight
 //! bounds, and benefit/ROI math — DB-free and unit-tested.
 
-use crate::figures::Figure;
 use uuid::Uuid;
 
 /// Idea funnel statuses (PPM-2).
@@ -86,14 +85,15 @@ pub struct Evaluation {
 
 /// Evaluate a candidate portfolio: sum per-currency spend, exposure,
 /// and alignment; check the budget cap (same-currency only) and the
-/// must-include list. Pure arithmetic over prepared facts.
+/// must-include list. Pure arithmetic over prepared facts. `None` when a total does not fit its type: the stored amounts
+/// are corrupt (RCA-IN-6), so there is no evaluation, not a bound.
 #[must_use]
-pub fn evaluate_scenario(members: &[MemberFact], constraints: &Constraints) -> Evaluation {
+pub fn evaluate_scenario(members: &[MemberFact], constraints: &Constraints) -> Option<Evaluation> {
     let mut planned: Vec<(String, i64)> = Vec::new();
     for member in members {
         for (currency, amount) in &member.planned_by_currency {
             match planned.iter_mut().find(|(c, _)| c == currency) {
-                Some((_, total)) => *total = total.total_add(*amount),
+                Some((_, total)) => *total = total.checked_add(*amount)?,
                 None => planned.push((currency.clone(), *amount)),
             }
         }
@@ -120,12 +120,16 @@ pub fn evaluate_scenario(members: &[MemberFact], constraints: &Constraints) -> E
             violations.push(format!("must-include member {required} is missing"));
         }
     }
-    Evaluation {
+    Some(Evaluation {
         planned_by_currency: planned,
-        total_exposure: members.iter().map(|m| m.open_exposure).sum(),
-        total_alignment: members.iter().map(|m| m.alignment_weight).sum(),
+        total_exposure: members
+            .iter()
+            .try_fold(0_i32, |t, m| t.checked_add(m.open_exposure))?,
+        total_alignment: members
+            .iter()
+            .try_fold(0_i32, |t, m| t.checked_add(m.alignment_weight))?,
         violations,
-    }
+    })
 }
 
 /// One candidate's cost/score facts for the deterministic generator
@@ -194,12 +198,14 @@ pub struct GenerateRationale {
 /// else, so the result depends only on the **set** of facts passed
 /// in, never on the caller's iteration order — same inputs always
 /// produce byte-identical output.
+///
+/// `None` when the remaining budget does not fit an `i64`: the stored amounts are corrupt (RCA-IN-6).
 #[must_use]
 pub fn generate_scenario(
     mut candidates: Vec<GenerateCandidateFact>,
     budget_cap_minor: Option<i64>,
     must_include: &[Uuid],
-) -> Vec<GenerateRationale> {
+) -> Option<Vec<GenerateRationale>> {
     candidates.sort_by_key(|c| c.pid);
     let must_include_set: std::collections::BTreeSet<Uuid> = must_include.iter().copied().collect();
     let known: std::collections::BTreeSet<Uuid> = candidates.iter().map(|c| c.pid).collect();
@@ -233,7 +239,10 @@ pub fn generate_scenario(
             cost_minor: c.cost_minor,
             reason: None,
         });
-        remaining_cap = remaining_cap.map(|cap| cap.total_sub(c.cost_minor.unwrap_or(0)));
+        remaining_cap = match remaining_cap {
+            Some(cap) => Some(cap.checked_sub(c.cost_minor.unwrap_or(0))?),
+            None => None,
+        };
     }
 
     // The rest: no-score and foreign-currency exclude outright; the
@@ -300,7 +309,10 @@ pub fn generate_scenario(
                 cost_minor: c.cost_minor,
                 reason: None,
             });
-            remaining_cap = remaining_cap.map(|cap| cap - cost);
+            remaining_cap = match remaining_cap {
+                Some(cap) => Some(cap.checked_sub(cost)?),
+                None => None,
+            };
         } else {
             rationale.push(GenerateRationale {
                 pid: c.pid,
@@ -312,7 +324,7 @@ pub fn generate_scenario(
         }
     }
 
-    rationale
+    Some(rationale)
 }
 
 /// One point of the efficient frontier: what the generator selects at one budget cap.
@@ -334,38 +346,40 @@ pub struct FrontierPoint {
 }
 
 /// Run [`generate_scenario`] once for each cap (sorted, duplicates dropped) and total the value
-/// and cost of what it selects. Each point is exactly the single-cap run's selection.
+/// and cost of what it selects. Each point is exactly the single-cap run's selection. `None` when a figure does not
+/// fit (see [`generate_scenario`]).
 #[must_use]
 pub fn frontier(
     candidates: &[GenerateCandidateFact],
     caps: &[i64],
     must_include: &[Uuid],
-) -> Vec<FrontierPoint> {
+) -> Option<Vec<FrontierPoint>> {
     let mut caps = caps.to_vec();
     caps.sort_unstable();
     caps.dedup();
     let mut best = f64::NEG_INFINITY;
     caps.into_iter()
         .map(|cap| {
-            let rationale = generate_scenario(candidates.to_vec(), Some(cap), must_include);
-            let chosen = rationale.iter().filter(|r| r.included);
-            let (value, cost_minor, included) = chosen.fold((0.0, 0_i64, 0), |(v, c, n), r| {
-                (
-                    v + r.score.unwrap_or(0.0),
-                    c.total_add(r.cost_minor.unwrap_or(0)),
-                    n + 1,
-                )
-            });
+            let rationale = generate_scenario(candidates.to_vec(), Some(cap), must_include)?;
+            let mut chosen = rationale.iter().filter(|r| r.included);
+            let (value, cost_minor, included) =
+                chosen.try_fold((0.0, 0_i64, 0), |(v, c, n), r| {
+                    Some((
+                        v + r.score.unwrap_or(0.0),
+                        c.checked_add(r.cost_minor.unwrap_or(0))?,
+                        n + 1,
+                    ))
+                })?;
             let dominated = value <= best;
             best = best.max(value);
-            FrontierPoint {
+            Some(FrontierPoint {
                 budget_cap_minor: cap,
                 value,
                 cost_minor,
                 included,
                 dominated,
                 rationale,
-            }
+            })
         })
         .collect()
 }
@@ -385,6 +399,41 @@ pub fn roi_basis_points(realized_minor: i64, cost_minor: i64) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The evaluation of small amounts, which always fits.
+    fn evaluate_scenario(members: &[MemberFact], constraints: &Constraints) -> Evaluation {
+        super::evaluate_scenario(members, constraints).expect("small amounts fit")
+    }
+
+    /// The selection from small amounts, which always fits.
+    fn generate_scenario(
+        candidates: Vec<GenerateCandidateFact>,
+        budget_cap_minor: Option<i64>,
+        must_include: &[Uuid],
+    ) -> Vec<GenerateRationale> {
+        super::generate_scenario(candidates, budget_cap_minor, must_include)
+            .expect("small amounts fit")
+    }
+
+    /// RCA-IN-6: amounts that do not total give no evaluation and no selection; never a bound.
+    #[test]
+    fn amounts_that_overflow_give_no_evaluation() {
+        let constraints = Constraints {
+            budget_cap_minor: None,
+            currency: None,
+            must_include: vec![],
+        };
+        assert!(
+            super::evaluate_scenario(
+                &[
+                    member(1, &[("GBP", i64::MAX)], 0, 0),
+                    member(2, &[("GBP", 1)], 0, 0)
+                ],
+                &constraints
+            )
+            .is_none()
+        );
+    }
 
     fn pid(n: u128) -> Uuid {
         Uuid::from_u128(n)
@@ -601,7 +650,7 @@ mod tests {
     #[test]
     fn the_frontier_rises_with_the_cap_and_each_point_is_a_single_cap_run() {
         let caps = [60_000, 0, 10_000, 30_000, 10_000];
-        let points = frontier(&fixture(), &caps, &[]);
+        let points = frontier(&fixture(), &caps, &[]).expect("small amounts fit");
         let at: Vec<i64> = points.iter().map(|p| p.budget_cap_minor).collect();
         assert_eq!(at, vec![0, 10_000, 30_000, 60_000], "sorted, deduplicated");
         let values: Vec<f64> = points.iter().map(|p| p.value).collect();
@@ -618,7 +667,7 @@ mod tests {
 
     #[test]
     fn a_point_that_buys_nothing_more_is_marked_dominated() {
-        let points = frontier(&fixture(), &[60_000, 600_000], &[]);
+        let points = frontier(&fixture(), &[60_000, 600_000], &[]).expect("small amounts fit");
         assert!(!points[0].dominated);
         assert!(points[1].dominated, "ten times the money, the same value");
         assert_eq!(points[0].value, points[1].value);

@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — scenario sums report no figure instead of a bound (2026-11-23)
+
+- `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `strategy::evaluate_scenario`, `generate_scenario` and `frontier`
+  return `Option`, `None` when a planned total, the exposure or alignment total, or the remaining budget does not fit its
+  type; the scenario evaluate, generate, frontier and compare routes answer `500` through `or_overflow`. The remaining
+  budget was a plain `cap - cost`, and the exposure and alignment totals were `Iterator::sum`, both of which now panic on
+  overflow in release (`overflow-checks`); they are `checked_sub` and `try_fold(checked_add)`. Test:
+  `amounts_that_overflow_give_no_evaluation`.
+- Not done: `tba` (about 25 sites), `capacity_heatmap`, `phase`, `viability`, `engineering`, `product_flow` and team
+  utilization still use `Figure`. `Iterator::sum` elsewhere still panics on overflow in release until it is banned
+  and replaced (RCA-AGG-1). The `500` paths are untested end to end (database-gated).
+
 ### Changed — benefit, value and earned-value sums report no figure instead of a bound (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `benefit_validation::group` and `value::roi` return `Option`

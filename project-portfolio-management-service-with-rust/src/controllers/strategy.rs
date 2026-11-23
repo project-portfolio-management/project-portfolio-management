@@ -6,7 +6,6 @@
 
 use super::conflict;
 use super::unprocessable;
-use crate::figures::Figure;
 use crate::prelude::*;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -513,7 +512,10 @@ async fn plan_member_fact(
     let mut planned: Vec<(String, i64)> = Vec::new();
     for line in &budgets {
         match planned.iter_mut().find(|(c, _)| *c == line.currency) {
-            Some((_, total)) => *total = total.total_add(line.planned_minor),
+            Some((_, total)) => {
+                *total =
+                    super::or_overflow(total.checked_add(line.planned_minor), "planned amounts")?;
+            }
             None => planned.push((line.currency.clone(), line.planned_minor)),
         }
         inputs_read.push(rules::InputRead {
@@ -641,14 +643,17 @@ pub(crate) async fn evaluate(
             .into_iter()
             .filter(|p| !hidden.contains(p))
             .collect();
-    let evaluation = rules::evaluate_scenario(
-        &members,
-        &rules::Constraints {
-            budget_cap_minor: scenario.budget_cap_minor,
-            currency: scenario.currency.clone(),
-            must_include,
-        },
-    );
+    let evaluation = super::or_overflow(
+        rules::evaluate_scenario(
+            &members,
+            &rules::Constraints {
+                budget_cap_minor: scenario.budget_cap_minor,
+                currency: scenario.currency.clone(),
+                must_include,
+            },
+        ),
+        "scenario planned amounts",
+    )?;
     Ok(EvaluationResult {
         evaluation,
         as_of,
@@ -708,7 +713,7 @@ async fn compare_scenarios(
     currencies.dedup();
     let planned_delta: Vec<serde_json::Value> = currencies
         .into_iter()
-        .map(|currency| {
+        .map(|currency| -> Result<serde_json::Value> {
             let of = |eval: &rules::Evaluation| {
                 eval.planned_by_currency
                     .iter()
@@ -716,14 +721,14 @@ async fn compare_scenarios(
                     .map_or(0, |(_, minor)| *minor)
             };
             let (a_minor, b_minor) = (of(a_eval), of(b_eval));
-            serde_json::json!({
+            Ok(serde_json::json!({
                 "currency": currency,
                 "a_minor": a_minor,
                 "b_minor": b_minor,
-                "delta_minor": b_minor.total_sub(a_minor),
-            })
+                "delta_minor": super::or_overflow(b_minor.checked_sub(a_minor), "planned delta")?,
+            }))
         })
-        .collect();
+        .collect::<Result<_>>()?;
     format::json(serde_json::json!({
         "a": { "pid": a_side.pid, "name": a_side.name, "status": a_side.status,
                "feasible": a_eval.violations.is_empty(), "evaluation": a_eval,
@@ -955,8 +960,10 @@ async fn generate_scenario(
         })
         .collect();
 
-    let rationale =
-        rules::generate_scenario(candidates, payload.budget_cap_minor, &payload.must_include);
+    let rationale = super::or_overflow(
+        rules::generate_scenario(candidates, payload.budget_cap_minor, &payload.must_include),
+        "scenario candidate costs",
+    )?;
     let member_pids: Vec<Uuid> = rationale
         .iter()
         .filter(|r| r.included)
@@ -1094,7 +1101,10 @@ async fn scenario_frontier(
     if caps.is_empty() {
         return Err(unprocessable("caps: at least one"));
     }
-    let points = rules::frontier(&candidates, &caps, &must_include);
+    let points = super::or_overflow(
+        rules::frontier(&candidates, &caps, &must_include),
+        "frontier candidate costs",
+    )?;
     format::json(serde_json::json!({
         "currency": q.currency,
         "value": "sum of the Smart Scores of the included plans",

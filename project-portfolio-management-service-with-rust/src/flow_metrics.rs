@@ -135,7 +135,7 @@ pub async fn refresh_with(
             continue;
         }
         let paired =
-            crate::controllers::tba::analyze_board(&rows, &transitions, &classes, as_of_ms);
+            crate::controllers::tba::analyze_board(&rows, &transitions, &classes, as_of_ms)?;
         let analyses: Vec<tba::TaskAnalysis> = paired.into_iter().map(|(_, a)| a).collect();
         let rollup = tba::plan(&analyses);
         let cycle_times: Vec<i64> = analyses

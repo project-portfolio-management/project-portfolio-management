@@ -1,7 +1,6 @@
 //! Monte-Carlo delivery forecasting (spec §15 TBA-11).
 
 use super::{Serialize, percentile};
-use crate::figures::Figure;
 
 /// Calendar days in a forecasting period. A week is the conventional unit:
 /// shorter buckets are dominated by weekday effects, longer ones give
@@ -72,11 +71,13 @@ impl Rng {
 /// failure: three approvals counted as two). The window therefore ends one
 /// millisecond after `now_ms`, which puts everything recorded up to and
 /// including `now_ms` inside it while leaving the number of periods unchanged.
+///
+/// `None` when the window does not fit an `i64` (a period count or length far past what the routes allow).
 #[must_use]
-pub fn history_window(now_ms: i64, periods: usize, period_ms: i64) -> (i64, i64) {
-    let to_ms = now_ms.total_add(1);
-    let from_ms = to_ms.total_sub(i64::try_from(periods).unwrap_or(0).total_mul(period_ms));
-    (from_ms, to_ms)
+pub fn history_window(now_ms: i64, periods: usize, period_ms: i64) -> Option<(i64, i64)> {
+    let to_ms = now_ms.checked_add(1)?;
+    let from_ms = to_ms.checked_sub(i64::try_from(periods).ok()?.checked_mul(period_ms)?)?;
+    Some((from_ms, to_ms))
 }
 
 /// Bucket completion instants into fixed periods, oldest first.
@@ -93,15 +94,23 @@ pub fn throughput_history(
     if period_ms <= 0 || to_ms <= from_ms {
         return Vec::new();
     }
-    let span = to_ms.total_sub(from_ms);
+    // A span or a count of periods past an `i64` has no history to report (the figures are out of range).
+    let Some(span) = to_ms.checked_sub(from_ms) else {
+        return Vec::new();
+    };
     // A partial trailing period would understate throughput, so only
     // whole periods are counted.
     let periods = usize::try_from(span / period_ms).unwrap_or(0);
+    let Some(whole_end) = i64::try_from(periods)
+        .ok()
+        .and_then(|p| p.checked_mul(period_ms))
+        .and_then(|len| from_ms.checked_add(len))
+    else {
+        return Vec::new();
+    };
     let mut buckets = vec![0usize; periods];
     for at in completed_ms {
-        if *at < from_ms
-            || *at >= from_ms.total_add(i64::try_from(periods).unwrap_or(0).total_mul(period_ms))
-        {
+        if *at < from_ms || *at >= whole_end {
             continue;
         }
         let index = usize::try_from((at - from_ms) / period_ms).unwrap_or(0);
@@ -221,7 +230,13 @@ pub fn forecast_batch(
         let mut done = 0usize;
         let mut periods = 0usize;
         while done < items && periods < MAX_PERIODS_PER_TRIAL {
-            done = done.total_add(history[rng.index(history.len())]);
+            let Some(next) = done.checked_add(history[rng.index(history.len())]) else {
+                return BatchForecast {
+                    reason: Some("the throughput history is out of range".to_string()),
+                    ..base
+                };
+            };
+            done = next;
             periods += 1;
         }
         if done < items {
@@ -286,9 +301,12 @@ pub fn forecast_items(
     period_days: i64,
     seed: u64,
 ) -> ItemsForecast {
+    let days = i64::try_from(periods)
+        .ok()
+        .and_then(|p| p.checked_mul(period_days));
     let base = ItemsForecast {
         periods,
-        days: i64::try_from(periods).unwrap_or(0).total_mul(period_days),
+        days: days.unwrap_or(0),
         trials,
         history_periods: history.len(),
         median_items: None,
@@ -298,6 +316,12 @@ pub fn forecast_items(
         note: "at_least_items is the 15th percentile: for `how many`, the                conservative end is the low one",
     };
 
+    if days.is_none() {
+        return ItemsForecast {
+            reason: Some("periods and period_days are out of range".to_string()),
+            ..base
+        };
+    }
     if !(1..=MAX_TRIALS).contains(&trials) {
         return ItemsForecast {
             reason: Some(format!("trials must be from 1 to {MAX_TRIALS}")),
@@ -327,7 +351,13 @@ pub fn forecast_items(
     for _ in 0..trials {
         let mut done = 0usize;
         for _ in 0..periods {
-            done = done.total_add(history[rng.index(history.len())]);
+            let Some(next) = done.checked_add(history[rng.index(history.len())]) else {
+                return ItemsForecast {
+                    reason: Some("the throughput history is out of range".to_string()),
+                    ..base
+                };
+            };
+            done = next;
         }
         results.push(i64::try_from(done).unwrap_or(i64::MAX));
     }

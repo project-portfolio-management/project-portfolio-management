@@ -905,7 +905,7 @@ fn an_event_stamped_at_now_is_inside_the_history_window() {
     let now = at(100);
     // The last of three completions is stamped in the same millisecond as "now".
     let completed = vec![now - 3 * DAY_MS, now - DAY_MS, now];
-    let (from, to) = history_window(now, 6, week);
+    let (from, to) = history_window(now, 6, week).expect("a small window fits");
     let history = throughput_history(&completed, from, to, week);
     assert_eq!(history.len(), 6, "the number of periods is unchanged");
     assert_eq!(
@@ -1045,6 +1045,46 @@ fn an_items_forecast_refuses_rather_than_guessing() {
         forecast_items(&history, MAX_PERIODS_PER_TRIAL + 1, 100, 7, 1)
             .reason
             .is_some()
+    );
+}
+
+#[test]
+fn a_window_past_an_i64_is_no_window_and_no_history() {
+    assert!(history_window(i64::MAX, 1, 1).is_none());
+    assert!(history_window(0, usize::MAX, 1).is_none());
+    assert!(history_window(0, 2, i64::MAX).is_none());
+    assert!(throughput_history(&[0], i64::MIN, i64::MAX, 1).is_empty());
+}
+
+#[test]
+fn stored_times_outside_the_range_are_refused() {
+    let clock = TaskClock {
+        created_ms: 0,
+        done_ms: None,
+    };
+    assert!(check_times(&[], clock, 1_000).is_ok());
+    assert!(check_times(&[], clock, MAX_EPOCH_MS + 1).is_err());
+    assert!(
+        check_times(
+            &[],
+            TaskClock {
+                created_ms: -1,
+                done_ms: None
+            },
+            0
+        )
+        .is_err()
+    );
+    assert!(
+        check_times(
+            &[],
+            TaskClock {
+                created_ms: 0,
+                done_ms: Some(MAX_EPOCH_MS + 1)
+            },
+            0
+        )
+        .is_err()
     );
 }
 

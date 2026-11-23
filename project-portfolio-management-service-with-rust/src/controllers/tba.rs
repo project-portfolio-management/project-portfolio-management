@@ -14,7 +14,6 @@
 //! (§12.4): handoff counts describe an item's journey, and there is no
 //! per-assignee cycle time by design.
 
-use crate::figures::Figure;
 use crate::prelude::*;
 use uuid::Uuid;
 
@@ -155,7 +154,7 @@ pub(crate) fn analyze_board(
     transitions: &[task_transitions::Model],
     classes: &std::collections::BTreeMap<String, String>,
     as_of_ms: i64,
-) -> Vec<(tasks::Model, tba::TaskAnalysis)> {
+) -> Result<Vec<(tasks::Model, tba::TaskAnalysis)>> {
     let mut per_task: std::collections::HashMap<Uuid, Vec<tba::Transition>> =
         std::collections::HashMap::new();
     for row in transitions {
@@ -169,8 +168,10 @@ pub(crate) fn analyze_board(
         .map(|task| {
             let empty: Vec<tba::Transition> = Vec::new();
             let its = per_task.get(&task.pid).unwrap_or(&empty);
+            tba::check_times(its, clock_of(task), as_of_ms)
+                .map_err(|reason| Error::Message(reason.to_string()))?;
             let analysis = tba::analyze(its, clock_of(task), classes, as_of_ms);
-            (task.clone(), analysis)
+            Ok((task.clone(), analysis))
         })
         .collect()
 }
@@ -236,6 +237,8 @@ async fn task_time_analysis(
     let rows = task_transitions_of(&ctx, task.pid).await?;
     let transitions: Vec<tba::Transition> = rows.iter().map(tba::to_transition).collect();
     let classes = classes_for(&ctx, item.pid).await;
+    tba::check_times(&transitions, clock_of(&task), now.timestamp_millis())
+        .map_err(|reason| Error::Message(reason.to_string()))?;
     let analysis = tba::analyze(
         &transitions,
         clock_of(&task),
@@ -309,7 +312,7 @@ async fn plan_time_analysis(
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (rows, transitions) = load_board(&ctx, item.pid, sprint).await?;
     let classes = classes_for(&ctx, item.pid).await;
-    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis());
+    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis())?;
     let analyses: Vec<tba::TaskAnalysis> = paired.iter().map(|(_, a)| a.clone()).collect();
     let summary = tba::plan(&analyses);
 
@@ -348,7 +351,7 @@ async fn plan_constraints(
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (rows, transitions) = load_board(&ctx, item.pid, sprint).await?;
     let classes = classes_for(&ctx, item.pid).await;
-    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis());
+    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis())?;
     let analyses: Vec<tba::TaskAnalysis> = paired.iter().map(|(_, a)| a.clone()).collect();
     let summary = tba::plan(&analyses);
     let findings = tba::constraints(&analyses, &summary);
@@ -382,7 +385,7 @@ async fn aging_wip(
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (rows, transitions) = load_board(&ctx, item.pid, sprint).await?;
     let classes = classes_for(&ctx, item.pid).await;
-    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis());
+    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis())?;
 
     let cycle_times: Vec<i64> = paired
         .iter()
@@ -445,7 +448,7 @@ async fn plan_flow(
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (rows, transitions) = load_board(&ctx, item.pid, None).await?;
     let classes = classes_for(&ctx, item.pid).await;
-    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis());
+    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis())?;
 
     let arrivals = rows.iter().filter(|t| t.created_at >= since).count();
     let finished_in_window: Vec<&(tasks::Model, tba::TaskAnalysis)> = paired
@@ -558,7 +561,11 @@ async fn cumulative_flow(
         .collect();
 
     let to_ms = now.timestamp_millis();
-    let from_ms = to_ms.total_sub(days.total_mul(tba::DAY_MS));
+    let from_ms = super::or_overflow(
+        days.checked_mul(tba::DAY_MS)
+            .and_then(|window| to_ms.checked_sub(window)),
+        "cumulative flow window",
+    )?;
     let samples = tba::cumulative_flow(&histories, from_ms, to_ms, tba::DAY_MS);
 
     format::json(serde_json::json!({
@@ -671,7 +678,7 @@ async fn rollup(
         if rows.len() as u64 >= MAX_TASKS {
             tasks_capped_plans += 1;
         }
-        let paired = analyze_board(&rows, &transitions, &classes, as_of_ms);
+        let paired = analyze_board(&rows, &transitions, &classes, as_of_ms)?;
         let analyses: Vec<tba::TaskAnalysis> = paired.into_iter().map(|(_, a)| a).collect();
         let summary = tba::plan(&analyses);
         let cycle_times: Vec<i64> = analyses
@@ -789,15 +796,18 @@ async fn forecast(
     let item = super::governance::find_item(&ctx, &pid).await?;
     let (rows, transitions) = load_board(&ctx, item.pid, None).await?;
     let classes = classes_for(&ctx, item.pid).await;
-    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis());
+    let paired = analyze_board(&rows, &transitions, &classes, now.timestamp_millis())?;
 
     // Completion instants, from the tasks' own `done_at` stamps.
     let completed_ms: Vec<i64> = rows
         .iter()
         .filter_map(|task| task.done_at.map(|at| at.timestamp_millis()))
         .collect();
-    let period_ms = period_days.total_mul(tba::DAY_MS);
-    let (from_ms, to_ms) = tba::history_window(now.timestamp_millis(), history_periods, period_ms);
+    let period_ms = super::or_overflow(period_days.checked_mul(tba::DAY_MS), "period length")?;
+    let (from_ms, to_ms) = super::or_overflow(
+        tba::history_window(now.timestamp_millis(), history_periods, period_ms),
+        "history window",
+    )?;
     let history = tba::throughput_history(&completed_ms, from_ms, to_ms, period_ms);
 
     // What is left to do, so the default question is the useful one.

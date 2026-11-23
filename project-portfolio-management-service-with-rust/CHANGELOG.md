@@ -9,6 +9,26 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — time-analysis stored times are range-checked, and its sums are proven (2026-11-23)
+
+- `spec/rust-checked-arithmetic` (RCA-IN-1, RCA-EXC-2, RCA-DECL-6): `tba::check_times` refuses a board whose stored
+  times (task created and done, each transition, the as-of time) fall outside 1970 to 2100 (`MAX_EPOCH_MS`), with a `500`
+  from `analyze_board` and the single-task analysis; with that, the 20 `Figure` sums and differences of spans inside `tba`
+  are plain operators, each commented with the proof. `history_window` returns `Option`, `throughput_history` returns
+  empty for a window past an `i64`, the batch and items forecasts return a `reason` for an out-of-range history or period
+  count, and the cumulative-flow, period and history-window arithmetic in the `tba` and governance controllers, and the
+  per-person absence minutes in the effort controller (`Iterator::sum` before, which panics on overflow in release), use
+  `checked_*` and answer `500`.
+- **Behaviour change:** a task or transition stamped outside 1970 to 2100 now makes the time-analysis routes and the
+  flow-metrics refresh answer `500` (the refresh fails as a whole, not for that board alone). Before, such a value was
+  summed and displayed.
+- Not done: the plain operators are justified by a comment, not by an `#[expect]` (the `arithmetic_side_effects` lint is not
+  enabled), so a wrong proof would show only as the release overflow panic. `.max(0)` and `clamp` on spans from
+  out-of-order stored times (a transition before creation reads as zero, not as corrupt) remain. About 20 `Figure` sites
+  remain: the oversight and insights benefit sums, tolerances, `phase`, `capacity_heatmap`, `viability`, team
+  utilization, and the unsigned count differences (FIG-2). Only the range check's unit tests exist; the `500` is untested end
+  to end (database-gated).
+
 ### Changed — scenario sums report no figure instead of a bound (2026-11-23)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `strategy::evaluate_scenario`, `generate_scenario` and `frontier`

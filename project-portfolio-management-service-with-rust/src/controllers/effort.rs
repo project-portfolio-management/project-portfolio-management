@@ -19,7 +19,6 @@
 //! ratio.
 
 use super::unprocessable;
-use crate::figures::Figure;
 use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
@@ -431,23 +430,25 @@ async fn utilization(
     let minutes_per_day = config.as_ref().map_or(0, |c| i64::from(c.minutes_per_day));
     let facts: Vec<rules::CapacityFact> = per_person
         .iter()
-        .map(|(actor, minutes)| {
-            let non_working: i64 = absences
-                .iter()
-                .filter(|a| &a.person_ref == actor)
-                .map(|a| {
-                    let days = (a.ends_on - a.starts_on).num_days() + 1;
-                    days.max(0).total_mul(minutes_per_day)
-                })
-                .sum();
-            rules::CapacityFact {
+        .map(|(actor, minutes)| -> Result<rules::CapacityFact> {
+            let mut non_working: i64 = 0;
+            for a in absences.iter().filter(|a| &a.person_ref == actor) {
+                let days = (a.ends_on - a.starts_on).num_days() + 1;
+                let absent = super::or_overflow(
+                    days.max(0).checked_mul(minutes_per_day),
+                    "absence minutes",
+                )?;
+                non_working =
+                    super::or_overflow(non_working.checked_add(absent), "absence minutes")?;
+            }
+            Ok(rules::CapacityFact {
                 actor_ref: actor.clone(),
                 declared_minutes: declared,
                 non_working_minutes: non_working.min(declared),
                 effort_minutes: *minutes,
-            }
+            })
         })
-        .collect();
+        .collect::<Result<_>>()?;
 
     // WW-1.6: both thresholds are the deployment's; the answer says which were used.
     let floor = rules::floor_minutes();

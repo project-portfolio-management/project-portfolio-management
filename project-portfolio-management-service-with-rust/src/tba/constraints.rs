@@ -4,7 +4,6 @@ use super::{
     BACKLOG_STATUS, BLOCKED_STATUS, BTreeMap, CATEGORY_VALUE_ADDING, PlanAnalysis, Serialize,
     TaskAnalysis, UNRECORDED_REASON, as_days,
 };
-use crate::figures::Figure;
 
 /// The share of non-value-adding time above which a status is reported
 /// as dominating it rather than merely contributing.
@@ -37,7 +36,7 @@ fn status_findings(summary: &PlanAnalysis) -> Vec<Finding> {
         .by_status
         .iter()
         .filter(|s| s.category != CATEGORY_VALUE_ADDING)
-        .fold(0i64, |a, s| a.total_add(s.ms));
+        .fold(0i64, |a, s| a + s.ms); // RCA-EXC-2: spans are bounded by `MAX_EPOCH_MS`
     summary
         .by_status
         .iter()
@@ -75,15 +74,13 @@ fn status_findings(summary: &PlanAnalysis) -> Vec<Finding> {
 pub fn constraints(analyses: &[TaskAnalysis], summary: &PlanAnalysis) -> Vec<Finding> {
     let mut findings = status_findings(summary);
 
-    let blocked = analyses
-        .iter()
-        .fold(0i64, |a, x| a.total_add(x.blocked_time_ms));
+    let blocked = analyses.iter().fold(0i64, |a, x| a + x.blocked_time_ms); // RCA-EXC-2: bounded by `MAX_EPOCH_MS`
     if blocked > 0 {
         let mut by_reason: BTreeMap<&str, i64> = BTreeMap::new();
         for analysis in analyses {
             for (reason, ms) in &analysis.blocked_by_reason {
                 let slot = by_reason.entry(reason.as_str()).or_insert(0);
-                *slot = slot.total_add(*ms);
+                *slot += *ms; // RCA-EXC-2: bounded by `MAX_EPOCH_MS`
             }
         }
         let reasons = by_reason
@@ -106,9 +103,7 @@ pub fn constraints(analyses: &[TaskAnalysis], summary: &PlanAnalysis) -> Vec<Fin
         });
     }
 
-    let dwell = analyses
-        .iter()
-        .fold(0i64, |a, x| a.total_add(x.queue_time_ms));
+    let dwell = analyses.iter().fold(0i64, |a, x| a + x.queue_time_ms); // RCA-EXC-2: bounded by `MAX_EPOCH_MS`
     if dwell > 0 {
         findings.push(Finding {
             rule: "backlog_dwell",

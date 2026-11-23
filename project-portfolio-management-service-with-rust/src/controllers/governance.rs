@@ -5,7 +5,6 @@
 //! [`crate::governance`]; nothing here ever feeds the matcher (the §8
 //! partition rule).
 
-use crate::figures::Figure;
 use crate::prelude::*;
 use axa::error::ErrorDetail;
 use axum::http::StatusCode;
@@ -616,9 +615,12 @@ async fn intake_forecast(
     }
 
     let now = crate::datetime::Timestamp::now();
-    let period_ms = period_days.total_mul(crate::tba::DAY_MS);
-    let (from_ms, to_ms) =
-        crate::tba::history_window(now.timestamp_millis(), history_periods, period_ms);
+    let period_ms =
+        super::or_overflow(period_days.checked_mul(crate::tba::DAY_MS), "period length")?;
+    let (from_ms, to_ms) = super::or_overflow(
+        crate::tba::history_window(now.timestamp_millis(), history_periods, period_ms),
+        "history window",
+    )?;
 
     // A proposal that became a hidden plan is not part of the intake the caller may see.
     let visible = scope.keep(

@@ -62,7 +62,8 @@ pub fn distribution(values: &[i64]) -> Option<Distribution> {
     let mut sorted = values.to_vec();
     sorted.sort_unstable();
     let n = sorted.len();
-    let sum = sorted.iter().fold(0i64, |a, v| a.total_add(*v));
+    // RCA-EXC-2: the values are spans, each bounded by `MAX_EPOCH_MS`.
+    let sum = sorted.iter().fold(0i64, |a, v| a + *v);
     #[expect(clippy::cast_possible_wrap)]
     let mean = sum / (n as i64).max(1);
     let at = |p: f64| percentile(&sorted, p).unwrap_or(0);
@@ -194,12 +195,10 @@ pub fn plan(analyses: &[TaskAnalysis]) -> PlanAnalysis {
     let cycle_times: Vec<i64> = finished.iter().filter_map(|a| a.cycle_time_ms).collect();
     let lead_times: Vec<i64> = finished.iter().map(|a| a.lead_time_ms).collect();
 
-    let total_work = analyses
-        .iter()
-        .fold(0i64, |a, x| a.total_add(x.work_time_ms));
+    let total_work = analyses.iter().fold(0i64, |a, x| a + x.work_time_ms); // RCA-EXC-2: bounded by `MAX_EPOCH_MS`
     let total_cycle = analyses
         .iter()
-        .fold(0i64, |a, x| a.total_add(x.cycle_time_ms.unwrap_or(0)));
+        .fold(0i64, |a, x| a + x.cycle_time_ms.unwrap_or(0)); // RCA-EXC-2: bounded by `MAX_EPOCH_MS`
 
     let mut ratios: Vec<f64> = analyses
         .iter()
@@ -231,7 +230,7 @@ pub fn plan(analyses: &[TaskAnalysis]) -> PlanAnalysis {
                 totals
                     .entry(status.status.clone())
                     .or_insert((status.category.clone(), 0, 0));
-            entry.1 = entry.1.total_add(status.ms);
+            entry.1 += status.ms; // RCA-EXC-2: bounded by `MAX_EPOCH_MS`
             entry.2 += status.entries;
         }
     }

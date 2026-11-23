@@ -64,6 +64,9 @@
 - [GitHub Pages site](spec/github-pages-site.md): The static documentation site in project-portfolio-management.github.io/: pages, content copy, locale and direction, CSP, tests, git subtree publish (GP-1)
 - [Special files for public repos](spec/special-files-for-public-repos/index.md): Topic spec: the special files a public repository carries
 - [AI Statement](spec/special-files-for-public-repos/AI_STATEMENT.md): The AI statement template that topic spec describes
+- [Mobile apps](spec/mobile-apps.md): The iOS and Android apps' contract: screens, OIDC sign-in with PKCE, errors, accessibility, the Lily dependency
+- [iOS app spec](project-portfolio-management-mobile-app-with-swift/spec/index.md): Platform specifics of the iOS app
+- [Android app spec](project-portfolio-management-mobile-app-with-kotlin/spec/index.md): Platform specifics of the Android app
 
 ## Agent guides
 
@@ -89,6 +92,8 @@
 - [Normalization — project-portfolio-management-matcher](project-portfolio-management-matcher-with-rust/agents/normalization.md): Field normalization rules
 - [Spec-Driven Development — Agent Guide](project-portfolio-management-matcher-with-rust/agents/spec-driven-development.md): Spec-driven development in the matcher
 - [Testing — project-portfolio-management-matcher](project-portfolio-management-matcher-with-rust/agents/testing.md): Matcher testing
+- [iOS app guide](project-portfolio-management-mobile-app-with-swift/AGENTS.md): Working guide for the iOS app
+- [Android app guide](project-portfolio-management-mobile-app-with-kotlin/AGENTS.md): Working guide for the Android app
 
 ## Install and operate
 
@@ -158,6 +163,10 @@
 - [SvelteKit 3 migration tasks](project-portfolio-management-ui-with-svelte/MIGRATION_TASKS.md): UI migration task list
 - [Matcher fuzzing](project-portfolio-management-matcher-with-rust/fuzz/README.md): Matcher fuzz targets
 - [Service fuzzing](project-portfolio-management-service-with-rust/fuzz/README.md): Service fuzz targets
+- [iOS app README](project-portfolio-management-mobile-app-with-swift/README.md): Build, run and test the iOS app
+- [iOS app changelog](project-portfolio-management-mobile-app-with-swift/CHANGELOG.md): Changes to the iOS app
+- [Android app README](project-portfolio-management-mobile-app-with-kotlin/README.md): Build, run and test the Android app
+- [Android app changelog](project-portfolio-management-mobile-app-with-kotlin/CHANGELOG.md): Changes to the Android app
 
 ## Project documents
 

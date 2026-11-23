@@ -1,6 +1,6 @@
 # AGENTS.md — Project Portfolio Management
 
-Entry point for AI coding agents at the repository root. Three projects live here; each has its own, longer
+Entry point for AI coding agents at the repository root. Five projects live here; each has its own, longer
 `AGENTS.md`. [`llms.txt`](llms.txt) and [`llms.json`](llms.json) list every document.
 
 | Project | Directory | Guide |
@@ -8,8 +8,10 @@ Entry point for AI coding agents at the repository root. Three projects live her
 | Service (Axum and axa REST API, PostgreSQL) | `project-portfolio-management-service-with-rust` | [AGENTS.md](project-portfolio-management-service-with-rust/AGENTS.md) |
 | Matcher (pure Rust library) | `project-portfolio-management-matcher-with-rust` | [AGENTS.md](project-portfolio-management-matcher-with-rust/AGENTS.md) |
 | Operator UI (SvelteKit 3, Svelte 5, Lily widgets) | `project-portfolio-management-ui-with-svelte` | [AGENTS.md](project-portfolio-management-ui-with-svelte/AGENTS.md) |
+| iOS and iPadOS app (Swift 6, SwiftUI, Lily for Swift) | `project-portfolio-management-mobile-app-with-swift` | [AGENTS.md](project-portfolio-management-mobile-app-with-swift/AGENTS.md) |
+| Android app (Kotlin, Jetpack Compose, Lily for Kotlin) | `project-portfolio-management-mobile-app-with-kotlin` | [AGENTS.md](project-portfolio-management-mobile-app-with-kotlin/AGENTS.md) |
 
-Versions: service 0.2.0, matcher 0.2.2, UI 0.2.0 (tag `v0.2.0`). Rust 1.100.0 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.98 for every crate; axa 0.20 needs it for the service), Node 26, pnpm, Podman.
+Versions: service 0.2.0, matcher 0.2.2, UI 0.2.0 (tag `v0.2.0`). The two mobile apps are 0.1.0, unreleased, and outside the release tag (`spec/mobile-apps.md`). Rust 1.100.0 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.98 for every crate; axa 0.20 needs it for the service), Node 26, pnpm, Podman.
 
 ## How work is done here
 
@@ -62,6 +64,12 @@ cargo test --test main
 #   make coverage-db with DB_URL set adds the database suites, as CI's `coverage` job runs them
 # UI (other projects on this machine may hold port 4173: use PW_PORT)
 cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run check && npx vitest run && PW_PORT=4183 CI=true pnpm exec playwright test
+# mobile apps: fetch the pinned Lily monorepo into vendor/ first (scripts/fetch-lily.sh; LILY_DESIGN_SYSTEM_DIR overrides)
+# iOS (Xcode 27; pick a simulator from `xcrun simctl list devices available`)
+cd project-portfolio-management-mobile-app-with-swift/PortfolioKit && swift test
+cd project-portfolio-management-mobile-app-with-swift && xcodebuild -project PortfolioMobile.xcodeproj -scheme PortfolioMobile -destination 'platform=iOS Simulator,name=<device>' test
+# Android (ANDROID_HOME=$HOME/Library/Android/sdk; JDK 17+); the accessibility audit needs an emulator or device
+cd project-portfolio-management-mobile-app-with-kotlin && ./gradlew assembleDebug test lint && ./gradlew :app:connectedDebugAndroidTest
 ```
 
 ## Things that are easy to get wrong

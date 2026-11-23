@@ -219,6 +219,21 @@
           "title": "AI Statement",
           "path": "spec/special-files-for-public-repos/AI_STATEMENT.md",
           "description": "The AI statement template that topic spec describes"
+        },
+        {
+          "title": "Mobile apps",
+          "path": "spec/mobile-apps.md",
+          "description": "The iOS and Android apps' contract: screens, OIDC sign-in with PKCE, errors, accessibility, the Lily dependency"
+        },
+        {
+          "title": "iOS app spec",
+          "path": "project-portfolio-management-mobile-app-with-swift/spec/index.md",
+          "description": "Platform specifics of the iOS app"
+        },
+        {
+          "title": "Android app spec",
+          "path": "project-portfolio-management-mobile-app-with-kotlin/spec/index.md",
+          "description": "Platform specifics of the Android app"
         }
       ]
     },
@@ -334,6 +349,16 @@
           "title": "Testing — project-portfolio-management-matcher",
           "path": "project-portfolio-management-matcher-with-rust/agents/testing.md",
           "description": "Matcher testing"
+        },
+        {
+          "title": "iOS app guide",
+          "path": "project-portfolio-management-mobile-app-with-swift/AGENTS.md",
+          "description": "Working guide for the iOS app"
+        },
+        {
+          "title": "Android app guide",
+          "path": "project-portfolio-management-mobile-app-with-kotlin/AGENTS.md",
+          "description": "Working guide for the Android app"
         }
       ]
     },
@@ -639,6 +664,26 @@
           "title": "Service fuzzing",
           "path": "project-portfolio-management-service-with-rust/fuzz/README.md",
           "description": "Service fuzz targets"
+        },
+        {
+          "title": "iOS app README",
+          "path": "project-portfolio-management-mobile-app-with-swift/README.md",
+          "description": "Build, run and test the iOS app"
+        },
+        {
+          "title": "iOS app changelog",
+          "path": "project-portfolio-management-mobile-app-with-swift/CHANGELOG.md",
+          "description": "Changes to the iOS app"
+        },
+        {
+          "title": "Android app README",
+          "path": "project-portfolio-management-mobile-app-with-kotlin/README.md",
+          "description": "Build, run and test the Android app"
+        },
+        {
+          "title": "Android app changelog",
+          "path": "project-portfolio-management-mobile-app-with-kotlin/CHANGELOG.md",
+          "description": "Changes to the Android app"
         }
       ]
     },

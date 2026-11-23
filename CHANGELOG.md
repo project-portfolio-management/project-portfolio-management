@@ -7,12 +7,31 @@ the code:
 - [`project-portfolio-management-matcher-with-rust/CHANGELOG.md`](project-portfolio-management-matcher-with-rust/CHANGELOG.md)
 - [`project-portfolio-management-service-with-rust/CHANGELOG.md`](project-portfolio-management-service-with-rust/CHANGELOG.md)
 - [`project-portfolio-management-ui-with-svelte/CHANGELOG.md`](project-portfolio-management-ui-with-svelte/CHANGELOG.md)
+- [`project-portfolio-management-mobile-app-with-swift/CHANGELOG.md`](project-portfolio-management-mobile-app-with-swift/CHANGELOG.md)
+- [`project-portfolio-management-mobile-app-with-kotlin/CHANGELOG.md`](project-portfolio-management-mobile-app-with-kotlin/CHANGELOG.md)
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
+
+## 23 November (two mobile apps, first slice)
+
+- `spec/mobile-apps.md` (MA) is the contract for two new apps: `project-portfolio-management-mobile-app-with-swift`
+  (iOS and iPadOS, SwiftUI, Lily for Swift) and `project-portfolio-management-mobile-app-with-kotlin` (Android, Jetpack
+  Compose, Lily for Kotlin). Each has server settings, OIDC sign-in with PKCE in the system browser, the plans list with
+  search, a plan with its child plans and tasks, moving a task, and creating a plan.
+- Lily's Swift and Kotlin libraries are unreleased, so `scripts/fetch-lily.sh` clones the Lily monorepo at a pinned
+  commit into `vendor/` (ignored by git).
+- Verified on 2026-11-23: iOS `swift test` (102 tests) and `xcodebuild test` on an iOS 27.2 simulator (8 UI tests,
+  including `performAccessibilityAudit` at the default and the largest text size); Android `./gradlew assembleDebug test
+  lint` (58 tests) and the Accessibility Test Framework on an API 37 emulator at font scale 1.0 and 2.0.
+- Not verified: either app against a running service or a real identity provider, on a physical device, or with
+  VoiceOver or TalkBack. Not built: everything MA-7 lists (editing, goals, issues, the board, notifications, offline
+  storage, locales other than English, store packaging), paging past the first page, and any CI job for either app.
+  A plan's `422` body has no per-field `errors` member, so the apps place problems by matching message text; that is an
+  open item for the service.
 
 ## 22 November (date and time crate: no panicking operators)
 

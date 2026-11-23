@@ -72,6 +72,9 @@ kept whole rather than split across them:
   time, flow efficiency, rework and first-pass yield, cycle-time
   percentiles and the service level expectation, aging WIP, constraint
   ranking, and queueing-theory flow. Spans §5, §9, §10 and §12.
+- [Mobile apps (MA)](mobile-apps.md) — the iOS (Swift, SwiftUI) and Android (Kotlin, Jetpack Compose) apps on Lily:
+  the first slice's screens and service calls, OIDC sign-in with PKCE in the system browser, error handling,
+  accessibility, and how the unreleased Lily libraries are fetched. Spans §7, §8 and §9.
 - [Project management standards](project-management-standards/index.md) — ISO 21502, PMI (PMBOK 7) and IPMA
   (ICB4) mapped onto the service, and which of its terms are one method's (WW-1.22).
 - [PRINCE2](prince2/index.md) — one example method, of UK-government origin
@@ -107,6 +110,7 @@ kept whole rather than split across them:
   NEWS, COMPARISONS, BENCHMARKS, INSTALL, CONTRIBUTING, RFC, CODEOWNERS,
   MAINTAINERS, CHANGELOG, AI_STATEMENT, GOVERNANCE, SECURITY), with a template
   for the AI statement. Requirement NFR-20.
+- [Licenses](licenses/index.md) — the licence options and the SPDX expression.
 
 ## Where to look for what
 

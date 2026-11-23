@@ -80,9 +80,13 @@ Each requirement states what is already true, checked against the code on 2026-1
 - **SA-R2 — Data stays where it is put.** The service makes no outbound transfer of its own (§12.3). Every outbound target
   is set by the operator: webhooks, the WPM bridge, the email relay, the event relay, the virus-scan hook and the OIDC
   issuer. Strict mode (NFR-21, `sinks.rs`) holds operator targets to public `https` addresses. It does not hold them to a
-  region. *Missing:* a single list in the
-  deployment guide of every setting that names an outbound host, so a supplier can show the buyer that each one is in the
-  UK or belongs to the buyer (SA-2). A test keeps that list complete as settings are added.
+  region. **Built (SA-2, 2026-11-23):** `operations/deployment.md` § Outbound hosts lists every setting of the service
+  and the operator interface that names an outbound host, and the settings named like hosts that are not contacted. A
+  supplier can go through it to show the buyer that each host is in the UK or belongs to the buyer. The test
+  `outbound_hosts` fails on a host setting the list does not name, or a row nothing reads. Destinations people add
+  themselves (notification sinks) are not settings; the guide says how to stop delivery to them. *Limits:* the scan finds
+  settings by their endings (`_URL`, `_ENDPOINT`, `_ADDR`, `_HOST`, `_ISSUER`) plus three named by hand; a host setting
+  named otherwise is missed. The scripts in `scripts/` are not scanned.
 - **SA-R3 — No local passwords and no vendor backdoor.** The service keeps no passwords and has no built-in account. Every
   caller is a verified token from the configured identity provider (NFR-5, NFR-18), and the service will not start in
   production with login off (NFR-12). *Missing:* a test asserting that no route accepts a password or issues its own

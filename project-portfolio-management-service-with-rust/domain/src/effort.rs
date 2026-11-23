@@ -31,7 +31,6 @@
 //!    and denominator.
 //! 5. Effort stays labelled **asserted**.
 
-use crate::figures::Figure;
 use serde::{Deserialize, Serialize};
 
 /// Basis-point scale.
@@ -238,12 +237,13 @@ pub struct Utilization {
     pub at_or_over_capacity: bool,
 }
 
-/// Compute one person's utilization under the five obligations.
+/// Compute one person's utilization under the five obligations. `None` when `declared − non-working` does not fit an
+/// `i64`: the stored minutes are corrupt (RCA-IN-6).
 #[must_use]
-pub fn utilization(fact: &CapacityFact, floor_minutes: i64) -> Utilization {
+pub fn utilization(fact: &CapacityFact, floor_minutes: i64) -> Option<Utilization> {
     let available = fact
         .declared_minutes
-        .total_sub(fact.non_working_minutes)
+        .checked_sub(fact.non_working_minutes)?
         .max(0);
 
     let unavailable = if fact.declared_minutes <= 0 {
@@ -264,7 +264,7 @@ pub fn utilization(fact: &CapacityFact, floor_minutes: i64) -> Utilization {
         None
     };
 
-    Utilization {
+    Some(Utilization {
         actor_ref: fact.actor_ref.clone(),
         basis_points,
         unavailable,
@@ -274,7 +274,7 @@ pub fn utilization(fact: &CapacityFact, floor_minutes: i64) -> Utilization {
         non_working_minutes: fact.non_working_minutes,
         asserted: true,
         at_or_over_capacity: basis_points.is_some_and(|bp| bp >= BASIS_POINTS),
-    }
+    })
 }
 
 /// Team-level utilization: effort over capacity across a group.
@@ -282,19 +282,21 @@ pub fn utilization(fact: &CapacityFact, floor_minutes: i64) -> Utilization {
 /// Computed from the **summed** numerator and denominator, never as a
 /// mean of individual ratios — averaging ratios over unequal
 /// denominators is a different (and wrong) number.
+///
+/// `None` when a sum does not fit an `i64` (see [`utilization`]).
 #[must_use]
-pub fn team_utilization(facts: &[CapacityFact], floor_minutes: i64) -> Utilization {
+pub fn team_utilization(facts: &[CapacityFact], floor_minutes: i64) -> Option<Utilization> {
     let combined = CapacityFact {
         actor_ref: "team".to_string(),
         declared_minutes: facts
             .iter()
-            .fold(0_i64, |a, f| a.total_add(f.declared_minutes)),
+            .try_fold(0_i64, |a, f| a.checked_add(f.declared_minutes))?,
         non_working_minutes: facts
             .iter()
-            .fold(0_i64, |a, f| a.total_add(f.non_working_minutes)),
+            .try_fold(0_i64, |a, f| a.checked_add(f.non_working_minutes))?,
         effort_minutes: facts
             .iter()
-            .fold(0_i64, |a, f| a.total_add(f.effort_minutes)),
+            .try_fold(0_i64, |a, f| a.checked_add(f.effort_minutes))?,
     };
     utilization(&combined, floor_minutes)
 }
@@ -306,9 +308,9 @@ pub fn group_utilization(
     facts: &[CapacityFact],
     floor_minutes: i64,
     min_people: usize,
-) -> Utilization {
+) -> Option<Utilization> {
     if facts.len() < min_people {
-        return Utilization {
+        return Some(Utilization {
             actor_ref: "team".to_string(),
             basis_points: None,
             unavailable: Some(Unavailable::SmallGroup),
@@ -318,7 +320,7 @@ pub fn group_utilization(
             non_working_minutes: 0,
             asserted: true,
             at_or_over_capacity: false,
-        };
+        });
     }
     team_utilization(facts, floor_minutes)
 }
@@ -326,6 +328,21 @@ pub fn group_utilization(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// One person's utilization of small minutes, which always fits.
+    fn utilization_of(fact: &CapacityFact, floor_minutes: i64) -> Utilization {
+        utilization(fact, floor_minutes).expect("small minutes fit")
+    }
+
+    /// A group's utilization of small minutes, which always fits.
+    fn group_of(facts: &[CapacityFact], floor_minutes: i64, min_people: usize) -> Utilization {
+        group_utilization(facts, floor_minutes, min_people).expect("small minutes fit")
+    }
+
+    /// A team's utilization of small minutes, which always fits.
+    fn team_of(facts: &[CapacityFact], floor_minutes: i64) -> Utilization {
+        team_utilization(facts, floor_minutes).expect("small minutes fit")
+    }
 
     #[test]
     fn the_small_cell_minimum_and_the_floor_are_settings_with_stated_defaults() {
@@ -354,8 +371,8 @@ mod tests {
                 })
                 .collect()
         };
-        assert!(group_utilization(&people(6), 0, 5).basis_points.is_some());
-        let u = group_utilization(&people(6), 0, 10);
+        assert!(group_of(&people(6), 0, 5).basis_points.is_some());
+        let u = group_of(&people(6), 0, 10);
         assert_eq!(u.basis_points, None);
         assert_eq!(u.unavailable, Some(Unavailable::SmallGroup));
     }
@@ -413,7 +430,7 @@ mod tests {
     /// ships its numerator and denominator.
     #[test]
     fn utilization_returns_its_own_denominator() {
-        let u = utilization(&capacity(2_400, 0, 1_200), 0);
+        let u = utilization_of(&capacity(2_400, 0, 1_200), 0);
         assert_eq!(u.basis_points, Some(5_000));
         assert_eq!(u.available_minutes, 2_400);
         assert_eq!(u.declared_minutes, 2_400);
@@ -428,14 +445,14 @@ mod tests {
     /// would read as measured idleness.
     #[test]
     fn leave_leaves_the_denominator_and_never_reads_as_zero() {
-        let all_leave = utilization(&capacity(2_400, 2_400, 0), 0);
+        let all_leave = utilization_of(&capacity(2_400, 2_400, 0), 0);
         assert_eq!(all_leave.basis_points, None);
         assert_eq!(all_leave.unavailable, Some(Unavailable::AllNonWorking));
         assert_eq!(all_leave.available_minutes, 0);
 
         // Half the window on leave doubles the utilization of the same
         // effort, because only half the capacity was ever available.
-        let half = utilization(&capacity(2_400, 1_200, 600), 0);
+        let half = utilization_of(&capacity(2_400, 1_200, 600), 0);
         assert_eq!(half.basis_points, Some(5_000));
         assert_eq!(half.non_working_minutes, 1_200);
     }
@@ -444,7 +461,7 @@ mod tests {
     /// leave — the denominator is unknown, not zero.
     #[test]
     fn no_declared_capacity_is_its_own_reason() {
-        let u = utilization(&capacity(0, 0, 500), 0);
+        let u = utilization_of(&capacity(0, 0, 500), 0);
         assert_eq!(u.basis_points, None);
         assert_eq!(u.unavailable, Some(Unavailable::NoDeclaredCapacity));
     }
@@ -453,7 +470,7 @@ mod tests {
     /// clinical setting this is a re-identification control.
     #[test]
     fn a_small_denominator_is_suppressed() {
-        let u = utilization(&capacity(60, 0, 30), DEFAULT_SUPPRESSION_FLOOR_MINUTES);
+        let u = utilization_of(&capacity(60, 0, 30), DEFAULT_SUPPRESSION_FLOOR_MINUTES);
         assert_eq!(u.basis_points, None);
         assert_eq!(u.unavailable, Some(Unavailable::BelowFloor));
         // The inputs are still returned, so the suppression is visible
@@ -466,11 +483,11 @@ mod tests {
     /// an achievement.
     #[test]
     fn at_capacity_is_flagged_as_a_warning() {
-        let at = utilization(&capacity(2_400, 0, 2_400), 0);
+        let at = utilization_of(&capacity(2_400, 0, 2_400), 0);
         assert_eq!(at.basis_points, Some(10_000));
         assert!(at.at_or_over_capacity);
 
-        let over = utilization(&capacity(2_400, 0, 3_600), 0);
+        let over = utilization_of(&capacity(2_400, 0, 3_600), 0);
         assert_eq!(over.basis_points, Some(15_000), "over 100% is not clamped");
         assert!(over.at_or_over_capacity);
     }
@@ -494,7 +511,7 @@ mod tests {
                 effort_minutes: 0, // 0%
             },
         ];
-        let team = team_utilization(&facts, 0);
+        let team = team_of(&facts, 0);
         // Summed: 2400 / 2640 ≈ 90.9%. A mean of the two ratios would
         // have said 50%.
         assert_eq!(team.basis_points, Some(9_090));
@@ -517,7 +534,7 @@ mod tests {
     #[test]
     fn a_small_group_is_withheld_whole() {
         for n in 0..MIN_GROUP_PEOPLE {
-            let u = group_utilization(&people(n), 0, MIN_GROUP_PEOPLE);
+            let u = group_of(&people(n), 0, MIN_GROUP_PEOPLE);
             assert_eq!(u.basis_points, None, "{n} people");
             assert_eq!(u.unavailable, Some(Unavailable::SmallGroup), "{n} people");
             assert_eq!(
@@ -535,7 +552,7 @@ mod tests {
 
     #[test]
     fn a_group_of_five_is_reported() {
-        let u = group_utilization(&people(MIN_GROUP_PEOPLE), 0, MIN_GROUP_PEOPLE);
+        let u = group_of(&people(MIN_GROUP_PEOPLE), 0, MIN_GROUP_PEOPLE);
         assert_eq!(u.basis_points, Some(5_000));
         assert_eq!(u.unavailable, None);
         assert_eq!(u.effort_minutes, 6_000);
@@ -544,13 +561,20 @@ mod tests {
     /// Untrusted stored values must not panic.
     #[test]
     fn extreme_values_are_total() {
-        let u = utilization(&capacity(i64::MAX, i64::MIN, i64::MAX), 0);
+        assert!(
+            utilization(&capacity(i64::MAX, i64::MIN, i64::MAX), 0).is_none(),
+            "declared - non-working does not fit: no figure, not a bound"
+        );
+        let u = utilization(&capacity(1, 0, i64::MAX), 0).expect("fits");
         assert!(u.available_minutes >= 0);
-        let _ = utilization(&capacity(1, 0, i64::MAX), 0);
         let huge: Vec<EffortFact> = (0..3)
             .map(|_| entry("person:a", i64::MAX, EffortCategory::Capex, true))
             .collect();
         assert!(totals(&huge).is_none(), "no total, not a bound");
-        let _ = team_utilization(&[], 0);
+        assert!(team_utilization(&[], 0).is_some());
+        assert!(
+            team_utilization(&[capacity(i64::MAX, 0, 0), capacity(1, 0, 0)], 0).is_none(),
+            "a team sum that does not fit gives no figure"
+        );
     }
 }

@@ -1,7 +1,6 @@
 //! Cohort statistics (spec §7).
 
 use super::{BTreeMap, DAY_MS, Ratio, Serialize, StatusShare, TaskAnalysis, as_days, waste_for};
-use crate::figures::Figure;
 
 /// Nearest-rank percentile over a **sorted** sample (spec §7.1).
 ///
@@ -19,7 +18,8 @@ pub fn percentile(sorted: &[i64], p: f64) -> Option<i64> {
     }
     let n = sorted.len();
     let rank = (p * n as f64).ceil().max(1.0);
-    let index = (rank as usize).min(n).total_sub(1);
+    // `n` is at least 1 and `rank` at least 1, so `index` is at least 0: `None` would be a broken contract (RCA-P-9).
+    let index = (rank as usize).min(n).checked_sub(1)?;
     sorted.get(index).copied()
 }
 

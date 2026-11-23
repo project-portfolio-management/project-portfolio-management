@@ -9,6 +9,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — team utilization reports no figure instead of a bound; `Figure` is deleted (2026-11-23)
+
+- `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6, RCA-INT-4): `effort::utilization`, `team_utilization` and
+  `group_utilization` return `Option` (`None` when a sum or `declared − non-working` does not fit); the utilization route
+  answers `500` through `or_overflow`. With that, no site uses `Figure::total_*`, so `domain/src/figures.rs`, its
+  tests and its re-export are deleted. The unsigned count differences became `checked_sub(..).unwrap_or(NAMED_ZERO)`
+  (FIG-2, a constant per site: `NONE_DROPPED`, `NO_ROWS`, `NO_OPEN_WORK`, `NOTHING_REMAINING`, `LOWEST_LEVEL`);
+  `status_updates` answers `500` and `tba::percentile` returns `None` where a negative count would mean inconsistent
+  inputs.
+- Not done: `Iterator::sum`, `product`, `unwrap_or_default` and `clamp` are still not banned (the module-by-module
+  adoption, RCA-ENF-3); `arithmetic_side_effects`, `as_conversions` and `indexing_slicing` are not enabled; the RCA-ENF-5 grep
+  for unwrapped checked results is not in CI; the `500` paths are untested end to end (database-gated).
+
 ### Changed — heatmap, phase and payback figures report no figure instead of a bound (2026-11-23)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `capacity_heatmap::verdict` and `linked_verdict`,

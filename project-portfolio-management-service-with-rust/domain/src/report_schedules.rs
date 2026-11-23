@@ -6,7 +6,6 @@
 //! and then moves to the next future date: it never replays every missed day.
 
 use crate::datetime::Date;
-use crate::figures::Figure;
 
 /// Cadences.
 pub const CADENCES: &[&str] = &["daily", "weekly", "monthly"];
@@ -66,12 +65,16 @@ pub fn is_due(next_run: Date, enabled: bool, today: Date) -> bool {
     enabled && next_run <= today
 }
 
+/// FIG-2: the rows of a CSV body with no lines at all.
+const NO_ROWS: usize = 0;
+
 /// The row count of a rendered report body, so a run can say how many rows it
 /// wrote (**including zero**).
 #[must_use]
 pub fn rows_in(format: &str, body: &str) -> i32 {
     let n = if format == "csv" {
-        body.lines().count().total_sub(1)
+        // FIG-2: an empty CSV body has no header row and no data rows.
+        body.lines().count().checked_sub(1).unwrap_or(NO_ROWS)
     } else {
         serde_json::from_str::<serde_json::Value>(body)
             .ok()

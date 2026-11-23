@@ -8,7 +8,6 @@
 #![expect(missing_docs)]
 
 use crate::datetime::Date;
-use crate::figures::Figure;
 use serde::Serialize;
 
 /// One task's stamps.
@@ -38,6 +37,9 @@ pub struct Flow {
     /// Tasks finished per week over the last four weeks.
     pub throughput_per_week: f64,
 }
+
+/// FIG-2: the open work when more items are done than were created by the day.
+const NO_OPEN_WORK: usize = 0;
 
 /// Burn-up over the last `weeks` weeks (at most 26) and throughput over the last four. `None` when the
 /// programme has no tasks: that is "no flow data", never a flat line.
@@ -69,7 +71,8 @@ pub fn flow(items: &[Item], as_of: Date, weeks: u32) -> Option<Flow> {
         .count();
     let now = at(as_of);
     Some(Flow {
-        open: now.scope.total_sub(now.done),
+        // FIG-2: open work is never negative; more completions than scope (a done stamp on an item created later) leaves none.
+        open: now.scope.checked_sub(now.done).unwrap_or(NO_OPEN_WORK),
         done: now.done,
         scope: now.scope,
         burn_up,

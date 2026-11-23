@@ -4,7 +4,6 @@
 //! burndown only ever counts real completion stamps, and the `MoSCoW`
 //! bands come from an explicit, disclosed tag convention.
 
-use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use crate::datetime::Date;
@@ -36,6 +35,9 @@ pub struct BurndownPoint {
     pub remaining: usize,
 }
 
+/// FIG-2: the remaining work when more tasks are done than counted.
+const NOTHING_REMAINING: usize = 0;
+
 /// The honest burndown: for each day of `[from, to]`, `total` minus
 /// the completions stamped **on or before** that day. Only real
 /// `done_at` stamps count — no ideal line, no interpolation (a
@@ -50,7 +52,8 @@ pub fn burndown(total: usize, done_dates: &[Date], from: Date, to: Date) -> Vec<
         let done = done_dates.iter().filter(|d| **d <= day).count();
         points.push(BurndownPoint {
             date: day,
-            remaining: total.total_sub(done),
+            // FIG-2: remaining work is never negative; more completions than tasks leaves none.
+            remaining: total.checked_sub(done).unwrap_or(NOTHING_REMAINING),
         });
         day = match day.succ_opt() {
             Some(next) => next,

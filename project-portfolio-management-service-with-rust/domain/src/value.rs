@@ -7,7 +7,6 @@
 //! sorts last — never `0`**, because zero means *measured and failing*
 //! and using it for *not measured* is how a dashboard lies.
 
-use crate::figures::Figure;
 use serde::{Deserialize, Serialize};
 
 /// Basis-point scale.
@@ -102,9 +101,14 @@ pub struct Roi {
 ///
 /// A non-positive investment is undefined rather than infinite: a plan
 /// that cost nothing has no return *ratio*, whatever value it produced.
+///
+/// `None` when the values do not total within an `i64`: the stored amounts are corrupt (RCA-IN-6), so there is no
+/// realized figure, not a bound.
 #[must_use]
-pub fn roi(values: &[ValueFact], investment_minor: i64) -> Roi {
-    let realized: i64 = values.iter().fold(0_i64, |a, v| a.total_add(v.value));
+pub fn roi(values: &[ValueFact], investment_minor: i64) -> Option<Roi> {
+    let realized: i64 = values
+        .iter()
+        .try_fold(0_i64, |a, v| a.checked_add(v.value))?;
     let measured = values
         .iter()
         .filter(|v| v.method == Method::Measured)
@@ -124,7 +128,7 @@ pub fn roi(values: &[ValueFact], investment_minor: i64) -> Roi {
         }
     };
 
-    Roi {
+    Some(Roi {
         basis_points,
         absent,
         realized_minor: realized,
@@ -138,7 +142,7 @@ pub fn roi(values: &[ValueFact], investment_minor: i64) -> Roi {
                     .and_then(|m| m.checked_mul(BASIS_POINTS))
                     .map(|scaled| scaled / total)
             }),
-    }
+    })
 }
 
 /// Value Realization Rate: completed initiatives that delivered their
@@ -327,10 +331,15 @@ mod tests {
         }
     }
 
+    /// ROI of values that total within an `i64`.
+    fn roi_of(values: &[ValueFact], investment_minor: i64) -> Roi {
+        roi(values, investment_minor).expect("small amounts fit")
+    }
+
     /// ROI ships its inputs and the evidence mix behind them.
     #[test]
     fn roi_reports_its_inputs_and_evidence_mix() {
-        let r = roi(
+        let r = roi_of(
             &[
                 value(1_500_000, Method::Measured),
                 value(500_000, Method::Asserted),
@@ -355,7 +364,7 @@ mod tests {
     /// not failed to deliver, it has not been measured.
     #[test]
     fn no_value_points_is_unrealized_not_a_total_loss() {
-        let r = roi(&[], 1_000_000);
+        let r = roi_of(&[], 1_000_000);
         assert_eq!(r.basis_points, None);
         assert_eq!(r.absent, Some(Absent::Unrealized));
     }
@@ -364,7 +373,7 @@ mod tests {
     /// was.
     #[test]
     fn a_zero_investment_has_no_ratio() {
-        let r = roi(&[value(1, Method::Measured)], 0);
+        let r = roi_of(&[value(1, Method::Measured)], 0);
         assert_eq!(r.absent, Some(Absent::NoDenominator));
     }
 
@@ -458,8 +467,19 @@ mod tests {
     /// Untrusted values must not panic.
     #[test]
     fn extreme_values_are_total() {
-        let r = roi(&[value(i64::MAX, Method::Measured); 1], 1);
+        let r = roi(&[value(i64::MAX, Method::Measured); 1], 1).expect("one value fits");
         assert!(r.basis_points.is_none() || r.basis_points.is_some());
+        assert!(
+            roi(
+                &[
+                    value(i64::MAX, Method::Measured),
+                    value(1, Method::Measured)
+                ],
+                1
+            )
+            .is_none(),
+            "no realized figure, not a bound"
+        );
         assert_eq!(adoption_rate(i64::MAX, 1), Err(Absent::Overflow));
         assert_eq!(earned_value_index(i64::MAX, 1), Err(Absent::Overflow));
         let _ = percentile(&[i64::MIN, i64::MAX], 10_000);

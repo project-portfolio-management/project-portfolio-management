@@ -10,7 +10,6 @@
 
 #![expect(missing_docs)]
 
-use crate::figures::Figure;
 use std::collections::BTreeMap;
 
 use uuid::Uuid;
@@ -101,8 +100,10 @@ pub struct Row {
 
 /// Group financial benefits. Recurring and one-off are separate rows, as are classifications and
 /// currencies, so no row adds unlike things.
+///
+/// `None` when a row's totals do not fit an `i64`: the stored amounts are corrupt (RCA-IN-6).
 #[must_use]
-pub fn group(items: &[Financial]) -> Vec<Row> {
+pub fn group(items: &[Financial]) -> Option<Vec<Row>> {
     let mut rows: BTreeMap<(Uuid, String, String, String), Row> = BTreeMap::new();
     for b in items {
         let rec = b
@@ -130,25 +131,45 @@ pub fn group(items: &[Financial]) -> Vec<Row> {
             });
         r.benefits += 1;
         match b.planned_minor {
-            Some(p) => r.planned_minor = r.planned_minor.total_add(p),
+            Some(p) => r.planned_minor = r.planned_minor.checked_add(p)?,
             None => r.with_no_planned_amount += 1,
         }
         let v = b.validated_minor.unwrap_or(0);
-        r.claimed_minor = r.claimed_minor.total_add(b.claimed_minor);
-        r.validated_minor = r.validated_minor.total_add(v);
+        r.claimed_minor = r.claimed_minor.checked_add(b.claimed_minor)?;
+        r.validated_minor = r.validated_minor.checked_add(v)?;
         r.unvalidated_claim_minor = r
             .unvalidated_claim_minor
-            .total_add((b.claimed_minor - v).max(0));
+            .checked_add(b.claimed_minor.checked_sub(v)?.max(0))?;
         if standing(b.claimed_minor, b.validated_minor) == Standing::Claimed {
             r.claimed_only += 1;
         }
     }
-    rows.into_values().collect()
+    Some(rows.into_values().collect())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The grouping of small amounts, which always fits.
+    fn group(items: &[Financial]) -> Vec<Row> {
+        super::group(items).expect("small amounts fit")
+    }
+
+    /// RCA-IN-6: amounts that do not total give no grouping; never a bound.
+    #[test]
+    fn amounts_that_overflow_give_no_grouping() {
+        let f = |claimed: i64| Financial {
+            programme: Uuid::nil(),
+            currency: "GBP".into(),
+            recurrence: None,
+            classification: None,
+            planned_minor: None,
+            claimed_minor: claimed,
+            validated_minor: None,
+        };
+        assert!(super::group(&[f(i64::MAX), f(1)]).is_none());
+    }
 
     fn fin(
         rec: Option<&str>,

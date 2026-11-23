@@ -11,7 +11,6 @@
 //! and those are different findings.
 
 use super::unprocessable;
-use crate::figures::Figure;
 use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
@@ -352,19 +351,25 @@ async fn value_realization(
     let currencies: std::collections::BTreeSet<&str> =
         budgets.iter().map(|line| line.currency.as_str()).collect();
     let mixed = currencies.len() > 1;
-    let investment: i64 = budgets
-        .iter()
-        .fold(0_i64, |acc, line| acc.total_add(line.actual_minor));
+    let investment: i64 = super::or_overflow(
+        budgets
+            .iter()
+            .try_fold(0_i64, |acc, line| acc.checked_add(line.actual_minor)),
+        "investment",
+    )?;
     let roi = if mixed {
         rules::Roi {
             basis_points: None,
             absent: Some(rules::Absent::MixedCurrency),
-            realized_minor: facts.iter().fold(0_i64, |a, f| a.total_add(f.value)),
+            realized_minor: super::or_overflow(
+                facts.iter().try_fold(0_i64, |a, f| a.checked_add(f.value)),
+                "realized value",
+            )?,
             investment_minor: investment,
             measured_share_basis_points: None,
         }
     } else {
-        rules::roi(&facts, investment)
+        super::or_overflow(rules::roi(&facts, investment), "realized value")?
     };
 
     let adoption_view = adoption.as_ref().map_or_else(

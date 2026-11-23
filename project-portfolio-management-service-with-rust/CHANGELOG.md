@@ -9,6 +9,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — benefit, value and earned-value sums report no figure instead of a bound (2026-11-22)
+
+- `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `benefit_validation::group` and `value::roi` return `Option`
+  (`None` when the stored amounts do not total within an `i64`); the earned-value controller's actual-cost, labour and
+  estimate-at-completion sums and the ROI route's investment and realized sums use `checked_add` and answer `500`
+  through `or_overflow`. `unvalidated_claim_minor` now uses `checked_sub` for `claimed − validated`, which was a plain
+  subtraction. Tests: `amounts_that_overflow_give_no_grouping`, and `extreme_values_are_total` now asserts no ROI for
+  values that overflow.
+- Not done: `strategy` (scenario evaluation and generation, the controller's budget-line totals), `tba`,
+  `capacity_heatmap`, `phase`, `viability`, `engineering`, `product_flow` and team utilization still use `Figure`
+  (about 40 sites). The `500` paths are untested end to end (database-gated).
+
 ### Changed — forecasts and earned-value totals report no figure instead of a bound (2026-11-22)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): `financials::forecast`, `rollup_forecast` and

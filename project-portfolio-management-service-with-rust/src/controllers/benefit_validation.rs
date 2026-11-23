@@ -482,7 +482,7 @@ pub(crate) async fn benefits_section(
             }
         }
     }
-    let grouped = rules::group(&financial);
+    let grouped = super::or_overflow(rules::group(&financial), "benefit amounts")?;
     let mut progs: Vec<&plans::Model> = all
         .iter()
         .filter(|p| p.kind.as_deref() == Some("Program") && include.contains(&p.pid))
@@ -504,7 +504,10 @@ pub(crate) async fn benefits_section(
         for f in &mut t {
             f.programme = Uuid::nil();
         }
-        rules::group(&t).iter().map(row_json).collect::<Vec<_>>()
+        super::or_overflow(rules::group(&t), "benefit amounts")?
+            .iter()
+            .map(row_json)
+            .collect::<Vec<_>>()
     };
     Ok(serde_json::json!({
         "programmes": programmes,

@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — axa 0.21.0 and axa-test 0.12.0 (2026-11-23)
+
+- `axa` 0.20.1 to 0.21.0 and `axa-test` 0.11.0 to 0.12.0 (`Cargo.toml`, `Cargo.lock`; nothing else moved). No source change was
+  needed: the upgrade guide's one compile break is the `axa-test` version, and the service already refuses the old setting
+  names (`DATABASE_URL`, `BODY_LIMIT_BYTES`, `HEADER_READ_TIMEOUT_SECONDS`) itself in every environment (`app.rs`).
+- **Checked locally (macOS, Postgres 18):** clippy `-D warnings` over the workspace; 1,399 unit and migration tests; 29
+  database-free integration tests; 243 request tests and 95 other database tests, all passed.
+- **Not done:** axa 0.21 now offers `axa_test::own_process!` and `Settings::renamed`, which could replace the service's own
+  `tests/own_process.rs` (61 files, 195 uses) and the renamed-settings table in `app.rs`; both are left as they are, as separate
+  changes. Not run: the `keycloak` and `fluvio` features and their container suites, the load test, the restore drill.
+
 ### Added — tests for four domain sentences and tokens (2026-11-23)
 
 - `start_control::Refusal::message` (the pool sentence), `approvals::Refusal::message`, `scheduling_rules::Rule::parse` and

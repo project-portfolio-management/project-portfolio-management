@@ -27,7 +27,7 @@ include = ["src/**/*", "README.md"]
 [workspace.dependencies]
 # The plumbing every service shares. `postgres-sqlx` (called `sqlx` before axa 0.12) makes `AppContext::db` sqlx's
 # `PgPool` (spec §8.3b).
-axa = { version = "0.20.1", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "postgres-sqlx"] }
+axa = { version = "0.21.0", features = ["cursor-pagination", "idempotency", "openapi", "outbox", "queue", "ratelimit", "postgres-sqlx"] }
 
 [dependencies]
 # Keyed integrity MACs with key handling (retired keys, key files): one implementation shared by every service,
@@ -163,7 +163,7 @@ path = "tests/main.rs"
 authentication-verifier = { version = "0.9.3", default-features = false, features = ["test-idp"] }
 criterion = { version = "0.8", features = ["html_reports"] }
 axa = { workspace = true }
-axa-test = { version = "0.11.0" }
+axa-test = { version = "0.12.0" }
 # Name the `TestServer` type in shared request-test helpers.
 axum-test = { version = "21" }
 # `#[tokio::test]` + a local ephemeral-port HTTP listener for the boot-time key-set fetch tests.

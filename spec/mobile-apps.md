@@ -113,7 +113,7 @@ another Lily monorepo checkout to use it instead. When Lily publishes, the apps 
 
 ## MA-7 Not built in the first slice
 
-Editing or deleting a plan, goals, issues, comments, the board as columns, sprints, notifications, offline storage,
+Editing or deleting a plan, goals, issues, comments, the board as columns, sprints, notifications, offline storage (which MA-8.8 forbids for record text),
 push notifications, locales other than English, tablet layouts beyond the system's default adaptation (MA-8.1),
 managed app configuration and managed distribution (MA-8.3), store packaging and signing, and a CI job on a macOS or Android-emulator runner. Each is a later item, not a promise.
 
@@ -133,6 +133,42 @@ them; the service calls, the sign-in and the screens do not.
 | MA-8.6 | **The service does not tell the two apart.** The app sends no claim that a device is managed, and the service treats every call by its token alone (service spec §9.6). A deployment that wants to allow only managed or compliant devices does it in its identity provider's policy, which acts on the sign-in in the system browser (MA-2). Whether a given provider's device policy works with this sign-in is a test for that deployment, not something this document asserts. |
 | MA-8.7 | **Tests.** The UI tests of MA-6 run on one phone size and one tablet size for each app, in both orientations, and run the accessibility audit (MA-4) on each. A unit test covers MA-8.3's rule (a managed value wins and is not editable; an absent one stays editable). |
 
+### MA-8.8 Record text is never copied onto a device
+
+**Record text** is any text read from a plan or a task (its name, code, description, status, assignee, dates) and any
+text typed to search for one or to become one. The apps MUST hold it **in memory only, while it is shown or being typed,
+and never copy it onto the device**. The app cannot tell a personal device from a managed one (MA-8.6), so the rule holds
+on **every** device, and a personal device is never an exception that the app has to detect.
+
+- **Never stored.** No file, database, preference, saved draft or cache holds record text. The HTTP client has no cache
+  (on iOS an ephemeral session with no URL cache; on Android an OkHttp client with no `Cache`). Record text is not put in
+  the platform's saved or restored state (iOS state restoration; Android saved-instance state and `rememberSaveable`),
+  so after the system ends the app it opens at the plans list and loads again. Nothing is written to a log, a crash
+  report or an analytics event.
+- **Never copied out.** The app does not write record text to the clipboard, does not offer it to the share sheet,
+  drag and drop, Handoff or an exported file, does not index it for Spotlight or App Search, and does not put it in a
+  notification, a widget, a shortcut, a deep link or a shared-container file. Views that show record text turn text
+  selection off.
+- **Never left on the screen of another app.** The app hides record text from the app switcher and the recent-apps
+  list (iOS: a blank cover while the app is inactive; Android: `FLAG_SECURE`, which also stops screenshots and screen
+  recording, and `setRecentsScreenshotEnabled(false)` where available). On iOS, which cannot stop a screenshot, the app
+  hides record text while the screen is being recorded or mirrored (`UIScreen.isCaptured`).
+- **Never learned by a keyboard.** Fields that take record text ask the keyboard not to learn or suggest from it
+  (iOS: autocorrection off, and the app refuses custom keyboard extensions with
+  `application(_:shouldAllowExtensionPointIdentifier:)`; Android: `IME_FLAG_NO_PERSONALIZED_LEARNING` and
+  `TYPE_TEXT_FLAG_NO_SUGGESTIONS`, and autofill off for the field).
+- **Forgotten at sign-out.** Signing out, or a refresh that fails (MA-2), clears every list and screen state in memory,
+  so a signed-out app holds no record text.
+- **Tests.** A test plants a distinctive string as the text of a plan and a task in the stub, drives the screens of MA-6,
+  and then searches everything the app can write (its files, cache, preferences and databases; on iOS also its container
+  and Keychain items) and fails if the string is found. A test fails if the HTTP client is built with a cache. A UI test
+  checks that a long press on a displayed plan name offers no Copy.
+
+**Not covered, and said so.** The rule is about what the app does, not what the person does. A person can photograph the
+screen, type the text out, or (on iOS) take a screenshot; a person's own typed text in a field can still be copied by the
+system's edit menu; a screen reader reads the text aloud; a keyboard may ignore the requests above; and a rooted or
+jailbroken device can read the app's memory. The service does not enforce this rule, because it cannot see the device.
+
 ### MA-8 status
 
 Nothing in MA-8 is verified on a real managed device or a real management service. Found in the apps' sources on
@@ -141,3 +177,9 @@ data-extraction rule files (their contents were not read, so MA-8.4 is not confi
 store uses a device-only Keychain class (`kSecAttrAccessible`) and sets no synchronizable flag. No tablet-specific layout
 code was found, so a tablet gets the system's default adaptation. **Not built:** the tablet layouts and the split-screen
 checks of MA-8.1, managed app configuration (MA-8.3), and the tests of MA-8.7. Each is a later item, not a promise (MA-7).
+
+For MA-8.8, found in the apps' sources on 2026-11-23: the iOS transport is an ephemeral session with `urlCache = nil` and
+cookies off; the Android client is an `OkHttpClient` built with no cache; no logging, clipboard, share or indexing call was
+found in either app's sources (a search for the common names, not an audit). **Not built, or not found:** hiding from the app
+switcher and `FLAG_SECURE`, the screen-capture check on iOS, the keyboard requests, the exclusion of record text from saved and
+restored state (not checked), the clearing at sign-out (not checked), and the tests above.

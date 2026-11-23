@@ -7,12 +7,13 @@ POSTGRES_PASSWORD ?= demo
 demo:
 	cd .. && POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) podman compose --profile demo up -d --build --wait ui-demo
 
-# The database-free gates from the root AGENTS.md (the database tests need Postgres; see AGENTS.md).
+# The database-free gates from the root AGENTS.md (the database tests need Postgres; see AGENTS.md). Needs cargo-nextest
+# (`cargo install cargo-nextest --locked`).
 test:
 	cargo fmt --all --check
 	cargo clippy --workspace --all-targets --all-features -- -D warnings
-	cargo test --workspace --lib
-	cargo test --test main
+	cargo nextest run --workspace --lib
+	cargo nextest run --test main
 
 # Test coverage with cargo-tarpaulin 0.37.6 (install: cargo install cargo-tarpaulin --version 0.37.6 --locked): the
 # workspace's unit tests and the database-free integration tests, as tarpaulin.toml sets them out (LLVM engine; its

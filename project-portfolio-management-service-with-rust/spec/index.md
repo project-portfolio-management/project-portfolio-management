@@ -263,7 +263,7 @@ rule: the domain crate may not depend on the service, `axum`, `axa`, `sqlx` or `
 controller is wiring over a domain module. The service re-exports each domain module under its old name in
 `src/lib.rs`, so `crate::cpm` and `project_portfolio_management::cpm` still resolve. Where this spec names a moved
 module as `src/<module>.rs`, the file is now `domain/src/<module>.rs`. Its unit tests run with
-`cargo test --workspace --lib` (or `cargo test -p project-portfolio-management-domain`).
+`cargo nextest run --workspace --lib` (or `cargo nextest run -p project-portfolio-management-domain`); `cargo test` runs the same tests.
 
 **Dates and times (17 November 2026).** Every date, instant, duration and zone is a type of the datetime crate, over
 `jiff` 1.0 (the service moved from `chrono` and `chrono-tz`, which RUSTSEC-2026-0543 and -0555 declared unmaintained):
@@ -843,10 +843,12 @@ these need Postgres, so they are `#[ignore]`-gated; run with
 
 Every integration suite is a module of one test binary, `tests/main.rs`
 (`autotests = false`; until 2026-11-17 each `tests/*.rs` was a binary of
-its own). `cargo test --test main` runs the database-free tests;
-`cargo test --test main requests:: -- --ignored --test-threads=1` the
-request suites; `cargo test --test main -- --ignored --test-threads=1
---skip requests:: --skip load_test::` the rest, as CI does. A test that
+its own). CI runs them with cargo-nextest (`.config/nextest.toml`; a process per test, so the process-wide state below
+cannot leak between tests): `cargo nextest run --test main` the database-free tests;
+`cargo nextest run --profile db --test main --run-ignored only -E 'test(/^requests::/)'` the request suites; and
+`... -E 'not test(/^requests::/) and not test(/^load_test::/)'` the rest. The `db` profile holds the whole binary to one
+test at a time, because the suites share one database; `cargo test --test main -- --ignored --test-threads=1` is
+the libtest equivalent and still works. A test that
 sets an environment variable or other process-wide state (the auth
 posture, the ABAC policy, the mark scheme, the MAC key, the event
 transport, a global `tracing` subscriber: each read once per process)

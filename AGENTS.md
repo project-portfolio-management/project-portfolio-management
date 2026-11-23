@@ -39,21 +39,23 @@ maintainers' decision.
 ## Gates
 
 ```bash
-# service (a workspace: the service, `domain` and `migration`; run from its directory)
-cargo fmt --all --check && cargo clippy --workspace --all-targets --all-features -- -D warnings && cargo test --workspace --lib
+# service (a workspace: the service, `domain` and `migration`; run from its directory). The runner is cargo-nextest (once: `cargo install cargo-nextest --locked`;
+# its settings are service/.config/nextest.toml); `cargo test` still runs every test, but not in CI's way
+cargo fmt --all --check && cargo clippy --workspace --all-targets --all-features -- -D warnings && cargo nextest run --workspace --lib
 # matcher
 cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib
 # service: the one integration-test binary (tests/main.rs; each former tests/*.rs binary is a module of it), database-free part
-cargo test --test main
+cargo nextest run --test main
 # database tests need Postgres 18 (the file also starts a Redis 8 on 127.0.0.1:6379, password `redis`, not needed by the tests): podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait
 #   then, as CI's `api-db` job runs them, the request suites and then everything else that is ignored:
-#   DB_URL=postgres://postgres:postgres@localhost:5432/project_portfolio_management_test cargo test --test main requests:: -- --ignored --test-threads=1
-#   DB_URL=… cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::
+#   DB_URL=postgres://postgres:postgres@localhost:5432/project_portfolio_management_test cargo nextest run --profile db --test main --run-ignored only -E 'test(/^requests::/)'
+#   DB_URL=… cargo nextest run --profile db --test main --run-ignored only -E 'not test(/^requests::/) and not test(/^load_test::/)'
+#   (the `db` profile runs the database suites one at a time, as they share one database; a second database lets two run at once)
 #   (or a throwaway database on a local Postgres: createdb -U postgres -O "$USER" <name>, and drop it after)
-#   one former binary is a module filter: cargo test --test main approvals:: -- --ignored --test-threads=1
+#   one former binary is a module filter: cargo nextest run --profile db --test main --run-ignored only -E 'test(/^approvals::/)'
 #   (load_test needs a running service: see its module docs; keycloak_container and fluvio_relay need their features)
 # restore drill, as CI runs it (the request suites on a restored copy; run it alone, two at once collide):
-#   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test main requests:: -- --ignored --test-threads=1'
+#   scripts/restore-test.sh -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo nextest run --profile db --test main --run-ignored only -E "test(/^requests::/)"'
 # mutation test of the matcher (CI's `mutants` job mutates the changed lines; weekly, every mutant):
 #   cd project-portfolio-management-matcher-with-rust && git diff --relative origin/main -- . > /tmp/d && cargo mutants --in-diff /tmp/d
 # chaos test (random database and service faults under load; Podman, Node 22+; weekly in CI, not a merge gate): scripts/chaos-test.sh --seconds 60

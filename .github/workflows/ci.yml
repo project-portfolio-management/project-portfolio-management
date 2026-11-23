@@ -47,18 +47,22 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: ${{ env.API }}
+      - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
+        with:
+          tool: nextest
       # `--all` and `--workspace`: the service and its `domain` crate (the pure modules) together.
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       # spec/rust-checked-arithmetic RCA-ENF-5: no saturating, wrapping or overflowing arithmetic anywhere in the workspace.
       - run: "! grep -rnwE '(saturating|wrapping|overflowing)_[a-z0-9_]+' --include='*.rs' src domain/src datetime/src migration"
-      - run: cargo test --workspace --lib
+      # cargo-nextest (service/.config/nextest.toml): a process per test, in parallel; doctests are not run (they never were).
+      - run: cargo nextest run --workspace --lib --profile ci
       # The migration crate's own checks: the embedded files are sqlx's reading of migrations/, one per old migration name.
       - run: cargo clippy -p project-portfolio-management-migration --all-targets -- -D warnings
-      - run: cargo test -p project-portfolio-management-migration
+      - run: cargo nextest run -p project-portfolio-management-migration --profile ci
       # The one integration-test binary (tests/main.rs): every test that needs no database or container. The rest
       # are `#[ignore]`d and run in `api-db`.
-      - run: cargo test --test main
+      - run: cargo nextest run --test main --profile ci
 
   api-db:
     name: API (Postgres 18 integration tests)
@@ -95,15 +99,18 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: ${{ env.API }}
+      - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
+        with:
+          tool: nextest
       # Both steps run the one integration-test binary (tests/main.rs); a suite that changes process-wide state runs
       # each of its tests in a process of its own (tests/own_process.rs).
       - name: Request-level suites (tests/requests)
-        run: 'cargo test --test main requests:: -- --ignored --test-threads=1'
+        run: "cargo nextest run --profile db --test main --run-ignored only -E 'test(/^requests::/)'"
       - name: Real-token and other database suites
         # Every other `#[ignore]`d test, except load_test (it needs a service already running, which CI does not
         # start). keycloak_container and fluvio_relay need a container runtime or a broker; they are built only with
         # their features, which this job does not turn on.
-        run: 'cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::'
+        run: "cargo nextest run --profile db --test main --run-ignored only -E 'not test(/^requests::/) and not test(/^load_test::/)'"
 
   coverage:
     name: API test coverage (cargo-tarpaulin, LLVM engine, the database suites included)
@@ -212,18 +219,20 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: ${{ env.API }}
+      - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
+        with:
+          tool: nextest
       - name: Put real data in the source database (migrations + a few suites that leave rows)
         run: |
           set -euo pipefail
-          # Libtest takes several name filters after `--`; Cargo takes one before it.
-          cargo test --test main -- approvals:: feeds:: planner:: private_aggregates:: --ignored --test-threads=1
+          cargo nextest run --profile db --test main --run-ignored only -E 'test(/^approvals::/) or test(/^feeds::/) or test(/^planner::/) or test(/^private_aggregates::/)'
           mkdir -p "$ARTIFACT_DIR/ab/cd" && echo "attachment bytes" > "$ARTIFACT_DIR/ab/cd/example"
           printf '\000\377' > "$ARTIFACT_DIR/ab/cd/"$'ملف\n資料'
       - name: Back up, restore into a scratch database, compare, run the suite on it
         working-directory: .
         run: >-
           scripts/restore-test.sh
-          -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo test --test main requests:: -- --ignored --test-threads=1'
+          -t 'cd project-portfolio-management-service-with-rust && DB_URL="$RESTORED_DB_URL" cargo nextest run --profile db --test main --run-ignored only -E "test(/^requests::/)"'
       - name: The same drill with an encrypted backup (passphrase)
         working-directory: .
         run: |

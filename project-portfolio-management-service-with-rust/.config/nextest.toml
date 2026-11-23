@@ -1,0 +1,34 @@
+# cargo-nextest (https://nexte.st), the test runner CI and the gates use. `cargo test` still works for any test here.
+#
+# Why nextest: it runs every test in a process of its own, in parallel, and reports the slowest. That fits this
+# workspace, where the integration tests are one binary (`tests/main.rs`) whose process-wide state (`OnceLock`s for
+# authentication, the policy, the handling-mark scheme, the search index and more) is the reason `tests/own_process.rs`
+# exists. It also lets a CI job split a binary by test (`--partition`), which libtest cannot.
+#
+# Doctests are not run by nextest; the gates never ran them (`--lib`, `--test main`).
+
+[profile.default]
+# Report every failure, not only the first.
+fail-fast = false
+# Say which tests are slow; do not stop them.
+slow-timeout = { period = "30s" }
+
+[profile.ci]
+inherits = "default"
+failure-output = "immediate-final"
+final-status-level = "slow"
+
+# The database suites. They share one PostgreSQL database and one connection pool, so no two run at once: a group of one
+# thread (what `--test-threads=1` did for libtest, and `#[serial]` does inside one process). Run them with
+#   cargo nextest run --profile db --run-ignored only --test main -E 'test(/^requests::/)'
+# against `DB_URL`. A partition (`--partition count:1/3`) needs its own database.
+[test-groups]
+database = { max-threads = 1 }
+
+[profile.db]
+inherits = "ci"
+slow-timeout = { period = "120s" }
+
+[[profile.db.overrides]]
+filter = "binary(=main)"
+test-group = "database"

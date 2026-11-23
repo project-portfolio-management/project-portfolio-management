@@ -42,7 +42,7 @@ is **never** fed to the matcher; only goal **titles** bridge in via
 |---|---|
 | Run | `cargo run -- start` (needs Postgres; port 1241; migrations auto-run in development) |
 | Lint (must be clean) | `cargo clippy --workspace --all-targets --all-features -- -D warnings` · `cargo fmt --all --check` |
-| DB-free tests | `cargo test --workspace --lib` (unit, the service's and the domain crate's) and `cargo test --test main` (the one integration-test binary, `tests/main.rs`: its database suites are `#[ignore]`d) |
+| DB-free tests | `cargo nextest run --workspace --lib` (unit, the service's and the domain crate's) and `cargo nextest run --test main` (the one integration-test binary, `tests/main.rs`: its database suites are `#[ignore]`d). nextest is the runner CI uses (`.config/nextest.toml`; install once with `cargo install cargo-nextest --locked`); `cargo test` runs the same tests |
 | DB tests | `#[ignore]`d; need `DB_URL` (`compose.test.yaml` provides Postgres: `postgres`/`postgres` on 5432) — see Testing |
 | Features | `paseto` (default), `keycloak` (also accept Keycloak access tokens), `fluvio` (real-broker sink); all off except `paseto` |
 | Domain crate | `domain/` (crate `project-portfolio-management-domain`): the pure rule modules (`cpm`, `evm`, `tz`, `validation`, … 121 of them), re-exported from `src/lib.rs` under their old names. It may not depend on the service, `axum`, `axa`, `sqlx` or `tokio` (root spec §8.3c) |
@@ -251,8 +251,8 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 
 | Layer | Command |
 |---|---|
-| Unit | `cargo test --workspace --lib` (DB-free; the domain crate alone: `cargo test -p project-portfolio-management-domain`) |
-| Integration tests, DB-free | `cargo test --test main`: one binary, `tests/main.rs`, whose modules are the former `tests/*.rs` binaries (`matching`, `otlp_export`, `otlp_middleware`, `licence_files`, `trace_span_concurrency`, …) |
+| Unit | `cargo nextest run --workspace --lib` (DB-free; the domain crate alone: `cargo nextest run -p project-portfolio-management-domain`) |
+| Integration tests, DB-free | `cargo nextest run --test main`: one binary, `tests/main.rs`, whose modules are the former `tests/*.rs` binaries (`matching`, `otlp_export`, `otlp_middleware`, `licence_files`, `trace_span_concurrency`, …) |
 | Load test (needs a running service with login off; not in CI) | `PPM_LOAD_TEST_SECONDS=10 PPM_LOAD_TEST_CONCURRENCY=16 cargo test --test main load_test:: -- --ignored --nocapture` |
 | Request suites (`tests/requests/*`) | `cargo test --test main requests:: -- --ignored --test-threads=1` (shared database; serial) |
 | Real-token and other database suites | `cargo test --test main -- --ignored --test-threads=1 --skip requests:: --skip load_test::` (all, as CI runs them), or one module, e.g. `cargo test --test main private_aggregates:: -- --ignored --test-threads=1` (`list_paging`, `approvals`, `processes`, …; `tests/change_requests.rs` is the module `change_request_rights`) |

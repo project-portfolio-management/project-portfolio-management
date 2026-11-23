@@ -9,6 +9,23 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the tests run under cargo-nextest (2026-11-23)
+
+- `.config/nextest.toml` (profiles `default`, `ci` and `db`) and CI: the unit tests, the migration tests, the database-free
+  integration binary, both database groups and the restore drill's seeding and suite run with `cargo nextest run` (the
+  action is the one already pinned for zizmor). The `db` profile puts the whole `main` binary in a test group of one thread,
+  which is what `--test-threads=1` did. The documented gates (`AGENTS.md`, the Makefile, spec §11) say nextest; `cargo test`
+  still runs the same tests.
+- **Checked locally (macOS, Postgres 18):** 1,395 unit and migration tests passed (1 skipped, as before); the database-free
+  binary passed 29 (339 skipped); and the database suites passed in full, 243 request tests and 95 others, with no failure.
+  The filters select the same 339 ignored tests as before (243 + 95, and `load_test` left out).
+- **Not faster by itself:** the request suites took 659 s in nextest, about what they took in CI under `--test-threads=1`
+  (12.4 minutes including compiling). The gain is that a binary can now be split by test (`--partition`), which is the
+  next step. Not done here: splitting the database suites across CI jobs, and any change to the coverage job (tarpaulin runs
+  `cargo test`). Not run: the CI jobs with the new steps; the first push is their test. Doctests are not run by nextest
+  and never were. `own_process!` still re-launches the binary for each test that uses it; under nextest that is a second
+  process that is no longer needed (nextest sets `NEXTEST`), and skipping it is a possible saving, not made.
+
 ### Changed — team utilization reports no figure instead of a bound; `Figure` is deleted (2026-11-23)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6, RCA-INT-4): `effort::utilization`, `team_utilization` and

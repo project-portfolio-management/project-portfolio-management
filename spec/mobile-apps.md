@@ -114,5 +114,30 @@ another Lily monorepo checkout to use it instead. When Lily publishes, the apps 
 ## MA-7 Not built in the first slice
 
 Editing or deleting a plan, goals, issues, comments, the board as columns, sprints, notifications, offline storage,
-push notifications, locales other than English, iPad and tablet layouts beyond the system's default adaptation,
-store packaging and signing, and a CI job on a macOS or Android-emulator runner. Each is a later item, not a promise.
+push notifications, locales other than English, tablet layouts beyond the system's default adaptation (MA-8.1),
+managed app configuration and managed distribution (MA-8.3), store packaging and signing, and a CI job on a macOS or Android-emulator runner. Each is a later item, not a promise.
+
+## MA-8 Devices: managed and personal, phones and tablets
+
+The apps MUST run on **phones and tablets** (iPhone and iPad; Android phones and Android tablets), and on **managed
+devices** and on **personal devices** (BYOD), from one build of each app. Only configuration and storage differ between
+them; the service calls, the sign-in and the screens do not.
+
+| Id | Requirement |
+| --- | --- |
+| MA-8.1 | **Phones and tablets.** Each screen of MA-1 adapts to phone and tablet widths, in portrait and landscape, and in a split-screen or multi-window layout (iPad Split View and Slide Over; Android multi-window). Text, touch targets and focus order meet MA-4 at each size, at the largest text size the platform offers. |
+| MA-8.2 | **A personal device needs no enrolment.** The app works on a device that is not enrolled in any device management. It asks for no device-administrator right, no device identifier and no permission beyond network access. It reads nothing of the person's own data (contacts, photos, location, files) and writes nothing outside MA-2's two stores. |
+| MA-8.3 | **A managed device can configure the app.** On a device enrolled in a management service (Apple Business Manager with an MDM; Android Enterprise), the server settings of MA-2 (the service's base URL, the issuer URL, the client id and the redirect path) MUST be accepted from the platform's managed app configuration (iOS `com.apple.configuration.managed`; Android managed configurations). A value so supplied is shown as managed and cannot be edited; a value not supplied stays editable. The app never requires management to run (MA-8.2). Managed distribution (a custom app in Apple Business Manager; a private app in managed Google Play) is packaging, not a behaviour of the app. |
+| MA-8.4 | **Nothing to wipe but a token.** The tokens and the server settings are the only things the app keeps (MA-2). They are excluded from device backups and from cloud sync on both platforms (on iOS `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` and no iCloud Keychain sync; on Android backup rules that exclude the token store and the preferences). Removing the app, or a management service removing its data, leaves no plan or task data on the device. |
+| MA-8.5 | **Ending access.** A lost, stolen or surrendered device is dealt with where the credential is issued: the organization revokes the person's session or refresh token at its identity provider, and the next refresh fails and signs the app out (MA-2). The app holds no credential of its own to revoke. |
+| MA-8.6 | **The service does not tell the two apart.** The app sends no claim that a device is managed, and the service treats every call by its token alone (service spec §9.6). A deployment that wants to allow only managed or compliant devices does it in its identity provider's policy, which acts on the sign-in in the system browser (MA-2). Whether a given provider's device policy works with this sign-in is a test for that deployment, not something this document asserts. |
+| MA-8.7 | **Tests.** The UI tests of MA-6 run on one phone size and one tablet size for each app, in both orientations, and run the accessibility audit (MA-4) on each. A unit test covers MA-8.3's rule (a managed value wins and is not editable; an absent one stays editable). |
+
+### MA-8 status
+
+Nothing in MA-8 is verified on a real managed device or a real management service. Found in the apps' sources on
+2026-11-23: the Android manifest asks only for the network permission and sets `allowBackup="false"` with backup and
+data-extraction rule files (their contents were not read, so MA-8.4 is not confirmed for the preferences); the iOS token
+store uses a device-only Keychain class (`kSecAttrAccessible`) and sets no synchronizable flag. No tablet-specific layout
+code was found, so a tablet gets the system's default adaptation. **Not built:** the tablet layouts and the split-screen
+checks of MA-8.1, managed app configuration (MA-8.3), and the tests of MA-8.7. Each is a later item, not a promise (MA-7).

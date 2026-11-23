@@ -329,6 +329,23 @@ pub fn group_utilization(
 mod tests {
     use super::*;
 
+    #[test]
+    fn a_category_has_a_token_and_an_unknown_one_is_unclassified() {
+        assert_eq!(EffortCategory::Capex.token(), "capex");
+        assert_eq!(EffortCategory::Opex.token(), "opex");
+        assert_eq!(EffortCategory::Unclassified.token(), "unclassified");
+        assert_eq!(
+            EffortCategory::parse(Some(" CapEx ")),
+            EffortCategory::Capex
+        );
+        assert_eq!(EffortCategory::parse(Some("opex")), EffortCategory::Opex);
+        assert_eq!(
+            EffortCategory::parse(Some("capital")),
+            EffortCategory::Unclassified
+        );
+        assert_eq!(EffortCategory::parse(None), EffortCategory::Unclassified);
+    }
+
     /// One person's utilization of small minutes, which always fits.
     fn utilization_of(fact: &CapacityFact, floor_minutes: i64) -> Utilization {
         utilization(fact, floor_minutes).expect("small minutes fit")

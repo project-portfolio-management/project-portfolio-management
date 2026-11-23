@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — tests for effort categories and status-evidence metrics (2026-11-23)
+
+- `effort::EffortCategory::token` and `parse`, and `status_evidence::Counts::value`, each have a test (about 14 uncovered lines
+  before, by the database-free run on `7cc13e33`).
+- **Not done:** `tz::set_today_zone` stays untested here, because it writes a process-wide zone that another unit test reads
+  as UTC; it is exercised by the database suites. The environment readers are still not tested (RCA-IN-4 slice). Coverage was
+  not re-measured after these tests.
+
 ### Changed — axa 0.21.0 and axa-test 0.12.0 (2026-11-23)
 
 - `axa` 0.20.1 to 0.21.0 and `axa-test` 0.11.0 to 0.12.0 (`Cargo.toml`, `Cargo.lock`; nothing else moved). No source change was

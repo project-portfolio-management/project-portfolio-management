@@ -191,6 +191,21 @@ impl Counts {
 mod tests {
     use super::*;
 
+    #[test]
+    fn a_metric_is_read_by_key_and_an_unknown_key_is_none() {
+        let c = Counts {
+            overdue: Some(3),
+            due_soon: None,
+            blocked: 2,
+            no_due_date: 5,
+        };
+        assert_eq!(c.value("overdue"), Some(3));
+        assert_eq!(c.value("due_soon"), None, "unknown is not zero");
+        assert_eq!(c.value("blocked"), Some(2));
+        assert_eq!(c.value("no_due_date"), Some(5));
+        assert_eq!(c.value("late"), None);
+    }
+
     fn day(s: &str) -> Date {
         s.parse().unwrap()
     }

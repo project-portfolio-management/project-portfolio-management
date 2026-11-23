@@ -1,0 +1,1422 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "error.conflict": {
+      "comment": "409 on create",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A plan like this already exists."
+          }
+        }
+      }
+    },
+    "error.forbidden": {
+      "comment": "403",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You are not allowed to do this."
+          }
+        }
+      }
+    },
+    "error.forbiddenRule": {
+      "comment": "403 with the rule the service names",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The service's rule: %@"
+          }
+        }
+      }
+    },
+    "error.heading": {
+      "comment": "Generic heading of an error alert",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong"
+          }
+        }
+      }
+    },
+    "error.notFound.plan": {
+      "comment": "404 for a plan",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This plan is not there. It may have been deleted or merged."
+          }
+        }
+      }
+    },
+    "error.notFound.task": {
+      "comment": "404 for a task",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This task is not there. It may have been deleted, or its plan merged."
+          }
+        }
+      }
+    },
+    "error.unexpected": {
+      "comment": "Any answer the app does not expect, or a success it cannot read, with its status code",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The service gave an answer this app did not expect (HTTP %lld)."
+          }
+        }
+      }
+    },
+    "error.unreachable": {
+      "comment": "No network, timeout or 5xx",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The service could not be reached."
+          }
+        }
+      }
+    },
+    "error.unreachable.detail": {
+      "comment": "Second line for an unreachable service",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the connection, then try again."
+          }
+        }
+      }
+    },
+    "errorSummary.title": {
+      "comment": "Heading of the error summary above a form",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is a problem"
+          }
+        }
+      }
+    },
+    "field.required": {
+      "comment": "Spoken after a required field's label",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "required"
+          }
+        }
+      }
+    },
+    "kind.pathway": {
+      "comment": "Plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pathway"
+          }
+        }
+      }
+    },
+    "kind.portfolio": {
+      "comment": "Plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portfolio"
+          }
+        }
+      }
+    },
+    "kind.practice": {
+      "comment": "Plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Practice"
+          }
+        }
+      }
+    },
+    "kind.process": {
+      "comment": "Plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Process"
+          }
+        }
+      }
+    },
+    "kind.product": {
+      "comment": "Plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Product"
+          }
+        }
+      }
+    },
+    "kind.program": {
+      "comment": "Plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Program"
+          }
+        }
+      }
+    },
+    "kind.project": {
+      "comment": "Plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project"
+          }
+        }
+      }
+    },
+    "kind.proposal": {
+      "comment": "Plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proposal"
+          }
+        }
+      }
+    },
+    "kind.purpose": {
+      "comment": "Plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purpose"
+          }
+        }
+      }
+    },
+    "loading": {
+      "comment": "Shown while a screen loads",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading"
+          }
+        }
+      }
+    },
+    "move.cancel": {
+      "comment": "Button: close the move sheet",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "move.current": {
+      "comment": "Marks the task's present status in the move sheet",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current status"
+          }
+        }
+      }
+    },
+    "move.failed": {
+      "comment": "Heading of a failed move; the task keeps its status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The task was not moved"
+          }
+        }
+      }
+    },
+    "move.moving": {
+      "comment": "Shown while a move runs",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moving the task"
+          }
+        }
+      }
+    },
+    "move.title": {
+      "comment": "Title of the move sheet",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move task"
+          }
+        }
+      }
+    },
+    "newPlan.cancel": {
+      "comment": "Button: close the form without creating",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "newPlan.code": {
+      "comment": "Field label: plan code",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code"
+          }
+        }
+      }
+    },
+    "newPlan.code.hint": {
+      "comment": "Field description for the code",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An owner-scoped code, for example PROJ-2026"
+          }
+        }
+      }
+    },
+    "newPlan.hasStart": {
+      "comment": "Toggle: give the plan a start date",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set a start date"
+          }
+        }
+      }
+    },
+    "newPlan.hasTarget": {
+      "comment": "Toggle: give the plan a target date",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set a target date"
+          }
+        }
+      }
+    },
+    "newPlan.kind": {
+      "comment": "Picker label: plan kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kind"
+          }
+        }
+      }
+    },
+    "newPlan.name": {
+      "comment": "Field label: plan name",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        }
+      }
+    },
+    "newPlan.none": {
+      "comment": "Picker option: no value",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
+    "newPlan.save": {
+      "comment": "Button: create the plan",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create plan"
+          }
+        }
+      }
+    },
+    "newPlan.saving": {
+      "comment": "Shown while the create runs",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Creating the plan"
+          }
+        }
+      }
+    },
+    "newPlan.start": {
+      "comment": "Date picker label",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start date"
+          }
+        }
+      }
+    },
+    "newPlan.status": {
+      "comment": "Picker label: plan status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        }
+      }
+    },
+    "newPlan.target": {
+      "comment": "Date picker label",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target date"
+          }
+        }
+      }
+    },
+    "newPlan.title": {
+      "comment": "Title of the new-plan form",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New plan"
+          }
+        }
+      }
+    },
+    "plan.children": {
+      "comment": "Section heading: plans under this one",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Child plans"
+          }
+        }
+      }
+    },
+    "plan.code": {
+      "comment": "Term: the plan's code",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code"
+          }
+        }
+      }
+    },
+    "plan.details": {
+      "comment": "Card heading for a plan's fields",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details"
+          }
+        }
+      }
+    },
+    "plan.kind": {
+      "comment": "Term: the plan's kind",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kind"
+          }
+        }
+      }
+    },
+    "plan.noChildren": {
+      "comment": "Shown when a plan has no children",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This plan has no child plans."
+          }
+        }
+      }
+    },
+    "plan.noTasks": {
+      "comment": "Shown when a plan has no tasks",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This plan has no tasks."
+          }
+        }
+      }
+    },
+    "plan.notSet": {
+      "comment": "Value shown for a field with no value",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not set"
+          }
+        }
+      }
+    },
+    "plan.owner": {
+      "comment": "Term: the owning organisation",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Owner"
+          }
+        }
+      }
+    },
+    "plan.start": {
+      "comment": "Term: the plan's start date",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start date"
+          }
+        }
+      }
+    },
+    "plan.status": {
+      "comment": "Term: the plan's status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        }
+      }
+    },
+    "plan.statusTag": {
+      "comment": "Context spoken after a plan's status tag",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "plan status"
+          }
+        }
+      }
+    },
+    "plan.target": {
+      "comment": "Term: the plan's target date",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target date"
+          }
+        }
+      }
+    },
+    "plan.tasks": {
+      "comment": "Section heading: the plan's tasks",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tasks"
+          }
+        }
+      }
+    },
+    "plan.tasksTruncated": {
+      "comment": "Shown when the task list is cut short",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the first %lld tasks are shown."
+          }
+        }
+      }
+    },
+    "planStatus.active": {
+      "comment": "Plan status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active"
+          }
+        }
+      }
+    },
+    "planStatus.cancelled": {
+      "comment": "Plan status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelled"
+          }
+        }
+      }
+    },
+    "planStatus.completed": {
+      "comment": "Plan status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed"
+          }
+        }
+      }
+    },
+    "planStatus.onHold": {
+      "comment": "Plan status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On hold"
+          }
+        }
+      }
+    },
+    "planStatus.proposed": {
+      "comment": "Plan status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proposed"
+          }
+        }
+      }
+    },
+    "plans.account": {
+      "comment": "Menu: sign out and server settings",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account"
+          }
+        }
+      }
+    },
+    "plans.empty": {
+      "comment": "Shown when the list is empty",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There are no active plans."
+          }
+        }
+      }
+    },
+    "plans.new": {
+      "comment": "Button: open the new-plan form",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New plan"
+          }
+        }
+      }
+    },
+    "plans.noResults": {
+      "comment": "Shown when a search finds nothing",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No plans match “%@”."
+          }
+        }
+      }
+    },
+    "plans.search": {
+      "comment": "Prompt of the plans search field",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search plans"
+          }
+        }
+      }
+    },
+    "plans.server": {
+      "comment": "Menu item: change the server",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server settings"
+          }
+        }
+      }
+    },
+    "plans.signOut": {
+      "comment": "Menu item: sign out",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out"
+          }
+        }
+      }
+    },
+    "plans.title": {
+      "comment": "Title of the plans list",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plans"
+          }
+        }
+      }
+    },
+    "retry": {
+      "comment": "Button: repeat a failed request",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        }
+      }
+    },
+    "server.check": {
+      "comment": "Button: ask the service whether it is ready",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check address"
+          }
+        }
+      }
+    },
+    "server.checking": {
+      "comment": "Shown while the readiness check runs",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking the address"
+          }
+        }
+      }
+    },
+    "server.clientID": {
+      "comment": "Field label: the OAuth client id",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Client id"
+          }
+        }
+      }
+    },
+    "server.error.clientID": {
+      "comment": "Error: issuer set without a client id",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the client id the provider gave this app."
+          }
+        }
+      }
+    },
+    "server.error.issuerRequired": {
+      "comment": "Error: no issuer for a non-loopback service",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the sign-in provider. Only a service on this device may be used without one."
+          }
+        }
+      }
+    },
+    "server.error.needsHTTPS": {
+      "comment": "Error: http to a non-loopback address",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use an https:// address. Plain http:// is allowed only for this device (localhost or 127.0.0.1)."
+          }
+        }
+      }
+    },
+    "server.error.notAURL": {
+      "comment": "Error: the address is not a URL",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a full address, starting with https://"
+          }
+        }
+      }
+    },
+    "server.error.redirectURI": {
+      "comment": "Error: redirect URI has no scheme",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a redirect URI with a scheme, such as io.github.projectportfoliomanagement.mobile:/oauth2redirect"
+          }
+        }
+      }
+    },
+    "server.intro": {
+      "comment": "Inset text at the top of the server screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the address of the portfolio service, and how to sign in to it."
+          }
+        }
+      }
+    },
+    "server.issuer": {
+      "comment": "Field label: the OIDC issuer URL",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign-in provider (issuer)"
+          }
+        }
+      }
+    },
+    "server.issuer.hint": {
+      "comment": "Field description for the issuer",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The OIDC issuer the service trusts. Leave it empty only for a service on this device that needs no sign-in."
+          }
+        }
+      }
+    },
+    "server.ready": {
+      "comment": "Success message after the readiness check",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The service answered and is ready."
+          }
+        }
+      }
+    },
+    "server.redirectURI": {
+      "comment": "Field label: the OAuth redirect URI",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Redirect URI"
+          }
+        }
+      }
+    },
+    "server.redirectURI.hint": {
+      "comment": "Field description for the redirect URI",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registered with the provider for this app."
+          }
+        }
+      }
+    },
+    "server.save": {
+      "comment": "Button: store the server settings",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save and continue"
+          }
+        }
+      }
+    },
+    "server.serviceURL": {
+      "comment": "Field label: the service's base URL",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Service address"
+          }
+        }
+      }
+    },
+    "server.serviceURL.hint": {
+      "comment": "Field description for the service address",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For example https://portfolio.example.org"
+          }
+        }
+      }
+    },
+    "server.title": {
+      "comment": "Title of the server settings screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server"
+          }
+        }
+      }
+    },
+    "signIn.button": {
+      "comment": "Button: start the sign-in",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in"
+          }
+        }
+      }
+    },
+    "signIn.changeServer": {
+      "comment": "Button: go back to the server settings",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change server"
+          }
+        }
+      }
+    },
+    "signIn.error.cancelled": {
+      "comment": "Error: the person closed the browser sheet",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sign-in was cancelled."
+          }
+        }
+      }
+    },
+    "signIn.error.discovery": {
+      "comment": "Error: discovery failed",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sign-in provider could not be reached, or did not answer as an OIDC provider."
+          }
+        }
+      }
+    },
+    "signIn.error.heading": {
+      "comment": "Heading of a sign-in error",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You are not signed in"
+          }
+        }
+      }
+    },
+    "signIn.error.issuerMismatch": {
+      "comment": "Error: discovery issuer differs",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The provider names its issuer %@, which is not the one set. Change the server settings to match it."
+          }
+        }
+      }
+    },
+    "signIn.error.notAllowed": {
+      "comment": "Error: provider is not HTTPS",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sign-in provider and its endpoints must use https://."
+          }
+        }
+      }
+    },
+    "signIn.error.provider": {
+      "comment": "Error from the provider, with its error code",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sign-in provider refused the sign-in: %@"
+          }
+        }
+      }
+    },
+    "signIn.error.redirect": {
+      "comment": "Error: bad redirect URI",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The redirect URI is not valid. Change the server settings."
+          }
+        }
+      }
+    },
+    "signIn.error.s256": {
+      "comment": "Error: provider lacks S256",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sign-in provider does not support PKCE with S256, which this app needs."
+          }
+        }
+      }
+    },
+    "signIn.error.state": {
+      "comment": "Error: state mismatch",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sign-in answer did not match the request, so it was refused. Try again."
+          }
+        }
+      }
+    },
+    "signIn.error.token": {
+      "comment": "Error: token exchange failed",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The sign-in provider did not issue tokens. Try again."
+          }
+        }
+      }
+    },
+    "signIn.intro": {
+      "comment": "Inset text on the sign-in screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in with your organisation's account. The sign-in page opens in the system browser; this app never sees your password."
+          }
+        }
+      }
+    },
+    "signIn.noIssuer": {
+      "comment": "Error: sign in pressed with no issuer",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No sign-in provider is set. Add one in the server settings."
+          }
+        }
+      }
+    },
+    "signIn.required": {
+      "comment": "Notice after a 401 while not signed in",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This service needs you to sign in."
+          }
+        }
+      }
+    },
+    "signIn.server": {
+      "comment": "Shows the service address on the sign-in screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server: %@"
+          }
+        }
+      }
+    },
+    "signIn.sessionEnded": {
+      "comment": "Notice after a 401 or a failed refresh",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your session has ended. Sign in again."
+          }
+        }
+      }
+    },
+    "signIn.signedOut": {
+      "comment": "Notice after signing out",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You are signed out."
+          }
+        }
+      }
+    },
+    "signIn.signingIn": {
+      "comment": "Shown while the sign-in runs",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Signing in"
+          }
+        }
+      }
+    },
+    "signIn.title": {
+      "comment": "Title of the sign-in screen",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in"
+          }
+        }
+      }
+    },
+    "signIn.without": {
+      "comment": "Button: use a development service with sign-in turned off",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue without signing in"
+          }
+        }
+      }
+    },
+    "signIn.without.hint": {
+      "comment": "Text under the continue-without-signing-in button",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only for a service on this device whose sign-in is turned off (a development profile)."
+          }
+        }
+      }
+    },
+    "task.blockedDays": {
+      "comment": "Days since a task was blocked",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Days blocked: %lld"
+          }
+        }
+      }
+    },
+    "task.due": {
+      "comment": "A task's due date",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Due %@"
+          }
+        }
+      }
+    },
+    "task.moveHint": {
+      "comment": "Accessibility hint on a task row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose another status for this task"
+          }
+        }
+      }
+    },
+    "task.points": {
+      "comment": "A task's story points",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Points: %lld"
+          }
+        }
+      }
+    },
+    "task.statusLabel": {
+      "comment": "A task's status, in words",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status: %@"
+          }
+        }
+      }
+    },
+    "taskStatus.blocked": {
+      "comment": "Task status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blocked"
+          }
+        }
+      }
+    },
+    "taskStatus.done": {
+      "comment": "Task status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "taskStatus.inProgress": {
+      "comment": "Task status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In progress"
+          }
+        }
+      }
+    },
+    "taskStatus.inReview": {
+      "comment": "Task status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In review"
+          }
+        }
+      }
+    },
+    "taskStatus.todo": {
+      "comment": "Task status",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To do"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

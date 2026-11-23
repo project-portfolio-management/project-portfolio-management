@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Merged with the keys Xcode generates (GENERATE_INFOPLIST_FILE). The URL scheme is the OIDC redirect's
+     (spec/mobile-apps.md MA-2). NSAllowsLocalNetworking lets plain http reach a loopback development service; every
+     other address must be https. -->
+<plist version="1.0">
+<dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>io.github.projectportfoliomanagement.mobile.oauth2redirect</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.github.projectportfoliomanagement.mobile</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

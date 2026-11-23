@@ -1,0 +1,346 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		D7EF38DB37EF98AFB21D25F8 /* PortfolioUI in Frameworks */ = {isa = PBXBuildFile; productRef = E5E97BF9F6CD5E3482F5BA46 /* PortfolioUI */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A3CF59445E7DC65B43395D74 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 925F8A53719BE8FAF464190E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E57240859473C30D20B315F4;
+			remoteInfo = PortfolioMobile;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		7FCB146BFC1FEB3E1F5B1FFC /* PortfolioMobile.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PortfolioMobile.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E97D9BDD41BAD4DB0BD83B14 /* PortfolioMobileUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PortfolioMobileUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4EDB2B1783AFD2BC729E6871 /* PortfolioMobile-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PortfolioMobile-Info.plist"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		E753750DEAC8480BC844F431 /* PortfolioMobile */ = {isa = PBXFileSystemSynchronizedRootGroup; path = PortfolioMobile; sourceTree = "<group>"; };
+		FD3AF9C7CEE7E78ADB33A9C9 /* PortfolioMobileUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = PortfolioMobileUITests; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		744819AE23E073D1D667555F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D7EF38DB37EF98AFB21D25F8 /* PortfolioUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		48A4C70136A18CE570F4C285 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		86DEC2FB62F4D17CED508F76 = {
+			isa = PBXGroup;
+			children = (
+				4EDB2B1783AFD2BC729E6871 /* PortfolioMobile-Info.plist */,
+				E753750DEAC8480BC844F431 /* PortfolioMobile */,
+				FD3AF9C7CEE7E78ADB33A9C9 /* PortfolioMobileUITests */,
+				3DC0FC81E33B2529FFFEBFFD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		3DC0FC81E33B2529FFFEBFFD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				7FCB146BFC1FEB3E1F5B1FFC /* PortfolioMobile.app */,
+				E97D9BDD41BAD4DB0BD83B14 /* PortfolioMobileUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E57240859473C30D20B315F4 /* PortfolioMobile */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3AE1684A6B8921258215DD78 /* Build configuration list for PBXNativeTarget "PortfolioMobile" */;
+			buildPhases = (
+				11E3414948CF8E4BB0AB33A2 /* Sources */,
+				744819AE23E073D1D667555F /* Frameworks */,
+				28F50A8D28F2FF44961490D3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E753750DEAC8480BC844F431 /* PortfolioMobile */,
+			);
+			name = PortfolioMobile;
+			packageProductDependencies = (
+				E5E97BF9F6CD5E3482F5BA46 /* PortfolioUI */,
+			);
+			productName = PortfolioMobile;
+			productReference = 7FCB146BFC1FEB3E1F5B1FFC /* PortfolioMobile.app */;
+			productType = "com.apple.product-type.application";
+		};
+		ED662E6F1DBFB87E93F0A696 /* PortfolioMobileUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F6449C2244E7D826C4366F1B /* Build configuration list for PBXNativeTarget "PortfolioMobileUITests" */;
+			buildPhases = (
+				EC747EE3DF2EA66DFB09FBB7 /* Sources */,
+				48A4C70136A18CE570F4C285 /* Frameworks */,
+				5309F1CE0FF0A5A4735A9EC9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6752BFD201707BC93D20D662 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				FD3AF9C7CEE7E78ADB33A9C9 /* PortfolioMobileUITests */,
+			);
+			name = PortfolioMobileUITests;
+			productName = PortfolioMobileUITests;
+			productReference = E97D9BDD41BAD4DB0BD83B14 /* PortfolioMobileUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		925F8A53719BE8FAF464190E /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					E57240859473C30D20B315F4 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					ED662E6F1DBFB87E93F0A696 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = E57240859473C30D20B315F4;
+					};
+				};
+			};
+			buildConfigurationList = B36479C45678C931DC24FA30 /* Build configuration list for PBXProject "PortfolioMobile" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 86DEC2FB62F4D17CED508F76;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6A91A92BDE4BF9D9584AC599 /* XCLocalSwiftPackageReference "PortfolioKit" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3DC0FC81E33B2529FFFEBFFD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E57240859473C30D20B315F4 /* PortfolioMobile */,
+				ED662E6F1DBFB87E93F0A696 /* PortfolioMobileUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		28F50A8D28F2FF44961490D3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5309F1CE0FF0A5A4735A9EC9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		11E3414948CF8E4BB0AB33A2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EC747EE3DF2EA66DFB09FBB7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6752BFD201707BC93D20D662 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E57240859473C30D20B315F4 /* PortfolioMobile */;
+			targetProxy = A3CF59445E7DC65B43395D74 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AB949C6579F1C8BBA5590DA3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1B3D90D3D9F41458B47A7D53 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CD1A3A3C56AE6A0B19A509FB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PortfolioMobile-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Portfolio;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.projectportfoliomanagement.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		6D120EA6F6F301EB700BDA89 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "PortfolioMobile-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Portfolio;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.projectportfoliomanagement.mobile;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		1F01C76BF9DAAA06AAEE8CE2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.projectportfoliomanagement.mobile.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = PortfolioMobile;
+			};
+			name = Debug;
+		};
+		19C699D20AE7056C3A1CC71B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.projectportfoliomanagement.mobile.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_TARGET_NAME = PortfolioMobile;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		B36479C45678C931DC24FA30 /* Build configuration list for PBXProject "PortfolioMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB949C6579F1C8BBA5590DA3 /* Debug */,
+				1B3D90D3D9F41458B47A7D53 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3AE1684A6B8921258215DD78 /* Build configuration list for PBXNativeTarget "PortfolioMobile" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CD1A3A3C56AE6A0B19A509FB /* Debug */,
+				6D120EA6F6F301EB700BDA89 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F6449C2244E7D826C4366F1B /* Build configuration list for PBXNativeTarget "PortfolioMobileUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1F01C76BF9DAAA06AAEE8CE2 /* Debug */,
+				19C699D20AE7056C3A1CC71B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		6A91A92BDE4BF9D9584AC599 /* XCLocalSwiftPackageReference "PortfolioKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = PortfolioKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E5E97BF9F6CD5E3482F5BA46 /* PortfolioUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PortfolioUI;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 925F8A53719BE8FAF464190E /* Project object */;
+}

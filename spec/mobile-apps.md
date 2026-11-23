@@ -54,8 +54,8 @@ Android. It never shows a password field of its own, and never uses an embedded 
 - An access token near expiry is refreshed with the refresh token; when refresh fails the app is signed out.
 - Sign out forgets the tokens, and calls the provider's `end_session_endpoint` when it has one.
 - A service whose enforcement is off (a development profile) needs no token. The app offers **Continue without signing
-  in** only when the server address is a loopback address (`localhost`, `127.0.0.1`, `[::1]`) or the Android
-  emulator's host (`10.0.2.2`).
+  in** only when the server address is a loopback address (`localhost`, `127.0.0.1`, `[::1]`) or, on Android
+  only, the emulator's host (`10.0.2.2`; on an iPhone that is an ordinary private address).
 
 HTTPS is required for the service and the issuer, except for those same development addresses.
 

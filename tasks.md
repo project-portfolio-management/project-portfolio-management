@@ -3209,7 +3209,7 @@ or the PMI portfolio standard; a separate SAFe portfolio kanban. Reasons are in
 
 ## Brainitive ideas (BR-n)
 
-Source: [spec/brainitive-lessons/index.md](spec/brainitive-lessons/index.md) and [plan.md §71 to §81](plan.md) (the
+Source: [spec/lessons/brainitive/index.md](spec/lessons/brainitive/index.md) and [plan.md §71 to §81](plan.md) (the
 repository, then the public site: BR-11 to BR-17).
 Ideas only (AGPL-3.0); no code copied. Order of work: BR-6, BR-1, BR-5, BR-10, then BR-3 and BR-2, then BR-11 and BR-12, then the small ones. Each item follows the rules in AGENTS.md.
 
@@ -3613,11 +3613,11 @@ Why: what a project delivers goes on running, and its incidents, requests and se
 - [ ] **SM-16 (L) — Screens** for each stage as it lands, in 11 locales, with Playwright and axe.
 - [ ] **SM-17 (S, owner) — Confirm SM-D1 to SM-D6.** SM-D1 and SM-D5 are decided (no CRA role claimed; legal advice before any commercial step).
 
-## DHCW Roadmap Editor ideas (RE-n, [spec/dhcw-roadmaps-editor-lessons/index.md](spec/dhcw-roadmaps-editor-lessons/index.md)), proposed 2026-11-14
+## DHCW Roadmap Editor ideas (RE-n, [spec/lessons/dhcw-roadmaps/index.md](spec/lessons/dhcw-roadmaps/index.md)), proposed 2026-11-14
 
 Why: Digital Health and Care Wales keeps public Now / Next / Later product roadmaps in a Google spreadsheet, and plans
 a PostgreSQL-backed API to replace it. This service has no public statement of a product's direction, and NC-10's Now /
-Next / Later lives in one browser. The assessment is in [plan.md](plan.md) §88 to §92, and the order of work is §92.
+Next / Later lives in one browser. The assessment is in [plan.md](plan.md) §88 to §92, and the order of work is §92. A second reading on 2026-11-23 is in §94, and adds RE-16 to RE-20.
 The source is MIT-licensed, but no code is copied, because the stacks differ. Every item follows the rules in AGENTS.md.
 The name is **public product roadmap** throughout, because "roadmap" already means spec §15 and NC-10.
 
@@ -3739,6 +3739,30 @@ The name is **public product roadmap** throughout, because "roadmap" already mea
   public reader, and what was not done or not verified.
   **Acceptance:** `.github/pull_request_template.md` exists and links AGENTS.md.
   **Built 2026-11-14.** `.github/pull_request_template.md`: the task, the specification, code and test, what the change writes outside the service (exports, webhooks, feeds, the public reader, migrations), what was not done or verified, and AI tools. CONTRIBUTING.md points at it. **Not verified:** how GitHub renders it, since no pull request has been opened since.
+- [ ] **RE-16 (S) — Dependency review and an OSV audit on every pull request.** Add GitHub's dependency-review action and
+  OSV-Scanner over the UI's and the matcher's lockfiles (the service's `Cargo.lock` too, beside `cargo deny`), with a config
+  file, as CHO-031 does. **Acceptance:** a pull request that adds a dependency with a known advisory fails; a pinned SHA for
+  each action; `zizmor` passes. Not covered, to say in the change: advisories published after the merge, and a setting only
+  the owner can turn on (name it, per CHO-031's retro). Next to SA-15.
+- [ ] **RE-17 (M) — Where does the UI suite assert a rule twice?** First measure: the Playwright runs and lines per spec, and
+  the Vitest and e2e specs that assert the same rule. Then slim one spec as DHCW's CHO-037 did (133 to 83 runs), and wait for the
+  thing an axe scan needs (a title or a heading), not `networkidle`. **Acceptance:** a short table of runs and lines per spec
+  before and after, and no check removed that nothing else covers. Not covered: the other 600 tests. The flaky cutover axe test
+  of 23 November is the first case.
+- [ ] **RE-18 (M, owner: OQ-17) — Per-field history of a plan, and a restore.** Only if OQ-16 says yes. Compare `audit_logs`
+  with ADR-015's change set, snapshot and change summary: what is recorded today (the act, not the previous value), what a
+  plan's page can show ("who last changed this field"), and what restoring would write. **Acceptance:** a one-page
+  assessment, then a spec for one entity (the plan), before any migration; it decides how SA-7's hash chain is laid out. Not
+  covered: other entities, and redaction across history (WW-1.8 holds erasure).
+- [ ] **RE-19 (S) — Two small checks.** (a) A test fails a route that declares no access policy, and the last administrator
+  cannot be removed; (b) the OpenAPI document lists every refusal code, and a test fails a code the document omits.
+  **Acceptance:** each is confirmed as present, or added; where present, say where. Either may end as a note. Not covered:
+  forced row-level security as a backstop for private plans, which is a design question for a later task.
+- [ ] **RE-20 (S, docs) — A record for each delivery.** A short rule in AGENTS.md: a change that was delivered by an agent
+  leaves, in its pull request, the models used, what each review found, what was declined and why, anything found after
+  review, and what it cannot show. Retro lessons go to the agent files. **Acceptance:** the rule is in AGENTS.md and the pull
+  request template asks for it. No tooling. Not covered: counting tokens or cost, which DHCW's records also leave out where the
+  tool does not expose them.
 
 ## Supplier assurance (SA-n, [spec/supplier-assurance.md](spec/supplier-assurance.md)), proposed 2026-11-20
 

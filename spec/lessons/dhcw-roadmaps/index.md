@@ -6,10 +6,16 @@ read at commit `cc81478` (2026-11-14). It has 72 commits, all from 10 to 14 Nove
 TypeScript app on GitHub Pages, MIT-licensed, copyright Digital Health and Care Wales. With it, DHCW Product Leads
 edit the public Now / Next / Later roadmaps of their products.
 
+**Second reading, 2026-11-23.** The repository was read again at `1da2008` (23 November): 302 commits, 230 of them
+since the first reading, and renamed `roadmaps`. It is no longer only an editor. It is a pnpm workspace of the editor and
+the public site, with a **PostgreSQL API designed but not yet built** (ADR-015 to ADR-020 accepted, 6 placeholder stories,
+no `apps/api`). The new lessons, 12 to 19, are in [Second reading](#second-reading-2026-11-23); advice and tasks are in
+[plan.md §94](../../../plan.md) and `RE-16` to `RE-20`. Lessons 1 to 11 are unchanged.
+
 This file is a **map, not a transcription**. It covers what the editor does that bears on a portfolio service, what
-this repository already has, and what to take. It follows the pattern of [brainitive-lessons](../brainitive-lessons/index.md).
-The decisions that came out of it are in [plan.md §88 to §92](../../plan.md), and the tasks `RE-1` to `RE-14` are in
-[tasks.md](../../tasks.md).
+this repository already has, and what to take. It follows the pattern of [brainitive lessons](../brainitive/index.md).
+The decisions that came out of it are in [plan.md §88 to §92](../../../plan.md), and the tasks `RE-1` to `RE-14` are in
+[tasks.md](../../../tasks.md).
 
 **Licence.** MIT permits reuse with the notice kept. The stacks differ (React and Google Sheets there; Rust, PostgreSQL
 and Svelte here), so in practice this repository takes ideas, and no code is copied.
@@ -144,6 +150,134 @@ ADRs in Nygard format that are amended, never deleted, with each amendment dated
 UX analysis and HTML prototypes before code. Each pull request ends with a retro, and the lessons go into the agent
 skills. A pull request template states what is written to the shared data source. *Here:* the spec plays the ADR's
 role, and CHANGELOG entries state what was not done.
+
+## Second reading, 2026-11-23
+
+**What changed.** 230 commits since the first reading, from 7 October to 23 November (34 on 19 November and 41 on 22
+November, the busiest days). By type: 38 `feat(roadmaps)`, 27 `docs(backlog)`, 23 `docs(retro)`, 11 `docs(agents)`,
+10 `docs(analysis)`, 10 `test(e2e)`, and a few `ci`, `build`, `fix` and `chore`. The work that matters here is in three places: a **design for the database and the API** (the
+accepted ADR-015 to ADR-020, 1,497 lines), a **workspace and CI move** (STY-085 to STY-088), and a **test-slimming run**
+(CHO-036 to CHO-043). The repository's own records of the last are the best view of how it is delivered.
+
+**Evidence base.** Read in full: ADR-015 (the database), and the decisions of ADR-016 to ADR-020; the delivery-run summary
+for CHO-036 to CHO-042; the CHO-031 supply-chain commit; the EPC-022 and EPC-023 epics' status lines; the commit log. **Not
+read:** the editor's source since 14 November, the public site, the 23 retro commits' text, or the identity analysis. **Not
+run.** Nothing here describes running code for the API: `apps/` holds only the editor and the public site, and the API
+stories (STY-090 to STY-094) are placeholders. These are designs, not behaviour, and they may change when built.
+
+### 12. A change set, a snapshot and a change summary for every write (take: RE-18, assess first)
+
+ADR-015 gives every write to a draft, a list or access one **change set**: who, when, its scope, its kind, a note, the
+revision it was based on and produced, and a client-supplied key that makes a retry return the first result. A
+**database function builds the snapshot itself** after the write, as one JSONB document with its schema version, so past
+content is a read, never reconstructed from rows. Each change set also keeps a **change summary**, one row per field with its
+old and new value, so "who changed what" and "who last changed this field" are queries. Triggers refuse a write to a working
+table outside a completed change set, after its sign-off, or outside its scope; the application's role cannot update or
+delete history. **Restoring writes forward** as a new change set. **Redaction** is the one exception: an audited procedure
+replaces named content with `[redacted]` everywhere it is held and records who, when and why, never the content.
+*Here:* `audit_logs` records the act, with an idempotency layer (`src/idempotency.rs`) and a tamper-evidence design (SA-7,
+not built). It does not keep a past version of a plan to view, a per-field summary, or a restore. Erasure is a policy (WW-1.8),
+not a redaction procedure across history. See RE-18.
+
+### 13. A private scratch, a shared draft and a publication that pins a snapshot (take: none; compare with RE-2)
+
+Unsaved edits live in a **private scratch on the server**, one per person per roadmap, visible to its owner alone, never
+history, deleted on save, discard, end of assignment or expiry. Saving promotes it to the roadmap's **one shared draft** and
+merges **field by field** against the snapshot of the save's base revision under the roadmap lock: a field the save changes
+and nobody changed since is written; one changed since to another value is a conflict; a reorder has its own version.
+A **publication pins a snapshot**, so unpublishing is a change set and the public read is of exactly what was published.
+*Here:* RE-2 publishes one change set and refuses a co-lead's change (server-side, from the first reading). The scratch, the
+merge by field and the pinned snapshot are finer than RE-2 and not taken: this service has no shared draft of a roadmap.
+
+### 14. Forced row-level security, set per transaction, failing closed (take: nothing; one idea in RE-19)
+
+Every tenant-owned table carries `tenant_id`, with `UNIQUE (tenant_id, id)` on parents and tenant-keyed foreign keys, and
+**row-level security that is enabled and forced from the first migration**: the policy matches `current_setting('app.tenant_id',
+true)` and reads nothing when it is unset. The tenant and the person are set **per transaction only** (`set_config(…, true)`),
+so neither leaks through a pooled connection; views are `security_invoker`; the few `SECURITY DEFINER` functions pin their
+`search_path`; forced RLS binds the migration role too. Tests run as the application's own role against a real PostgreSQL 18.
+*Here:* this service is **one deployment per customer** (SA-1, SA-R13) and keeps tenancy out on purpose, so none of this is
+taken as tenancy. The part that transfers is a backstop for **private plans**: today `HiddenScope` is applied in application
+code; a forced policy keyed on a per-transaction setting would make a missed filter return nothing. Not a task now (RE-19
+asks whether to try it on one table).
+
+### 15. The API runs sign-in; sessions are server-side; invitations are single-use links (take: none)
+
+The API is a confidential OpenID Connect client for a **fixed allow-list of issuers in code**; ID tokens are validated by a
+maintained library; the mock provider can never be admitted in a deployed environment. A person is `(issuer, subject)`, never
+matched by email; **a person record exists only after an invitation is redeemed**, a single-use link plus a matching verified
+email that the admin copies and sends themselves. A session is an opaque 256-bit row in PostgreSQL behind a `__Host-`, `Secure`,
+`HttpOnly`, `SameSite=Strict` cookie, ending after 60 minutes idle or 10 hours; every request re-reads the session and
+refuses a disabled person. Security events go to the structured log, never the database, and carry IDs, never tokens or emails.
+*Here:* this service takes bearer tokens from the organization's own identity provider and has no sessions, no invitations
+and no browser cookie (SA-D2: OIDC only). The editor needs a server session because it has no gateway; this service does not.
+Not taken.
+
+### 16. Every route declares one policy; permissions are a catalogue in code; access is reviewed (take: RE-19, check)
+
+ADR-019: the **permission catalogue is a typed enumeration in the API's code**; **every route declares exactly one policy**
+(public; signed in; a tenant permission; a platform one) and a test fails a route that declares none; permission names are
+referenced only through the enumeration (a lint); there are **three shipped roles**, and a tenant cannot edit roles yet; a
+**tenant keeps at least one admin** (the API refuses to end the last); an **access review every six months** shows each
+member's roles and last sign-in. **Platform operations** are one-command Cloud Run jobs only named people can run, and who ran
+one comes from Cloud Audit Logs, not from the command line; there is **no operator web surface and no impersonation**.
+*Here:* there is an ABAC layer and an access-review module (`access_review`), and support grants are planned (SA-4). The
+two ideas worth checking, not checked in this reading: that a test fails a route with no declared policy, and that the last
+administrator cannot be removed.
+
+### 17. One origin, no CORS, edge rate limits, an OpenAPI document that CI keeps honest (take: RE-19)
+
+ADR-020: the editor and the API **share one origin**, so the editor's endpoints send **no CORS headers at all**; a
+state-changing request needs same-origin proof (`Sec-Fetch-Site: same-origin` or a matching `Origin`); rate limits live at the
+edge (Cloud Armor), and an environment without the load balancer holds no real data. ADR-017: **the OpenAPI document is
+committed and CI fails when it drifts from the code**; **every refusal is `{detail, code, params}` with a stable `code`**, and
+the document lists every code, so the editor's adapter maps each. *Here:* the OpenAPI document is committed and checked, and
+the service has its own rate limiter and a refusal shape; whether the codes are **enumerated in the document**
+and a test fails a code the document omits is not checked. See RE-19.
+
+### 18. A delivery that records itself, and tests that hold each rule once (take: RE-17, RE-20)
+
+The repository is delivered by agents, one fresh agent and one pull request per item, and each run leaves a **delivery-run
+record**: models used, review lanes and rounds, findings fixed and declined, timing, escapes found after review, rework,
+human interventions, bot status and the retro outcome, with an "evidence limits" line saying what the record cannot show.
+Each pull request ends in a **retro** whose lessons go into the agent skills (23 retro commits; for example "an item's stage
+timings come from its progress log", and "observe an event-gated CI condition before merge", which followed DEF-031, a fix so that
+the editor deploys from `main` again). The seven chores of CHO-014 then **slimmed the end-to-end suite so that each rule is asserted
+once, at its lowest seam**: one spec's runs fell from 133 to 83 and its lines from 4,602 to 3,067, another from 128 to 60.
+A standing owner rule (23 November) adds an axe scan to each page's brief. *Here:* the UI has about 615 Playwright tests and
+a CI run takes about 45 minutes, with one Playwright job near 20 minutes; the first reading's RE-9 to RE-11 added structure
+checks without asking where a rule is asserted twice. A flaky axe test on 23 November (a page scanned before its title
+existed) is the cost of waiting for `networkidle` instead of for the thing the scan needs. See RE-17.
+
+### 19. Supply-chain checks on every pull request (take: RE-16)
+
+CHO-031: **GitHub's dependency-review action** and an **OSV-Scanner audit of every lockfile**, with a config file and
+pnpm's release-age setting, run on every pull request; workflow files are linted with actionlint and zizmor; `main` is
+protected by a ruleset applied to the whole workspace; hooks install on every fresh install (DEF-028). A retro from that run
+holds that **a repository setting only the owner can turn on is an owner-only scenario** to be named in the story, not
+discovered at merge. *Here:* `cargo deny`, `cargo machete`, gitleaks, zizmor, a two-day publish-age rule and a container
+scan (SA-15, not built) exist; **dependency review and an OSV audit of the UI's and the matcher's lockfiles do not.** See RE-16.
+
+### What the second reading says about the first
+
+- **RE-5 and OQ-15 are settled by DHCW.** The first reading found a guide that planned a PostgreSQL API "to replace Google
+  Sheets"; the project asked whether to offer this service as that API. DHCW has since accepted its own: Python 3.15,
+  FastAPI, SQLAlchemy, a tenant-scoped schema, its own OpenAPI contract. The decision of 2026-11-16 (not offered, the path kept
+  open) stands, and the path is now narrower: RE-5 stays as a **mapping and a one-time dry-run import** of the spreadsheet
+  format, and is not extended into an adapter.
+- **The vocabulary trap is unchanged**, and now there is a second reader: the editor's "tenant" is an NHS Wales organization,
+  not a customer deployment in the sense of SA-R13.
+- **None of the first reading's lessons were withdrawn.** Lesson 3 (freshness) and 6 (bilingual text that is never written
+  from English) still hold; ADR-008's two-language rule is carried into ADR-015 as an English and a Welsh column per field.
+
+### Not taken from the second reading
+
+- **Multi-tenancy, a tenant on every row, tenant-scoped uniqueness and a platform job to create a tenant.** SA-1 and SA-R13
+  chose one deployment per customer, and a census test keeps it so.
+- **Server-side sessions, invitations and an Entra and Google sign-in in the API.** This service does not sign anyone in.
+- **A private scratch and a field-level merge** (lesson 13). The service has no shared draft to merge.
+- **Python, FastAPI and SQLAlchemy, Cloud SQL and Cloud Armor.** Other stack and hosting choices.
+- **Treating the designs as evidence of behaviour.** They are accepted decisions, not running code.
 
 ## Not taken
 

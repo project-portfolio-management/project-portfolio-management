@@ -2,7 +2,7 @@
 
 Who the main users are, written so a task, a screen or a sentence of copy can be checked against a real need. The
 pattern comes from the DHCW Roadmap Editor's Product Lead persona (RE-12,
-[lessons](../dhcw-roadmaps-editor-lessons/index.md), lesson 8).
+[lessons](../lessons/dhcw-roadmaps/index.md), lesson 8).
 
 **How to read them.** Each persona has three kinds of statement:
 

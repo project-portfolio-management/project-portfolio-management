@@ -9,7 +9,7 @@ asked. The owner decided OQ-15 on 2026-11-16 ([open questions](../spec/16-open-q
 was read at commit `cc81478` (`src/domain/roadmap/roadmap-repository.ts` and its doc comments, which are its
 contract) and its own guide,
 [replacing-google-sheets.md](https://github.com/DHCW-Digital-Health-and-Care-Wales/roadmaps-editor/blob/main/docs/operations/replacing-google-sheets.md).
-The background is in [the lessons](../spec/dhcw-roadmaps-editor-lessons/index.md).
+The background is in [the lessons](../spec/lessons/dhcw-roadmaps/index.md).
 
 ## Their model and ours
 

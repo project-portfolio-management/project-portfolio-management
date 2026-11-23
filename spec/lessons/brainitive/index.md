@@ -8,9 +8,9 @@ An open-source team workspace: Kanban and Scrum boards, docs, Excalidraw whitebo
 lead forms, billing and an MCP server, as one self-hosted monolith.
 
 This file is a **map, not a transcription**: what Brainitive does that bears on a portfolio service, what this
-repository already has, and what to take. The pattern follows [prince2](../prince2/index.md) and
-[total-project-control](../total-project-control/index.md). The decisions that came out of it are in
-[plan.md §71 to §81](../../plan.md) and the tasks `BR-1` to `BR-17` in [tasks.md](../../tasks.md).
+repository already has, and what to take. The pattern follows [prince2](../../prince2/index.md) and
+[total-project-control](../../total-project-control/index.md). The decisions that came out of it are in
+[plan.md §71 to §81](../../../plan.md) and the tasks `BR-1` to `BR-17` in [tasks.md](../../../tasks.md).
 
 **Licence.** AGPL-3.0 is strong copyleft. This repository takes **ideas only**; no code, text or schema is to be
 copied from it.

@@ -1577,7 +1577,7 @@ decision log, RACI, skill pools, delivery confidence, OKRs and benefits.
 
 Research date: 2026-10-25. Subject: [armendzekjiri/brainitive](https://github.com/armendzekjiri/brainitive)
 (PHP / Laravel 12 + Inertia + React; AGPL-3.0; 20 stars; created 2026-02-23). The full map is
-[spec/brainitive-lessons/index.md](spec/brainitive-lessons/index.md); this section is the assessment and the
+[spec/lessons/brainitive/index.md](spec/lessons/brainitive/index.md); this section is the assessment and the
 recommendations.
 
 **Evidence base.** Read: the README, `AGENTS.md`, `docs/ai/README.md`, two skills, the headings of `KNOWLEDGE.md` and
@@ -1662,7 +1662,7 @@ and a security review) were hardened by real incidents they wrote down.
 Second source for the same subject, read 2026-10-25: the home page, its pricing block and the privacy page of
 [www.brainitive.app](https://www.brainitive.app/). It is marketing and policy text, so it is evidence of what the
 vendor *claims*; nothing was run. The detail is in
-[spec/brainitive-lessons/index.md](spec/brainitive-lessons/index.md), lessons 11 to 17.
+[spec/lessons/brainitive/index.md](spec/lessons/brainitive/index.md), lessons 11 to 17.
 
 ## 78. Where we already match or lead (site)
 
@@ -1827,14 +1827,14 @@ templates, since the owner's rule for translations should hold for legal wording
 Research date: 2026-11-14. Subject:
 [DHCW-Digital-Health-and-Care-Wales/roadmaps-editor](https://github.com/DHCW-Digital-Health-and-Care-Wales/roadmaps-editor),
 read at commit `cc81478`. It is a static React app, MIT-licensed, with 72 commits from 10 to 14 November 2026. The map
-is [spec/dhcw-roadmaps-editor-lessons/index.md](spec/dhcw-roadmaps-editor-lessons/index.md), and this section gives
+is [spec/lessons/dhcw-roadmaps/index.md](spec/lessons/dhcw-roadmaps/index.md), and this section gives
 the assessment and the advice. The evidence was its documents and types; nothing was run.
 
 ## 88. What it is, and why it matters more than its size
 
 Digital Health and Care Wales Product Leads use it to keep public Now / Next / Later roadmaps of their products. A
-separate public site reads the same Google spreadsheet each night. The editor is four days old and has no backend,
-but it is unusually well specified: it has 14 ADRs, a persona with numbered owner answers, a written contract for
+separate public site reads the same Google spreadsheet each night. The editor was four days old and had no backend when first read
+(§94 reads it again on 23 November), but it is unusually well specified: it has 14 ADRs, a persona with numbered owner answers, a written contract for
 everything it writes to the shared spreadsheet, and 34 accessibility-tree snapshots in English and Welsh.
 
 It matters to this project for three reasons:
@@ -1928,3 +1928,51 @@ to its monitoring.
 The underlying records are the [open and completed tasks](tasks.md), the
 [recovery targets](operations/recovery-objectives.md), the [language statement](governance/language-statement.md)
 and the [accessibility statement](governance/accessibility-statement.md).
+
+## 94. The DHCW repository, read again on 23 November 2026
+
+**What it is now.** The repository is renamed `roadmaps`, holds the editor and the public site as one pnpm workspace, and has
+302 commits (230 since §88's reading on 14 November). A **PostgreSQL API is designed and accepted but not built**: six
+ADRs (015 to 020, 1,497 lines), and six placeholder stories, STY-090 to STY-095, with no `apps/api`. The rest of the 230 is
+test slimming (CHO-036 to CHO-043), supply-chain and CI work (CHO-031, STY-087, STY-088) and retros that change the agent
+skills. The detail is in [spec/lessons/dhcw-roadmaps/index.md](spec/lessons/dhcw-roadmaps/index.md), "Second reading".
+
+**Where we match or lead.** One deployment per customer, kept by a census (SA-1, SA-R13), where DHCW chose tenancy with forced
+row-level security. An audit trail with an idempotency layer, and a tamper-evidence design (SA-7). An access review
+(`access_review`) and an ABAC layer. A committed OpenAPI document that CI checks. Supply-chain checks on the Rust side
+(`cargo deny`, `cargo machete`, gitleaks, zizmor, a two-day publish-age rule), though not theirs (gap 1). A restore drill that
+runs in CI and a weekly chaos test; ADR-015 says backups and point-in-time recovery stay in the UK but describes no drill.
+
+**Gaps worth considering.** Each is assessed, not assumed.
+
+1. **No dependency review or OSV audit of the UI's and the matcher's lockfiles on a pull request** (CHO-031). Small, and it
+   closes a gap SA-15 (a container scan) does not. `RE-16`.
+2. **A flaky and slow UI suite**: about 615 Playwright tests, a job near 20 minutes, a 45-minute CI run, and one axe test that
+   scanned a page before its title existed on 23 November. DHCW cut a spec's runs from 133 to 83 by asking where each rule is
+   asserted twice, at the lowest seam that can fail it. Measure first, slim second. `RE-17`.
+3. **No per-field history of a plan, and no restore.** DHCW's design keeps a change set, a snapshot and a change summary per
+   write, written by a database function and guarded by triggers; this service keeps the act, not the previous value. Whether
+   a portfolio office needs "who last changed this field" and "show me the plan as it was" is a question for the owner, and the
+   answer decides how SA-7 is built. `RE-18`, with OQ-17.
+4. **Two small checks from ADR-019 and ADR-017:** a test that fails a route with no declared access policy, and that the last
+   administrator cannot be removed; and an OpenAPI document that lists every refusal code, with a test that fails an omitted
+   one. Neither is known to be missing. `RE-19`.
+5. **Delivery records.** Each delivery run leaves a record of the models, the review lanes, the findings fixed and declined, the
+   escapes and the rework, and each retro changes the skills. This repository's `agents/` has the review checklist but not
+   the record. A short rule in AGENTS.md, no tooling. `RE-20`.
+
+**What changes about the first reading.** RE-5 and OQ-15 are settled by DHCW: it is building its own API, so the plan of
+2026-11-16 (not offered, the path kept open) stands, and RE-5 stays a mapping and a one-time dry-run import, never an adapter.
+No lesson from §88 to §92 is withdrawn.
+
+**Not advised.** Multi-tenancy and a tenant column (SA-1 and SA-R13 decided otherwise); server-side sessions, invitations and an
+API-run sign-in (this service has no browser session and takes bearer tokens, SA-D2); a private scratch and a field-level
+merge (no shared draft); and treating the designs as running code. Forced row-level security is a good backstop for private
+plans, but it is a change to every query's transaction, and nothing here argues for it yet.
+
+**Evidence limits.** The designs are accepted decisions, not behaviour. The 23 retro commits, the editor's source since 14
+November and the public site were not read. Nothing was run. The statements about this repository's own CI, tests and modules
+come from its files; "known to be missing" means not found by a search, not proved absent.
+
+**Sequencing.** RE-16 first (a few lines of workflow). RE-20 next (a rule, no code). RE-17 starts with a measurement. RE-19 is a
+check that may end as a note. RE-18 waits for OQ-17.

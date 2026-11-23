@@ -88,7 +88,7 @@ spec §16 once that crate is scaffolded.
   position on what the project supports, not a review of a deployment: it does not change DPIA risk 17, and a
   deployment that turns the reader on still owns that risk.)
 - **OQ-15 — Offer this service as the API the DHCW Roadmap Editor plans?** Its guide plans a PostgreSQL-backed HTTP API
-  to replace Google Sheets behind one port ([lessons](dhcw-roadmaps-editor-lessons/index.md)). (Lean: write the mapping
+  to replace Google Sheets behind one port ([lessons](lessons/dhcw-roadmaps/index.md)). (Lean: write the mapping
   and a dry-run import (RE-5), and leave any approach to DHCW to the owner. Do not shape the data model to their
   spreadsheet beyond what RE-1 needs anyway.)
   (**Decided 2026-11-16 by the owner: not now, and the path stays open.** Nothing is offered to DHCW. The mapping
@@ -96,8 +96,19 @@ spec §16 once that crate is scaffolded.
   stay as interop features of this service, kept working by their tests. Nothing more is built for the Roadmap
   Editor alone unless DHCW asks; a change that is useful without them, such as organization short names and names in
   other languages (FR-16e18), is judged on its own. Revisit when DHCW asks, or when the owner chooses to offer it.)
+  (**Update 2026-11-23, from a second reading of DHCW's repository:** DHCW has accepted a design for its own API, a Python
+  FastAPI service over PostgreSQL with its own OpenAPI contract (ADR-015 to ADR-020), though it is not yet built. The
+  question is therefore answered from their side as well. The mapping and the dry-run import stay as they are, and nothing
+  is added toward an adapter. [Lessons](lessons/dhcw-roadmaps/index.md), "Second reading".)
 - **OQ-16 — SAML 2.0 sign-in?** NHS Wales and other public bodies may run identity providers that offer SAML, and a
   procurement briefing lists it (SA-D2). The service verifies OIDC tokens only (NFR-18).
   (**Decided 2026-11-21 by the owner: stay OIDC-only, not SAML, until a customer needs it.** Nothing SAML is built,
   directly or as a bridge in the service. A SAML-only provider reaches the service through a broker the deployer
   runs, such as a Keycloak realm. Revisit when a customer needs SAML and cannot broker it.)
+- **OQ-17 — How much history of a plan must a deployment keep and show?** Today `audit_logs` records the act (who did
+  what, to which entity, and when), and `schedule_baselines` freeze a schedule. DHCW's design for its roadmap database keeps,
+  for every write, a snapshot of the whole roadmap and a change summary of each field's old and new value, so "who last
+  changed this field" and "show it as it was" are queries, and a restore writes forward ([lessons](lessons/dhcw-roadmaps/index.md),
+  lesson 12). Does a portfolio office need that for a plan, and for which fields? (Lean: ask the owner before building;
+  start with a read-only "who last changed this" for a plan's own fields, and decide the audit hash chain (SA-7) with it. This
+  is `RE-18`, and a non-answer leaves SA-7 as it is.)

@@ -458,7 +458,10 @@ async fn utilization(
             "by": "person",
             "window_days": window_days,
             // Stable order by actor, **not** sorted by utilization.
-            "utilization": facts.iter().map(|f| rules::utilization(f, floor)).collect::<Vec<_>>(),
+            "utilization": super::or_overflow(
+                facts.iter().map(|f| rules::utilization(f, floor)).collect::<Option<Vec<_>>>(),
+                "person utilization",
+            )?,
             "suppression": { "floor_minutes": floor, "min_group_people": min_people },
             "note": "Utilization near or above 100% is a warning about the queue, \
                      not an achievement. No per-person cycle time, throughput or \
@@ -467,7 +470,10 @@ async fn utilization(
         _ => serde_json::json!({
             "by": by,
             "window_days": window_days,
-            "utilization": rules::group_utilization(&facts, floor, min_people),
+            "utilization": super::or_overflow(
+                rules::group_utilization(&facts, floor, min_people),
+                "group utilization",
+            )?,
             "people_counted": facts.len(),
             "suppression": { "floor_minutes": floor, "min_group_people": min_people },
         }),

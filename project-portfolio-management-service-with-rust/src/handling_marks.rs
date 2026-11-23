@@ -24,7 +24,6 @@
 //! HTTP header carries ASCII only, so a mark with any other character is sent as an RFC 8187 extended value,
 //! `UTF-8''` followed by its percent-encoded UTF-8 ([`header_value`]).
 
-use crate::figures::Figure;
 use std::fmt::Write as _;
 use std::sync::OnceLock;
 
@@ -53,6 +52,9 @@ pub fn header_value(mark: &str) -> String {
     }
     out
 }
+
+/// FIG-2: the only level of a scheme with no levels (`init` refuses one, so this is not reached in a running service).
+const LOWEST_LEVEL: usize = 0;
 
 /// An ordered scheme of marks, lowest first.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -126,7 +128,10 @@ impl Scheme {
     pub fn plan_level(&self, mark: Option<&str>) -> usize {
         match mark {
             None => 0,
-            Some(m) => self.level_of(m).unwrap_or(self.levels.len().total_sub(1)),
+            Some(m) => self.level_of(m).unwrap_or(
+                // FIG-2: `init` refuses an empty scheme, so there is a highest level; for none, level 0 is the only one.
+                self.levels.len().checked_sub(1).unwrap_or(LOWEST_LEVEL),
+            ),
         }
     }
 

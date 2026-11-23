@@ -11,7 +11,6 @@
 //! * `GET /api/status-metrics`: the definitions of the numbers a claim may cite (BR-2);
 //! * [`pack_section`]: the director pack's view, as at its cut-off.
 
-use crate::figures::Figure;
 use std::collections::HashSet;
 
 use crate::datetime::{Date, Timestamp};
@@ -572,7 +571,10 @@ pub async fn pack_section(
         "as_at": cut_off,
         "plans": rows,
         "overdue": overdue,
-        "without_cadence": include.len().total_sub(with.len()),
+        "without_cadence": super::or_overflow(
+            include.len().checked_sub(with.len()),
+            "plans without a cadence",
+        )?,
         "basis": "The latest update posted on or before the cut-off, and the cadence as it is now.",
     }))
 }

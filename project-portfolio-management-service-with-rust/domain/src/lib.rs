@@ -90,7 +90,6 @@ pub mod exceptions_digest;
 pub mod extract;
 pub mod feeds;
 pub mod fever;
-pub mod figures;
 pub mod financial_year;
 /// The phased budget baseline and the EAC/ETC forecast (T-28b).
 pub mod financials;

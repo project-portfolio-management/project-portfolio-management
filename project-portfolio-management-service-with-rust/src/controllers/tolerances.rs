@@ -11,7 +11,6 @@
 //! over-booking of the plan's people) counts only the plans the caller can read, so it can differ between callers;
 //! the answer says so.
 
-use crate::figures::Figure;
 use std::collections::HashMap;
 
 use crate::datetime::Date;
@@ -127,10 +126,13 @@ async fn measure_cost(ctx: &AppContext, plan: Uuid) -> Result<Measure> {
             "there is no approved budget baseline to hold the estimate against",
         ));
     };
-    let total = baseline
-        .periods
-        .iter()
-        .fold(0_i64, |a, p| a.total_add(p.planned_minor));
+    let total = super::or_overflow(
+        baseline
+            .periods
+            .iter()
+            .try_fold(0_i64, |a, p| a.checked_add(p.planned_minor)),
+        "baseline total",
+    )?;
     Ok(rules::overrun_bps(eac, total).map_or_else(
         || Measure::none("the approved baseline totals zero, so an overrun has no percentage"),
         Measure::of,

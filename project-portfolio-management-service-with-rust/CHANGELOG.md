@@ -9,6 +9,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — benefit and baseline totals in the controllers answer 500 instead of a bound (2026-11-23)
+
+- `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6): the per-currency benefit target and realized totals in the board
+  pack, regulator extract and technology-benefits routes, the realized amounts in the board pack, and the baseline total
+  in the tolerances route use `checked_add` and answer `500` through `or_overflow`. The regulator extract handler got
+  `#[expect(clippy::too_many_lines)]`.
+- Not done: `phase`, `capacity_heatmap`, `viability`, team utilization (about 12 `Figure` sites in the domain crate) and the
+  unsigned count differences (FIG-2). The `500` paths are untested end to end (database-gated).
+
 ### Changed — time-analysis stored times are range-checked, and its sums are proven (2026-11-23)
 
 - `spec/rust-checked-arithmetic` (RCA-IN-1, RCA-EXC-2, RCA-DECL-6): `tba::check_times` refuses a board whose stored

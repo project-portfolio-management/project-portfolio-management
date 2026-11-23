@@ -16,7 +16,6 @@
 //! excludes `as_of`), mirroring `/api/at-a-glance`. All endpoints are
 //! GETs, so under the blanket ABAC guard they derive as `read`.
 
-use crate::figures::Figure;
 use crate::prelude::*;
 use axum::http::HeaderMap;
 use serde::Deserialize;
@@ -436,8 +435,14 @@ async fn executive_benefits(
             *statuses.entry(benefit.status.as_str()).or_default() += 1;
             if let Some(currency) = benefit.currency.as_deref() {
                 let entry = per_currency.entry(currency).or_default();
-                entry.0 = entry.0.total_add(benefit.target_minor.unwrap_or(0));
-                entry.1 = entry.1.total_add(benefit.realized_minor);
+                entry.0 = super::or_overflow(
+                    entry.0.checked_add(benefit.target_minor.unwrap_or(0)),
+                    "benefit targets",
+                )?;
+                entry.1 = super::or_overflow(
+                    entry.1.checked_add(benefit.realized_minor),
+                    "realized benefits",
+                )?;
             } else {
                 non_financial += 1;
             }

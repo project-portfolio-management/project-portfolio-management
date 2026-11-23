@@ -65,6 +65,15 @@ Added `locales/<loc>/sitemap.xml` to ar-001, cy-001, cy-ar, cy-gb, en-001, en-gb
 
 ## Unreleased
 
+### 23 November (SA-2, outbound hosts in one list)
+
+- `operations/deployment.md` § Outbound hosts lists every setting by which the service or the operator interface
+  reaches another host, what each reaches and what happens when it is unset, plus the settings named like hosts that are
+  not contacted. A new test, `outbound_hosts`, fails when either side reads a host setting the list does not name, or the
+  list names one that nothing reads. Checked both ways by planting a setting and a stale row.
+  **Not covered:** a host setting whose name lacks a host-like ending (three are named by hand), and the scripts.
+  Destinations people add themselves (notification sinks) are held to public `https` but not to a region.
+
 ### 21 November (fr-fr, fr-001 and fr-ca: French, France, world and Canada)
 
 - Added the full French content: `locales/fr-fr`, `locales/fr-001` and `locales/fr-ca` now each have the home page, the four topics, the eleven role briefs and a sitemap beside their existing path to production (51 entries each; folder names in French: avantages, fonctionnalités, comparaisons, tutoriel). The site's own words are in `fr` (`messages.json`, 63 keys), and the three locales moved to the full list in `site.ts`; `PAGE_ONLY_LOCALES` is now empty. `fr-fr` was translated from `en-001` by the model. `fr-001` and `fr-ca` are copies of it with scripted edits (`fr-001`: "e-mail", "signalement" for issue ticket; `fr-ca`: "courriel", "billet", "jours ouvrables", "exercice financier", "ÉFVP" for the impact assessment) and each locale's own sign-in link. The existing path-to-production pages were kept. Not done or not verified: no French speaker, French, Canadian or other, has reviewed any of it; `fr-001` and `fr-ca` were edited by word lists and not read through; Playwright and the live pages were not checked, only a build; the three locales share one `fr` interface block with no Canadian variant; the hero line reads "Langue :" and is unchecked on a live page, as are the picker hover and dropdown; the sitemaps were written by script; the tutorial keeps the demonstration's English button and page labels, and says so; technical terms ("chemin critique", "dossier de direction" for director pack, "accès d'urgence (break-glass)", "séparation des tâches", "confiance de réalisation", "marques de traitement") and the role titles are the model's choices and are not checked against usage; folder names carry accents (fonctionnalités), which only the build was checked for, not a Windows or older-Mac checkout. The role folder names stay in English. Every locale in the list now has full content; the older locales (en-*, hi-*, cy-*, ar-001, zh-001, zh-cn) still lack `sitemap.xml` and have not been checked for peer ids, folder names and translation, and the LocalePicker label rewordings have not been applied.

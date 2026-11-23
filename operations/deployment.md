@@ -128,6 +128,46 @@ migration adds one. The only tenant column is axa's outbox column, which this se
 hosting several customers runs one deployment for each, and never points two at the same database
 ([supplier assurance](../spec/supplier-assurance.md), SA-R1).
 
+## Outbound hosts
+
+The service and the operator interface make no outbound connection of their own. Every host they reach is one an
+operator names in a setting below. To show a buyer where data goes, for example that every host is in the UK or belongs
+to the buyer (SA-R2), go through this list for your deployment. Names here are written in full, prefix included. A test
+(`outbound_hosts`, SA-2) fails when the service or the operator interface reads a host setting this list does not name,
+or when the list names a setting that nothing reads any more.
+
+| Setting | Read by | What it reaches | Unset |
+|---|---|---|---|
+| `DB_URL` | service | PostgreSQL | required |
+| `PROJECT_PORTFOLIO_MANAGEMENT_REDIS_URL` | service | Redis, the shared cache | required, except in development, test and `container-dev` (an in-process cache) |
+| `SMTP_HOST` | service | the mail relay for notifications | `localhost` (port 1025 in development) |
+| `OTLP_ENDPOINT` | service | the telemetry collector: traces, metrics and logs | **`http://localhost:4317`**; the empty string turns export off |
+| `PROJECT_PORTFOLIO_MANAGEMENT_PASETO_KEYS_URL` | service | the authentication service's public keys | inline keys, or none |
+| `PROJECT_PORTFOLIO_MANAGEMENT_OIDC_ISSUER` | service | the OpenID Connect provider's discovery document and key set | off |
+| `PROJECT_PORTFOLIO_MANAGEMENT_KEYCLOAK_URL` | service, `keycloak` build only | the Keycloak realm's discovery document and key set | off |
+| `PROJECT_PORTFOLIO_MANAGEMENT_WORKER_SERVICE_URL` | service | the workforce service (WPM), with the caller's token | off |
+| `PROJECT_PORTFOLIO_MANAGEMENT_ATTACHMENT_SCAN_ADDR` | service | `clamd`, with the content of every upload | no scan |
+| `PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT` | service, relay builds only | the event broker, with every relayed event | no broker |
+| `PROJECT_PORTFOLIO_MANAGEMENT_WEBHOOKS`, `PROJECT_PORTFOLIO_MANAGEMENT_WEBHOOKS_FILE` | service | each webhook's target URL, with the event | no webhooks |
+| `PROJECT_PORTFOLIO_MANAGEMENT_API_URL` | operator interface | this service | `http://localhost:1241` |
+| `AUTH_API_URL` | operator interface | the authentication service | `http://localhost:1241` |
+| `OIDC_ISSUER` | operator interface | the OpenID Connect provider, for sign-in | off |
+| `REDIS_URL` | operator interface | Redis, the session store, only with `OIDC_SESSION_STORE=redis` | sessions in memory |
+
+These are named like hosts but are **not contacted**:
+
+| Setting | Read by | Why it is not a connection |
+|---|---|---|
+| `DATABASE_URL` | service | the old name, not read; set alone, it refuses the start |
+| `PROJECT_PORTFOLIO_MANAGEMENT_TOKEN_ISSUER` | service | the `iss` a token must carry, compared and never fetched |
+| `CONTACTS_APP_URL`, `WORKFORCE_APP_URL` | operator interface | links shown to the reader's browser; the server does not call them |
+| `PUBLIC_SITE_URL` | operator interface | the origin written into `sitemap.xml` and `robots.txt` |
+
+**Destinations set by people, not settings.** A person can add notification destinations of their own
+(`/api/me/notification-sinks`). Those are held to public `https` addresses with no credentials, but not to a region.
+Where every destination must stay in one country, set `PROJECT_PORTFOLIO_MANAGEMENT_SINKS_TICK_SECS=0`, and nothing is
+delivered to them unless an administrator calls `POST /api/notification-sinks/dispatch`. Backups go wherever the operator's `backup.sh` destination points; no setting of the service names it.
+
 ## More than one instance
 
 The service is designed for a single node today. Before running replicas:

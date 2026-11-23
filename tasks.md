@@ -3752,8 +3752,12 @@ give a supplier evidence for the obligations SA-O1 to SA-O9, which no commit can
   **Built 2026-11-20.** `tests/migrations.rs`: `no_table_has_a_tenant_column` (database) and
   `the_service_never_names_an_outbox_tenant`; axa's outbox `tenant` (migration 114) is the one named exception.
   `operations/deployment.md` § One customer per deployment.
-- [ ] **SA-2 (S) — Every outbound host in one list.** The deployment guide lists each setting that names an outbound host.
+- [x] **SA-2 (S) — Every outbound host in one list.** The deployment guide lists each setting that names an outbound host.
   A test fails when a new setting of that kind is missing from the list.
+  **Built 2026-11-23.** `operations/deployment.md` § Outbound hosts: 16 host settings (12 service, 4 operator
+  interface) and 5 named like hosts but not contacted. `tests/outbound_hosts.rs` (no database) scans the service's
+  string literals and the interface's `env.NAME` reads, and fails both ways; checked by planting an unlisted setting
+  and a stale row. Not covered: host settings without a host-like ending (three are named by hand), and `scripts/`.
 - [ ] **SA-3 (S) — No passwords, no built-in account.** A test asserts that no route takes a password or mints a credential
   and that no subject is hard-coded with access. The Entra sign-in guide states that multi-factor authentication and
   conditional access are enforced at the provider.

@@ -75,6 +75,7 @@ mod oidc_provider;
 mod organizations;
 mod otlp_export;
 mod otlp_middleware;
+mod outbound_hosts;
 mod outbox_audit;
 mod pack_rhythm;
 mod personal_data_inventory;

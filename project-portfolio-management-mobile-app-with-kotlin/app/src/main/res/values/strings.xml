@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Every word the app shows or speaks (MA-4). English only in the first slice; no other locale is built. -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Portfolio</string>
+    <string name="back">Back</string>
+    <string name="try_again">Try again</string>
+    <string name="not_set">Not set</string>
+    <string name="loading">Loading</string>
+    <string name="required">required</string>
+    <string name="there_is_a_problem">There is a problem</string>
+
+    <!-- MA-1.1 Server -->
+    <string name="server_title">Server</string>
+    <string name="server_intro">Enter the address of the portfolio service and how to sign in to it. Ask whoever runs the service for these.</string>
+    <string name="server_url">Service address</string>
+    <string name="server_url_hint">For example, https://portfolio.example.org</string>
+    <string name="server_issuer">Sign-in issuer</string>
+    <string name="server_issuer_hint">The identity provider\'s issuer URL. Leave empty only for a development service that needs no sign-in.</string>
+    <string name="server_client_id">Client ID</string>
+    <string name="server_redirect">Redirect URI</string>
+    <string name="server_redirect_hint">Register this with the identity provider. Its scheme must stay io.github.projectportfoliomanagement.mobile.</string>
+    <string name="server_check">Check address</string>
+    <string name="server_save">Save</string>
+    <string name="server_ready">The service answered and is ready.</string>
+    <string name="server_error_url">Enter an address that starts with https://. Only this computer\'s own addresses and the emulator\'s host (10.0.2.2) may use http://.</string>
+    <string name="server_error_issuer">Enter an issuer that starts with https://, or leave it empty for a development service.</string>
+    <string name="server_error_issuer_required">Enter the sign-in issuer. Only a development address may be used without signing in.</string>
+    <string name="server_error_client_id">Enter the client ID.</string>
+    <string name="server_error_redirect">Enter a redirect URI that starts with io.github.projectportfoliomanagement.mobile:</string>
+
+    <!-- MA-1.2 Sign in -->
+    <string name="sign_in_title">Sign in</string>
+    <string name="sign_in_intro">You sign in with your organisation\'s identity provider, in your browser. This app never asks for your password.</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_in_without">Continue without signing in</string>
+    <string name="sign_in_without_note">This is a development address, so the service may not need a sign-in.</string>
+    <string name="sign_in_change_server">Change server</string>
+    <string name="sign_in_no_issuer">No sign-in issuer is set for this server. Change the server settings to add one.</string>
+    <string name="sign_in_waiting">Finish signing in using the browser.</string>
+    <string name="sign_out">Sign out</string>
+    <string name="session_ended">Your session has ended. Sign in again.</string>
+    <string name="auth_failed_heading">You could not be signed in</string>
+    <string name="auth_insecure">The identity provider must use https://.</string>
+    <string name="auth_issuer_mismatch">The identity provider says its issuer is %1$s, which is not the one set for this server.</string>
+    <string name="auth_state_mismatch">The answer from the identity provider did not match this sign-in. Try again.</string>
+    <string name="auth_provider">The identity provider refused the sign-in: %1$s</string>
+    <string name="auth_no_code">The identity provider did not complete the sign-in. Try again.</string>
+    <string name="auth_unreachable">The identity provider could not be reached. Check your connection and try again.</string>
+    <string name="auth_interrupted">The sign-in was interrupted. Try again.</string>
+
+    <!-- MA-1.3 Plans -->
+    <string name="plans_title">Plans</string>
+    <string name="plans_search">Search plans</string>
+    <string name="plans_none">No plans</string>
+    <string name="plans_none_found">No plans match your search</string>
+    <string name="plans_open">Open plan</string>
+    <string name="plans_new">New plan</string>
+
+    <!-- MA-1.4 Plan -->
+    <string name="plan_title">Plan</string>
+    <string name="plan_details">Plan details</string>
+    <string name="plan_name">Name</string>
+    <string name="plan_kind">Kind</string>
+    <string name="plan_status">Status</string>
+    <string name="plan_code">Code</string>
+    <string name="plan_start_date">Start date</string>
+    <string name="plan_target_date">Target date</string>
+    <string name="plan_organisation">Organisation</string>
+    <string name="plan_children">Child plans</string>
+    <string name="plan_no_children">No child plans</string>
+    <string name="plan_tasks">Tasks</string>
+    <string name="plan_no_tasks">No tasks</string>
+    <string name="task_status">Task status</string>
+    <string name="task_due">Due %1$s</string>
+    <plurals name="task_points">
+        <item quantity="one">%1$d point</item>
+        <item quantity="other">%1$d points</item>
+    </plurals>
+    <plurals name="task_blocked_days">
+        <item quantity="one">Blocked for %1$d day</item>
+        <item quantity="other">Blocked for %1$d days</item>
+    </plurals>
+    <string name="task_move">Move</string>
+    <string name="task_move_label">Move %1$s</string>
+
+    <!-- MA-1.5 Move -->
+    <string name="move_title">Move to another status</string>
+    <string name="move_confirm">Move</string>
+    <string name="cancel">Cancel</string>
+    <string name="moved">%1$s moved to %2$s.</string>
+    <string name="move_failed">The task was not moved. It is still %1$s.</string>
+
+    <!-- MA-1.6 New plan -->
+    <string name="new_plan_title">New plan</string>
+    <string name="new_plan_create">Create plan</string>
+    <string name="new_plan_name_required">Enter a name for the plan.</string>
+    <string name="new_plan_date_format" tools:ignore="TypographyDashes">Enter the date as year, month and day, for example 2027-03-31.</string>
+    <string name="date_hint" tools:ignore="TypographyDashes">Year, month and day, for example 2027-03-31</string>
+    <string name="choose_date">Choose date</string>
+    <string name="choose">Choose</string>
+    <string name="ok">OK</string>
+    <string name="choose_kind">Choose a kind</string>
+    <string name="choose_status">Choose a status</string>
+
+    <!-- MA-3 -->
+    <string name="error_forbidden_heading">You are not allowed to do this</string>
+    <string name="error_forbidden_rule">The service says: %1$s</string>
+    <string name="error_forbidden_no_rule">The service did not name the rule that refused it.</string>
+    <string name="error_not_found">This plan or task is not there. It may have been deleted, or merged into another plan.</string>
+    <string name="error_duplicate">A plan like this already exists.</string>
+    <string name="error_invalid_heading">The service did not accept this</string>
+    <string name="error_unreachable_heading">The service could not be reached</string>
+    <string name="error_unreachable_network">Check your connection, then try again.</string>
+    <string name="error_unreachable_timeout">The service took too long to answer. Try again.</string>
+    <string name="error_unreachable_server">The service had a problem. Try again later.</string>
+    <string name="error_unexpected_heading">Something went wrong</string>
+    <string name="error_unexpected">The service gave an answer this app did not expect (HTTP %1$d).</string>
+    <string name="error_unreadable">The service gave an answer this app could not read.</string>
+
+    <!-- Task statuses (the service's built-in workflow); another workflow's status is shown as the service sends it. -->
+    <string name="task_status_todo">To do</string>
+    <string name="task_status_in_progress">In progress</string>
+    <string name="task_status_in_review">In review</string>
+    <string name="task_status_done">Done</string>
+    <string name="task_status_blocked">Blocked</string>
+
+    <!-- Plan statuses; a custom one is shown by its own text. -->
+    <string name="plan_status_proposed">Proposed</string>
+    <string name="plan_status_active">Active</string>
+    <string name="plan_status_on_hold">On hold</string>
+    <string name="plan_status_completed">Completed</string>
+    <string name="plan_status_cancelled">Cancelled</string>
+
+    <!-- Plan kinds -->
+    <string name="plan_kind_portfolio">Portfolio</string>
+    <string name="plan_kind_project">Project</string>
+    <string name="plan_kind_product">Product</string>
+    <string name="plan_kind_program">Program</string>
+    <string name="plan_kind_practice">Practice</string>
+    <string name="plan_kind_process">Process</string>
+    <string name="plan_kind_purpose">Purpose</string>
+    <string name="plan_kind_pathway">Pathway</string>
+    <string name="plan_kind_proposal">Proposal</string>
+</resources>

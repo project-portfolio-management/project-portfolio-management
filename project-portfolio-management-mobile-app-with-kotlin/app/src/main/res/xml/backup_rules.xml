@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nothing is backed up: the tokens are bound to this device's Keystore key (Android 11 and earlier). -->
+<full-backup-content>
+    <exclude domain="root" path="." />
+    <exclude domain="sharedpref" path="." />
+</full-backup-content>

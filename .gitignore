@@ -26,3 +26,6 @@ chaos-report.json
 # Reports from the load scripts.
 distributed-load-test-results/
 long-running-test-results/
+
+# The Lily monorepo the mobile apps build against (scripts/fetch-lily.sh, spec/mobile-apps.md MA-5).
+vendor/

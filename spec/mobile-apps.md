@@ -43,15 +43,19 @@ with PKCE (`S256`) in the system browser, as RFC 8252 requires: `ASWebAuthentica
 Android. It never shows a password field of its own, and never uses an embedded web view.
 
 - The settings are the issuer URL, the client id, and the redirect URI (a custom scheme, by default
-  `io.github.projectportfoliomanagement.mobile:/oauth2redirect`). Endpoints come from the issuer's
-  `/.well-known/openid-configuration`, whose `issuer` must equal the one set.
+  `io.github.projectportfoliomanagement.mobile:/oauth2redirect`; the scheme is fixed by the app's manifest or
+  `Info.plist`, so only the part after it can change). Endpoints come from the issuer's
+  `/.well-known/openid-configuration`, whose `issuer` must equal the one set. The scope asked for is
+  `openid offline_access`.
 - The app checks `state`, sends the `code_verifier`, and keeps the access and refresh tokens only in the platform's
   protected store (the iOS Keychain, `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`; on Android, values encrypted
-  with an Android Keystore key). Nothing else is written to disk.
+  with an Android Keystore key). The server settings above are kept in the platform's ordinary preferences; no token,
+  plan or task data is written anywhere else. A sign-in under way is held in memory only.
 - An access token near expiry is refreshed with the refresh token; when refresh fails the app is signed out.
 - Sign out forgets the tokens, and calls the provider's `end_session_endpoint` when it has one.
 - A service whose enforcement is off (a development profile) needs no token. The app offers **Continue without signing
-  in** only when the server address is a loopback address or the Android emulator's host (`10.0.2.2`).
+  in** only when the server address is a loopback address (`localhost`, `127.0.0.1`, `[::1]`) or the Android
+  emulator's host (`10.0.2.2`).
 
 HTTPS is required for the service and the issuer, except for those same development addresses.
 
@@ -63,10 +67,16 @@ HTTPS is required for the service and the issuer, except for those same developm
 | `403` | Says the person is not allowed to do this, and shows the rule the service names in the body |
 | `404` | Says the plan or task is not there (it may have been deleted or merged) |
 | `409` on create | Says a plan like this already exists |
-| `422` | Shows every problem the service lists, beside the field it names where it names one, with Lily's `ErrorSummary` |
+| `422` on a form | Shows every problem the service lists, beside the field it names where it names one, with Lily's `ErrorSummary` |
+| `422` on a move (a WIP limit or a workflow refusal) | Shows the service's reason in a `LilyAlert` |
+| any other answer (`400`, another `4xx`, a success the app cannot read) | Says it got an answer it did not expect, with the status code |
 | no network, timeout, `5xx` | Says the service could not be reached, with a way to try again; never shows a stack trace |
 
 A failed move leaves the task in the status it had.
+
+A plan's `422` today carries its problems joined by `"; "` in `detail`, with no per-field `errors` member, so an app
+splits the text and places a problem beside a field only when the message starts with that field's name. An app uses
+`errors` first when the service sends it. A per-field `errors` member in the service's `422` body is an open item.
 
 ## MA-4 Design system and accessibility
 
@@ -77,7 +87,10 @@ A failed move leaves the task in the status it had.
   The first slice ships English only; other locales are not built, and no machine-written translation is added.
 - The text size follows the person's setting; nothing is clipped at the largest accessibility size.
 - Tappable parts are at least 44 by 44 points (iOS) and 48 by 48 dp (Android). Status is never shown by colour alone.
-- Each app runs the platform's automated accessibility audit over its screens in its UI tests.
+- Each app runs the platform's automated accessibility audit over its screens in UI tests on a simulator, emulator or
+  device (`performAccessibilityAudit` on iOS, Google's Accessibility Test Framework on Android). The audit does not run
+  under Robolectric, so the Android JVM UI tests check the semantics tree themselves: every control has a name, is at
+  least 48 dp, and no text is cut off, at text size 1.0 and 2.0.
 
 ## MA-5 Lily dependency
 
@@ -85,14 +98,15 @@ Lily's Swift package and Kotlin libraries are unreleased, and live in subdirecto
 Swift package URL nor a Maven coordinate exists yet. `scripts/fetch-lily.sh` clones the Lily monorepo at the commit it
 pins into `vendor/lily-design-system/` (ignored by git); the Swift app depends on
 `vendor/lily-design-system/lily-design-system-swift` as a local package, and the Kotlin app includes
-`vendor/lily-design-system/lily-design-system-kotlin` as a Gradle composite build. Set `LILY_DESIGN_SYSTEM_DIR` to use
-another checkout. When Lily publishes, the apps move to the published package and the script goes.
+`vendor/lily-design-system/lily-design-system-kotlin` as a Gradle composite build. Set `LILY_DESIGN_SYSTEM_DIR` to the root of
+another Lily monorepo checkout to use it instead. When Lily publishes, the apps move to the published package and the script goes.
 
 ## MA-6 Tests
 
 - A unit test for each call's request (method, path, headers, body) and for decoding each answer, including a
   `{"Custom": …}` status and an unknown field, against a stub transport; no test needs a running service.
 - A unit test for each row of MA-3.
+- Lists show the first page the service answers; following `Link: rel=next` is not built.
 - The PKCE pieces (verifier, `S256` challenge, `state` check) are unit-tested with the RFC 7636 appendix B vector.
 - UI tests drive the plans list, the plan screen, a move, and a create against the stub, and run the accessibility
   audit (MA-4).

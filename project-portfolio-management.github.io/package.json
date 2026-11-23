@@ -19,10 +19,10 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@lilydesignsystem/svelte-headless": "0.11.0",
-    "@lilydesignsystem/svelte-picker-bar": "0.7.0",
+    "@lilydesignsystem/svelte-headless": "0.13.1",
+    "@lilydesignsystem/svelte-picker-bar": "0.10.0",
     "@lilydesignsystem/svelte-share-picker": "0.3.2",
-    "@lilydesignsystem/themes": "0.6.2",
+    "@lilydesignsystem/themes": "0.9.0",
     "marked": "18.2.0"
   },
   "devDependencies": {

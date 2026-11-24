@@ -22,6 +22,23 @@ It is pre-1.0; the first release cut from the root release workflow is
 - Not verified: CI on this commit (cargo-machete 0.10 may report differently; the Redis 7 to 8 change was not run against the
   demo stack); the five pull requests are left open until it is green.
 
+## 24 November (maintenance sweep: toolchains, crates, worktrees, pins)
+
+- **Checked, no change needed:** `cargo check --all-targets` passes on Rust 1.98 (N-2, the `rust-version`), 1.99 and 1.100.0 for the
+  service and the matcher. `rust-toolchain.toml`, the `[profile.dev]` and `[profile.mutants]` settings, `make
+  ci-minimum-supported-rust-version`, `tests/main.rs`, `jiff`, `croner` and `ring` were already as the checklist asks. All
+  three fuzz targets are declared and used. No open Dependabot security alert; private vulnerability reporting is on.
+- **`chrono` and `aws-lc-rs`:** the default build has neither. The optional `fluvio` feature pulls in both (its client depends on
+  them and turns on `rustls`'s `aws-lc-rs` backend), and the dev-dependency `axum-test` pulls in `chrono`; replacing them needs
+  those crates to change, so they stay, and `cron` was already `croner`.
+- **Worktrees:** 13 agent worktrees (and their branches) whose commits were all already in `main` were removed. Five were kept
+  because they hold commits that are not in `main`: `aa5c3f18`, `ab1d8e11`, `ac40542a`, `aef82f3f`, `af0a0dfc` (under
+  `.claude/worktrees/`).
+- **Pins:** `cargo-deny-action` 2.1.1 to 2.1.2 (Dependabot #42), after #37 to #41 (above).
+- **Agent files:** `AGENTS.md` and `CLAUDE.md` files are all under 40,000 bytes; the largest, the UI's, is 39,891 and was not trimmed.
+- **Not done:** containers, processes and zombies seen on the machine belong to other projects and sessions and were left alone;
+  no version bump or publish yet.
+
 ## 24 November (make test-benchmarks, make test-coverage)
 
 - `bin/test-benchmarks` and `bin/test-coverage`, with `make test-benchmarks` and `make test-coverage` at the root. The first runs each

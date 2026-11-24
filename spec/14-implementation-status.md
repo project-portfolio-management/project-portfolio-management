@@ -25,9 +25,9 @@ no network, database or compilation; counts are source lines, not test runs):
 
 | Fact | Value | Method |
 |---|---|---|
-| Service version | 0.2.1 | `version` in the service `Cargo.toml` |
+| Service version | 0.2.2 | `version` in the service `Cargo.toml` |
 | Matcher version | 0.2.2 | `version` in the matcher `Cargo.toml` |
-| Front-end version | 0.2.1 | `version` in the front-end `package.json` |
+| Front-end version | 0.2.2 | `version` in the front-end `package.json` |
 | Migrations | 150 | files in `migration/migrations` (a `.sql` or `.up.sql` each) |
 | Mounted routes | 705 | `METHOD /path` lines in the service's `api-routes.txt` (one per method, so this exceeds the path count) |
 | Documented API paths | 559 | path keys in the service's `openapi.json` |

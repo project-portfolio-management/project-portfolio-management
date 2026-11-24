@@ -22,6 +22,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 - Not verified: CI on this commit (cargo-machete 0.10 may report differently; the Redis 7 to 8 change was not run against the
   demo stack); the five pull requests are left open until it is green.
 
+## 24 November (release 0.2.2)
+
+- Service and UI 0.2.2 (the tag `v0.2.2` must equal both; the matcher stays 0.2.2). It supersedes `v0.2.1`, which was tagged but not released
+  (see the entry below). The service and UI changelogs' `[Unreleased]` sections are now `[0.2.2] - 2026-11-24`: since 0.2.1, axa 0.23.0 and
+  axa-test 0.14.0 with the TLS helper, `own_process!` and `for_test` from axa, the Playwright title wait, and the release workflow without a build cache.
+- `openapi.json`, `asyncapi.json`, `llms.json`/`llms.txt`, the status block and the version lines were regenerated or edited.
+- Not done: the `v0.2.1` tag and its GHCR tags (`0.2.1`, `0.2`, `latest`, `sha-46ef9e83`) are left as they are; `0.2` and `latest` will point at 0.2.2
+  once it is published. The sub-crates `datetime`, `domain` and `migration` stay 0.2.0. The tag is not pushed by this commit.
+
 ## 24 November (release workflow: no build cache)
 
 - `release.yml` no longer reads or writes the GitHub Actions build cache in the image build (`cache-from` and `cache-to` removed). Its own

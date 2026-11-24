@@ -10,7 +10,7 @@ SvelteKit 3 · Svelte 5 (runes) · TypeScript strict · SPA · Lily Design
 System (DataGrid, KanbanBoard, GanttChart, CalendarView, pickers) · Lily Svelte Headless · 10-locale i18n · full
 theme catalogue.
 
-> **Status: implemented (v0.2.1), verified 2026-10-30.** `pnpm run check`
+> **Status: implemented (v0.2.2), verified 2026-10-30.** `pnpm run check`
 > is 0 errors / 0 warnings and the vitest suite passes. There are 101 page
 > routes (2026-11-04). Test, API-route and locale counts are in the entity spec's [§14 generated block](../spec/14-implementation-status.md). The live work queue is [`spec/index.md`](spec/index.md) §13;
 > the repo-level backlog is [`../tasks.md`](../tasks.md). Contributor

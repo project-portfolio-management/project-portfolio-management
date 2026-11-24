@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-24
+
+0.2.1 was tagged on 2026-11-24 but never released: its image reached GHCR, then the run failed on the build-cache export before the provenance
+attestation and the GitHub Release. 0.2.2 supersedes it, and everything listed under 0.2.1 is in it.
+
 ### Fixed — the Playwright fixture waits for the page title (2026-11-24)
 
 - `tests/e2e/test.ts`: the shared `test` fixture now wraps `page.goto` and, for an HTML response, waits up to 5 seconds (never failing) for a

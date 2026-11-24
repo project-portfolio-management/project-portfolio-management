@@ -4,7 +4,7 @@
 
 ## Facts
 
-- Version: service 0.2.1, matcher 0.2.2, UI 0.2.1 (tag v0.2.1)
+- Version: service 0.2.2, matcher 0.2.2, UI 0.2.2 (tag v0.2.2)
 - Projects: `project-portfolio-management-service-with-rust` (service), `project-portfolio-management-matcher-with-rust` (matcher), `project-portfolio-management-ui-with-svelte` (ui)
 - Stack: Rust 1.100.0 (minimum 1.98), axa 0.23, sqlx 0.9, axum 0.8, PostgreSQL 18
 - Stack: SvelteKit 3, Svelte 5 (runes), Node 26, pnpm

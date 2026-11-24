@@ -22,7 +22,7 @@ containment-cycle check).
 - Agent guide: [AGENTS.md](./AGENTS.md)
 - Sibling UI: [project-portfolio-management-ui-with-svelte](../project-portfolio-management-ui-with-svelte)
 
-> **Status: v0.2.1, a full project-management tool.** Deferred items
+> **Status: v0.2.2, a full project-management tool.** Deferred items
 > (`/plans/deduplicate`, `/timeline`) live in
 > [spec §13](./spec/index.md); see [CHANGELOG.md](./CHANGELOG.md).
 

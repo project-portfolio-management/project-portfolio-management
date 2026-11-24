@@ -229,7 +229,9 @@ test("on the pack list a reader chooses the audiences to be told about; a refusa
   await page
     .getByRole("group", { name: "Packs to be told about" })
     .getByRole("checkbox", { name: "Executive" })
-    .check();
+    // A click, not `.check()`: the refusal puts the box back at once, and `.check()` fails when it reads the box
+    // as unchanged (a race on a fast runner) although that is the behaviour under test.
+    .click();
   await expect(page.getByRole("alert")).toHaveText(
     "You can be told only about the audiences whose packs you may read.",
   );

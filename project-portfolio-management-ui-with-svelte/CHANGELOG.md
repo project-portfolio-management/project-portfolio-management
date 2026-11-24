@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — a refusal test clicks the box instead of checking it (2026-11-24)
+
+- `tests/e2e/director-pack-rhythm.spec.ts`: the refused subscription clicked "Executive" with `.check()`, which fails with "did not
+  change its state" when the refusal puts the box back before Playwright reads it. It now clicks, and still asserts the alert and
+  that the box is unchecked. Failed once in CI on a commit that did not touch the UI.
+- **Verified:** 15 of 15 runs locally (3 × 5, chromium). **Not verified:** that CI no longer fails on it; other `.check()` calls
+  that a refusal reverts, if any, were not searched for.
+
 ### Fixed — the cutover axe test waits for the page title (2026-11-24)
 
 - `tests/e2e/cutover.spec.ts`: the audit of the cutover page waited for `networkidle` only, and on a slow CI runner ran before

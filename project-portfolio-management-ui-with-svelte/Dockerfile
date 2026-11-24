@@ -10,7 +10,7 @@
 # with no proxy the server treats requests as plain http.
 # The Node version equals `engines.node` in package.json.
 
-FROM docker.io/library/node:26-slim@sha256:e4db4c914bf8ad241bd24804fc25d272d89bad97e68cdc8a1414862790a02c39 AS builder
+FROM docker.io/library/node:26-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS builder
 RUN npm install --global pnpm@12.10.1
 WORKDIR /ui
 COPY project-portfolio-management-ui-with-svelte/package.json project-portfolio-management-ui-with-svelte/pnpm-lock.yaml project-portfolio-management-ui-with-svelte/pnpm-workspace.yaml project-portfolio-management-ui-with-svelte/.npmrc ./
@@ -19,7 +19,7 @@ COPY project-portfolio-management-ui-with-svelte/ ./
 RUN pnpm run build \
  && pnpm install --frozen-lockfile --prod
 
-FROM docker.io/library/node:26-slim@sha256:e4db4c914bf8ad241bd24804fc25d272d89bad97e68cdc8a1414862790a02c39
+FROM docker.io/library/node:26-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc
 # BODY_SIZE_LIMIT: adapter-node refuses a request body over 512 KiB by default, which would stop an attachment (LT-5,
 # NC-1 slice 5) long before the service's 10 MiB limit. 10304K is the service's own transport ceiling for the upload
 # route (the limit plus 64 KiB). It applies to every route of this server; raise both together if

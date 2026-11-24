@@ -122,7 +122,7 @@ services:
   # The cache. Not published on the host; only the API reaches it. It holds nothing that cannot be rebuilt
   # (cached reads, each with a short lifetime), so there is no volume.
   redis:
-    image: docker.io/library/redis:7-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
+    image: docker.io/library/redis:8-alpine@sha256:7958cfbb9d152f87dadfbc89f1b0b15938f0b81ff8982feb327476f4911935c3
     command: ["redis-server", "--requirepass", "${PPM_REDIS_PASSWORD:-${POSTGRES_PASSWORD}}", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASS\" --no-auth-warning ping | grep -q PONG"]
@@ -248,7 +248,7 @@ services:
 
   seed-demo:
     profiles: ["demo"]
-    image: docker.io/library/node:26-slim@sha256:e4db4c914bf8ad241bd24804fc25d272d89bad97e68cdc8a1414862790a02c39
+    image: docker.io/library/node:26-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc
     working_dir: /repo
     command: ["node", "scripts/seed-demo.mjs"]
     environment:

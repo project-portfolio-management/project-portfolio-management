@@ -14,6 +14,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 24 November (pins from five Dependabot pull requests)
+
+- Applied by hand, as one commit, the pull requests #37 to #41: `taiki-e/install-action` 2.90.3 to 2.90.5 and `cargo-machete` 0.9.2 to
+  0.10.1 (`ci.yml`), the `node:26-slim` digest (`compose.yaml`, the UI `Dockerfile`), and Redis 7 to 8 in `compose.yaml` (the test
+  compose already ran 8) with the new `redis:8-alpine` digest in `compose.test.yaml`. `scripts/check-actions-pinned.py` passes.
+- Not verified: CI on this commit (cargo-machete 0.10 may report differently; the Redis 7 to 8 change was not run against the
+  demo stack); the five pull requests are left open until it is green.
+
 ## 22 November (date and time crate: no panicking operators)
 
 - Followed `spec/rust-checked-arithmetic/index.md` (the maintainer's, with `RCA-*` ids), which replaced my earlier, shorter

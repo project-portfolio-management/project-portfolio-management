@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-24
+
 ### Fixed — a refusal test clicks the box instead of checking it (2026-11-24)
 
 - `tests/e2e/director-pack-rhythm.spec.ts`: the refused subscription clicked "Executive" with `.check()`, which fails with "did not

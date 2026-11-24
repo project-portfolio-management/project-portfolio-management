@@ -325,7 +325,7 @@
   "info": {
     "description": "What the service sends: a server-sent event stream per plan, and outbound webhooks. Webhook deliveries are signed with HMAC-SHA256 over `<X-Mxi-Timestamp>.` and the exact request body bytes (header `X-Mxi-Signature-V2`; a receiver should refuse a timestamp more than 300 seconds from its clock), and, for one more release, over the body alone (`X-Mxi-Signature`); a receiver deduplicates on `X-Mxi-Event-Id`. A target chooses `native`, `cloudevents_structured` or `cloudevents_binary`.",
     "title": "Project Portfolio Management Service events",
-    "version": "0.2.0"
+    "version": "0.2.1"
   },
   "operations": {
     "deliverWebhook": {

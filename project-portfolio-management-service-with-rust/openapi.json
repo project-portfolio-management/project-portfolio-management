@@ -3637,7 +3637,7 @@
   "info": {
     "description": "Registry of plan identities in one recursive collection (any plan may contain any other via parent_ref; kind is an optional descriptive label): CRUD + matching. The request/response body is the project-portfolio-management-matcher Plan shape. Validation failures (blank name, blank goal title, malformed identifier, malformed parent_ref / in_language, or a containment cycle) return 422. Matching is not gated by kind.",
     "title": "Project Portfolio Management Service API",
-    "version": "0.2.0"
+    "version": "0.2.1"
   },
   "openapi": "3.0.3",
   "paths": {

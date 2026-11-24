@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-24
+
 ### Changed — jiff 1.0.1 to 1.0.2 (2026-11-24)
 
 - `Cargo.lock` only: `jiff` and `jiff-static` move from 1.0.1 to 1.0.2; the `1.0` requirement in `datetime/Cargo.toml` already allowed it.

@@ -22,6 +22,17 @@ It is pre-1.0; the first release cut from the root release workflow is
 - Not verified: CI on this commit (cargo-machete 0.10 may report differently; the Redis 7 to 8 change was not run against the
   demo stack); the five pull requests are left open until it is green.
 
+## 24 November (release 0.2.1)
+
+- Service and UI 0.2.1 (the tag `v0.2.1` must equal both; the matcher stays 0.2.2). The service and UI changelogs' former
+  `[Unreleased]` sections are now `[0.2.1] - 2026-11-24` (about 99,000 characters in the service's, which the release notes use whole).
+  Changes since 0.2.0 include axa 0.21 and jiff 1.0.2, the new Lily packages, start-up checks of numeric, word and on/off settings
+  (a bad value now stops the service), cargo-nextest, the licence change below and many tests.
+- `openapi.json`, `asyncapi.json`, `llms.json`/`llms.txt`, the status block and the version lines in the READMEs and `AGENTS.md` files
+  were regenerated or edited; `scripts/release-notes.sh v0.2.1` prints the notes.
+- Not done: the tag is not pushed by this commit; the sub-crates `datetime`, `domain` and `migration` stay at 0.2.0 (they are not
+  released separately); the database suites were last run by CI, not for this exact commit.
+
 ## 24 November (licence: CC-BY-NC-SA-4.0 replaced by CC-BY-SA-4.0)
 
 - The seventh licence in the SPDX expression is now `CC-BY-SA-4.0` (Creative Commons Attribution Share Alike 4.0 International), not

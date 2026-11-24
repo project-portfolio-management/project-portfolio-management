@@ -112,6 +112,59 @@ pub async fn require_version_mw(req: Request, next: Next) -> Response {
 mod tests {
     use super::*;
 
+    async fn status_and_header(
+        path: &str,
+        requested: Option<&str>,
+    ) -> (StatusCode, Option<String>) {
+        use tower::ServiceExt;
+        let app = axum::Router::new()
+            .route("/api/x", axum::routing::get(|| async { "ok" }))
+            .route("/health", axum::routing::get(|| async { "ok" }))
+            .layer(axum::middleware::from_fn(require_version_mw));
+        let mut req = axum::http::Request::builder().uri(path);
+        if let Some(v) = requested {
+            req = req.header(VERSION_HEADER, v);
+        }
+        let response = app
+            .oneshot(req.body(axum::body::Body::empty()).unwrap())
+            .await
+            .unwrap();
+        let echoed = response
+            .headers()
+            .get(VERSION_HEADER)
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_owned);
+        (response.status(), echoed)
+    }
+
+    #[tokio::test]
+    async fn an_api_request_is_answered_and_the_resolved_version_echoed() {
+        assert_eq!(
+            status_and_header("/api/x", None).await,
+            (StatusCode::OK, Some("1.0".to_string()))
+        );
+        assert_eq!(
+            status_and_header("/api/x", Some("1")).await,
+            (StatusCode::OK, Some("1.0".to_string()))
+        );
+    }
+
+    #[tokio::test]
+    async fn an_unsupported_version_is_refused_with_406_and_no_echo() {
+        assert_eq!(
+            status_and_header("/api/x", Some("2.0")).await,
+            (StatusCode::NOT_ACCEPTABLE, None)
+        );
+    }
+
+    #[tokio::test]
+    async fn a_path_outside_the_api_is_not_versioned() {
+        assert_eq!(
+            status_and_header("/health", Some("2.0")).await,
+            (StatusCode::OK, None)
+        );
+    }
+
     #[test]
     fn absent_header_resolves_to_current() {
         assert_eq!(resolve_version(None), Ok(CURRENT_API_VERSION));

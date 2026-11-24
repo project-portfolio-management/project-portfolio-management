@@ -9,6 +9,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — tests for the API-version middleware (2026-11-23)
+
+- `version::require_version_mw` had no test of its own: three unit tests now drive it through a bare router (an API request
+  echoes the resolved version, an unsupported `Accepts-version` is refused with 406 and no echo, a path outside `/api` is not
+  versioned).
+- **Measured** by `make coverage-db` on `7403e133` (Postgres 18, all runners passed): 94.40% (50,697 of 53,707 lines); domain
+  98.16%, datetime 98.03%, migration 95.24%, service 93.23%. **Not re-measured** after these tests.
+- **Not done:** the other least-covered service files need a service context, a clock or a network (`tasks/dhcw_roadmaps_apply`
+  18.75%, `scheduler` 58.57%, `relay` 60.32%, `controllers/components` 73.73%, `auth/verifier` 74.76%, `snapshots` 75.56%,
+  `webhooks` 75.60%); they are the next slices. 100% is not reached and no threshold is set.
+
 ### Added — tests for effort categories and status-evidence metrics (2026-11-23)
 
 - `effort::EffortCategory::token` and `parse`, and `status_evidence::Counts::value`, each have a test (about 14 uncovered lines

@@ -22,6 +22,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 - Not verified: CI on this commit (cargo-machete 0.10 may report differently; the Redis 7 to 8 change was not run against the
   demo stack); the five pull requests are left open until it is green.
 
+## 24 November (release workflow: no build cache)
+
+- `release.yml` no longer reads or writes the GitHub Actions build cache in the image build (`cache-from` and `cache-to` removed). Its own
+  comment already said a release job uses no build cache, so that a poisoned cache cannot reach a published artifact; the build step did not
+  follow it. The `v0.2.1` run built and pushed the image, then failed when the cache export got `503 no healthy upstream`, so the provenance
+  attestation and the GitHub Release were skipped.
+- Not done: the `v0.2.1` release is still incomplete: the image tags `0.2.1`, `0.2`, `latest` and `sha-46ef9e83` are on GHCR and the tag `v0.2.1` is on
+  GitHub, but there is no attestation and no GitHub Release. Whether to re-run, retag or cut `0.2.2` is the maintainer's call. The SBOM
+  job's warning about the `toolchain` input of `dtolnay/rust-toolchain` is not changed (the `fresh-clone` job compares that input).
+
 ## 24 November (release 0.2.1)
 
 - Service and UI 0.2.1 (the tag `v0.2.1` must equal both; the matcher stays 0.2.2). The service and UI changelogs' former

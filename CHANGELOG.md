@@ -22,6 +22,21 @@ It is pre-1.0; the first release cut from the root release workflow is
 - Not verified: CI on this commit (cargo-machete 0.10 may report differently; the Redis 7 to 8 change was not run against the
   demo stack); the five pull requests are left open until it is green.
 
+## 24 November (licence: CC-BY-NC-SA-4.0 replaced by CC-BY-SA-4.0)
+
+- The seventh licence in the SPDX expression is now `CC-BY-SA-4.0` (Creative Commons Attribution Share Alike 4.0 International), not
+  `CC-BY-NC-SA-4.0`. `LICENSES/cc-by-nc-sa-4.0/` became `LICENSES/cc-by-sa-4.0/`, holding the SPDX licence-list text of CC BY-SA 4.0
+  (downloaded, not retyped); `LICENSE.md` names it and no longer says the licence forbids commercial use. The expression is changed in
+  every manifest (the service, `datetime`, `domain` and `migration` crates, the matcher, both `package.json` files), the image label in the
+  service `Dockerfile`, `CITATION.cff`, the READMEs, `GOVERNANCE.md`, `spec/licenses/index.md`, `spec/07` and the licence test
+  (`tests/licence_files.rs`, which passes).
+- **What this means:** the project no longer restricts that one licence's users to non-commercial use. That is the maintainer's decision
+  (asked for in the session); it was not reviewed by a lawyer, and releases already published under the old expression (`v0.2.0` and earlier)
+  keep the terms they were published under.
+- **Not done:** the translated pages under `locales/` (about 80 files, `chief-legal-officer` and the benefits topic) still name
+  `CC-BY-NC-SA-4.0` and say non-commercial; they hold the maintainer's uncommitted edits and are machine-written, so they were left.
+  `plan.md`, `tasks.md` and earlier changelog entries keep the old name as history.
+
 ## 24 November (maintenance sweep: toolchains, crates, worktrees, pins)
 
 - **Checked, no change needed:** `cargo check --all-targets` passes on Rust 1.98 (N-2, the `rust-version`), 1.99 and 1.100.0 for the

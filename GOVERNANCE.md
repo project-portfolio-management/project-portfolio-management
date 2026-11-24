@@ -37,7 +37,7 @@ API between minor versions; changes are listed in the
 ## Licensing
 
 The repository is offered under any one of MIT, Apache-2.0, BSD-3-Clause,
-GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 or CC-BY-NC-SA-4.0, and custom terms by arrangement
+GPL-2.0-only, GPL-3.0-only, OGL-UK-3.0 or CC-BY-SA-4.0, and custom terms by arrangement
 ([LICENSE.md](LICENSE.md)). A contribution is accepted on the same terms.
 
 ## Use of AI tools

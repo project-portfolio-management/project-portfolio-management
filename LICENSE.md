@@ -7,7 +7,7 @@ holder, Joel Parker Henderson, joel@joelparkerhenderson.com).
 The SPDX expression, used in every `Cargo.toml` and `package.json`, is:
 
 ```
-MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only OR OGL-UK-3.0 OR CC-BY-NC-SA-4.0
+MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only OR OGL-UK-3.0 OR CC-BY-SA-4.0
 ```
 
 | Licence | SPDX identifier | Text |
@@ -18,16 +18,17 @@ MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only OR OGL-UK-3.0 
 | [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html) | [`GPL-2.0-only`](https://spdx.org/licenses/GPL-2.0-only.html) | [`LICENSES/gpl-2.0-only/index.md`](LICENSES/gpl-2.0-only/index.md) |
 | [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0-standalone.html) | [`GPL-3.0-only`](https://spdx.org/licenses/GPL-3.0-only.html) | [`LICENSES/gpl-3.0-only/index.md`](LICENSES/gpl-3.0-only/index.md) |
 | [UK Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) | [`OGL-UK-3.0`](https://spdx.org/licenses/OGL-UK-3.0.html) | [`LICENSES/ogl-uk-3.0/index.md`](LICENSES/ogl-uk-3.0/index.md) |
-| [Creative Commons Attribution Non Commercial Share Alike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/) | [`CC-BY-NC-SA-4.0`](https://spdx.org/licenses/CC-BY-NC-SA-4.0.html) | [`LICENSES/cc-by-nc-sa-4.0/index.md`](LICENSES/cc-by-nc-sa-4.0/index.md) |
+| [Creative Commons Attribution Share Alike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/) | [`CC-BY-SA-4.0`](https://spdx.org/licenses/CC-BY-SA-4.0.html) | [`LICENSES/cc-by-sa-4.0/index.md`](LICENSES/cc-by-sa-4.0/index.md) |
 
 ## Why a choice, and why a directory
 
 The permissive licences (MIT, Apache-2.0, BSD-3-Clause) suit organizations that
 embed or adapt the code in their own products; Apache-2.0 adds an explicit
 patent grant. The GNU licences suit those who want copyleft. The UK Open
-Government Licence v3.0 suits public-sector reuse in the UK, and CC BY-NC-SA 4.0
-suits non-commercial reuse that is shared alike (it is not an open-source
-licence, because it forbids commercial use). Offering all seven lets each user take the one that fits their own constraints. Custom terms are
+Government Licence v3.0 suits public-sector reuse in the UK, and CC BY-SA 4.0
+suits reuse, commercial or not, of documentation and other content that is
+shared alike (adaptations must carry the same licence; Creative Commons
+recommends its licences for content rather than for software). Offering all seven lets each user take the one that fits their own constraints. Custom terms are
 for cases none of them fits.
 
 All licence texts live in the [`LICENSES/`](LICENSES) directory, one
@@ -59,4 +60,4 @@ The full text of each license is in its own directory under `LICENSES/`:
 - [GPL-2.0-only](LICENSES/gpl-2.0-only/index.md)
 - [GPL-3.0-only](LICENSES/gpl-3.0-only/index.md)
 - [OGL-UK-3.0](LICENSES/ogl-uk-3.0/index.md)
-- [CC-BY-NC-SA-4.0](LICENSES/cc-by-nc-sa-4.0/index.md)
+- [CC-BY-SA-4.0](LICENSES/cc-by-sa-4.0/index.md)

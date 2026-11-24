@@ -141,7 +141,7 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
 - **NFR-15 — Licence.** The repository is offered under any one of MIT,
   Apache-2.0, BSD-3-Clause, GPL-2.0-only or GPL-3.0-only, or custom terms by
   arrangement; every manifest declares the one SPDX expression
-  `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only OR OGL-UK-3.0 OR CC-BY-NC-SA-4.0`. The
+  `MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only OR GPL-3.0-only OR OGL-UK-3.0 OR CC-BY-SA-4.0`. The
   licence texts live in the root **`LICENSES/`** directory, one
   `LICENSES/<lowercase-spdx-id>/index.md` per licence, and nowhere else. A root **`LICENSE.md`** explains the choice, states
   the expression, links each text and says how to ask for custom terms; it is

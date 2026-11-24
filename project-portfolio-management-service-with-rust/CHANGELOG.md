@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — jiff 1.0.1 to 1.0.2 (2026-11-24)
+
+- `Cargo.lock` only: `jiff` and `jiff-static` move from 1.0.1 to 1.0.2; the `1.0` requirement in `datetime/Cargo.toml` already allowed it.
+  The lockfile also still lists a `jiff` 0.2.46 that no workspace member uses (`cargo tree` finds no path to it); it was left.
+- **Checked locally:** clippy `-D warnings` over the workspace; 1,405 unit and migration tests (1 skipped, as before); 29 database-free
+  integration tests; `cargo deny check`. **Not run:** the database suites (CI runs them).
+
 ### Changed — five on/off flags are checked at start-up (SET-1, 2026-11-24)
 
 - `EVENT_RELAY`, `HEATMAP_SHOW_PARTNERS`, `PUBLIC_ROADMAPS`, `PUBLIC_ROADMAPS_REVIEWED_ONLY` and `PUBLIC_ROADMAPS_NOINDEX` accept the

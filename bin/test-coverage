@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Measure test coverage of the service workspace with cargo-tarpaulin: the unit tests and the database-free integration tests
+# (the service's `make coverage`, configured by tarpaulin.toml). With DB_URL set, the database suites are measured too
+# (`make coverage-db`). Reports are in project-portfolio-management-service-with-rust/target/coverage/. No threshold is set
+# (COVERAGE.md). Run it with:
+#
+#     make test-coverage
+set -euo pipefail
+
+cd "$(dirname "$0")/../project-portfolio-management-service-with-rust"
+
+if ! cargo tarpaulin --version >/dev/null 2>&1; then
+  echo "error: cargo-tarpaulin is not installed; run: cargo install cargo-tarpaulin --version 0.37.6 --locked" >&2
+  exit 1
+fi
+
+if [ -n "${DB_URL:-}" ]; then
+  make coverage-db
+else
+  make coverage
+fi

@@ -59,6 +59,8 @@ cargo nextest run --test main
 # mutation test of the matcher (CI's `mutants` job mutates the changed lines; weekly, every mutant):
 #   cd project-portfolio-management-matcher-with-rust && git diff --relative origin/main -- . > /tmp/d && cargo mutants --in-diff /tmp/d
 # chaos test (random database and service faults under load; Podman, Node 22+; weekly in CI, not a merge gate): scripts/chaos-test.sh --seconds 60
+# benchmarks (Criterion, quick mode, both Rust workspaces): make test-benchmarks
+# test coverage, same as the two lines below, from the repository root: make test-coverage (add DB_URL for the database suites)
 # test coverage (cargo-tarpaulin 0.37.6, `cargo install cargo-tarpaulin --version 0.37.6 --locked`; no threshold yet, COVERAGE.md):
 #   cd project-portfolio-management-service-with-rust && make coverage   (unit + DB-free integration; reports in target/coverage/)
 #   make coverage-db with DB_URL set adds the database suites, as CI's `coverage` job runs them

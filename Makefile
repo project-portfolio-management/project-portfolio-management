@@ -144,6 +144,20 @@ test-github-discussions:
 	./bin/test-github-discussions
 
 ##
+# make test-benchmarks: Run the Criterion benchmarks (quick mode) of every Rust workspace.
+##
+.PHONY: test-benchmarks
+test-benchmarks:
+	./bin/test-benchmarks
+
+##
+# make test-coverage: Measure test coverage of the service workspace (cargo-tarpaulin; with DB_URL set, the database suites too).
+##
+.PHONY: test-coverage
+test-coverage:
+	./bin/test-coverage
+
+##
 # make ci-minimum-supported-rust-version: Check and test on the minimum supported Rust version (N-2) and the next (N-1).
 ##
 .PHONY: ci-minimum-supported-rust-version

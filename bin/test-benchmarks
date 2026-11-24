@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Run the Criterion benchmarks of every Rust workspace in this repository, in Criterion's quick mode (a short sample, no
+# comparison against a saved baseline), so a benchmark that no longer builds or runs is found. Run it with:
+#
+#     make test-benchmarks
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+# Each workspace and its Criterion benchmark target (the `[[bench]]` name in its Cargo.toml). A target is named, because a
+# bare `cargo bench -- --quick` would hand `--quick` to the library's own test harness, which refuses it.
+benchmarks=(
+  "project-portfolio-management-service-with-rust service_bench"
+  "project-portfolio-management-matcher-with-rust match_pair"
+)
+
+for entry in "${benchmarks[@]}"; do
+  workspace=${entry% *}
+  target=${entry#* }
+  echo
+  echo "=== benchmark $target: $workspace ==="
+  (cd "$workspace" && cargo bench --bench "$target" -- --quick)
+done

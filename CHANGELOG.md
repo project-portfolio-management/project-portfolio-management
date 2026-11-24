@@ -22,6 +22,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 - Not verified: CI on this commit (cargo-machete 0.10 may report differently; the Redis 7 to 8 change was not run against the
   demo stack); the five pull requests are left open until it is green.
 
+## 24 November (make test-benchmarks, make test-coverage)
+
+- `bin/test-benchmarks` and `bin/test-coverage`, with `make test-benchmarks` and `make test-coverage` at the root. The first runs each
+  workspace's Criterion target in quick mode (`service_bench`, `match_pair`; both ran here: 47 measurements for the service). The
+  second calls the service's `make coverage`, or `make coverage-db` when `DB_URL` is set.
+- Not done: `make test-coverage` was not run end to end here (coverage was measured earlier through `make coverage-db`); the benchmarks
+  have no threshold and are not in CI.
+
 ## 22 November (date and time crate: no panicking operators)
 
 - Followed `spec/rust-checked-arithmetic/index.md` (the maintainer's, with `RCA-*` ids), which replaced my earlier, shorter

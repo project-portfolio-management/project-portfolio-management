@@ -22,6 +22,19 @@ It is pre-1.0; the first release cut from the root release workflow is
 - Not verified: CI on this commit (cargo-machete 0.10 may report differently; the Redis 7 to 8 change was not run against the
   demo stack); the five pull requests are left open until it is green.
 
+## 24 November (workflows: the rust-toolchain action's dead `toolchain:` input)
+
+- `dtolnay/rust-toolchain` is pinned by commit SHA to its `1.100.0` ref, and at that commit the action fixes the Rust version itself
+  (`env: toolchain: 1.100.0` in its `action.yml`) and declares no `toolchain` input; every `toolchain:` we passed was ignored, and the
+  `v0.2.1` release run printed "Unexpected input(s) 'toolchain'" for it. The 11 dead inputs are removed from `ci.yml`, `chaos.yml`, `fuzz.yml`,
+  `mutants.yml` and `release.yml`, and the comments that said the input "must equal rust-toolchain.toml" now say where the version comes from.
+- **New check** (in the `fresh-clone` job): every `- uses: dtolnay/rust-toolchain@…` step must end in `# <channel of rust-toolchain.toml>`. Run
+  against the edited files it passes on all 11 steps, and it fails on a step whose comment is changed to `1.99.0`.
+- `fuzz.yml` passed a nightly through that input. It never took effect: the job has worked (runs on 2026-11-17 and 2026-11-24) because rustup
+  installs the dated nightly when `cargo +nightly-2026-11-14` first runs. That is now said in a comment; the behaviour is unchanged.
+- Not done: nothing verified in CI yet (the workflows change, so CI is the test); the `fuzz.yml` nightly is still installed implicitly by rustup, not by
+  an explicit step.
+
 ## 24 November (release 0.2.2)
 
 - Service and UI 0.2.2 (the tag `v0.2.2` must equal both; the matcher stays 0.2.2). It supersedes `v0.2.1`, which was tagged but not released

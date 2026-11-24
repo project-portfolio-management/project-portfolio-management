@@ -78,8 +78,9 @@ cd project-portfolio-management-ui-with-svelte && pnpm run lint && pnpm run chec
   Use `--workspace` (`--all` for fmt), or the domain crate's tests and lints are skipped.
 - The UI wraps one table component (`DataTable`) and Lily widgets (`@lilydesignsystem/*`); there is no SVAR.
   Computed styles use Svelte's `style:` directive, never a `style="…"` attribute (the CSP blocks those).
-- `axum-test` follows `axa`, and `jsonwebtoken` stays at the version the Keycloak and OIDC code was written against; do not bump them alone. `dtolnay/rust-toolchain` is pinned by commit SHA and
-  given an explicit `toolchain:` input; bump both by hand together with `rust-toolchain.toml` (the `fresh-clone` job checks they agree).
+- `axum-test` follows `axa`, and `jsonwebtoken` stays at the version the Keycloak and OIDC code was written against; do not bump them alone. `dtolnay/rust-toolchain` is pinned by commit SHA, and the Rust
+  version is the action's ref (the trailing `# 1.100.0`), not an input (`toolchain:` is ignored at a version ref); bump both by hand together with
+  `rust-toolchain.toml` (the `fresh-clone` job checks that every step's comment and `RUST_TOOLCHAIN` agree with it).
 - Releases: a `v*.*.*` tag must equal the service crate and UI versions; the workflow pushes an image to GHCR.
 - Use Podman (`podman compose`), not Docker, in instructions and scripts. CI still builds with Docker.
 - The service has no ORM: plain sqlx through `src/db.rs` (`db::pool(&ctx)`, `db::begin(&ctx)`), so every statement

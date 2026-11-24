@@ -144,8 +144,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@9522411a9bce8484da960823fc2f46e52f981f71 # 1.100.0
-        with:
-          toolchain: 1.100.0
       # No build cache in a release job: a poisoned cache must not reach a published artifact.
       - run: cargo install cargo-cyclonedx --locked
       - name: Rust SBOMs

@@ -68,7 +68,7 @@ pub fn routes() -> Routes {
 /// Whether partner organization names may appear on the heatmap; off unless the deployment sets `PROJECT_PORTFOLIO_MANAGEMENT_HEATMAP_SHOW_PARTNERS` to a true-like value.
 fn show_partners() -> bool {
     std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_HEATMAP_SHOW_PARTNERS")
-        .is_ok_and(|v| matches!(v.trim(), "1" | "true" | "TRUE" | "yes"))
+        .is_ok_and(|v| crate::settings::flag_is_on(&v))
 }
 
 // ---- pools ----------------------------------------------------------------------------------

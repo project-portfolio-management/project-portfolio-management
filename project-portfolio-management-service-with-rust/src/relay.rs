@@ -200,14 +200,8 @@ impl EventSink for FluvioSink {
 /// truthy (`1`/`true`/`yes`/`on`). Off by default.
 #[must_use]
 pub fn relay_enabled() -> bool {
-    matches!(
-        std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY")
-            .unwrap_or_default()
-            .trim()
-            .to_ascii_lowercase()
-            .as_str(),
-        "1" | "true" | "yes" | "on"
-    )
+    std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY")
+        .is_ok_and(|v| crate::settings::flag_is_on(&v))
 }
 
 /// Relay poll interval in seconds (`PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY_INTERVAL_SECS`,

@@ -142,7 +142,7 @@ pub const ITEM_FIELDS: &[(&str, Exposure, &str)] = &[
 ];
 
 fn on(name: &str) -> bool {
-    std::env::var(name).is_ok_and(|v| matches!(v.trim(), "on" | "true" | "1"))
+    std::env::var(name).is_ok_and(|v| crate::settings::flag_is_on(&v))
 }
 
 /// The routes.

@@ -164,6 +164,27 @@ struct Choice {
     valid: fn(&str) -> bool,
 }
 
+/// What an on/off setting may be, for the message.
+const FLAG_WORDS: &str = "on, 1, true or yes; or off, 0, false or no";
+
+/// Whether `v` (trimmed, not blank) is one of the on/off words, in any case.
+fn is_flag(v: &str) -> bool {
+    matches!(
+        v.to_ascii_lowercase().as_str(),
+        "on" | "1" | "true" | "yes" | "off" | "0" | "false" | "no"
+    )
+}
+
+/// Whether an on/off setting's text means on: `on`, `1`, `true` or `yes`, in any case, whitespace ignored. Anything else is
+/// off here, but [`validate`] has refused a value that is neither an on word nor an off word, so a reader sees only those.
+#[must_use]
+pub fn flag_is_on(v: &str) -> bool {
+    matches!(
+        v.trim().to_ascii_lowercase().as_str(),
+        "on" | "1" | "true" | "yes"
+    )
+}
+
 /// Every word-valued setting the service reads and a bad value of which used to be replaced by a default.
 const CHOICES: &[Choice] = &[
     Choice {
@@ -203,13 +224,33 @@ const CHOICES: &[Choice] = &[
     },
     Choice {
         name: "PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED",
-        expected: "on, 1, true or yes; or off, 0, false or no",
-        valid: |v| {
-            matches!(
-                v.to_ascii_lowercase().as_str(),
-                "on" | "1" | "true" | "yes" | "off" | "0" | "false" | "no"
-            )
-        },
+        expected: FLAG_WORDS,
+        valid: is_flag,
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY",
+        expected: FLAG_WORDS,
+        valid: is_flag,
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_HEATMAP_SHOW_PARTNERS",
+        expected: FLAG_WORDS,
+        valid: is_flag,
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS",
+        expected: FLAG_WORDS,
+        valid: is_flag,
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS_REVIEWED_ONLY",
+        expected: FLAG_WORDS,
+        valid: is_flag,
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS_NOINDEX",
+        expected: FLAG_WORDS,
+        valid: is_flag,
     },
 ];
 
@@ -254,7 +295,7 @@ pub fn validate_with(get: impl Fn(&str) -> Option<String>) -> Result<(), String>
 
 #[cfg(test)]
 mod tests {
-    use super::{CHOICES, SETTINGS, validate_with};
+    use super::{CHOICES, SETTINGS, flag_is_on, validate_with};
 
     /// RCA-IN-2, RCA-IN-4: a supplied value outside its range, or not a number, stops start-up and names the setting;
     /// an absent or blank one does not.
@@ -317,6 +358,29 @@ mod tests {
             assert!(with(flag, good).is_ok(), "{good}");
         }
         assert!(with(flag, "maybe").is_err());
+        for (word, on) in [
+            ("on", true),
+            (" YES ", true),
+            ("1", true),
+            ("True", true),
+            ("off", false),
+            ("0", false),
+            ("no", false),
+            ("", false),
+        ] {
+            assert_eq!(flag_is_on(word), on, "{word:?}");
+        }
+        for flag in [
+            "PROJECT_PORTFOLIO_MANAGEMENT_EVENT_RELAY",
+            "PROJECT_PORTFOLIO_MANAGEMENT_HEATMAP_SHOW_PARTNERS",
+            "PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS",
+            "PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS_REVIEWED_ONLY",
+            "PROJECT_PORTFOLIO_MANAGEMENT_PUBLIC_ROADMAPS_NOINDEX",
+        ] {
+            assert!(with(flag, "On").is_ok(), "{flag}");
+            assert!(with(flag, "no").is_ok(), "{flag}");
+            assert!(with(flag, "enabled").is_err(), "{flag}");
+        }
         let wip = "PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMITS";
         for good in ["{}", r#"{"in_progress": 3}"#] {
             assert!(with(wip, good).is_ok(), "{good}");

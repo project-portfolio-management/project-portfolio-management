@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — five on/off flags are checked at start-up (SET-1, 2026-11-24)
+
+- `EVENT_RELAY`, `HEATMAP_SHOW_PARTNERS`, `PUBLIC_ROADMAPS`, `PUBLIC_ROADMAPS_REVIEWED_ONLY` and `PUBLIC_ROADMAPS_NOINDEX` accept the
+  on/off words of `REGISTER_REQUIRED` and refuse any other word at start-up. Before, a typo read as off and the feature stayed silently
+  disabled. The three readers now share one parser, `settings::flag_is_on` (`on`, `1`, `true`, `yes`, any case), so a word the validator accepts is read the same everywhere: the public roadmaps flags used to accept only `on`, `true` and `1` (so `yes` or `True` was off), and the heatmap flag only `1`, `true`, `TRUE` and `yes` (so `on` was off); both now accept all four.
+- **Left as it is:** `REQUIRE_AUTH` reads an unrecognised word as on, deliberately (secure by default). **Not done:** other boolean readers,
+  if any, were not found by the search; the readers keep their lenient parse for the absent case. Unit test only; database suites and CI were not run.
+
 ### Changed — four more word-valued settings are checked at start-up (SET-1, 2026-11-24)
 
 - `EVM_AC_SOURCE`, `SCHEDULE_HEALTH_THRESHOLDS`, `DEFAULT_MODULES` and `ERASURE_POLICY` join the `CHOICES` table, from the audit of

@@ -114,6 +114,26 @@ const SETTINGS: &[Setting] = &[
         min: 0,
         max: 525_600,
     },
+    Setting {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_MINUTES_PER_DAY",
+        min: 1,
+        max: 1_440,
+    },
+    Setting {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMIT",
+        min: 1,
+        max: 1_000,
+    },
+    Setting {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_SUPPRESSION_FLOOR_MINUTES",
+        min: 0,
+        max: 100_000,
+    },
+    Setting {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_MIN_GROUP_PEOPLE",
+        min: 2,
+        max: 1_000,
+    },
 ];
 
 /// Check one setting's value: `Ok` when absent or blank, or a whole number in range.

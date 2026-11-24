@@ -1919,10 +1919,14 @@ replaced by the default, the nearest bound or "off". `0` where the range starts 
 | `EXCEPTION_WINDOW_HOURS` | 1 to 720 | the reader's default |
 | `SNAPSHOT_HOURS` | 0 to 8 760 | 0 (off) |
 | `SCHEDULER_MINUTES` | 0 to 525 600 | off |
+| `MINUTES_PER_DAY` | 1 to 1 440 | 480 |
+| `WIP_LIMIT` | 1 to 1 000 | no limit |
+| `SUPPRESSION_FLOOR_MINUTES` | 0 to 100 000 | 2 400 |
+| `MIN_GROUP_PEOPLE` | 2 to 1 000 | 5 |
 
 The ranges are the implementer's, chosen wide so no working deployment is refused (RCA-DECL-3: they need the
 maintainers' review). A value that used to be accepted and is now refused: `BULK_TTL_HOURS=0` (was raised to 1),
-`SCHEDULER_MINUTES=hourly` (was "off, with a warning"), and anything above a maximum. Tests:
+`SCHEDULER_MINUTES=hourly` (was "off, with a warning"), and anything above a maximum; likewise `MINUTES_PER_DAY=0` or `1441` (was the default 480), `WIP_LIMIT=0` or `abc` (was "no limit", with a flag), `MIN_GROUP_PEOPLE=1` (was 5) and a `SUPPRESSION_FLOOR_MINUTES` outside its range (was 2 400). Not yet checked at start-up, and so still replaced by their default when invalid: `DEFAULT_WORKING_WEEK` (a seven-digit mask), `CCPM_ESTIMATE_RULE`, `REGISTER_REQUIRED` and the `WIP_LIMITS` JSON. Tests:
 `an_invalid_setting_is_refused_by_name_and_an_absent_one_is_not` (`settings`).
 
 **The simulations' generator (RCA-EXC-3).** `schedule_risk::Rng`, shared by the schedule, cost and joint risk simulations, is

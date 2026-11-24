@@ -9,6 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — four more numeric settings are checked at start-up (SET-1, 2026-11-24)
+
+- `MINUTES_PER_DAY` (1 to 1 440), `WIP_LIMIT` (1 to 1 000), `SUPPRESSION_FLOOR_MINUTES` (0 to 100 000) and `MIN_GROUP_PEOPLE`
+  (2 to 1 000) join the settings validator: supplied outside its range, or not a whole number, the service does not start and
+  names the setting; absent or blank still takes the reader's default. Before, each fell back to its default on a bad value
+  (RCA-IN-4). The ranges are the readers' own, so no value that worked is refused unless it was already being replaced.
+- **Not done:** `DEFAULT_WORKING_WEEK`, `CCPM_ESTIMATE_RULE`, `REGISTER_REQUIRED` and the `WIP_LIMITS` JSON still fall back
+  when invalid (they are not numeric ranges; the spec lists them). The readers' own fallbacks stay for the absent case. Checked
+  here by the validator's unit test only; the database suites and CI were not run for this change.
+
 ### Added — tests for the API-version middleware (2026-11-23)
 
 - `version::require_version_mw` had no test of its own: three unit tests now drive it through a bare router (an API request

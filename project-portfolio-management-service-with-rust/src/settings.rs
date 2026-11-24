@@ -177,6 +177,11 @@ const CHOICES: &[Choice] = &[
         valid: |v| matches!(v, "explicit_only" | "half_of_safe"),
     },
     Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMITS",
+        expected: "a JSON object of task status to a whole-number cap of at least 1, such as {\"in_progress\": 3}",
+        valid: |v| crate::engineering::parse_wip_limits(Some(v)).is_some(),
+    },
+    Choice {
         name: "PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED",
         expected: "on, 1, true or yes; or off, 0, false or no",
         valid: |v| {
@@ -292,5 +297,17 @@ mod tests {
             assert!(with(flag, good).is_ok(), "{good}");
         }
         assert!(with(flag, "maybe").is_err());
+        let wip = "PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMITS";
+        for good in ["{}", r#"{"in_progress": 3}"#] {
+            assert!(with(wip, good).is_ok(), "{good}");
+        }
+        for bad in [
+            "in_progress=3",
+            r#"{"in_progress": 0}"#,
+            r#"{"nonsense": 3}"#,
+            r#"{"in_progress": "3"}"#,
+        ] {
+            assert!(with(wip, bad).is_err(), "{bad}");
+        }
     }
 }

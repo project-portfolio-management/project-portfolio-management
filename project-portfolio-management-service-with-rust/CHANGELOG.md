@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — the `WIP_LIMITS` JSON is checked at start-up (SET-1, 2026-11-24)
+
+- `PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMITS` joins the word-valued settings: supplied and not a JSON object of known task status to a
+  cap of at least 1, the service does not start and names it. Before, the three readers quietly took "no limits".
+- **Not done:** no audit of every other environment variable the service reads for a fallback on invalid input (the spec says so);
+  the readers keep their own handling for the absent case. Checked by the validator's unit test only; the database suites and CI
+  were not run for this change.
+
 ### Changed — three word-valued settings are checked at start-up (SET-1, 2026-11-24)
 
 - `DEFAULT_WORKING_WEEK` (a valid weekday mask), `CCPM_ESTIMATE_RULE` (`explicit_only` or `half_of_safe`) and `REGISTER_REQUIRED`

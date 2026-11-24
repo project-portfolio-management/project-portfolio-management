@@ -28,7 +28,7 @@ type Seen = Arc<Mutex<Vec<(HeaderMap, Vec<u8>)>>>;
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main webhook_redelivery:: -- --ignored`"]
 #[expect(clippy::too_many_lines)] // one linear scenario: a receiver, a logged failure, then each redelivery case
 async fn a_logged_delivery_is_redelivered_once_with_a_fresh_signed_timestamp() {
-    own_process!();
+    axa_test::own_process!();
     // A receiver on a loopback port, recording what it is sent.
     let seen: Seen = Arc::default();
     let sink = seen.clone();

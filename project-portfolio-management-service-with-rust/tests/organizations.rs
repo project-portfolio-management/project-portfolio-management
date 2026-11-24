@@ -95,7 +95,7 @@ async fn sweep_call(
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main organizations:: -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn organizations_are_records_and_a_partner_sees_its_own() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier or these settings.
     unsafe {

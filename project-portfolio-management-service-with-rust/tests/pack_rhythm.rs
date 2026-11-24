@@ -86,7 +86,7 @@ const OTHER: &str = "3f2c6b7e-0000-4000-8000-0000000000d3";
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main pack_rhythm:: -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn a_schedule_drafts_an_office_reviews_a_person_issues_and_subscribers_are_told() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {

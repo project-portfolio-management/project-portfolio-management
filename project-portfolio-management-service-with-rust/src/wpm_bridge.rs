@@ -347,7 +347,7 @@ fn recall(caller: &str, peer_pool_ref: &str, month: Date) -> Option<Received> {
 /// Shared HTTP client for calls to the worker service: bounded by [`PEER_TIMEOUT`] and never following redirects, so a peer cannot bounce a bearer token elsewhere.
 fn client() -> Result<&'static reqwest::Client, &'static str> {
     static CLIENT: OnceLock<Result<reqwest::Client, String>> = OnceLock::new();
-    crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
+    axa::tls::install_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
     CLIENT
         .get_or_init(|| {
             reqwest::Client::builder()

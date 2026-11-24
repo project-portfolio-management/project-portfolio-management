@@ -98,7 +98,7 @@ fn plan_body() -> Value {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main enforcement:: -- --ignored`"]
 async fn enforcement_on_gates_the_real_router() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // Set BEFORE the app boots — the flag, key set and policy are read
     // into process-wide `OnceLock`s on first use. No

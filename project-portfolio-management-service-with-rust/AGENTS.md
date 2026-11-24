@@ -2,7 +2,7 @@
 
 Entry point for AI coding agents working in the
 `project-portfolio-management` crate (v0.2.1, edition 2024, Rust 1.100.0 with a
-minimum of 1.98, axa 0.20, sqlx 0.9, axum 0.8): a registry of **plan** records
+minimum of 1.98, axa 0.23, sqlx 0.9, axum 0.8): a registry of **plan** records
 — one recursive collection with an optional Portfolio / Project / Product
 / Program / Practice / Process / Purpose / Pathway / Proposal `kind`
 label — **and** a project-management tool.
@@ -210,7 +210,7 @@ Walk-through: [`../operations/wpm-bridge.md`](../operations/wpm-bridge.md).
 - **The auth posture and the ABAC policy are read once per process**
   (`auth::REQUIRE_AUTH`, `auth::policy`; the verifier `auth::VERIFIER` is
   re-seeded by `auth::init` at each boot). So every real-token test runs in
-  its **own process**: it starts with `own_process!();`, which runs it alone
+  its **own process**: it starts with `axa_test::own_process!();`, which runs it alone
   in a fresh process of the one test binary (`private_aggregates`,
   `list_paging`, `approvals`, `processes`, `controlled_documents`,
   `cross_plan`, `guests`, `plan_access`, `enforcement`, …). Do not add
@@ -268,8 +268,8 @@ aggregate GET needs a decision in `private_aggregates`.
 
 A new suite is a module in `tests/main.rs`, not a new binary. A test that sets an environment variable or other
 process-wide state (the auth posture, the ABAC policy, the mark scheme, the MAC key, the event transport, a global
-`tracing` subscriber: each is read once per process) starts with `own_process!();`, which runs it alone in a fresh
-process of the same executable (`tests/own_process.rs`).
+`tracing` subscriber: each is read once per process) starts with `axa_test::own_process!();`, which runs it alone in a fresh
+process of the same executable (axa-test 0.14).
 
 ## Layout
 

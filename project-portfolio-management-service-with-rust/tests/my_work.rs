@@ -82,7 +82,7 @@ const AS_OF: &str = "2026-10-02T23:30:00Z";
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main my_work:: -- --ignored`"]
 async fn my_work_buckets_by_due_date_in_the_callers_zone() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so no other test races the
     // process-wide verifier `OnceLock` it sets.

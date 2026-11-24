@@ -72,7 +72,7 @@ const BOB: &str = "3f2c6b7e-0000-4000-8000-00000000000b";
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main planner:: -- --ignored`"]
 async fn slots_clash_when_they_overlap_render_in_the_callers_zone_and_stay_private() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so no other test races the
     // process-wide verifier `OnceLock` it sets.

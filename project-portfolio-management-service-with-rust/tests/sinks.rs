@@ -107,7 +107,7 @@ async fn receiver(status: Arc<AtomicU16>) -> (String, Seen) {
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main sinks:: -- --ignored`"]
 async fn deliveries_are_enqueued_sent_retried_filtered_and_private() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     let status = Arc::new(AtomicU16::new(200));
     let (base, seen) = receiver(status.clone()).await;

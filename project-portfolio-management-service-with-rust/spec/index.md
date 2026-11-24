@@ -852,9 +852,9 @@ the libtest equivalent and still works. A test that
 sets an environment variable or other process-wide state (the auth
 posture, the ABAC policy, the mark scheme, the MAC key, the event
 transport, a global `tracing` subscriber: each read once per process)
-starts with `own_process!();` and so runs alone in a fresh process of
+starts with `axa_test::own_process!();` and so runs alone in a fresh process of
 the same executable, which fails unless that process ran and passed
-exactly that one test (`tests/own_process.rs`).
+exactly that one test (`axa-test`'s macro, which replaced the service's own `tests/own_process.rs`).
 
 ## 12. Compliance
 

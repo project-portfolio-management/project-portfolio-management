@@ -1484,13 +1484,10 @@ mod tests {
     use super::*;
 
     fn context() -> AppContext {
-        let environment = axa::Environment::Test;
-        let config = axa::config::Config::from_env(&environment, &axa::config::Defaults::default())
-            .expect("test configuration");
         let pool = sqlx::postgres::PgPoolOptions::new()
             .connect_lazy("postgres://nobody:nothing@127.0.0.1:1/none")
             .expect("lazy pool");
-        AppContext::new(environment, pool, config)
+        AppContext::for_test(pool).expect("test context")
     }
 
     fn fact(kind: &str, from: Option<&str>, to: Option<&str>) -> rules::TriggerFact {

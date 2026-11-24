@@ -177,12 +177,6 @@ pub fn renamed_settings(
 /// The service: plain functions, called in order from [`App::run`].
 pub struct App;
 
-/// Choose `ring` as rustls's process-wide crypto provider. reqwest is built with `rustls-no-provider`, so nothing else
-/// installs one. An already-installed provider is left alone, so this is safe to call more than once.
-pub fn install_tls_provider() {
-    let _ = rustls::crypto::ring::default_provider().install_default();
-}
-
 impl App {
     /// The version shown to operators: the crate version and the commit it was built from.
     #[must_use]
@@ -202,7 +196,8 @@ impl App {
     ///
     /// When any of those cannot be set up.
     pub async fn context(environment: Environment, config: ServiceConfig) -> Result<AppContext> {
-        install_tls_provider();
+        // reqwest is built with `rustls-no-provider`; axa installs `ring` here and in `db::connect` (idempotent).
+        axa::tls::install_provider();
         crate::handling_marks::init().map_err(Error::Message)?;
         crate::settings::validate().map_err(Error::Message)?;
         let db = axa::db::connect(&config.database).await?;
@@ -946,8 +941,9 @@ mod tests {
         let defaults = defaults();
         assert_eq!(defaults.port, 1241);
         assert_eq!(defaults.max_connections, 1);
-        install_tls_provider();
-        install_tls_provider();
+        axa::tls::install_provider();
+        axa::tls::install_provider();
+        assert!(axa::tls::is_installed());
         let environment = Environment::Test;
         let config = ServiceConfig::from_env(&environment, &defaults).unwrap();
         let pool = sqlx::postgres::PgPoolOptions::new()

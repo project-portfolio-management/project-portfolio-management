@@ -62,7 +62,7 @@ fn auth_header(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue)
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main references_privacy:: -- --ignored`"]
 async fn a_private_plans_references_are_not_found_for_a_non_member() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {

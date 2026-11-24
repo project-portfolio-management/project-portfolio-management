@@ -40,7 +40,7 @@ use std::sync::Arc;
 #[serial]
 #[ignore = "requires PostgreSQL AND a live Fluvio broker; see this file's module docs"]
 async fn fluvio_relay_publishes_an_outbox_row_to_a_real_topic() {
-    own_process!();
+    axa_test::own_process!();
     let endpoint = std::env::var("PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT").expect(
         "set PROJECT_PORTFOLIO_MANAGEMENT_FLUVIO_ENDPOINT to the broker's SC address (e.g. 127.0.0.1:9103)",
     );

@@ -20,7 +20,7 @@ use serial_test::serial;
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main hardening:: -- --ignored`"]
 async fn the_real_router_carries_headers_cors_and_rate_limits() {
-    own_process!();
+    axa_test::own_process!();
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT", "on");
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_RATE_LIMIT_GENERAL_BURST", "6");

@@ -80,7 +80,7 @@ const CAROL: &str = "3f2c6b7e-0000-4000-8000-00000000000c";
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main watchers:: -- --ignored`"]
 async fn watchers_are_told_once_and_the_actor_never() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so no other test races the
     // process-wide verifier `OnceLock` it sets.

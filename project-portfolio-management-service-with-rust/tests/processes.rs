@@ -105,7 +105,7 @@ fn states(ex: &Value) -> Vec<String> {
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main processes:: -- --ignored`"]
 async fn a_process_runs_one_step_at_a_time_and_ends_honestly() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {

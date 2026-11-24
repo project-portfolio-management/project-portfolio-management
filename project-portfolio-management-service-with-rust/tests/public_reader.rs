@@ -76,7 +76,7 @@ fn bearer(
     reason = "one linear end-to-end story of the reader"
 )]
 async fn the_public_reader_serves_only_what_was_published_from_an_open_plan() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide settings.
     unsafe {

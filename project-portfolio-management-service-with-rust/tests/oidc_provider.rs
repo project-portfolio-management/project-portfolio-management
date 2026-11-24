@@ -41,7 +41,7 @@ fn auth(token: &str) -> (axum::http::HeaderName, axum::http::HeaderValue) {
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main oidc_provider:: -- --ignored`"]
 async fn a_token_from_a_plain_oidc_provider_is_accepted_and_mapped() {
-    own_process!();
+    axa_test::own_process!();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let issuer = format!("http://127.0.0.1:{}", listener.local_addr().unwrap().port());
     let discovery = json!({ "issuer": issuer, "jwks_uri": format!("{issuer}/jwks") });

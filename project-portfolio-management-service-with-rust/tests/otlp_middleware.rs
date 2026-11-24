@@ -39,7 +39,7 @@ use project_portfolio_management::observability::{
 
 #[tokio::test(flavor = "multi_thread")]
 async fn a_served_request_exports_a_span_and_returns_its_traceparent() {
-    own_process!();
+    axa_test::own_process!();
     let (endpoint, captured) = otlp_collector::start().await;
 
     let config = TelemetryConfig {
@@ -75,7 +75,7 @@ async fn a_served_request_exports_a_span_and_returns_its_traceparent() {
         axum::serve(listener, router).await.ok();
     });
 
-    project_portfolio_management::app::install_tls_provider(); // reqwest has no bundled provider.
+    axa::tls::install_provider(); // reqwest has no bundled provider.
     let response = reqwest::Client::new()
         .get(format!("http://{addr}/api/health"))
         .send()

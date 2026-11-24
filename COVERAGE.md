@@ -30,7 +30,7 @@ request suites (`requests:: --ignored --test-threads=1`) and every other databas
 
 **Why LLVM and not ptrace on Linux.** macOS has only the LLVM engine, and using it on Linux too keeps the local and CI
 figures comparable. More to the point, the suites that change process-wide state run each test in a child process
-of the test binary (`tests/own_process.rs`): LLVM's runtime writes a profile from every process (`%m-%p`), while
+of the test binary (`axa_test::own_process!`): LLVM's runtime writes a profile from every process (`%m-%p`), while
 ptrace sees a child only with `--follow-exec`, and slower.
 
 **Left out of the denominator** (each with its reason in `tarpaulin.toml`): integration-test code (`tests/`,

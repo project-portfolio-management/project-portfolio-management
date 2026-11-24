@@ -78,7 +78,7 @@ const CAROL: &str = "3f2c6b7e-0000-4000-8000-00000000000c";
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main approvals:: -- --ignored`"]
 async fn only_the_named_approver_decides_and_a_decision_is_final() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so no other test races the
     // process-wide verifier `OnceLock` it sets.

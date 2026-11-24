@@ -77,7 +77,7 @@ fn bearer(
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main handling_marks:: -- --ignored`"]
 async fn a_plan_marked_above_your_clearance_does_not_exist_for_you() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier and the scheme.
     unsafe {

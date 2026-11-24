@@ -28,7 +28,7 @@ async fn status(method: &Method, path: &str, headers: &HeaderMap) -> u16 {
 
 #[tokio::test]
 async fn a_keycloak_token_is_authenticated_and_authorized_through_the_real_guard() {
-    own_process!();
+    axa_test::own_process!();
     let idp = TestIdp::start().await;
     unsafe {
         std::env::set_var("PROJECT_PORTFOLIO_MANAGEMENT_KEYCLOAK_URL", &idp.base_url);

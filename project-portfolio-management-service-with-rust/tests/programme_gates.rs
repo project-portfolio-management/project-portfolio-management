@@ -85,7 +85,7 @@ const OUTSIDER: &str = "3f2c6b7e-0000-4000-8000-0000000000a9";
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main programme_gates:: -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn gates_and_programme_status_keep_their_promises() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {

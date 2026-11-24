@@ -9,7 +9,7 @@ Entry point for AI coding agents at the repository root. Three projects live her
 | Matcher (pure Rust library) | `project-portfolio-management-matcher-with-rust` | [AGENTS.md](project-portfolio-management-matcher-with-rust/AGENTS.md) |
 | Operator UI (SvelteKit 3, Svelte 5, Lily widgets) | `project-portfolio-management-ui-with-svelte` | [AGENTS.md](project-portfolio-management-ui-with-svelte/AGENTS.md) |
 
-Versions: service 0.2.1, matcher 0.2.2, UI 0.2.1 (tag `v0.2.1`). Rust 1.100.0 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.98 for every crate; axa 0.20 needs it for the service), Node 26, pnpm, Podman.
+Versions: service 0.2.1, matcher 0.2.2, UI 0.2.1 (tag `v0.2.1`). Rust 1.100.0 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.98 for every crate; axa 0.23 needs it for the service), Node 26, pnpm, Podman.
 
 ## How work is done here
 

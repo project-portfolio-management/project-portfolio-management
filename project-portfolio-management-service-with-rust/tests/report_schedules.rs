@@ -72,7 +72,7 @@ const BOB: &str = "3f2c6b7e-0000-4000-8000-00000000000b";
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main report_schedules:: -- --ignored`"]
 async fn scheduled_runs_are_claimed_once_audited_and_owner_only() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     let dir = tempfile::tempdir().expect("tempdir");
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races these variables.

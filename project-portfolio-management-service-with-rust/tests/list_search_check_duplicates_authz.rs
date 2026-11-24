@@ -103,7 +103,7 @@ fn ordinary_plan() -> Value {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main list_search_check_duplicates_authz:: -- --ignored`"]
 async fn denied_reader_never_sees_the_plan_via_list_search_or_check_duplicates() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // `dept=outsider` may not read a plan that has passed gate 0 at all
     // (a `deny`, not a `mask` obligation — first-match-wins per

@@ -23,7 +23,7 @@ use serial_test::serial;
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with: cargo test --test main outbox_audit:: -- --ignored"]
 async fn outbox_create_update_merge_delete_write_events_and_audit_atomically() {
-    own_process!();
+    axa_test::own_process!();
     // Select the durable transport BEFORE the app boots (the transport is
     // read once into a process-wide OnceLock). `set_var` is `unsafe` in
     // edition 2024; single-threaded test setup.

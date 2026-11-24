@@ -3,7 +3,7 @@
 //! Each module below was a binary of its own, built and linked against the whole library: 69 links per test build.
 //! They are modules of this one now. The request-level suites are the [`requests`] tree (the old `tests/mod.rs`
 //! binary). A suite that changes process-wide state still runs each of its tests in a process of its own, of this
-//! same executable: see [`own_process`].
+//! same executable: see `axa_test::own_process!` (axa-test 0.14).
 //!
 //! Running them:
 //!
@@ -23,9 +23,6 @@
     linker_messages,
     reason = "ld64's __eh_frame size note for one large test binary"
 )]
-
-#[macro_use]
-mod own_process;
 
 mod otlp_collector;
 mod requests;

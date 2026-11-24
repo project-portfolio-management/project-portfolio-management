@@ -81,7 +81,7 @@ fn hdr(kid: &str, sub: &str, access: &[&str]) -> Who {
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main controlled_documents:: -- --ignored`"]
 async fn a_controlled_document_is_immutable_once_effective_and_never_without_an_approval() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {

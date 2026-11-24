@@ -8,7 +8,7 @@
 # Engine: LLVM source-based coverage (`-C instrument-coverage`), on macOS (where it is the only engine) and on Linux
 # alike, so a local figure and CI's compare. ptrace, Linux's other choice, follows a child process only with
 # `follow-exec`, and the suites that change process-wide state run each test in a child process of the test binary
-# (`tests/own_process.rs`); LLVM's runtime writes a profile from every process (`%m-%p`), children included.
+# (`axa_test::own_process!`); LLVM's runtime writes a profile from every process (`%m-%p`), children included.
 #
 # What is not counted (the denominator is the code the service, the domain crate, the datetime crate and the
 # migration runner ship), one reason per pattern:

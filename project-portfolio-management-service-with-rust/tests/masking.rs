@@ -105,7 +105,7 @@ fn apollo_plan() -> Value {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main masking:: -- --ignored`"]
 async fn mask_obligation_redacts_reads_and_exports() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // `dept=partner` may read, but only masked. Everyone else reads in
     // full by the default policy; `access=write` may create. Set

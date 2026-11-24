@@ -119,7 +119,7 @@ async fn private_plan(request: &axum_test::TestServer, who: &Callers, name: &str
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn an_inbox_belongs_to_its_owner() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -191,7 +191,7 @@ async fn an_inbox_belongs_to_its_owner() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn proposals_and_objectives_keep_a_private_plan_out() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -275,7 +275,7 @@ async fn proposals_and_objectives_keep_a_private_plan_out() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_private_plans_canvas_is_private() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -384,7 +384,7 @@ async fn a_private_plans_canvas_is_private() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_private_plans_reviews_are_private() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -447,7 +447,7 @@ async fn a_private_plans_reviews_are_private() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_private_plans_automations_are_private() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -584,7 +584,7 @@ async fn a_private_plans_automations_are_private() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_field_of_the_body_is_no_way_into_a_private_plan() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -672,7 +672,7 @@ async fn a_field_of_the_body_is_no_way_into_a_private_plan() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn sprints_and_calendars_keep_a_private_plan_out() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -761,7 +761,7 @@ async fn sprints_and_calendars_keep_a_private_plan_out() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_template_is_hidden_with_its_plan() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -840,7 +840,7 @@ async fn a_template_is_hidden_with_its_plan() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_reference_is_no_way_into_a_private_plan() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -976,7 +976,7 @@ async fn a_reference_is_no_way_into_a_private_plan() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn a_sweep_a_writer_runs_stays_on_their_side() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -1036,7 +1036,7 @@ async fn a_sweep_a_writer_runs_stays_on_their_side() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn what_you_were_told_goes_when_your_access_does() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);
@@ -1152,7 +1152,7 @@ async fn what_you_were_told_goes_when_your_access_does() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_routes:: -- --ignored`"]
 async fn the_okr_and_skill_gap_reads_keep_a_private_plan_out() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     let who = callers(&kid);

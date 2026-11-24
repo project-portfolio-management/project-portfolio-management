@@ -9,6 +9,28 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — axa 0.23.0 and axa-test 0.14.0 (2026-11-24)
+
+- `axa` 0.21.0 to 0.23.0 and `axa-test` 0.12.0 to 0.14.0, with the transitive `axa-cursor-pagination` 0.1.3, `axa-idempotency-key` 0.3.0,
+  `axa-openapi-docs` 0.1.1, `axa-postgres-job-queue` 0.7.0, `axa-request-rate-limit` 0.3.4 and `axa-transactional-outbox` 0.4.1. **Cooldown:**
+  `axa` and `axa-test` were 5 hours old and the others 20 hours old against the 2-day minimum; the maintainer approved the exception, used once
+  as `CARGO_RESOLVER_INCOMPATIBLE_PUBLISH_AGE=allow cargo update -p axa -p axa-test`. The 0.22 and 0.23 upgrade guides' compile breaks (the
+  `Result` and `Option` returns of the job-queue and schedule functions, `Defaults` with every field named) do not touch this service: it
+  compiled with no source change.
+- **Refactored onto axa:** `axa::tls::install_provider` replaces the service's own `app::install_tls_provider` (10 call sites), and the
+  direct `rustls` dependency is gone (`cargo machete` and `cargo deny` clean; the default build still has no `aws-lc-rs`);
+  `axa_test::own_process!` replaces `tests/own_process.rs` (60 test files, 90 uses; the file and `mod own_process` are deleted; the child's output is
+  no longer echoed through the parent unless the test fails); `AppContext::for_test` replaces a hand-built context in the automation tests.
+  Stale "axa 0.20" in the `AGENTS.md` files and `llms.json` is now 0.23.
+- **Not adopted, on purpose:** `Settings::renamed` (axa refuses an old name only in production; the spec refuses in every environment),
+  `AppRoutes::into_app_with` (the service's own security headers, authentication and rate limit sit outside axa's stack by design; moving them
+  reorders it), the new `Defaults` CORS, HSTS, timeout and compression fields (`http_security` owns them), `Error::with_detail` (it sets `code` to
+  the HTTP reason; the spec, section 8.3a, requires service-specific codes) and `Config::for_task` (no task builds its own `Config`).
+- **Checked locally (macOS, Postgres 18):** clippy `-D warnings` over the workspace with every feature; 1,405 unit and migration tests (1 skipped); 29
+  database-free tests; the database suites in full, 243 request tests and 95 others; `cargo deny`; `cargo machete`. The logs of the
+  database suites show none of axa 0.23's new warning about dropping a handler's plain-text answer, but they may not print log output at all, so
+  that is not proof there is none. **Not run:** the `keycloak` and `fluvio` features' container suites, the load test, the restore drill and CI.
+
 ## [0.2.1] - 2026-11-24
 
 ### Changed — jiff 1.0.1 to 1.0.2 (2026-11-24)

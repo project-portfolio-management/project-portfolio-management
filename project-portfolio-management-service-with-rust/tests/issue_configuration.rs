@@ -129,7 +129,7 @@ async fn new_plan(request: &axum_test::TestServer, who: &Header, name: &str) -> 
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn only_an_administrator_changes_the_catalogues_and_issue_workflows() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -218,7 +218,7 @@ async fn only_an_administrator_changes_the_catalogues_and_issue_workflows() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_role_makes_nobody_an_administrator() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -246,7 +246,7 @@ async fn a_role_makes_nobody_an_administrator() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_workflow_can_restrict_a_move_by_type_and_role_and_a_status_counts_by_its_category() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -453,7 +453,7 @@ async fn a_workflow_can_restrict_a_move_by_type_and_role_and_a_status_counts_by_
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_retired_type_stays_on_its_issues_and_a_withdrawn_workflow_strands_nothing() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -529,7 +529,7 @@ async fn a_retired_type_stays_on_its_issues_and_a_withdrawn_workflow_strands_not
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn with_nothing_configured_an_issue_behaves_as_before() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -576,7 +576,7 @@ async fn with_nothing_configured_an_issue_behaves_as_before() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn changing_an_issues_type_cannot_get_round_a_gate() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -707,7 +707,7 @@ async fn changing_an_issues_type_cannot_get_round_a_gate() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn the_catalogues_and_workflows_keep_what_they_should() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -824,7 +824,7 @@ async fn the_catalogues_and_workflows_keep_what_they_should() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_status_filter_confirms_no_word_only_a_hidden_plan_uses() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -935,7 +935,7 @@ async fn add_role(
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn roles_on_a_plan_decide_what_its_members_may_do_to_issues() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -1154,7 +1154,7 @@ async fn roles_on_a_plan_decide_what_its_members_may_do_to_issues() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_role_held_on_one_plan_opens_that_plans_gates_and_no_others_and_no_private_plan() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -1226,7 +1226,7 @@ async fn a_role_held_on_one_plan_opens_that_plans_gates_and_no_others_and_no_pri
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_status_can_require_a_field_or_lock_one_for_named_roles() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -1349,7 +1349,7 @@ async fn a_status_can_require_a_field_or_lock_one_for_named_roles() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_plan_can_limit_itself_to_some_issue_types() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -1453,7 +1453,7 @@ async fn a_plan_can_limit_itself_to_some_issue_types() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_workflow_changes_in_place_and_its_words_reach_the_register_in_any_language() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -1604,7 +1604,7 @@ async fn a_workflow_changes_in_place_and_its_words_reach_the_register_in_any_lan
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_private_plans_issues_stay_out_of_the_audit_feed_and_workflow_writes() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -1719,7 +1719,7 @@ async fn a_private_plans_issues_stay_out_of_the_audit_feed_and_workflow_writes()
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn removing_or_a_move_only_save_gets_round_nothing() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -1805,7 +1805,7 @@ async fn removing_or_a_move_only_save_gets_round_nothing() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_task_workflow_needs_an_administrator_and_a_usable_shape() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -1889,7 +1889,7 @@ async fn a_task_workflow_needs_an_administrator_and_a_usable_shape() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn a_private_plans_controls_answer_only_to_those_who_can_read_it() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -1986,7 +1986,7 @@ async fn a_private_plans_controls_answer_only_to_those_who_can_read_it() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn no_task_gets_past_a_gate_by_creation_or_by_changing_plan() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {
@@ -2076,7 +2076,7 @@ async fn no_task_gets_past_a_gate_by_creation_or_by_changing_plan() {
 #[serial_test::serial]
 #[ignore = "requires PostgreSQL (DB_URL)"]
 async fn an_issues_times_come_from_its_moves_and_nothing_is_guessed() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     set_up(&keys);
     request::<App, _, _>(|request, ctx| async move {

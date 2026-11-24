@@ -84,7 +84,7 @@ const REASON: &str = "Incident 4412: the plan owner is unreachable and the relea
 #[tokio::test]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main break_glass:: -- --ignored`"]
 async fn a_private_plan_opens_only_for_the_eligible_for_a_while_and_with_a_witness() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {

@@ -261,7 +261,7 @@ impl Jar {
 /// Returns the Keycloak access token.
 async fn sign_in(kc: &str, mock: &Mock, user: &str) -> String {
     mock.state.lock().unwrap().user = user.to_string();
-    project_portfolio_management::app::install_tls_provider(); // reqwest has no bundled provider.
+    axa::tls::install_provider(); // reqwest has no bundled provider.
     let http = reqwest::Client::builder()
         .redirect(reqwest::redirect::Policy::none())
         .build()
@@ -354,7 +354,7 @@ async fn status(method: &Method, path: &str, headers: &HeaderMap) -> u16 {
 #[tokio::test]
 #[ignore = "requires a container runtime (Podman); see the module docs"]
 async fn an_entra_sign_in_brokered_by_a_real_keycloak_passes_the_real_guard() {
-    own_process!();
+    axa_test::own_process!();
     let (port, mock) = start_mock().await;
     let browser_facing = format!("http://localhost:{port}/{TENANT}");
     let from_container = format!("http://host.containers.internal:{port}/{TENANT}");

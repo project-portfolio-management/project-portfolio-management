@@ -651,7 +651,7 @@ const PRODUCT_DECISION_VIEWS: &[&str] = &[
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_aggregates:: -- --ignored`"]
 async fn census_of_what_a_product_plan_touches() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: the tests here are `#[serial]`, and each writes the same values.
     unsafe {
@@ -708,7 +708,7 @@ async fn census_of_what_a_product_plan_touches() {
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main private_aggregates:: -- --ignored`"]
 async fn a_private_plan_is_in_no_aggregate_for_a_non_member() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     // SAFETY: the tests here are `#[serial]`, and each writes the same values.
     unsafe {

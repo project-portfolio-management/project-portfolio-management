@@ -170,7 +170,7 @@ async fn stand_in(stub: Arc<Stub>) -> String {
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main wpm_bridge:: -- --ignored`"]
 #[expect(clippy::too_many_lines)]
 async fn the_bridge_keeps_one_owner_per_fact() {
-    own_process!();
+    axa_test::own_process!();
     let (keys, kid) = keys_and_kid();
     let stub = Arc::new(Stub::default());
     let base = stand_in(stub.clone()).await;

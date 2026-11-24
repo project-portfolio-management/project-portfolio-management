@@ -182,6 +182,26 @@ const CHOICES: &[Choice] = &[
         valid: |v| crate::engineering::parse_wip_limits(Some(v)).is_some(),
     },
     Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_EVM_AC_SOURCE",
+        expected: "budget_lines, labour or both",
+        valid: |v| crate::controllers::earned_value::AcSource::parse(v).is_some(),
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULE_HEALTH_THRESHOLDS",
+        expected: "a JSON object whose fields, if present, are whole numbers inside their ranges (see the schedule health spec)",
+        valid: |v| !crate::schedule_health::parse_thresholds(Some(v)).1,
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_DEFAULT_MODULES",
+        expected: "all, or a comma-separated list of known module names",
+        valid: |v| crate::modules::parse_default(Some(v)).is_ok(),
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY",
+        expected: "pseudonymise or delete",
+        valid: |v| crate::subjects::parse_policy(Some(v)).is_ok(),
+    },
+    Choice {
         name: "PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED",
         expected: "on, 1, true or yes; or off, 0, false or no",
         valid: |v| {
@@ -301,6 +321,26 @@ mod tests {
         for good in ["{}", r#"{"in_progress": 3}"#] {
             assert!(with(wip, good).is_ok(), "{good}");
         }
+        let ac = "PROJECT_PORTFOLIO_MANAGEMENT_EVM_AC_SOURCE";
+        for good in ["budget_lines", "labour", "both"] {
+            assert!(with(ac, good).is_ok(), "{good}");
+        }
+        assert!(with(ac, "ledger").is_err());
+        let health = "PROJECT_PORTFOLIO_MANAGEMENT_SCHEDULE_HEALTH_THRESHOLDS";
+        for good in ["{}", r#"{"high_float_days": 30}"#] {
+            assert!(with(health, good).is_ok(), "{good}");
+        }
+        for bad in [r#"{"high_float_days": 0}"#, r#"{"lags_pct": 101}"#, "[1]"] {
+            assert!(with(health, bad).is_err(), "{bad}");
+        }
+        let modules = "PROJECT_PORTFOLIO_MANAGEMENT_DEFAULT_MODULES";
+        assert!(with(modules, "all").is_ok());
+        assert!(with(modules, "no_such_module").is_err());
+        let erasure = "PROJECT_PORTFOLIO_MANAGEMENT_ERASURE_POLICY";
+        for good in ["pseudonymise", "Delete"] {
+            assert!(with(erasure, good).is_ok(), "{good}");
+        }
+        assert!(with(erasure, "shred").is_err());
         for bad in [
             "in_progress=3",
             r#"{"in_progress": 0}"#,

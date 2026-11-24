@@ -165,7 +165,7 @@ pub(crate) enum AcSource {
 
 impl AcSource {
     /// Parses the `ac_source` query token (`budget_lines`, `labour` or `both`); `None` when unrecognized.
-    fn parse(s: &str) -> Option<Self> {
+    pub(crate) fn parse(s: &str) -> Option<Self> {
         match s {
             "budget_lines" => Some(Self::BudgetLines),
             "labour" => Some(Self::Labour),

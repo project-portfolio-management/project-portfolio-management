@@ -1924,7 +1924,7 @@ replaced by the default, the nearest bound or "off". `0` where the range starts 
 | `SUPPRESSION_FLOOR_MINUTES` | 0 to 100 000 | 2 400 |
 | `MIN_GROUP_PEOPLE` | 2 to 1 000 | 5 |
 
-Four settings are words or patterns, not numbers, and follow the same rule (`src/settings.rs`, `CHOICES`): absent or blank takes the reader's
+Eight settings are words or patterns, not numbers, and follow the same rule (`src/settings.rs`, `CHOICES`): absent or blank takes the reader's
 default; any other value that is not one of its words stops start-up and names the setting.
 
 | Setting (`PROJECT_PORTFOLIO_MANAGEMENT_` …) | Valid values | Absent |
@@ -1933,10 +1933,14 @@ default; any other value that is not one of its words stops start-up and names t
 | `CCPM_ESTIMATE_RULE` | `explicit_only` or `half_of_safe`, exactly | `explicit_only` |
 | `REGISTER_REQUIRED` | `on`, `1`, `true`, `yes` (on) or `off`, `0`, `false`, `no` (off), any case | off |
 | `WIP_LIMITS` | a JSON object of task status to a whole-number cap of at least 1, for example `{"in_progress": 3}`; an unknown status is refused | no caps |
+| `EVM_AC_SOURCE` | `budget_lines`, `labour` or `both` | `budget_lines` |
+| `SCHEDULE_HEALTH_THRESHOLDS` | a JSON object whose fields, if present, are whole numbers inside their ranges | the preset |
+| `DEFAULT_MODULES` | `all`, or a comma-separated list of known module names | every module |
+| `ERASURE_POLICY` | `pseudonymise` or `delete`, any case | `pseudonymise` |
 
 The ranges are the implementer's, chosen wide so no working deployment is refused (RCA-DECL-3: they need the
 maintainers' review). A value that used to be accepted and is now refused: `BULK_TTL_HOURS=0` (was raised to 1),
-`SCHEDULER_MINUTES=hourly` (was "off, with a warning"), and anything above a maximum; likewise `MINUTES_PER_DAY=0` or `1441` (was the default 480), `WIP_LIMIT=0` or `abc` (was "no limit", with a flag), `MIN_GROUP_PEOPLE=1` (was 5) and a `SUPPRESSION_FLOOR_MINUTES` outside its range (was 2 400). A word setting that used to be replaced and is now refused: `REGISTER_REQUIRED=maybe` (was off), `CCPM_ESTIMATE_RULE=Half_Of_Safe` (was `explicit_only`, flagged), a `DEFAULT_WORKING_WEEK` that is not a valid mask (was `1111100`). `WIP_LIMITS=in_progress=3` or a cap of 0 or an unknown status (was "no limits", silently). Not audited: whether any other environment variable the service reads (outside this list) still falls back on an invalid value. Tests:
+`SCHEDULER_MINUTES=hourly` (was "off, with a warning"), and anything above a maximum; likewise `MINUTES_PER_DAY=0` or `1441` (was the default 480), `WIP_LIMIT=0` or `abc` (was "no limit", with a flag), `MIN_GROUP_PEOPLE=1` (was 5) and a `SUPPRESSION_FLOOR_MINUTES` outside its range (was 2 400). A word setting that used to be replaced and is now refused: `REGISTER_REQUIRED=maybe` (was off), `CCPM_ESTIMATE_RULE=Half_Of_Safe` (was `explicit_only`, flagged), a `DEFAULT_WORKING_WEEK` that is not a valid mask (was `1111100`). `WIP_LIMITS=in_progress=3` or a cap of 0 or an unknown status (was "no limits", silently). Also now refused: `EVM_AC_SOURCE=ledger` (was `budget_lines`), a `SCHEDULE_HEALTH_THRESHOLDS` that is not valid (was the whole preset, flagged on the page), an unknown name in `DEFAULT_MODULES` (was every module) and an `ERASURE_POLICY` that is neither word (it already failed on first use; now at start). Not audited: whether any other environment variable the service reads (outside this list) still falls back on an invalid value. Tests:
 `an_invalid_setting_is_refused_by_name_and_an_absent_one_is_not` (`settings`).
 
 **The simulations' generator (RCA-EXC-3).** `schedule_risk::Rng`, shared by the schedule, cost and joint risk simulations, is

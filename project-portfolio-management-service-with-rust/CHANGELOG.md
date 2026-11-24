@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — four more word-valued settings are checked at start-up (SET-1, 2026-11-24)
+
+- `EVM_AC_SOURCE`, `SCHEDULE_HEALTH_THRESHOLDS`, `DEFAULT_MODULES` and `ERASURE_POLICY` join the `CHOICES` table, from the audit of
+  readers that fell back on bad input (RCA-IN-4): supplied and invalid, the service does not start and names the setting. The
+  readers keep their own handling for the absent case. `AcSource::parse` is now `pub(crate)` for this.
+- **Not done:** `RETENTION_*` and `PUBLIC_ROADMAPS` were not read in the audit; no audit of variables outside `std::env::var(` calls
+  found by search. Checked by the validator's unit test only; the database suites and CI were not run for this change.
+
 ### Changed — the `WIP_LIMITS` JSON is checked at start-up (SET-1, 2026-11-24)
 
 - `PROJECT_PORTFOLIO_MANAGEMENT_WIP_LIMITS` joins the word-valued settings: supplied and not a JSON object of known task status to a

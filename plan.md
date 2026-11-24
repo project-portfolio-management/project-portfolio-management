@@ -1976,3 +1976,49 @@ come from its files; "known to be missing" means not found by a search, not prov
 
 **Sequencing.** RE-16 first (a few lines of workflow). RE-20 next (a rule, no code). RE-17 starts with a measurement. RE-19 is a
 check that may end as a note. RE-18 waits for OQ-17.
+
+## 95. Outcome follow-through: ideas from an independent review, 24 November 2026
+
+**What it is.** A reading of one published independent review of a large organization (anonymous here on purpose: no name, quotation
+or figure may reach a plan section, task, test or demo record) became sixteen ideas, written up in
+[spec/lessons/20261124/index.md](spec/lessons/20261124/index.md). They are now the requirements `OF-1` to `OF-16` in
+[spec/outcome-follow-through.md](spec/outcome-follow-through.md), with tasks `OF-1` to `OF-16` in [tasks.md](tasks.md) and four
+owner decisions (`OF-D1` to `OF-D4`, also OQ-18 to OQ-21). The ids equal the idea numbers.
+
+**The pattern.** The organization had plenty of plans, programmes, registers and reports, and could not turn them into decisions,
+finished work and lasting results. A portfolio service can make that worse by recording activity well. So the question for each
+idea is: *if an organization with this problem used this service, would it show the problem or help hide it?*
+
+**Checked before adopting.** The lessons file says it was written by reading, so the claims that carry weight were re-read here:
+`update_risk` overwrites probability and impact and audits `risk_updated` with no values (`controllers/governance.rs`), so a risk's
+history is already being lost; a rejected proposal has no way back to draft (`proposal_transition` in the domain crate); the
+approval log (`approval_requests`) is a table, so a waiting-time read needs no new one; `milestone_slips` and `objective_links`
+exist for ideas 8 and 7; and every id the file cites (EX-6, EX-8, EX-9, EX-13, DP-5, DP-9, PL-2, FR-36, FR-52, FR-54, SM-8, PE-8,
+FB-4, §12.4) exists. Nothing was run, and the UI was not searched, as the file says.
+
+**Where we match or lead.** Money, gates, baselines, independent confidence, escalation, stop decisions and benefit validation
+(DP-9) are already strong, and the doctrine this needs is already in place: derived figures state a rule, unknown is never zero,
+no composite score, no person metric. The gap is the **second look**: nothing asks later whether a completed action changed the
+thing it was for.
+
+**Advice.**
+
+1. **Do `OF-3` steps 1 and 2 first and soon.** It is the only time-sensitive item: each month without a risk-score history loses
+   data that cannot be rebuilt. It is small (a history table written by every create and update, and a risk reference on an
+   escalation) and touches no screen.
+2. **Then the small reads** over data already held: repeated slippage (`OF-8`), time waiting per approval step (`OF-4` step 1) and
+   objectives no work serves (`OF-7`, reverse list). They need no new table and show whether the idea earns its keep.
+3. **Design `OF-1` and `OF-2` together.** The register and the effect check share the same "not the owner" rule (`OF-P7`) and the
+   same `sustained` state. Settle `OF-D1` and `OF-D2` before building.
+4. **Focus and ownership (`OF-5`, `OF-6`) and the stop checklist (`OF-9`) next;** the rest only when a deployment asks.
+5. **Keep it light.** Every new field is optional or a finding (`OF-P5`). The review's lesson is that extra approval steps and extra
+   required fields were part of the problem; a change that adds them has missed it.
+
+**Cost of not doing it.** Low and slow, except step 1. The service stays useful without the others; it simply cannot say whether
+activity became a result.
+
+**Not taken** (spec/outcome-follow-through.md, "Not advised"): a health or maturity score, automatic stopping or escalation,
+confidential concerns about people, person-level decision times, an AI summary of risks, and more required fields.
+
+**Open questions** (also OQ-18 to OQ-21): is the register part of this service (`OF-D1`); who may verify (`OF-D2`); are decision
+limits wanted (`OF-D3`); is an anonymous team view wanted at all (`OF-D4`). Sequencing is in the spec.

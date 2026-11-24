@@ -96,6 +96,11 @@
           "description": "Proposed (SA-1 to SA-20): what a UK-hosted, supported deployment for NHS Wales needs: software requirements, supplier obligations and shared responsibility"
         },
         {
+          "title": "Outcome follow-through",
+          "path": "spec/outcome-follow-through.md",
+          "description": "Proposed (OF-1 to OF-16): show whether activity became a result: a recommendations register, effect checks, risk score history, how long decisions wait, focus and ownership"
+        },
+        {
           "title": "Local-first CI/CD",
           "path": "spec/local-ci-cd.md",
           "description": "Proposed (LC-1 to LC-10): run CI locally first and record the result; the options assessed, the risks and the order"

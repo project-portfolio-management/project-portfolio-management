@@ -73,7 +73,8 @@ no network, database or compilation; counts are source lines, not test runs):
 | RE | 15 | 5 |
 | SA | 2 | 19 |
 | MD | 0 | 7 |
-| **Total** | **264** | **91** |
+| OF | 0 | 20 |
+| **Total** | **264** | **111** |
 
 <!-- generated:end -->
 

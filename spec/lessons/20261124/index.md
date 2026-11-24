@@ -1,8 +1,11 @@
 # Lessons from an independent review of a large organization: ideas for this repository
 
-Date: 2026-11-24. **Status: proposed, nothing built.** This file is an assessment and advice. It changes no behaviour, and no
-task, requirement, or decision id has been taken. An idea becomes work only when the owner chooses it, and it then gets a
-section in [plan.md](../../../plan.md) and a task in [tasks.md](../../../tasks.md) in the usual way.
+Date: 2026-11-24. **Status: proposed, nothing built.** This file is an assessment and advice. It changes no behaviour. The owner
+chose to take the ideas into the plan on 2026-11-24, so the ids are now taken: plan [§95](../../../plan.md), the specification
+[outcome-follow-through.md](../../outcome-follow-through.md) (`OF-1` to `OF-16`, equal to the idea numbers below, and `OF-D1` to
+`OF-D4` for the four questions at the end), tasks in [tasks.md](../../../tasks.md) (section "Outcome follow-through"), and
+OQ-18 to OQ-21 in [open questions](../../16-open-questions.md). Where this file and that specification differ, the specification
+wins.
 
 ## Where the ideas come from, and what is left out
 

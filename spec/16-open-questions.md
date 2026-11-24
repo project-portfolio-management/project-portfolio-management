@@ -112,3 +112,14 @@ spec §16 once that crate is scaffolded.
   lesson 12). Does a portfolio office need that for a plan, and for which fields? (Lean: ask the owner before building;
   start with a read-only "who last changed this" for a plan's own fields, and decide the audit hash chain (SA-7) with it. This
   is `RE-18`, and a non-answer leaves SA-7 as it is.)
+- **OQ-18 — Is the recommendations register part of this service?** The advice is yes, because the work that answers a
+  recommendation (plans, tasks, control actions) is here; the alternative is a generic link to a register kept elsewhere
+  ([spec/outcome-follow-through.md](outcome-follow-through.md) `OF-D1`, task `OF-1`). Blocks `OF-1`.
+- **OQ-19 — Who may verify a recommendation?** An independent role, as confidence is independent, or any named person who is
+  not the owner (`OF-D2`). Both refuse the owner. (Lean: an independent role where one is configured, otherwise any other
+  person.) Blocks `OF-1` and `OF-2`.
+- **OQ-20 — Are standing decision limits wanted?** A register of limits per kind and value makes "decided two levels above its
+  limit" checkable, but it is worth only if it is kept up to date (`OF-D3`, `OF-4b`). (Lean: not until a deployment will
+  maintain them.)
+- **OQ-21 — Is an anonymous team view of confidence wanted at all?** Small teams may see nothing, because the minimum group size
+  hides them (`OF-D4`, `OF-13`). (Lean: ask a deployment first; it is the most sensitive of the sixteen ideas.)

@@ -3879,6 +3879,97 @@ section ids `MA-n`. Each task says what it does not cover. Order: MD-7, MD-3, MD
   each app's `spec/index.md`, equal to the build settings. **Acceptance:** each app's spec states them and a test or a
   check fails if the build setting differs. **Not covered:** testing on every version in the range.
 
+## Outcome follow-through (OF-n, [spec/outcome-follow-through.md](spec/outcome-follow-through.md)), proposed 2026-11-24
+
+Why: a portfolio can record activity well and still not show whether it became a result. These tasks add the reads and records
+that do (a recommendations register, an effect check, risk score history, how long decisions wait), then focus and ownership.
+The source is anonymous: no task, test, demo record or commit message here may name the organization or quote it. Every new
+field is optional or a finding (OF-P5). The ids equal the idea numbers in
+[spec/lessons/20261124/index.md](spec/lessons/20261124/index.md), and the assessment is [plan.md §95](plan.md). Order: OF-8,
+OF-4 step 1 and OF-7 step 1 (small reads over data already held); OF-3 steps 1 and 2 (the history cannot be rebuilt later);
+OF-1 with OF-2 (decide OF-D1 and OF-D2 first); OF-5, OF-6, OF-9; the rest when a deployment asks. Each task says what it does
+not cover. Nothing here is built.
+
+- [ ] **OF-8 (S) — Repeated slippage across the portfolio.** A read listing milestones moved later more than once, with the
+  original date, net days, reasons, and re-baselines per plan, from `milestone_slips`, `slip_summary` and the baselines. A second
+  move later raises the question *re-plan, reduce, or stop*. **Acceptance:** cutovers delayed for safety are excluded (EX-6);
+  the rule and the period are shown with the result (OF-P1); a milestone with no recorded move is absent, not zero. **Not
+  covered:** any score or ranking of plans or people.
+- [ ] **OF-4a (S) — Time waiting per approval step.** A derived read over the approval log (PL-2, `approval_requests`): time
+  waiting at each step, steps per approval, and what is waiting now and on which step. No new table. **Acceptance:** each
+  duration says calendar or business days; a step still open counts as waiting, not zero; there is no person-level breakdown at
+  any role (OF-P4), including a step only one person can hold. **Not covered:** a target duration, a prediction, the later
+  steps of OF-4.
+- [ ] **OF-7a (S) — Objectives that no work serves.** The reverse of `/api/executive/alignment`: objectives with no linked plan,
+  from `objective_links`, with the period. **Acceptance:** an objective linked only to a closed plan is shown as such; the list
+  states how it was computed. **Not covered:** benefit-to-objective links and the `enables` link (OF-7b).
+- [ ] **OF-3a (S) — Risk score history.** An append-only `risk_scores` table (score, date, actor, reason) written by every
+  create and update of a risk, in the same transaction (today `update_risk` overwrites and audits `risk_updated` with no
+  values). **Acceptance:** no code path changes a score without a history row (a test walks the write paths); a risk with no
+  history before the migration says so; the history is readable through the API and appears in the OpenAPI document. **Not
+  covered:** back-filling old scores, the screen, mitigations, inherent and residual scores.
+- [ ] **OF-3b (S) — A risk on an escalation, and its wording at each level.** An optional `risk_pid` on an escalation (FR-54)
+  and the risk's wording as it stood at each level. **Acceptance:** an escalation that names a risk keeps the wording it was
+  given, so softening on the way up can be seen; an escalation with no risk is unchanged. **Not covered:** a verdict on
+  softening; rewriting any text.
+- [ ] **OF-3c (M) — Mitigations as rows, and the flat-risk finding.** Mitigations with an owner, due date, state and target
+  score, and a finding for several mitigations done with no change in score over a stated period (OF-3a gives the history).
+  **Acceptance:** the finding shows its rule and period and asks a question; it never refuses a write. **Not covered:** a risk
+  appetite threshold; any aggregate of scores.
+- [ ] **OF-1 (L) — A recommendations register.** Sources, recommendations with a response (`accepted`, `accepted_in_part`,
+  `not_accepted` with a reason), an owner, a due date, links to plans, tasks and control actions, dependencies with a finding
+  (never a refusal), the states `open`, `in_progress`, `done`, `verified`, `sustained`, `relapsed`, a theme vocabulary, and a
+  recurrence view. **Acceptance:** the owner cannot verify their own recommendation (OF-P7); `verified` with no evidence is
+  refused; the recurrence view names the sources and dates behind each line; counts by state list `unknown` separately. **Blocked
+  by:** OF-D1 and OF-D2. **Not covered:** importing a source document, assigning a theme by reading text, any score.
+- [ ] **OF-2 (M) — An effect check after completion.** An optional check on a recommendation, control action, benefit or closed
+  plan (measure, starting value, expected value, dates to look again; result `held`, `partly`, `not_held`, `not_measured`,
+  recorded by someone other than the owner), the state `sustained` after a stated number of consecutive checks that held, and a
+  portfolio view of actions completed beside effects held. **Acceptance:** a missed check shows as `not_measured`; closing a
+  plan does not close its checks; the view lists the items behind both numbers and gives no percentage. **Not covered:** reading
+  the measure from another system.
+- [ ] **OF-4b (M) — Decide-by, returned, and decision limits.** A `decide_by` date and a named deciding role or forum on
+  proposals and gate reviews with an overdue list; a `returned` outcome with a reason and a count (a rejected proposal cannot
+  go back to draft today); and, only if OF-D3 says yes, a register of standing decision limits that a finding can check.
+  **Acceptance:** as OF-4a. **Not covered:** a target duration; the limits are not built without OF-D3.
+- [ ] **OF-5 (M) — A limit on priorities and deliverables.** Optional limits on open objectives per period and on open
+  milestones per plan with EX-8's shape (a refusal or a recorded override), a rank without ties for objectives kept by a person,
+  and the question *what does it replace?* on each new objective. **Acceptance:** unset means no limit; overrides are listed
+  with reasons; the limit never hides an item. **Not covered:** automatic re-ranking.
+- [ ] **OF-6 (M) — A named owner, with the authority to act.** One accountable owner on a milestone, an owner status
+  (`confirmed`, `interim`, `vacant`), the owner's declaration of authority (`yes`, `in_part`, `no`, `not_asked`) with what is
+  missing, and a count of open milestones and recommendations per owner **role**. **Acceptance:** a `no` on an item in delivery
+  is a finding for whoever set the work; the load count is shown to the owner and to those who assign work, not as a ranking;
+  vacancy and interim cover arrive from the workforce service as a state, never a name. **Not covered:** any person ranking.
+- [ ] **OF-7b (M) — Line of sight to benefits and between plans.** A benefit-to-objective link and an `enables` link from one
+  plan to another recording the version of the parent it was written against, with `parent not approved` and `parent changed
+  since`, and one read from objective to plan, milestone, benefit and effect check with every gap shown as a gap. **Not
+  covered:** forcing a parent to exist.
+- [ ] **OF-9 (S to M) — A stop that finishes.** A stop checklist on the DP-5 decision (who is told and by when; each waiting
+  plan, gate and dependency answered `released`, `re_pointed` or `closed`; thanks; lessons recorded), a reference sent to the
+  workforce service for any hold it owns, and a long-pause finding. **Acceptance:** a stop is never automatic; nothing is
+  deleted; an unanswered dependant keeps the checklist open. **Not covered:** notifying people (the list is shown, not sent).
+- [ ] **OF-10 (M) — Phase entry criteria.** EX-6's frozen, co-signed criteria for entry into a phase, and a follow-up review at the
+  transition, as a readiness **finding** (phase never gates an operational write). **Not covered:** any refusal.
+- [ ] **OF-11 (M) — What we heard, what we decided.** A consultation record on a plan; closing with an unanswered theme is
+  refused; counts by group follow the small-group rules (FR-36). **Not covered:** collecting the answers.
+- [ ] **OF-12 (M) — Forums, papers and follow-through.** A forum on a meeting, a five-part paper, and the reports of items with no
+  conclusion, open actions from earlier meetings and one item in several forums. **Not covered:** reading paper text.
+- [ ] **OF-13 (M) — The team's view beside the lead's.** An anonymous periodic confidence answer shown as a distribution with a
+  minimum group size beside the lead's and the independent view, never blended. **Blocked by:** OF-D4. **Not covered:**
+  identifying anyone.
+- [ ] **OF-14 (S) — Quality and fairness beside money.** A proposal states its expected effect on quality, safety and equality or
+  `not_assessed`, shown wherever the money is. **Not covered:** a weighting of the columns.
+- [ ] **OF-15 (S) — Good practice that spreads.** A plan records `adopted`, `adapted` or `not_suitable_because` for a lesson, and
+  the register shows which lessons travelled. **Not covered:** recommending a lesson.
+- [ ] **OF-16 (M) — Change load on a unit.** Initiatives reaching the same unit in the same months, a read over FB-4, hidden when
+  the bridge is off. **Not covered:** the measure itself (the workforce service owns it).
+
+### Not taken (outcome follow-through)
+
+A health, maturity or trust score; automatic stopping or escalation; confidential concerns about people; person-level decision
+times or completion rates; an AI summary of risks or papers; more required fields. Reasons are in the spec, "Not advised".
+
 ## Coverage work in progress (2026-11-20)
 
 - [ ] **CQ-coverage-95 — Raise service-workspace line coverage to at least 95%.** The authoritative database run is

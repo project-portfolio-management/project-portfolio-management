@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — the cutover axe test waits for the page title (2026-11-24)
+
+- `tests/e2e/cutover.spec.ts`: the audit of the cutover page waited for `networkidle` only, and on a slow CI runner ran before
+  the page had set its title, so axe's `document-title` rule failed (seen in `zh-cn` twice, on commits that did not touch the
+  UI). It now waits for a non-empty title and the first `h1`.
+- **Not verified:** that the flake is gone; it was intermittent, and the spec passes locally (6 of 6). The other 242
+  `networkidle` waits in the suite are unchanged.
+
 ### Changed — four Lily packages (2026-11-23)
 
 - `svelte-headless` 0.11.0 to 0.13.1, `svelte-locale-translations` 0.5.0 to 0.6.0, `svelte-picker-bar` 0.7.0 to 0.10.0 and

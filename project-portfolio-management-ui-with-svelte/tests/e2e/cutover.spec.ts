@@ -176,6 +176,10 @@ test.describe("cutover go/no-go", () => {
       await page.goto(`/${locale}/plans/${PID}/cutover`, {
         waitUntil: "networkidle",
       });
+      // The page sets its own title once it has hydrated; axe's document-title rule reads it, so wait for it
+      // (`networkidle` alone left a window where the title was still empty, and the audit failed on a slow runner).
+      await expect(page).not.toHaveTitle("");
+      await expect(page.locator("h1").first()).toBeVisible();
       const { default: AxeBuilder } = await import("@axe-core/playwright");
       const r = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])

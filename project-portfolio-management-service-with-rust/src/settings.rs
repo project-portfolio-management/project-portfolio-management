@@ -154,6 +154,56 @@ fn check(setting: &Setting, value: Option<&str>) -> Result<(), String> {
     }
 }
 
+/// A setting that is one of a few words, or a pattern, rather than a number.
+struct Choice {
+    /// The environment variable.
+    name: &'static str,
+    /// What a valid value looks like, for the message.
+    expected: &'static str,
+    /// Whether a trimmed, non-blank value is valid.
+    valid: fn(&str) -> bool,
+}
+
+/// Every word-valued setting the service reads and a bad value of which used to be replaced by a default.
+const CHOICES: &[Choice] = &[
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_DEFAULT_WORKING_WEEK",
+        expected: "seven characters of 0 or 1, Monday first, at least one 1 (for example 1111100)",
+        valid: |v| crate::calendars::parse_weekdays(v).is_ok(),
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_CCPM_ESTIMATE_RULE",
+        expected: "explicit_only or half_of_safe",
+        valid: |v| matches!(v, "explicit_only" | "half_of_safe"),
+    },
+    Choice {
+        name: "PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED",
+        expected: "on, 1, true or yes; or off, 0, false or no",
+        valid: |v| {
+            matches!(
+                v.to_ascii_lowercase().as_str(),
+                "on" | "1" | "true" | "yes" | "off" | "0" | "false" | "no"
+            )
+        },
+    },
+];
+
+/// Check one word-valued setting: `Ok` when absent or blank, or a valid value.
+///
+/// # Errors
+///
+/// A message naming the setting and what it may be.
+fn check_choice(choice: &Choice, value: Option<&str>) -> Result<(), String> {
+    let Some(raw) = value.map(str::trim).filter(|v| !v.is_empty()) else {
+        return Ok(());
+    };
+    if (choice.valid)(raw) {
+        Ok(())
+    } else {
+        Err(format!("{} must be {}", choice.name, choice.expected))
+    }
+}
+
 /// Check every numeric setting in the environment.
 ///
 /// # Errors
@@ -171,12 +221,15 @@ pub fn validate() -> Result<(), String> {
 pub fn validate_with(get: impl Fn(&str) -> Option<String>) -> Result<(), String> {
     SETTINGS
         .iter()
-        .try_for_each(|setting| check(setting, get(setting.name).as_deref()))
+        .try_for_each(|setting| check(setting, get(setting.name).as_deref()))?;
+    CHOICES
+        .iter()
+        .try_for_each(|choice| check_choice(choice, get(choice.name).as_deref()))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{SETTINGS, validate_with};
+    use super::{CHOICES, SETTINGS, validate_with};
 
     /// RCA-IN-2, RCA-IN-4: a supplied value outside its range, or not a number, stops start-up and names the setting;
     /// an absent or blank one does not.
@@ -210,5 +263,34 @@ mod tests {
             let message = with("lots").err().unwrap_or_default();
             assert!(message.contains(setting.name), "{message}");
         }
+    }
+
+    /// RCA-IN-4: a word-valued setting that is supplied and not one of its words stops start-up and names the setting.
+    #[test]
+    fn a_bad_word_setting_is_refused_by_name_and_a_good_or_absent_one_is_not() {
+        let with = |name: &str, v: &str| {
+            let (name, v) = (name.to_string(), v.to_string());
+            validate_with(move |n| (n == name).then(|| v.clone()))
+        };
+        for choice in CHOICES {
+            let message = with(choice.name, "sometimes").unwrap_err();
+            assert!(message.contains(choice.name), "{message}");
+            assert!(with(choice.name, " ").is_ok(), "{}: blank", choice.name);
+        }
+        let week = "PROJECT_PORTFOLIO_MANAGEMENT_DEFAULT_WORKING_WEEK";
+        for good in ["1111100", "1111001", "0000001"] {
+            assert!(with(week, good).is_ok(), "{good}");
+        }
+        for bad in ["0000000", "11111", "abcdefg", "11111000"] {
+            assert!(with(week, bad).is_err(), "{bad}");
+        }
+        let rule = "PROJECT_PORTFOLIO_MANAGEMENT_CCPM_ESTIMATE_RULE";
+        assert!(with(rule, "half_of_safe").is_ok());
+        assert!(with(rule, "Half_Of_Safe").is_err(), "the words are exact");
+        let flag = "PROJECT_PORTFOLIO_MANAGEMENT_REGISTER_REQUIRED";
+        for good in ["on", "1", "TRUE", "Yes", "off", "0", "false", "no"] {
+            assert!(with(flag, good).is_ok(), "{good}");
+        }
+        assert!(with(flag, "maybe").is_err());
     }
 }

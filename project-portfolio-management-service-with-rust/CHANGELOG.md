@@ -9,6 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — three word-valued settings are checked at start-up (SET-1, 2026-11-24)
+
+- `DEFAULT_WORKING_WEEK` (a valid weekday mask), `CCPM_ESTIMATE_RULE` (`explicit_only` or `half_of_safe`) and `REGISTER_REQUIRED`
+  (`on`/`1`/`true`/`yes` or `off`/`0`/`false`/`no`, any case) join the validator in a second table (`CHOICES`): supplied and invalid,
+  the service does not start and names the setting; absent or blank still takes the default. Before, each fell back (RCA-IN-4).
+  The spec's accepted words for `REGISTER_REQUIRED` are the implementer's (RCA-DECL-3: they need the maintainers' review): the four
+  "off" words were not recognised before and any other word meant off.
+- **Not done:** the `WIP_LIMITS` JSON still falls back when invalid. The readers keep their own fallbacks for the absent case. Checked
+  by the validator's unit test only; the database suites and CI were not run for this change.
+
 ### Changed — four more numeric settings are checked at start-up (SET-1, 2026-11-24)
 
 - `MINUTES_PER_DAY` (1 to 1 440), `WIP_LIMIT` (1 to 1 000), `SUPPRESSION_FLOOR_MINUTES` (0 to 100 000) and `MIN_GROUP_PEOPLE`

@@ -1924,9 +1924,18 @@ replaced by the default, the nearest bound or "off". `0` where the range starts 
 | `SUPPRESSION_FLOOR_MINUTES` | 0 to 100 000 | 2 400 |
 | `MIN_GROUP_PEOPLE` | 2 to 1 000 | 5 |
 
+Three settings are words, not numbers, and follow the same rule (`src/settings.rs`, `CHOICES`): absent or blank takes the reader's
+default; any other value that is not one of its words stops start-up and names the setting.
+
+| Setting (`PROJECT_PORTFOLIO_MANAGEMENT_` …) | Valid values | Absent |
+| --- | --- | --- |
+| `DEFAULT_WORKING_WEEK` | seven `0`/`1` characters, Monday first, at least one `1` | `1111100` |
+| `CCPM_ESTIMATE_RULE` | `explicit_only` or `half_of_safe`, exactly | `explicit_only` |
+| `REGISTER_REQUIRED` | `on`, `1`, `true`, `yes` (on) or `off`, `0`, `false`, `no` (off), any case | off |
+
 The ranges are the implementer's, chosen wide so no working deployment is refused (RCA-DECL-3: they need the
 maintainers' review). A value that used to be accepted and is now refused: `BULK_TTL_HOURS=0` (was raised to 1),
-`SCHEDULER_MINUTES=hourly` (was "off, with a warning"), and anything above a maximum; likewise `MINUTES_PER_DAY=0` or `1441` (was the default 480), `WIP_LIMIT=0` or `abc` (was "no limit", with a flag), `MIN_GROUP_PEOPLE=1` (was 5) and a `SUPPRESSION_FLOOR_MINUTES` outside its range (was 2 400). Not yet checked at start-up, and so still replaced by their default when invalid: `DEFAULT_WORKING_WEEK` (a seven-digit mask), `CCPM_ESTIMATE_RULE`, `REGISTER_REQUIRED` and the `WIP_LIMITS` JSON. Tests:
+`SCHEDULER_MINUTES=hourly` (was "off, with a warning"), and anything above a maximum; likewise `MINUTES_PER_DAY=0` or `1441` (was the default 480), `WIP_LIMIT=0` or `abc` (was "no limit", with a flag), `MIN_GROUP_PEOPLE=1` (was 5) and a `SUPPRESSION_FLOOR_MINUTES` outside its range (was 2 400). A word setting that used to be replaced and is now refused: `REGISTER_REQUIRED=maybe` (was off), `CCPM_ESTIMATE_RULE=Half_Of_Safe` (was `explicit_only`, flagged), a `DEFAULT_WORKING_WEEK` that is not a valid mask (was `1111100`). Not yet checked at start-up, and so still replaced by its default when invalid: the `WIP_LIMITS` JSON. Tests:
 `an_invalid_setting_is_refused_by_name_and_an_absent_one_is_not` (`settings`).
 
 **The simulations' generator (RCA-EXC-3).** `schedule_risk::Rng`, shared by the schedule, cost and joint risk simulations, is

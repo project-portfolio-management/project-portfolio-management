@@ -9,6 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — the Playwright fixture waits for the page title (2026-11-24)
+
+- `tests/e2e/test.ts`: the shared `test` fixture now wraps `page.goto` and, for an HTML response, waits up to 5 seconds (never failing) for a
+  non-empty `document.title`. The app renders only in the browser (`ssr = false`), so a page's `<title>` exists once it has hydrated, and for
+  a locale whose catalogue loads on demand (`zh-cn`) that can be after `networkidle`; axe's `document-title` rule then failed on a slow
+  runner, in `cutover.spec.ts` and `deployment-moves.spec.ts` so far. This covers all 86 specs that run axe, and supersedes the one-spec fix of
+  the cutover test.
+- **Verified:** the whole Playwright suite locally, 1,536 of 1,536. **Not verified:** that CI no longer shows the flake (it was intermittent); a page
+  that never sets a title now waits the full 5 seconds on `goto`.
+
 ## [0.2.1] - 2026-11-24
 
 ### Fixed — a refusal test clicks the box instead of checking it (2026-11-24)

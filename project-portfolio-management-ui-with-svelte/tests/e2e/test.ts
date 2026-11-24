@@ -32,6 +32,25 @@ export function isAllowed(url: URL, appOrigin: string): boolean {
 
 export const test = base.extend<{ blockedRequests: string[] }>({
   serviceWorkers: "block",
+  // The app renders in the browser only (`ssr = false`), so a page's <title> exists once it has hydrated, and for a
+  // locale whose catalogue loads on demand (zh-cn) that can be after `networkidle`. axe's `document-title` rule then
+  // failed on a slow runner, in a different spec each time. After `goto` of an HTML page, wait (up to 5 s, never failing)
+  // for a non-empty title, so every spec that audits a page starts from one that has finished its first render.
+  page: async ({ page }, use) => {
+    const goto = page.goto.bind(page);
+    page.goto = async (url, options) => {
+      const response = await goto(url, options);
+      if (response?.headers()["content-type"]?.includes("text/html")) {
+        await page
+          .waitForFunction(() => document.title !== "", undefined, {
+            timeout: 5_000,
+          })
+          .catch(() => undefined);
+      }
+      return response;
+    };
+    await use(page);
+  },
   blockedRequests: [
     async ({ context, baseURL }, use) => {
       if (!baseURL) throw new Error("baseURL is not configured");

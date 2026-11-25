@@ -16,6 +16,10 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 25 November (healthcare portfolio audit)
+
+- Added a [healthcare-use audit](docs/audits/gpt-6.2-astra-high/index.md) with a proposed roadmap pilot and acceptance criteria for cutover evidence, confidentiality, recovery and benefits measurement. No product behaviour changed. The audit did not verify a live health-board deployment or clinical outcomes.
+
 ## 23 November (two mobile apps, first slice)
 
 - `spec/mobile-apps.md` (MA) is the contract for two new apps: `project-portfolio-management-mobile-app-with-swift`

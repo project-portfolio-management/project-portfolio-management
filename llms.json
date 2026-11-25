@@ -526,6 +526,11 @@
           "description": "Review record for zh-cn: machine draft, not reviewed"
         },
         {
+          "title": "Project portfolio management audit for healthcare use",
+          "path": "docs/audits/gpt-6.2-astra-high/index.md",
+          "description": "Source-based assessment of a health-board pilot, cutover decisions, customer isolation and outcome measurement"
+        },
+        {
           "title": "Path to production: the evidence",
           "path": "governance/production-readiness.md",
           "description": "The evidence behind the path to production: what is strong, what is not done yet"

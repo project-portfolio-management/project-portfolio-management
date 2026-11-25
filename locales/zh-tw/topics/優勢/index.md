@@ -28,7 +28,7 @@
 
 ## 控制與可移植性
 
-- **許可。** 軟體為開源軟體，可在 MIT、Apache-2.0、BSD-3-Clause、GPL-2.0 或 GPL-3.0 中選擇。
+- **許可。** 軟體為開源軟體，可在 MIT、Apache-2.0、BSD-3-Clause、GPL-2.0、GPL-3.0、OGL-UK-3.0 或 CC-BY-NC-SA-4.0 中選擇。
 - **託管。** 軟體由組織自行託管：一個基於 PostgreSQL 的 Rust 服務，配有 SvelteKit 介面。
 - **資料匯入。** 可匯入 Jira 和 Asana 的 CSV 檔案，提供預覽並說明排除內容的原因。可匯入和匯出 Microsoft Project XML。
 - **語言。** 介面提供十種語言區域，包括從右到左的阿拉伯語。譯文均為草稿，等待母語人士審閱。

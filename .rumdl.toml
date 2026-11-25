@@ -65,7 +65,6 @@ exclude = [
     "**/output",
     "CHANGELOG.md",
     "LICENSE.md",
-    "**/LICENSE/*.txt",
     "locales/cy-gb/**",
     "llms.json",
     "llms.txt",

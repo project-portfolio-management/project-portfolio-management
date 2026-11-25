@@ -28,7 +28,7 @@ Inloggning är på som standard, och tjänsten startar inte i produktion med inl
 
 ## Kontroll och portabilitet
 
-- **Licensiering.** Programvaran har öppen källkod, med val mellan MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 eller GPL-3.0.
+- **Licensiering.** Programvaran har öppen källkod, med val mellan MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0 eller CC-BY-NC-SA-4.0.
 - **Drift.** Programvaran driftas av dig själv: en Rust-tjänst ovanpå PostgreSQL, med ett SvelteKit-gränssnitt.
 - **Dataimport.** CSV-filer från Jira och Asana kan importeras, med förhandsvisning och en angiven orsak till allt som utelämnas. Microsoft Project XML kan importeras och exporteras.
 - **Språk.** Gränssnittet finns på tio språkversioner, däribland arabiska som skrivs från höger till vänster. Översättningarna är utkast som väntar på granskning av personer som talar språket.

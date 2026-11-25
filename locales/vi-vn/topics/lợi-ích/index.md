@@ -28,7 +28,7 @@ Mọi thay đổi đều được kiểm toán, và không thể sửa nhật k�
 
 ## Kiểm soát và khả năng chuyển đổi
 
-- **Cấp phép.** Phần mềm là mã nguồn mở, theo lựa chọn MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 hoặc GPL-3.0.
+- **Cấp phép.** Phần mềm là mã nguồn mở, theo lựa chọn MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0 hoặc CC-BY-NC-SA-4.0.
 - **Lưu trữ.** Phần mềm do bạn tự lưu trữ: một dịch vụ Rust chạy trên PostgreSQL, với giao diện SvelteKit.
 - **Nhập dữ liệu.** Có thể nhập tệp CSV từ Jira và Asana, kèm bản xem trước và lý do nêu rõ cho mọi mục bị loại. Có thể nhập và xuất XML của Microsoft Project.
 - **Ngôn ngữ.** Giao diện có sẵn ở mười ngôn ngữ và khu vực, trong đó có tiếng Ả Rập viết từ phải sang trái. Các bản dịch là bản nháp đang chờ người nói ngôn ngữ đó rà soát.

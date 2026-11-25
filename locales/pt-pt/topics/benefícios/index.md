@@ -28,7 +28,7 @@ O login vem ativado por padrão, e o serviço não inicia em produção com o lo
 
 ## Controle e portabilidade
 
-- **Licenciamento.** O software é de código aberto, à escolha entre MIT, Apache-2.0, BSD-3-Clause, GPL-2.0 ou GPL-3.0.
+- **Licenciamento.** O software é de código aberto, à escolha entre MIT, Apache-2.0, BSD-3-Clause, GPL-2.0, GPL-3.0, OGL-UK-3.0 ou CC-BY-NC-SA-4.0.
 - **Hospedagem.** O software é hospedado por conta própria: um serviço em Rust sobre PostgreSQL, com uma interface em SvelteKit.
 - **Importação de dados.** Ficheiros CSV do Jira e do Asana podem ser importados, com uma prévia e o motivo declarado para qualquer item excluído. O XML do Microsoft Project pode ser importado e exportado.
 - **Idiomas.** A interface está disponível em dez localidades, incluindo o árabe, escrito da direita para a esquerda. As traduções são rascunhos que aguardam revisão por falantes.

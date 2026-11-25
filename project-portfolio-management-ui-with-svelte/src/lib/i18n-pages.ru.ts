@@ -5472,6 +5472,8 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "Сопутствующие подписи",
   "p.cutover.cosign_signed": "Подписали: {roles}.",
   "p.cutover.cosign_missing": "Ещё требуются: {roles}.",
+  "p.cutover.cosign_stale":
+    "Подписано для прежних доказательств, поэтому нужна новая подпись: {roles}.",
   "p.cutover.cosign_none": "нет",
   "p.cutover.cosign_role":
     "Роль, в которой подписать (она должна быть в вашем токене)",

@@ -5448,6 +5448,8 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "Tanda tangan bersama",
   "p.cutover.cosign_signed": "Sudah menandatangani: {roles}.",
   "p.cutover.cosign_missing": "Masih diperlukan: {roles}.",
+  "p.cutover.cosign_stale":
+    "Ditandatangani untuk bukti sebelumnya, sehingga perlu ditandatangani lagi: {roles}.",
   "p.cutover.cosign_none": "tidak ada",
   "p.cutover.cosign_role":
     "Peran untuk menandatangani (token Anda harus membawanya)",

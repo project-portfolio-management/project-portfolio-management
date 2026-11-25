@@ -147,6 +147,7 @@ pub mod report_schedules;
 pub mod resource_roles;
 pub mod review_queue_items;
 pub mod reviews;
+pub mod risk_scores;
 pub mod risks;
 pub mod roadmap_categories;
 pub mod roadmap_families;

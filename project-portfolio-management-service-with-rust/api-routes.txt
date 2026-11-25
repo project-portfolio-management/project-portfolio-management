@@ -460,6 +460,7 @@ PUT /api/plans/{pid}/risks/{r_pid}/cost-impact
 PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact
 PUT /api/plans/{pid}/risks/{risk_pid}
 POST /api/plans/{pid}/risks/{risk_pid}/escalate
+GET /api/plans/{pid}/risks/{risk_pid}/scores
 GET /api/plans/{pid}/roadmap
 PUT /api/plans/{pid}/roadmap
 GET /api/plans/{pid}/roadmap-family

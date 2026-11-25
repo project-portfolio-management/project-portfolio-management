@@ -5436,6 +5436,8 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "Đồng ký tên",
   "p.cutover.cosign_signed": "Đã ký: {roles}.",
   "p.cutover.cosign_missing": "Vẫn cần: {roles}.",
+  "p.cutover.cosign_stale":
+    "Đã ký cho bằng chứng trước đó, nên cần ký lại: {roles}.",
   "p.cutover.cosign_none": "không có",
   "p.cutover.cosign_role":
     "Vai trò để ký (mã thông báo của bạn phải mang vai trò này)",

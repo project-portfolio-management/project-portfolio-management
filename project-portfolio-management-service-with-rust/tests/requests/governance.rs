@@ -295,7 +295,7 @@ async fn gate_journey_advances_stage_in_order() {
 // (highest first), and escalation materializes an open risk.
 async fn risks_score_and_escalate() {
     super::isolate_search_index();
-    request::<App, _, _>(|request, _ctx| async move {
+    request::<App, _, _>(|request, ctx| async move {
         let item: Value = request
             .post("/api/plans")
             .json(&json!({ "kind": "Program", "name": "Risky programme" }))
@@ -374,14 +374,24 @@ async fn risks_score_and_escalate() {
             "SELECT probability, impact, score, reason, backfilled FROM risk_scores WHERE risk_pid = $1::uuid ORDER BY id",
         )
         .bind(low_pid)
-        .fetch_all(project_portfolio_management::db::pool(&_ctx))
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
         .await
         .unwrap();
         assert_eq!(history.len(), 2, "created, then rescored; the mitigation and status edits wrote none: {history:?}");
         assert_eq!((history[1].2, history[1].3.as_deref(), history[1].4), (25, Some("Vendor slipped twice"), false));
+        let hist: Value = request
+            .get(&format!("/api/plans/{pid}/risks/{low_pid}/scores"))
+            .await
+            .json();
+        let rows = hist["scores"].as_array().unwrap();
+        assert_eq!((rows.len(), rows[1]["score"].as_i64(), rows[1]["reason"].as_str()), (2, Some(25), Some("Vendor slipped twice")));
+        assert_eq!(
+            request.get(&format!("/api/plans/{pid}/risks/{}/scores", uuid::Uuid::new_v4())).await.status_code(),
+            404
+        );
         assert!(
             sqlx::raw_sql("DELETE FROM risk_scores")
-                .execute(project_portfolio_management::db::pool(&_ctx))
+                .execute(project_portfolio_management::db::pool(&ctx))
                 .await
                 .is_err(),
             "the history is append-only"

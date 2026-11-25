@@ -5556,6 +5556,8 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "Mitzeichnungen",
   "p.cutover.cosign_signed": "Unterzeichnet: {roles}.",
   "p.cutover.cosign_missing": "Noch erforderlich: {roles}.",
+  "p.cutover.cosign_stale":
+    "Für frühere Nachweise unterzeichnet, daher erneut zu unterzeichnen: {roles}.",
   "p.cutover.cosign_none": "keine",
   "p.cutover.cosign_role":
     "Rolle, in der Sie zeichnen (Ihr Token muss sie enthalten)",

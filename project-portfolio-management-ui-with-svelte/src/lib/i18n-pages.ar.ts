@@ -5214,6 +5214,8 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "التوقيعات المشتركة",
   "p.cutover.cosign_signed": "وقّع: {roles}.",
   "p.cutover.cosign_missing": "لا يزال مطلوبًا: {roles}.",
+  "p.cutover.cosign_stale":
+    "وُقّع على أدلة سابقة، لذا يلزم التوقيع من جديد: {roles}.",
   "p.cutover.cosign_none": "لا أحد",
   "p.cutover.cosign_role": "الدور الذي توقّع بصفته (يجب أن يحمله رمزك)",
   "p.cutover.cosign": "توقيع مشترك",

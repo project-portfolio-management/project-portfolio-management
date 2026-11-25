@@ -5460,6 +5460,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "Cyd-lofnodion",
   "p.cutover.cosign_signed": "Wedi llofnodi: {roles}.",
   "p.cutover.cosign_missing": "Dal ei angen: {roles}.",
+  "p.cutover.cosign_stale":
+    "Wedi llofnodi ar gyfer tystiolaeth gynharach, felly mae angen llofnodi eto: {roles}.",
   "p.cutover.cosign_none": "dim",
   "p.cutover.cosign_role":
     "Rôl i lofnodi fel hi (rhaid i'ch tocyn ei chynnwys)",

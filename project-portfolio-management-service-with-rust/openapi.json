@@ -23980,6 +23980,12 @@
                     "format": "int32",
                     "type": "integer"
                   },
+                  "reason": {
+                    "default": null,
+                    "description": "Why it was scored so; kept with the first score in the history (OF-3), at most 500 characters.",
+                    "nullable": true,
+                    "type": "string"
+                  },
                   "review_date": {
                     "default": null,
                     "description": "Date by which the risk should next be reviewed; absent means no review scheduled.",
@@ -24272,6 +24278,38 @@
           }
         },
         "summary": "`POST /api/plans/{pid}/risks/{risk_pid}/escalate` — a materialized risk: status → `materialized`, stamped",
+        "tags": [
+          "governance"
+        ]
+      }
+    },
+    "/api/plans/{pid}/risks/{risk_pid}/scores": {
+      "get": {
+        "description": "`GET /api/plans/{pid}/risks/{risk_pid}/scores` — the risk's score history, oldest first: probability, impact, score, when, by whom and why. A risk scored before the history began shows one row marked `backfilled`: its first known score, not its past.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "risk_pid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK; the response shape is not documented yet."
+          }
+        },
+        "summary": "`GET /api/plans/{pid}/risks/{risk_pid}/scores` — the risk's score history, oldest first: probability, impact, score, when, by whom and why",
         "tags": [
           "governance"
         ]

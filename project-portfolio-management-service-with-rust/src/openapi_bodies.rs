@@ -551,6 +551,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("put", "/api/plans/{pid}/risks/{r_pid}/schedule-impact", "schedule_risk", "`PUT /api/plans/{pid}/risks/{r_pid}/schedule-impact` — make a register risk a schedule event: which task, how many business days, how likely. Any field left out stays unset, and a risk missing one is skipped (and named) by the simulation."),
     ("put", "/api/plans/{pid}/risks/{risk_pid}", "governance", "`PUT /api/plans/{pid}/risks/{risk_pid}` handler: validates the changed fields (the exposure is re-checked against the merged scores), refuses a risk that belongs to another plan with `404`, and audits `risk_updated`."),
     ("post", "/api/plans/{pid}/risks/{risk_pid}/escalate", "governance", "`POST /api/plans/{pid}/risks/{risk_pid}/escalate` — a materialized risk: status → `materialized`, stamped. (Conversion into a tracked issue arrives with the issues sub-resource.)"),
+    ("get", "/api/plans/{pid}/risks/{risk_pid}/scores", "governance", "`GET /api/plans/{pid}/risks/{risk_pid}/scores` — the risk's score history, oldest first: probability, impact, score, when, by whom and why. A risk scored before the history began shows one row marked `backfilled`: its first known score, not its past."),
     ("get", "/api/plans/{pid}/roadmap", "public_roadmaps", "`GET /api/plans/{pid}/roadmap`"),
     ("put", "/api/plans/{pid}/roadmap", "public_roadmaps", "`PUT /api/plans/{pid}/roadmap`"),
     ("get", "/api/plans/{pid}/roadmap-family", "roadmap_families", "`GET /api/plans/{pid}/roadmap-family`"),

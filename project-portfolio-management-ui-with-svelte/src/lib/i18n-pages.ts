@@ -5343,6 +5343,8 @@ export const PAGES_EN = {
   "p.cutover.cosign_h3": "Co-signatures",
   "p.cutover.cosign_signed": "Signed: {roles}.",
   "p.cutover.cosign_missing": "Still needed: {roles}.",
+  "p.cutover.cosign_stale":
+    "Signed for earlier evidence, so it needs signing again: {roles}.",
   "p.cutover.cosign_none": "none",
   "p.cutover.cosign_role": "Role to sign as (your token must carry it)",
   "p.cutover.cosign": "Co-sign",

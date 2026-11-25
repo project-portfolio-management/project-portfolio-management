@@ -5395,6 +5395,8 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "共同署名",
   "p.cutover.cosign_signed": "署名済み：{roles}。",
   "p.cutover.cosign_missing": "まだ必要：{roles}。",
+  "p.cutover.cosign_stale":
+    "以前の証拠に対する署名のため、再度署名が必要です：{roles}。",
   "p.cutover.cosign_none": "なし",
   "p.cutover.cosign_role":
     "署名する役割（トークンに含まれている必要があります）",

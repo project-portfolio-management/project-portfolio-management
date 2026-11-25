@@ -5291,6 +5291,8 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "সহ-স্বাক্ষর",
   "p.cutover.cosign_signed": "স্বাক্ষরিত: {roles}।",
   "p.cutover.cosign_missing": "এখনো দরকার: {roles}।",
+  "p.cutover.cosign_stale":
+    "আগের প্রমাণের জন্য স্বাক্ষর করা হয়েছিল, তাই আবার স্বাক্ষর করতে হবে: {roles}।",
   "p.cutover.cosign_none": "কিছু নেই",
   "p.cutover.cosign_role": "যে ভূমিকায় স্বাক্ষর করবেন (আপনার টোকেনে তা থাকতে হবে)",
   "p.cutover.cosign": "সহ-স্বাক্ষর করুন",

@@ -5011,6 +5011,7 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "联署",
   "p.cutover.cosign_signed": "已签署：{roles}。",
   "p.cutover.cosign_missing": "仍需：{roles}。",
+  "p.cutover.cosign_stale": "已针对先前的证据签署，因此需要重新签署：{roles}。",
   "p.cutover.cosign_none": "无",
   "p.cutover.cosign_role": "签署角色（你的令牌必须包含该角色）",
   "p.cutover.cosign": "联署",

@@ -109,6 +109,10 @@ const UNREACHED: &[(&str, &str)] = &[
         "a task's links, capped at 100 like a plan's; needs a task this census does not create",
     ),
     (
+        "/api/plans/{pid}/risks/{risk_pid}/scores",
+        "one risk's score history (an object, not a list; OF-3); needs a risk this census does not create. tests/requests/governance.rs covers it",
+    ),
+    (
         "/api/plans/{pid}/escalations/{epid}",
         "one escalation with its history (an object, not a list); needs an escalation this census does not create",
     ),

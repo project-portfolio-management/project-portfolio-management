@@ -97,6 +97,53 @@ test.describe("cutover go/no-go", () => {
     });
   });
 
+  test("a signature given for earlier evidence is shown as needing to be signed again (EX-6a)", async ({
+    page,
+  }) => {
+    const STALE = {
+      ...OPEN,
+      cosignatures: {
+        required: ["safety", "operations"],
+        signed: [
+          {
+            role: "safety",
+            signed_on: "2026-10-05",
+            evidence_digest: "old",
+            current: false,
+          },
+          {
+            role: "operations",
+            signed_on: "2026-10-06",
+            evidence_digest: "now",
+            current: true,
+          },
+        ],
+        missing: ["safety"],
+      },
+    };
+    await page.route(`**/api/plans/${PID}/cutover-decisions`, (r) =>
+      r.fulfill({
+        json: {
+          decisions: [STALE],
+          required_cosigners: ["safety", "operations"],
+        },
+      }),
+    );
+    await page.goto(`/en-001/plans/${PID}/cutover`, {
+      waitUntil: "networkidle",
+    });
+    await expect(
+      page.getByText("Signed: operations. Still needed: safety.").first(),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByText(
+          "Signed for earlier evidence, so it needs signing again: safety.",
+        )
+        .first(),
+    ).toBeVisible();
+  });
+
   test("shows criteria, evidence, co-signatures and why go would be refused, and takes the decision", async ({
     page,
   }) => {

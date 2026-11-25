@@ -16,6 +16,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 25 November (risk history read, cutover signature display)
+
+- `GET /api/plans/{pid}/risks/{risk_pid}/scores` reads the risk score history; `POST …/risks` takes an optional `reason`.
+- The cutover page shows a signature given for earlier evidence as needing to be signed again (`current` from EX-6a),
+  with a new string in every locale. The 13 non-English strings are machine-written, none reviewed; the Welsh one is added
+  to `governance/welsh-translation-review.csv`, unreviewed.
+- Not done: no screen or chart for the risk history; canvas promotion records no reason; OF-3 steps 2 to 4, OF-2 and the
+  aggregate-series interface remain unbuilt.
+
 ## 25 November (risk score history)
 
 - OF-3 step 1 (audit finding 4, first half; migration `20261125000118`): an append-only `risk_scores` table written by a

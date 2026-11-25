@@ -3764,7 +3764,16 @@ export interface CutoverDecision {
   }[];
   cosignatures: {
     required: string[];
-    signed: { role: string; signed_on: string }[];
+    signed: {
+      role: string;
+      signed_on: string;
+      /** When it was signed (EX-6a). */
+      signed_at?: string;
+      /** Digest of the marked criteria it was given on; none when signed before EX-6a. */
+      evidence_digest?: string | null;
+      /** Whether it is for the evidence as it stands now. */
+      current?: boolean;
+    }[];
     missing: string[];
   };
   go_would_be_refused_because: string[];

@@ -5226,6 +5226,8 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "सह-हस्ताक्षर",
   "p.cutover.cosign_signed": "हस्ताक्षरित: {roles}।",
   "p.cutover.cosign_missing": "अभी आवश्यक: {roles}।",
+  "p.cutover.cosign_stale":
+    "पहले के साक्ष्य के लिए हस्ताक्षर किए गए थे, इसलिए फिर से हस्ताक्षर आवश्यक हैं: {roles}।",
   "p.cutover.cosign_none": "कोई नहीं",
   "p.cutover.cosign_role":
     "किस भूमिका के रूप में हस्ताक्षर करें (आपके टोकन में यह होनी चाहिए)",

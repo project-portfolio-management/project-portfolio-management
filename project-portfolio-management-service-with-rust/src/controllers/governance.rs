@@ -894,6 +894,9 @@ pub(crate) struct RiskPayload {
     /// `security` / `other`); absent reads as `delivery`.
     #[serde(default)]
     category: Option<String>,
+    /// Why it was scored so; kept with the first score in the history (OF-3), at most 500 characters.
+    #[serde(default)]
+    reason: Option<String>,
 }
 
 /// `POST /api/plans/{pid}/risks` — raise a risk (status `open`).
@@ -911,6 +914,13 @@ async fn create_risk(
     cap(&mut problems, "title", &payload.title);
     cap_opt(&mut problems, "description", payload.description.as_deref());
     cap_opt(&mut problems, "mitigation", payload.mitigation.as_deref());
+    if payload
+        .reason
+        .as_deref()
+        .is_some_and(|r| r.chars().count() > 500)
+    {
+        problems.push("reason is at most 500 characters".to_string());
+    }
     if let Err(e) = rules::risk_exposure(payload.probability, payload.impact) {
         problems.push(e);
     }
@@ -932,6 +942,12 @@ async fn create_risk(
     }
     let item = find_item(&ctx, &pid).await?;
     let mut tx = crate::db::begin(&ctx).await?;
+    // The score history trigger reads who and why from the transaction (OF-3).
+    sqlx::query("SELECT set_config('ppm.actor', $1, true), set_config('ppm.reason', $2, true)")
+        .bind(caller.actor().unwrap_or_default())
+        .bind(payload.reason.clone().unwrap_or_default())
+        .fetch_one(tx.conn())
+        .await?;
     let row_pid: Uuid = sqlx::query_scalar(
         "INSERT INTO risks
              (pid, plan_pid, title, description, probability, impact, status, owner_ref, mitigation, review_date,
@@ -984,6 +1000,48 @@ async fn list_risks(State(ctx): State<AppContext>, Path(pid): Path<String>) -> R
         })
         .collect();
     format::json(views)
+}
+
+/// One row of a risk's score history.
+#[derive(sqlx::FromRow)]
+struct ScoreRow {
+    probability: i32,
+    impact: i32,
+    score: i32,
+    recorded_at: crate::datetime::Timestamp,
+    actor: Option<String>,
+    reason: Option<String>,
+    backfilled: bool,
+}
+
+/// `GET /api/plans/{pid}/risks/{risk_pid}/scores` — the risk's score history, oldest first: probability, impact,
+/// score, when, by whom and why. A risk scored before the history began shows one row marked `backfilled`: its first
+/// known score, not its past.
+#[debug_handler]
+async fn risk_scores(
+    State(ctx): State<AppContext>,
+    Path((pid, risk_pid)): Path<(String, String)>,
+) -> Result<Response> {
+    let item = find_item(&ctx, &pid).await?;
+    let risk = find_risk(&ctx, gov::parse_pid(&risk_pid)?).await?;
+    if risk.plan_pid != item.pid {
+        return Err(Error::NotFound);
+    }
+    let rows: Vec<ScoreRow> = sqlx::query_as(
+        "SELECT probability, impact, score, recorded_at, actor, reason, backfilled
+         FROM risk_scores WHERE risk_pid = $1 ORDER BY recorded_at, id",
+    )
+    .bind(risk.pid)
+    .fetch_all(crate::db::pool(&ctx))
+    .await?;
+    format::json(serde_json::json!({
+        "risk_pid": risk.pid.to_string(),
+        "scores": rows.iter().map(|r| serde_json::json!({
+            "probability": r.probability, "impact": r.impact, "score": r.score, "recorded_at": r.recorded_at,
+            "actor": r.actor, "reason": r.reason, "backfilled": r.backfilled,
+        })).collect::<Vec<_>>(),
+        "note": "A row marked backfilled is the first score known when the history began, not the risk's past.",
+    }))
 }
 
 /// `PUT /api/plans/{pid}/risks/{risk_pid}` — update scoring /
@@ -1438,6 +1496,7 @@ pub fn routes() -> Routes {
         .add("/plans/{pid}/risks", post(create_risk))
         .add("/plans/{pid}/risks", get(list_risks))
         .add("/plans/{pid}/risks/{risk_pid}", put(update_risk))
+        .add("/plans/{pid}/risks/{risk_pid}/scores", get(risk_scores))
         .add(
             "/plans/{pid}/risks/{risk_pid}/escalate",
             post(escalate_risk),

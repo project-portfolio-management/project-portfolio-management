@@ -5307,6 +5307,8 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "공동 서명",
   "p.cutover.cosign_signed": "서명함: {roles}.",
   "p.cutover.cosign_missing": "아직 필요함: {roles}.",
+  "p.cutover.cosign_stale":
+    "이전 증거에 대한 서명이므로 다시 서명해야 합니다: {roles}.",
   "p.cutover.cosign_none": "없음",
   "p.cutover.cosign_role": "서명할 역할 (토큰에 포함되어 있어야 함)",
   "p.cutover.cosign": "공동 서명",

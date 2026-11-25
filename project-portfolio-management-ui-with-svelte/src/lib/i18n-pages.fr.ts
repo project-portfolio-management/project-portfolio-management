@@ -5555,6 +5555,8 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "Cosignatures",
   "p.cutover.cosign_signed": "Signé : {roles}.",
   "p.cutover.cosign_missing": "Encore requis : {roles}.",
+  "p.cutover.cosign_stale":
+    "Signé pour des preuves antérieures, donc à signer de nouveau : {roles}.",
   "p.cutover.cosign_none": "aucun",
   "p.cutover.cosign_role": "Rôle de signature (votre jeton doit le porter)",
   "p.cutover.cosign": "Cosigner",

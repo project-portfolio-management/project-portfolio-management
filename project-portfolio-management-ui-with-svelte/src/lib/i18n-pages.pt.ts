@@ -5519,6 +5519,8 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.cutover.cosign_h3": "Cossignaturas",
   "p.cutover.cosign_signed": "Assinaram: {roles}.",
   "p.cutover.cosign_missing": "Ainda necessárias: {roles}.",
+  "p.cutover.cosign_stale":
+    "Assinado para evidências anteriores, por isso precisa ser assinado de novo: {roles}.",
   "p.cutover.cosign_none": "nenhuma",
   "p.cutover.cosign_role": "Função com que assinar (seu token deve contê-la)",
   "p.cutover.cosign": "Cossignar",

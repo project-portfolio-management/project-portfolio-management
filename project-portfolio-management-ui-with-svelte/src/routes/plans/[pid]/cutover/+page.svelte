@@ -171,7 +171,10 @@
       {/if}
 
       <h3>{t("p.cutover.cosign_h3")}</h3>
-      <p>{t("p.cutover.cosign_signed", { roles: list(d.cosignatures.signed.map((s) => s.role)) })} {t("p.cutover.cosign_missing", { roles: list(d.cosignatures.missing) })}</p>
+      <p>{t("p.cutover.cosign_signed", { roles: list(d.cosignatures.signed.filter((s) => s.current !== false).map((s) => s.role)) })} {t("p.cutover.cosign_missing", { roles: list(d.cosignatures.missing) })}</p>
+      {#if d.cosignatures.signed.some((s) => s.current === false && d.cosignatures.missing.includes(s.role))}
+        <p>{t("p.cutover.cosign_stale", { roles: list(d.cosignatures.missing.filter((r) => d.cosignatures.signed.some((s) => s.role === r))) })}</p>
+      {/if}
       {#if d.status === "open"}
         <form onsubmit={(e) => { e.preventDefault(); const r = (role[d.pid] ?? "").trim(); if (r) void run(() => ppm.cosignCutover(pid, d.pid, r)); }}>
           <label>{t("p.cutover.cosign_role")} <input bind:value={role[d.pid]} maxlength="100" /></label>

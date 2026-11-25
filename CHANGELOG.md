@@ -16,6 +16,30 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 25 November (risk score history)
+
+- OF-3 step 1 (audit finding 4, first half; migration `20261125000118`): an append-only `risk_scores` table written by a
+  trigger on `risks`, with actor and an optional `reason` on `PUT …/risks/{risk_pid}`. Existing risks get one row marked
+  `backfilled`.
+- Not done: there is no endpoint that reads the history, so nothing shows it yet; OF-3 steps 2 to 4, OF-2, the
+  aggregate-series interface and the benefits-measure work are not built. The reason is not asked for on create.
+  Verified only by the one request test and the lint and unit gates listed in the service changelog; UI not touched.
+
+## 25 November (cutover signatures bound to evidence)
+
+- Implemented finding 1 of the [healthcare audit](docs/audits/gpt-6.2-astra-high/index.md) (spec EX-6a, migration
+  `20261125000117`). A cutover co-signature stores a SHA-256 digest of the marked criteria; changing a mark or its
+  evidence makes earlier signatures stop counting toward a go, and the roles sign again (old signatures stay as
+  history). Required roles are frozen when a decision opens. Marking, co-signing and deciding lock the decision row and
+  read one revision; a go records `decided_evidence_digest`. The decision view shows `signed_at`, `evidence_digest`
+  and `current`. A no-go or delay for safety is never blocked.
+- Not done: findings 2 to 6 (data-boundary rehearsal, SA-21 deployment binding and timed restore, risk-score history
+  OF-3, user testing, release evidence index) are process or larger work and are untouched. No rule that signers are
+  different people. Signatures given before this change have no digest and do not count, so an open decision needs
+  them again. The concurrent-update behaviour rests on the row lock and was not tested under concurrency; the
+  request test covers changed evidence, refusal and re-signing only. Not run: UI tests, the load suite. The UI shows
+  the signing list unchanged, so it does not yet display `current`.
+
 ## 25 November (healthcare portfolio audit)
 
 - Added a [healthcare-use audit](docs/audits/gpt-6.2-astra-high/index.md) with a proposed roadmap pilot and acceptance criteria for cutover evidence, confidentiality, recovery and benefits measurement. No product behaviour changed. The audit did not verify a live health-board deployment or clinical outcomes.

@@ -24208,6 +24208,12 @@
                     "nullable": true,
                     "type": "integer"
                   },
+                  "reason": {
+                    "default": null,
+                    "description": "Why the score changed; kept with the score history (OF-3), at most 500 characters.",
+                    "nullable": true,
+                    "type": "string"
+                  },
                   "review_date": {
                     "default": null,
                     "description": "New review date; absent leaves it unchanged.",

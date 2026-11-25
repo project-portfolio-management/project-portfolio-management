@@ -41,6 +41,62 @@ pub fn required_roles() -> Vec<String> {
         .map_or_else(|_| default_roles(), |v| parse_roles(&v))
 }
 
+/// The digest a co-signature attests to (EX-6a): SHA-256, in hex, over each criterion's position, mark and
+/// evidence text, in position order. Any change to a mark or to its evidence changes it.
+#[must_use]
+pub fn evidence_digest(criteria: &[(i32, Option<bool>, Option<&str>)]) -> String {
+    use sha2::{Digest, Sha256};
+    use std::fmt::Write;
+    let mut h = Sha256::new();
+    for (n, met, evidence) in criteria {
+        let m = match met {
+            Some(true) => "met",
+            Some(false) => "unmet",
+            None => "unmarked",
+        };
+        let e = evidence.unwrap_or("");
+        // Length-prefixed, so one field cannot run into the next.
+        h.update(format!("{n}|{m}|{}|{e}\n", e.len()).as_bytes());
+    }
+    h.finalize().iter().fold(String::new(), |mut out, b| {
+        let _ = write!(out, "{b:02x}");
+        out
+    })
+}
+
+/// The roles a decision requires: the list frozen when it opened, or the current setting for one opened before.
+#[must_use]
+pub fn frozen_roles(stored: Option<&str>) -> Vec<String> {
+    stored.map_or_else(required_roles, |s| {
+        s.split(',')
+            .map(str::to_string)
+            .filter(|r| !r.is_empty())
+            .collect()
+    })
+}
+
+/// The roles that have signed and whose signature is for the `current` evidence, and the roles whose only
+/// signatures are for other evidence (`stale`). Signatures are `(role, digest)`; one with no digest never counts.
+#[must_use]
+pub fn current_and_stale(
+    signatures: &[(String, Option<String>)],
+    current: &str,
+) -> (Vec<String>, Vec<String>) {
+    let mut ok: Vec<String> = Vec::new();
+    for (r, d) in signatures {
+        if d.as_deref() == Some(current) && !ok.contains(r) {
+            ok.push(r.clone());
+        }
+    }
+    let mut stale: Vec<String> = Vec::new();
+    for (r, _) in signatures {
+        if !ok.contains(r) && !stale.contains(r) {
+            stale.push(r.clone());
+        }
+    }
+    (ok, stale)
+}
+
 /// What stands in the way of a go: criteria not marked or not met (by their number, from 1), and roles that
 /// have not co-signed. Empty means a go may be recorded.
 #[must_use]
@@ -114,6 +170,48 @@ mod tests {
             ["criteria not yet marked: 3", "criteria not met: 2"]
         );
         assert_eq!(go_problems(&[], &[], &[]), ["there are no stop criteria"]);
+    }
+
+    #[test]
+    fn a_signature_counts_only_for_the_evidence_it_was_given_on() {
+        let a = evidence_digest(&[(1, Some(true), Some("Rehearsal record"))]);
+        assert_eq!(
+            a,
+            evidence_digest(&[(1, Some(true), Some("Rehearsal record"))])
+        );
+        assert_ne!(
+            a,
+            evidence_digest(&[(1, Some(true), Some("Rehearsal record 2"))])
+        );
+        assert_ne!(
+            a,
+            evidence_digest(&[(1, Some(false), Some("Rehearsal record"))])
+        );
+        assert_ne!(a, evidence_digest(&[(1, None, None)]));
+        let sigs = vec![
+            ("lead".to_string(), Some(a.clone())),
+            ("delivery".to_string(), Some("old".to_string())),
+            ("legacy".to_string(), None),
+        ];
+        let (ok, stale) = current_and_stale(&sigs, &a);
+        assert_eq!(
+            (ok, stale),
+            (roles(&["lead"]), roles(&["delivery", "legacy"]))
+        );
+        let again = vec![
+            ("delivery".to_string(), Some("old".to_string())),
+            ("delivery".to_string(), Some(a.clone())),
+        ];
+        assert_eq!(
+            current_and_stale(&again, &a),
+            (roles(&["delivery"]), vec![]),
+            "signing again makes it current"
+        );
+    }
+
+    #[test]
+    fn frozen_roles_win_over_the_setting() {
+        assert_eq!(frozen_roles(Some("a,b")), ["a", "b"]);
     }
 
     #[test]

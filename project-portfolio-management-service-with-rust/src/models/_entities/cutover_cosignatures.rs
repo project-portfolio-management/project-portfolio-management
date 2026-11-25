@@ -16,4 +16,6 @@ pub struct Model {
     pub role: String,
     pub signed_by: Option<String>,
     pub signed_on: Date,
+    /// Digest of the marked criteria when signed; none before EX-6a.
+    pub evidence_digest: Option<String>,
 }

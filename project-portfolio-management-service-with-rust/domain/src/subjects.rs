@@ -137,6 +137,7 @@ pub const COLUMNS: &[(&str, &str)] = &[
     ("cutover_decisions", "decided_by"),
     ("cutover_criteria", "marked_by"),
     ("cutover_cosignatures", "signed_by"),
+    ("risk_scores", "actor"),
     ("deployment_moves", "requested_by"),
     ("deployment_moves", "decided_by"),
     ("deployment_moves", "approver_ref"),

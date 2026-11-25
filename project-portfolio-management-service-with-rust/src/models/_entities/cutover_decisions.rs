@@ -25,4 +25,8 @@ pub struct Model {
     pub decided_on: Option<Date>,
     pub decided_by: Option<String>,
     pub decision_reason: Option<String>,
+    /// The required co-signing roles, comma-separated, frozen when the decision opened (EX-6a).
+    pub required_roles: Option<String>,
+    /// The evidence digest a go was validated against (EX-6a).
+    pub decided_evidence_digest: Option<String>,
 }

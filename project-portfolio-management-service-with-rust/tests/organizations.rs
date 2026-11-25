@@ -665,8 +665,22 @@ async fn organizations_are_records_and_a_partner_sees_its_own() {
         let t = with!(request.post(&format!("{one}/decide")), writer).json(&go).await.text();
         assert!(t.contains("co-signatures missing: delivery_organization"), "{t}");
         with!(request.post(&format!("{one}/cosign")), delivery).json(&json!({ "role": "delivery_organization" })).await.assert_status_ok();
+        // EX-6a: evidence changed after both signed, so neither signature counts until given again.
+        let before: Value = with!(request.get(&cut), writer).await.json();
+        let digest0 = before["decisions"][0]["evidence_digest"].as_str().unwrap().to_string();
+        assert!(before["decisions"][0]["cosignatures"]["signed"].as_array().unwrap().iter().all(|x| x["current"] == true && x["evidence_digest"] == digest0.as_str()));
+        with!(request.put(&format!("{one}/criteria/2/mark")), writer).json(&json!({ "met": true, "evidence": "Safety case v2 on file" })).await.assert_status_ok();
+        let t = with!(request.post(&format!("{one}/decide")), writer).json(&go).await.text();
+        assert!(t.contains("co-signatures out of date") && t.contains("co-signatures missing"), "{t}");
+        let mid: Value = with!(request.get(&cut), writer).await.json();
+        assert_eq!(mid["decisions"][0]["cosignatures"]["missing"].as_array().unwrap().len(), 2);
+        assert_ne!(mid["decisions"][0]["evidence_digest"], digest0.as_str());
+        with!(request.post(&format!("{one}/cosign")), lead).json(&json!({ "role": "accountable_professional_lead" })).await.assert_status_ok();
+        with!(request.post(&format!("{one}/cosign")), delivery).json(&json!({ "role": "delivery_organization" })).await.assert_status_ok();
         let decided: Value = with!(request.post(&format!("{one}/decide")), writer).json(&go).await.json();
         assert_eq!((decided["status"].as_str(), decided["outcome"].as_str()), (Some("decided"), Some("go")));
+        assert_eq!(decided["decided_evidence_digest"], decided["evidence_digest"], "the go records the evidence it was decided on");
+        assert_eq!(decided["cosignatures"]["signed"].as_array().unwrap().len(), 4, "history is kept");
         assert!(sqlx::raw_sql("UPDATE cutover_decisions SET outcome = 'no_go' WHERE status = 'decided'").execute(project_portfolio_management::db::pool(&_ctx)).await.is_err(), "a decided decision is final");
         assert_eq!(with!(request.post(&format!("{one}/new-version")), writer).await.status_code(), 409, "a go is final");
 

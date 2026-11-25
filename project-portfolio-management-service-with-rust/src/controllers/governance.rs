@@ -1005,6 +1005,9 @@ pub(crate) struct RiskUpdate {
     /// New review date; absent leaves it unchanged.
     #[serde(default)]
     review_date: Option<crate::datetime::Date>,
+    /// Why the score changed; kept with the score history (OF-3), at most 500 characters.
+    #[serde(default)]
+    reason: Option<String>,
 }
 
 /// `PUT /api/plans/{pid}/risks/{risk_pid}` handler: validates the changed fields (the exposure is re-checked against the merged scores), refuses a risk that belongs to another plan with `404`, and audits `risk_updated`.
@@ -1032,10 +1035,18 @@ async fn update_risk(
         problems.push(e);
     }
     cap_opt(&mut problems, "mitigation", payload.mitigation.as_deref());
+    if payload
+        .reason
+        .as_deref()
+        .is_some_and(|r| r.chars().count() > 500)
+    {
+        problems.push("reason is at most 500 characters".to_string());
+    }
     if !problems.is_empty() {
         return Err(unprocessable(&problems));
     }
     let risk_row_pid = risk.pid;
+    let payload_reason = payload.reason.clone();
     // The update names only what changes: the scores always, the rest when the body carries them.
     let mut update = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE risks SET probability = ");
     update.push_bind(probability);
@@ -1054,6 +1065,12 @@ async fn update_risk(
         .push_bind(risk.id)
         .push(" RETURNING *");
     let mut tx = crate::db::begin(&ctx).await?;
+    // The score history trigger reads who and why from the transaction (OF-3).
+    sqlx::query("SELECT set_config('ppm.actor', $1, true), set_config('ppm.reason', $2, true)")
+        .bind(caller.actor().unwrap_or_default())
+        .bind(payload_reason.unwrap_or_default())
+        .fetch_one(tx.conn())
+        .await?;
     let row: risks::Model = update.build_query_as().fetch_one(tx.conn()).await?;
     AuditModel::record_on(
         tx.conn(),

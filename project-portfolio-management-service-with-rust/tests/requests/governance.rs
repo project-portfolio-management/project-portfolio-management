@@ -363,6 +363,29 @@ async fn risks_score_and_escalate() {
             .await
             .json();
         assert_eq!(closed["status"], "closed");
+
+        // OF-3: every score change leaves a history row; an edit that leaves the score alone leaves none.
+        let rescored = request
+            .put(&format!("/api/plans/{pid}/risks/{low_pid}"))
+            .json(&json!({ "probability": 5, "impact": 5, "reason": "Vendor slipped twice" }))
+            .await;
+        rescored.assert_status_ok();
+        let history: Vec<(i32, i32, i32, Option<String>, bool)> = sqlx::query_as(
+            "SELECT probability, impact, score, reason, backfilled FROM risk_scores WHERE risk_pid = $1::uuid ORDER BY id",
+        )
+        .bind(low_pid)
+        .fetch_all(project_portfolio_management::db::pool(&_ctx))
+        .await
+        .unwrap();
+        assert_eq!(history.len(), 2, "created, then rescored; the mitigation and status edits wrote none: {history:?}");
+        assert_eq!((history[1].2, history[1].3.as_deref(), history[1].4), (25, Some("Vendor slipped twice"), false));
+        assert!(
+            sqlx::raw_sql("DELETE FROM risk_scores")
+                .execute(project_portfolio_management::db::pool(&_ctx))
+                .await
+                .is_err(),
+            "the history is append-only"
+        );
     })
     .await;
 }

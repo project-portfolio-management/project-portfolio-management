@@ -88,20 +88,91 @@ async fn parts(
     Ok((c, s))
 }
 
-/// JSON view of a decision with its criteria and co-signatures, including which required roles have and have not signed.
+/// The digest of the criteria as marked now (EX-6a).
+fn digest_of(c: &[criteria::Model]) -> String {
+    rules::evidence_digest(
+        &c.iter()
+            .map(|x| (x.position, x.met, x.evidence.as_deref()))
+            .collect::<Vec<_>>(),
+    )
+}
+
+/// What stops a go now: the criteria, and the co-signatures that are for the evidence as it stands (EX-6a).
+fn go_refusal(d: &decisions::Model, c: &[criteria::Model], s: &[cosigs::Model]) -> Vec<String> {
+    let required = rules::frozen_roles(d.required_roles.as_deref());
+    let sigs: Vec<(String, Option<String>)> = s
+        .iter()
+        .map(|x| (x.role.clone(), x.evidence_digest.clone()))
+        .collect();
+    let (ok, stale) = rules::current_and_stale(&sigs, &digest_of(c));
+    let mut problems =
+        rules::go_problems(&c.iter().map(|x| x.met).collect::<Vec<_>>(), &required, &ok);
+    let stale: Vec<&str> = stale
+        .iter()
+        .filter(|r| required.contains(r))
+        .map(String::as_str)
+        .collect();
+    if !stale.is_empty() {
+        problems.push(format!(
+            "co-signatures out of date, the evidence changed since: {}",
+            stale.join(", ")
+        ));
+    }
+    problems
+}
+
+/// JSON view of a decision with its criteria and co-signatures, including which required roles have and have not signed for the evidence as it stands.
 fn view(d: &decisions::Model, c: &[criteria::Model], s: &[cosigs::Model]) -> Value {
-    let required = rules::required_roles();
-    let signed: Vec<&str> = s.iter().map(|x| x.role.as_str()).collect();
+    let required = rules::frozen_roles(d.required_roles.as_deref());
+    let digest = digest_of(c);
+    let sigs: Vec<(String, Option<String>)> = s
+        .iter()
+        .map(|x| (x.role.clone(), x.evidence_digest.clone()))
+        .collect();
+    let (ok, _) = rules::current_and_stale(&sigs, &digest);
     json!({
         "pid": d.pid, "plan_pid": d.plan_pid, "title": d.title, "version": d.version,
         "supersedes_pid": d.supersedes_pid, "status": d.status,
         "published_on": d.published_on, "opened_on": d.opened_on,
         "outcome": d.outcome, "decided_on": d.decided_on, "decision_reason": d.decision_reason,
+        "evidence_digest": digest, "decided_evidence_digest": d.decided_evidence_digest,
         "criteria": c.iter().map(|x| json!({ "n": x.position, "criterion": x.criterion, "met": x.met, "evidence": x.evidence, "marked_on": x.marked_on })).collect::<Vec<_>>(),
-        "cosignatures": { "required": required, "signed": s.iter().map(|x| json!({ "role": x.role, "signed_on": x.signed_on })).collect::<Vec<_>>(),
-            "missing": required.iter().filter(|r| !signed.contains(&r.as_str())).collect::<Vec<_>>() },
-        "go_would_be_refused_because": if d.status == "open" { rules::go_problems(&c.iter().map(|x| x.met).collect::<Vec<_>>(), &required, &signed.iter().map(|x| (*x).to_string()).collect::<Vec<_>>()) } else { vec![] },
+        "cosignatures": { "required": required,
+            "signed": s.iter().map(|x| json!({ "role": x.role, "signed_on": x.signed_on, "signed_at": x.created_at, "evidence_digest": x.evidence_digest, "current": x.evidence_digest.as_deref() == Some(digest.as_str()) })).collect::<Vec<_>>(),
+            "missing": required.iter().filter(|r| !ok.contains(r)).collect::<Vec<_>>() },
+        "go_would_be_refused_because": if d.status == "open" { go_refusal(d, c, s) } else { vec![] },
     })
+}
+
+/// Locks a decision's row for the rest of the transaction and returns it as it now stands; a conflict unless it is open.
+async fn lock_open(tx: &mut crate::db::Tx, id: i64) -> Result<decisions::Model> {
+    let d: decisions::Model =
+        sqlx::query_as("SELECT * FROM cutover_decisions WHERE id = $1 FOR UPDATE")
+            .bind(id)
+            .fetch_one(tx.conn())
+            .await?;
+    if d.status != "open" {
+        return Err(conflict("the decision is no longer open"));
+    }
+    Ok(d)
+}
+
+/// Reads the criteria and co-signatures inside the transaction, so they are the revision the caller then writes against.
+async fn parts_in(
+    tx: &mut crate::db::Tx,
+    d: &decisions::Model,
+) -> Result<(Vec<criteria::Model>, Vec<cosigs::Model>)> {
+    let c: Vec<criteria::Model> =
+        sqlx::query_as("SELECT * FROM cutover_criteria WHERE decision_pid = $1 ORDER BY position")
+            .bind(d.pid)
+            .fetch_all(tx.conn())
+            .await?;
+    let s: Vec<cosigs::Model> =
+        sqlx::query_as("SELECT * FROM cutover_cosignatures WHERE decision_pid = $1 ORDER BY id")
+            .bind(d.pid)
+            .fetch_all(tx.conn())
+            .await?;
+    Ok((c, s))
 }
 
 /// Trims the criteria and requires 1 to 30 items of 5 to 500 characters each, otherwise unprocessable.
@@ -272,18 +343,18 @@ async fn advance(
     }
     let today = crate::tz::deployment_today();
     // The date column is one of two literals, chosen by `to`.
+    // Opening also freezes the required roles (EX-6a).
     let sql = if to == "published" {
         "UPDATE cutover_decisions SET status = $1, published_on = $2 WHERE id = $3 RETURNING *"
     } else {
-        "UPDATE cutover_decisions SET status = $1, opened_on = $2 WHERE id = $3 RETURNING *"
+        "UPDATE cutover_decisions SET status = $1, opened_on = $2, required_roles = $4 WHERE id = $3 RETURNING *"
     };
     let mut tx = crate::db::begin(ctx).await?;
-    let row: decisions::Model = sqlx::query_as(sql)
-        .bind(to)
-        .bind(Some(today))
-        .bind(d.id)
-        .fetch_one(tx.conn())
-        .await?;
+    let mut q = sqlx::query_as(sql).bind(to).bind(Some(today)).bind(d.id);
+    if to != "published" {
+        q = q.bind(rules::required_roles().join(","));
+    }
+    let row: decisions::Model = q.fetch_one(tx.conn()).await?;
     AuditModel::record_on(tx.conn(), row.pid, action, caller.actor(), None)
         .await
         .map_err(super::audit_failed)?;
@@ -365,6 +436,7 @@ async fn mark(
     .await?
     .ok_or(Error::NotFound)?;
     let mut tx = crate::db::begin(&ctx).await?;
+    let d = lock_open(&mut tx, d.id).await?;
     sqlx::query(
         "UPDATE cutover_criteria SET met = $1, evidence = $2, marked_by = $3, marked_on = $4
          WHERE id = $5
@@ -413,11 +485,9 @@ async fn cosign(
         ));
     }
     let role = b.role.trim().to_lowercase();
-    if !rules::required_roles().contains(&role) {
-        return Err(unprocessable(&format!(
-            "role must be one of {:?}",
-            rules::required_roles()
-        )));
+    let required = rules::frozen_roles(d.required_roles.as_deref());
+    if !required.contains(&role) {
+        return Err(unprocessable(&format!("role must be one of {required:?}")));
     }
     let holds = caller.holds_or_open(|c| {
         c.attrs
@@ -434,20 +504,24 @@ async fn cosign(
         ));
     }
     let mut tx = crate::db::begin(&ctx).await?;
+    let d = lock_open(&mut tx, d.id).await?;
+    // The signature attests to the criteria as they stand while the row is locked (EX-6a).
+    let (now_c, _) = parts_in(&mut tx, &d).await?;
     sqlx::query(
-        "INSERT INTO cutover_cosignatures (pid, decision_pid, role, signed_by, signed_on)
-         VALUES ($1, $2, $3, $4, $5)",
+        "INSERT INTO cutover_cosignatures (pid, decision_pid, role, signed_by, signed_on, evidence_digest)
+         VALUES ($1, $2, $3, $4, $5, $6)",
     )
     .bind(Uuid::new_v4())
     .bind(d.pid)
     .bind(&role)
     .bind(caller.actor())
     .bind(crate::tz::deployment_today())
+    .bind(digest_of(&now_c))
     .execute(tx.conn())
     .await
     .map_err(|e| {
         if e.to_string().contains("ccs_once") {
-            conflict("that role has already co-signed")
+            conflict("that role has already co-signed for the evidence as it stands")
         } else {
             e.into()
         }
@@ -498,14 +572,11 @@ async fn decide(
             "a reason of at least 10 characters is required",
         ));
     }
-    let (c, s) = parts(&ctx, &d).await?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    let d = lock_open(&mut tx, d.id).await?;
+    let (c, s) = parts_in(&mut tx, &d).await?;
     if b.outcome == "go" {
-        let signed: Vec<String> = s.iter().map(|x| x.role.clone()).collect();
-        let problems = rules::go_problems(
-            &c.iter().map(|x| x.met).collect::<Vec<_>>(),
-            &rules::required_roles(),
-            &signed,
-        );
+        let problems = go_refusal(&d, &c, &s);
         if !problems.is_empty() {
             return Err(unprocessable(&format!(
                 "a go is refused: {}",
@@ -513,10 +584,9 @@ async fn decide(
             )));
         }
     }
-    let mut tx = crate::db::begin(&ctx).await?;
     let row: decisions::Model = sqlx::query_as(
         "UPDATE cutover_decisions
-         SET status = $1, outcome = $2, decided_on = $3, decided_by = $4, decision_reason = $5
+         SET status = $1, outcome = $2, decided_on = $3, decided_by = $4, decision_reason = $5, decided_evidence_digest = $7
          WHERE id = $6
          RETURNING *",
     )
@@ -526,6 +596,7 @@ async fn decide(
     .bind(caller.actor())
     .bind(Some(b.reason.trim()))
     .bind(d.id)
+    .bind(digest_of(&c))
     .fetch_one(tx.conn())
     .await?;
     AuditModel::record_on(

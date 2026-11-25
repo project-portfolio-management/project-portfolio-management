@@ -1819,6 +1819,29 @@ drops an organization once it signs, so a client that replaced the set from it w
 is the set to show and keep. Tests: `domain/src/milestone_signoff.rs`
 (`the_required_set_is_kept_whole_signed_or_not`), `tests/organizations.rs`.
 
+## Cutover signatures attest to their evidence (EX-6a, from the healthcare audit, finding 1)
+
+A co-signature on a cutover decision (EX-6) attests to the criteria **as marked when it was given**.
+
+- **Evidence digest.** Each co-signature stores `evidence_digest`: SHA-256 (hex) over every criterion's position,
+  met mark and evidence text at signing. Marking a criterion again changes the digest, so earlier signatures stop
+  counting toward a **go**; the roles sign again. Signatures stay append-only (the old one is history); one
+  signature per decision, role and digest. A signature given before this rule has no digest and never counts.
+- **Frozen roles.** `POST …/open` stores the required roles (`required_roles`) on the decision. The view, the
+  co-signing and the decision read that list, not the deployment's current setting, so a later configuration change
+  cannot alter an old pack. A decision opened earlier falls back to the current setting.
+- **One consistent revision.** Marking, co-signing and deciding lock the decision row, re-read the criteria and
+  signatures inside the transaction, and refuse unless it is still open. A go is validated against the digest it
+  commits; `decided_evidence_digest` records it.
+- **Visible.** Each signature in the decision view shows `signed_at`, `evidence_digest` and `current` (whether it
+  matches the present marks); the decision shows `evidence_digest`. A go refused for stale signatures says which
+  roles ("co-signatures out of date, the evidence changed since: …").
+- **A safety delay or no-go** needs no signatures and is never blocked by any of this.
+
+Not done: a rule that signers be different people (the board may require it; the role attribute is the only check),
+and a revision history of the evidence text itself beyond the audit log's `cutover_criterion_marked`. Tests:
+`domain/src/cutover.rs`, `tests/organizations.rs` (EX-6).
+
 ## Codes and fields a screen reads (NC-1 slice 12, part a)
 
 Each refusal a screen must tell apart has its own machine `code` (the problem's `code` member), keeping its HTTP status

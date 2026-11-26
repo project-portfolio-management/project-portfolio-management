@@ -16,6 +16,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 26 November (CI fixes found by a run on the branch)
+
+- The benefits topic and the chief-legal-officer page in `ar-001`, `ar-dz`, `ar-eg` and `ur-001` had their `README.md`
+  turned from a link to `index.md` into a copy by the licence-list edit (`d1eb246b`); they are links again, as the
+  site's file rule requires (the Pages job failed on it). The text did not change.
+
 ## 26 November (CF-7: capacity is no longer assumed)
 
 - A day no availability range covers has **no declared capacity**; it is no longer read as 100%. Such a day is over

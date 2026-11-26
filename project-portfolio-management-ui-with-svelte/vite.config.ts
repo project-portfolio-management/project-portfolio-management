@@ -48,6 +48,10 @@ export default defineConfig({
   test: {
     include: ["tests/unit/**/*.{test,spec}.{ts,js}"],
     environment: "jsdom",
+    // One jsdom per worker, a fresh VM context per file (isolation kept): measured 2026-11-26 on a shared machine,
+    // 13.1 to 19.0 s against 20.6 to 27.8 s with the default pool, three runs each, same 1,623 tests. Vitest notes
+    // that VM pools can grow memory and that `instanceof` across contexts can differ; nothing here relied on either.
+    pool: "vmThreads",
     setupFiles: ["tests/unit/setup-locales.ts"],
     globals: true,
     // The package's compiled `dist/index.js` imports "./label-pack" without a file extension, which

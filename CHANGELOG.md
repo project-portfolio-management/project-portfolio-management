@@ -16,6 +16,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 26 November (UI unit tests about a third faster)
+
+- `vite.config.ts` runs the unit tests in Vitest's `vmThreads` pool (one jsdom per worker, a fresh context per file):
+  13.1 to 19.0 s against 20.6 to 27.8 s, three alternating runs each on a shared machine, all 1,623 tests passing both
+  ways. Not measured: CI's runner, and memory use.
+
 ## 26 November (rustdoc links fixed and checked in CI)
 
 - Eleven broken, ambiguous or private intra-doc links fixed in the service workspace and the matcher (a link to the

@@ -40,6 +40,45 @@ Make **the local machine the place CI runs first and the place its result is rec
 5. **Release stays reproducible.** Build the Linux binaries on the host with the musl target the specs already describe, build and sign the images, and keep the hosted release workflow as the manual fallback.
 6. **Speed comes from the machine we have.** A shared `CARGO_TARGET_DIR`, `sccache` or equivalent, `cargo nextest` where it helps, and the database binaries in parallel. Measure first (LC-1); do not guess.
 
+## Evidence (LC-1, in part, measured 2026-11-26)
+
+Read from the GitHub API for every run of `ci.yml` from 2026-10-10 to 2026-11-26 (676 runs: 591 on a push, 75 on a pull
+request, 10 by hand), and timed on this machine during the work of 2026-11-26. **Not measured yet:** any local job
+cold (a cleaned target directory), and the local times on a machine nobody else is building on; the local figures below
+were taken while other sessions were building, so they are upper bounds.
+
+**Outcomes.** 314 passed, 137 failed, 224 were cancelled, 1 was running. Of the cancelled, 177 ended within 15 minutes:
+`concurrency: cancel-in-progress` stopping a run that a newer push replaced, not the platform failing. 8 runs waited more
+than five minutes for a runner and 2 more than an hour (the longest 6 h 17 min). 8 runs were re-run.
+
+**Why the 137 failed**, by the first failing step of each failing job (a run can have several causes; the `ci-ok`
+aggregate is left out):
+
+| Cause | Runs | Caught by the pre-push gate (LC-4)? |
+|---|---|---|
+| Slow suites: Playwright, real-token binaries, request suites, coverage, restore, backups, UI check | 59 | No |
+| Generated or checked documents: status block, links, site copy, rumdl, derived bodies, translation exports | 53 | Yes (docs stage) |
+| Containers, images, the composed stack, ZAP | 39 | No |
+| `cargo deny` (mostly advisories published between runs) | 30 | Advisories only, and only when the database has the advisory |
+| fmt, clippy, lib tests, UI lint | 28 | Yes (rust and ui stages) |
+| Toolchain setup (`dtolnay/rust-toolchain` pinned to a version that did not exist), 2026-10-10 to 2026-10-18 | 15 | No; a workflow defect, since fixed |
+| Package versions (syncpack) | 7 | No |
+
+73 of the 137 failed runs had at least one cause the pre-push gate now catches; in 32 those were the only causes. No
+failure was classified as the hosted platform itself failing, but the 39 container, image and ZAP failures were not read
+one by one and may include registry or network failures; the unreliability visible in the record is the queueing (the
+two long waits).
+
+**Where the time goes** (median of the 25 most recent passing runs, minutes): UI with Playwright and axe 41.0;
+coverage 27.9; the database suites 19.4; the restore drill 15.1; ZAP 10.7; the container smoke 10.5; the Pages site 8.7;
+API fmt, clippy and DB-free tests 6.7; rumdl 6.2; the fresh clone 4.5; everything else under 1. A passing run takes 23.5
+minutes at the median and 36.8 at the 90th percentile (jobs run in parallel).
+
+**The same work here, warm** (this machine, 2026-11-26, shared with other builds): the pre-push gate 55 s (its docs
+stage 4 s); the UI unit tests 13 to 19 s; every ignored database test in one process 16 min (serial); `make coverage-db`
+about 7 to 8 min after the first instrumented build; the full Playwright suite 36.5 min on 8 workers. A hosted run is
+not slower than this machine for the long jobs; what a local gate saves is the round trip for the cheap failures.
+
 ## Risks
 
 | Risk | What follows | Mitigation |

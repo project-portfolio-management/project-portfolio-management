@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 26 November (LC-1 in part: what hosted CI costs and why it fails)
+
+- `spec/local-ci-cd.md` gains an evidence section from all 676 runs of `ci.yml` since 2026-10-10: 137 failed, and 73 of
+  those had a cause the new pre-push gate catches (32 had no other); none was classified as the platform's fault, though the 39
+  container, image and ZAP failures were not read one by one; 2 runs waited over an hour for a runner. Job medians and warm local times are beside them. Not measured: cold local times,
+  or times on an idle machine; LC-1 stays open, and every decision is still the owner's (LC-D1).
+
 ## 26 November (a pre-push gate, LC-4)
 
 - `scripts/pre-push.sh` runs the fast checks before a push: the doc and generated-file checks (in a worktree of the

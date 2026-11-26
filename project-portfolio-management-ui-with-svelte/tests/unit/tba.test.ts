@@ -5,7 +5,7 @@
 // low flow efficiency is normal rather than alarming.
 
 import { describe, expect, it, vi } from "vitest";
-import { ApiClient } from "$lib/api/client";
+import { ApiClient } from "#lib/api/client.js";
 import {
   TbaClient,
   days,
@@ -13,7 +13,7 @@ import {
   interpretationLabel,
   msAsDays,
   percent,
-} from "$lib/api/tba";
+} from "#lib/api/tba.js";
 
 /** A TbaClient whose fetch records every (url, method) pair. */
 function recordingClient(): {

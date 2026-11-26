@@ -1,7 +1,7 @@
 <!--
   The demonstration tour (`/demo`): where the sign-in on a demonstration stack lands. Every feature, grouped,
   each with what to look for in the fictitious Northgate data and a link. The copy is in the catalogue
-  (`p.demo.*`); the screens it points at are in `$lib/demo-tour.ts`.
+  (`p.demo.*`); the screens it points at are in `src/lib/demo-tour.ts`.
 -->
 <script lang="ts">
   import { t, tDynamic, localeHref } from "#lib/i18n.svelte.js";

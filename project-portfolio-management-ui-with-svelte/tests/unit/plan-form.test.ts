@@ -4,9 +4,9 @@
 // general parent_ref (kept for any plan).
 import { describe, it, expect, vi } from "vitest";
 import { render, fireEvent } from "@testing-library/svelte";
-import PlanForm from "$lib/components/PlanForm.svelte";
-import { ALL_KINDS } from "$lib/api/types";
-import type { Plan } from "$lib/api/types";
+import PlanForm from "#lib/components/PlanForm.svelte";
+import { ALL_KINDS } from "#lib/api/types.js";
+import type { Plan } from "#lib/api/types.js";
 
 /** Render the form with a spy `onsubmit`, returning it plus captured records. */
 function renderForm(initial: Plan) {

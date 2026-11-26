@@ -4,7 +4,7 @@
 // normally handled by the BFF proxy, which injects the bearer server-side;
 // the client attaches one only when explicitly passed.
 import { describe, it, expect, vi } from "vitest";
-import { ApiClient, ApiError, nextLink } from "$lib/api/client";
+import { ApiClient, ApiError, nextLink } from "#lib/api/client.js";
 
 /** A fake `fetch` that records the last call and returns a canned response. */
 function fakeFetch(

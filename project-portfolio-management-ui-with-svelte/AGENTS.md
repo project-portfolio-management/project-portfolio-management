@@ -370,7 +370,7 @@ stylesheet (see `settle()` in `tests/e2e/fixtures.ts`), not an injected
   exchange; `src/routes/api/proxy/[...path]/+server.ts` is the reverse
   proxy that injects the PASETO bearer and forwards to the portfolio
   service. There is no client-held session store
-  (`$lib/auth.svelte.ts` does not exist).
+  (`src/lib/auth.svelte.ts` does not exist).
 - **`ApiClient`** — browser→BFF calls (`API_BASE_URL` = same-origin
   `/api/proxy`) send the cookie because they are same-origin. There is **no
   CSRF token** (an earlier version of this file said `X-CSRF-Token`; the

@@ -12,7 +12,6 @@ export default defineConfig({
     sveltekit({
       preprocess: vitePreprocess(),
       adapter: adapter(),
-      alias: { $lib: "src/lib" },
       csp: {
         // Nonces for dynamically rendered pages, hashes for prerendered
         // ones; SvelteKit adds them to script-src and style-src.

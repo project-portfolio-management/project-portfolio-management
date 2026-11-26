@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 26 November (UI: the deprecated `$lib` alias removed)
+
+- The UI's `vite.config.ts` no longer sets SvelteKit's deprecated `config.alias` (`$lib`); the six unit-test files that
+  still imported through it use the `#lib/*` subpath imports the rest of the code uses, so `svelte-check` and the build
+  no longer warn. Lint, check, the unit tests and the build pass; the Playwright suite was not re-run for this change
+  (no source under `src/` changed beyond a comment).
+
 ## 26 November (test coverage to 95%)
 
 - Service line coverage measured at **95.03%** (51,139 of 53,816 lines; was 94.39%), by 22 new request tests

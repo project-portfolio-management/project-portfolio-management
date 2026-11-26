@@ -2,8 +2,8 @@
 // source of PPM endpoint paths, so a wrong path fails here first).
 
 import { describe, expect, it, vi } from "vitest";
-import { ApiClient } from "$lib/api/client";
-import { PpmClient, money } from "$lib/api/ppm";
+import { ApiClient } from "#lib/api/client.js";
+import { PpmClient, money } from "#lib/api/ppm.js";
 
 /** A PpmClient whose fetch records every (url, method) pair. */
 function recordingClient(): {

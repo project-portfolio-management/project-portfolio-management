@@ -3,8 +3,8 @@
 // path or a dropped query parameter fails here first.
 
 import { describe, expect, it, vi } from "vitest";
-import { ApiClient } from "$lib/api/client";
-import { CapabilityClient } from "$lib/api/capabilities";
+import { ApiClient } from "#lib/api/client.js";
+import { CapabilityClient } from "#lib/api/capabilities.js";
 
 /** A CapabilityClient whose fetch records every (url, method) pair. */
 function recordingClient(): {

@@ -3,9 +3,9 @@
 // via a fake fetch that records calls. There is one recursive collection,
 // so every path is under `/api/plans`.
 import { describe, it, expect, vi } from "vitest";
-import { ApiClient } from "$lib/api/client";
-import { PlanRepository } from "$lib/api/plans";
-import type { Plan } from "$lib/api/types";
+import { ApiClient } from "#lib/api/client.js";
+import { PlanRepository } from "#lib/api/plans.js";
+import type { Plan } from "#lib/api/types.js";
 
 /** Capture the (method, url, body) the repository sends to the client. */
 function spyClient() {

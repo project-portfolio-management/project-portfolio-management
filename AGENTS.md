@@ -20,7 +20,8 @@ Versions: service 0.2.0, matcher 0.2.2, UI 0.2.0 (tag `v0.2.0`). The two mobile 
 2. **One item, one commit, one push**, then look at CI (`gh run list`). Stage named files, never `git add -A`.
 3. **Say plainly what is not built or not tested.** Every change to `CHANGELOG.md` states what was not done or not
    verified. Do not weaken a guard or census test to get green; fix the cause or record why.
-4. **Run the gates before pushing** (below), and `bash scripts/generate-status.sh` after adding tests, and
+4. **Run the gates before pushing** (below; `scripts/pre-push.sh` runs the fast ones in about a minute, and
+   `scripts/install-pre-push.sh` makes it the clone's pre-push hook), and `bash scripts/generate-status.sh` after adding tests, and
    `python3 scripts/generate-openapi-bodies.py` after adding or changing a request body, or the docs job fails.
    `python3 scripts/generate-llms.py` after editing `llms.json`. Check all three with `--check`.
 5. Welsh (and other) strings are machine-written until a speaker reviews them; `governance/welsh-translation-review.csv`

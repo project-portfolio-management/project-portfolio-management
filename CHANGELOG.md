@@ -16,6 +16,16 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 26 November (a pre-push gate, LC-4)
+
+- `scripts/pre-push.sh` runs the fast checks before a push: the doc and generated-file checks (in a worktree of the
+  pushed commit), service and matcher fmt and clippy, the service lib tests, `cargo deny` advisories when installed,
+  and the UI lint; about a minute warm. `scripts/install-pre-push.sh` makes it the clone's hook; a skip
+  (`PPM_SKIP_PRE_PUSH="why"`) is recorded in `.git/pre-push-skips.log`. `scripts/test-pre-push.sh` tests it and CI's
+  Docs job runs that test. Run on today's failing commits, it fails on each of the five CI failures except the
+  `cookie` advisory, which depends on when the advisory database is read. Not done: it is installed nowhere by
+  default, and it runs no Playwright, database suites or coverage.
+
 ## 26 November (heatmap: "availability not declared")
 
 - A capacity-heatmap cell whose people have days with no availability declared is now `supply_undeclared`

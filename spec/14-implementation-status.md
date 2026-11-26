@@ -66,7 +66,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | FB | 6 | 2 |
 | GP | 8 | 0 |
 | OC | 25 | 0 |
-| LC | 0 | 10 |
+| LC | 1 | 9 |
 | UE | 1 | 7 |
 | PE | 1 | 15 |
 | SM | 2 | 15 |
@@ -74,7 +74,7 @@ no network, database or compilation; counts are source lines, not test runs):
 | SA | 2 | 19 |
 | MD | 0 | 7 |
 | OF | 0 | 20 |
-| **Total** | **265** | **110** |
+| **Total** | **266** | **109** |
 
 <!-- generated:end -->
 

@@ -46,6 +46,27 @@ running service); doctests; branch coverage (tarpaulin does not implement it).
 
 ## Baseline (measured 2026-11-18)
 
+### Measurement after the first coverage tests (2026-11-26)
+
+`make coverage-db` on a throwaway Postgres 18, after the tests in
+`tests/requests/coverage_gaps.rs` and one unit test for phonetic search: **95.03% (51,139 of 53,816 lines)**: domain
+98.12%, datetime 98.03%, migration 95.24%, service 94.07%. It exited 0; every runner passed. The margin over 95% is
+**14 lines** (51,126 are needed), so a few lines of new code without tests would take it back under. The run before the
+tests measured 94.39% (50,796 of 53,816), the same denominator.
+
+What the 22 new request tests and the one unit test reach: component rename, skill-pool update, control withdrawal,
+allocation removal, the grouped budget report as CSV, programme threshold removal, scorecard KPI replacement, the merge
+entries in the executive decision feed and the auditor findings, the bulk import and export refusals and filters, bulk
+task edit clearing and refusals, the ledger's allocation and cost-code refusals, rate-table, rate and task-cost
+refusals, the roadmap change-set preview's problems, budget-baseline refusals, the de-escalation tracker's refusals, the
+onboarding template, case and item refusals, the idea refusals, scheduled-action list filters, and review and
+notification validation. Most of these are refusal branches (a 422 or 409 naming the field), not new behaviour.
+
+**Not done:** the measurement is local (macOS, LLVM engine); CI's `coverage` job on Linux has not run it, and its figure
+may differ by a few lines. The largest uncovered blocks are still the spawn loops and shutdown paths (`relay.rs`,
+`scheduler.rs`, `webhooks.rs`, `app.rs`), MSPDI import notes, `processes.rs` failure paths and the error arms of
+`bulk.rs`. No threshold was added.
+
 ### Work-in-progress measurement (2026-11-20)
 
 The latest complete database trace map (`make coverage-db`, 2026-11-20, after commit `19cb59c7`) measures

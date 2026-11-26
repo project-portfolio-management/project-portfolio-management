@@ -13,6 +13,7 @@ mod canvas;
 mod capabilities;
 mod change_requests;
 mod components;
+mod coverage_gaps;
 mod cpm;
 mod cpm_only;
 mod cross_site;

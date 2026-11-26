@@ -722,6 +722,29 @@ mod tests {
         );
     }
 
+    /// Phonetic search finds a name by how it sounds, and a query with no sound in it finds nothing (and does not error).
+    #[test]
+    fn phonetic_search_matches_by_sound_and_an_empty_code_finds_nothing() {
+        let (engine, _dir) = engine_in_temp();
+        let pid = index(&engine, &Plan::new("Smith programme"));
+        let found = |q: &str| {
+            engine
+                .search_page(q, SearchMode::Phonetic, None, 10, 0)
+                .unwrap()
+                .0
+        };
+        assert_eq!(found("Smyth"), vec![pid.to_string()]);
+        assert_eq!(
+            engine
+                .search_page("Smyth", SearchMode::Phonetic, Some("project"), 10, 0)
+                .unwrap()
+                .0,
+            Vec::<String>::new(),
+            "the kind filter still applies"
+        );
+        assert!(found("123 !!").is_empty());
+    }
+
     /// The secondary fields are searchable, not just the name — the goal
     /// title especially, since it is what a plan is *trying to achieve*.
     #[test]

@@ -16,6 +16,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 26 November (test coverage to 95%)
+
+- Service line coverage measured at **95.03%** (51,139 of 53,816 lines; was 94.39%), by 22 new request tests
+  (`tests/requests/coverage_gaps.rs`) and one unit test (phonetic search). Details and the figures by crate are in
+  [`COVERAGE.md`](COVERAGE.md). No code behaviour changed.
+- Not done or not verified: the figure is a local macOS run; CI's `coverage` job has not run it. The margin over 95% is
+  only 14 lines. No threshold was added.
+
 ## 25 November (risk history read, cutover signature display)
 
 - `GET /api/plans/{pid}/risks/{risk_pid}/scores` reads the risk score history; `POST …/risks` takes an optional `reason`.

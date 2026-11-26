@@ -701,6 +701,11 @@
       "title": "Project documents",
       "links": [
         {
+          "title": "Frequently asked questions",
+          "path": "docs/faq/index.md",
+          "description": "Answers for portfolio users on getting started, importing work, delivery, reporting and sharing"
+        },
+        {
           "title": "README",
           "path": "README.md",
           "description": "Overview, routes and quick start"

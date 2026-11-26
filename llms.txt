@@ -172,6 +172,7 @@
 
 ## Project documents
 
+- [Frequently asked questions](docs/faq/index.md): Answers for portfolio users on getting started, importing work, delivery, reporting and sharing
 - [README](README.md): Overview, routes and quick start
 - [Changelog](CHANGELOG.md): Everything that changed, with what was not done or not verified
 - [Contributing](CONTRIBUTING.md): How to contribute

@@ -21,6 +21,8 @@ It is pre-1.0; the first release cut from the root release workflow is
 - The benefits topic and the chief-legal-officer page in `ar-001`, `ar-dz`, `ar-eg` and `ur-001` had their `README.md`
   turned from a link to `index.md` into a copy by the licence-list edit (`d1eb246b`); they are links again, as the
   site's file rule requires (the Pages job failed on it). The text did not change.
+- `cookie` 0.18.2 to 0.18.3 for RUSTSEC-2026-0594 (nonce reuse in private cookies after `fork()`). It is reached only
+  through `axum-test`, a test-only dependency, so no built service was affected; `cargo deny check advisories` passes.
 
 ## 26 November (CF-7: capacity is no longer assumed)
 

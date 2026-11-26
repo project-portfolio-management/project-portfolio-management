@@ -149,6 +149,7 @@ export function capacityText(c: AssignmentResult["capacity"]): string {
       from: c.from,
       to: c.to,
     });
+  if (c.over_capacity === null) return t("l.work_view.capacity_undeclared");
   return t("l.work_view.within_the_person_s_capacity");
 }
 

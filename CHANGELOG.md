@@ -16,6 +16,20 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 26 November (CF-7: capacity is no longer assumed)
+
+- A day no availability range covers has **no declared capacity**; it is no longer read as 100%. Such a day is over
+  only when more than 100% is asked (no range may allow more), and otherwise neither over nor within. `/api/capacity`
+  answers `over_allocated: null` (`over_allocated_reason: capacity_undeclared`) with `undeclared_days` and
+  `unknown_days`; supply in the resource plan and the capacity heatmap is declared capacity only, with the gap `null`
+  where some is undeclared; leveling lists the people with work on such days. The UI shows a grey "?" meter, the
+  leveling list and the assignment sentence, in every locale (six new strings, machine-written in 13 locales, none
+  reviewed; the Welsh ones are in the review CSV).
+- **Behaviour change for deployments:** until people's availability is declared, the heatmap shows no supply and the
+  drum is not chosen by shortfall, and an over-allocation with no ranges is judged per day rather than by summing every
+  booking that touches the window. Not done: a heatmap word of its own for undeclared supply; nothing declares anyone's
+  availability for them. The full Playwright suite was not re-run (the six capacity, leveling and resource specs were).
+
 ## 26 November (UI unit tests about a third faster)
 
 - `vite.config.ts` runs the unit tests in Vitest's `vmThreads` pool (one jsdom per worker, a fresh context per file):

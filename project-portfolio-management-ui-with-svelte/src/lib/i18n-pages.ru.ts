@@ -1362,6 +1362,9 @@ export const PAGES_RU: Record<PageKey, string> = {
     "Ни одна дата начала не изменится.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "Перегруженных нет, поэтому выравнивать нечего.",
+  "p.plans.pid.leveling.capacity_undeclared_h": "Ёмкость не заявлена",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "У этих людей есть работа в дни без заявленной доступности; в эти дни они ни сверх, ни в пределах ёмкости:",
   "p.plans.pid.leveling.over_allocated_now": "Перегружены сейчас",
   "p.plans.pid.leveling.person": "Сотрудник",
   "p.plans.pid.leveling.plan": "← План",
@@ -2835,6 +2838,12 @@ export const PAGES_RU: Record<PageKey, string> = {
   "l.capacity_view.to": " по {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "превышение ёмкости с {from}{v} (запрошено {demand}%, доступно {capacity}%)",
+  "l.capacity_view.capacity_undeclared":
+    "в некоторые дни с работой ёмкость не заявлена: ни превышения, ни в пределах ёмкости",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "превышение ёмкости с {from}{v} (запрошено {demand}, больше, чем может быть любая ёмкость)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: запрошено {demand}, больше, чем может быть любая ёмкость",
   "l.capacity_view.over_capacity": "превышение ёмкости",
   "l.capacity_view.committing_it_would_put_them":
     "; при закреплении будет превышена ёмкость",
@@ -3184,6 +3193,8 @@ export const PAGES_RU: Record<PageKey, string> = {
     " Округлено: три значения не совпадают с точностью до минуты.",
   "l.work_view.capacity_not_checked_the_task":
     "Ёмкость не проверена: у задачи пока нет дат.",
+  "l.work_view.capacity_undeclared":
+    "Для некоторых из этих дней ёмкость не заявлена, поэтому это ни превышение, ни в пределах ёмкости человека.",
   "l.work_view.within_the_person_s_capacity": "В пределах ёмкости человека.",
   "l.work_view.give_1_to_40_whole":
     "Укажите от 1 до 40 целых процентов через запятую.",

@@ -1358,6 +1358,9 @@ export const PAGES_PT: Record<PageKey, string> = {
     "Nenhuma data de início seria alterada.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "Ninguém está superalocado, portanto não há nada a nivelar.",
+  "p.plans.pid.leveling.capacity_undeclared_h": "Sem capacidade declarada",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "Estas pessoas têm trabalho em dias sem disponibilidade declarada; nesses dias não estão nem acima nem dentro da capacidade:",
   "p.plans.pid.leveling.over_allocated_now": "Superalocados agora",
   "p.plans.pid.leveling.person": "Pessoa",
   "p.plans.pid.leveling.plan": "← Plano",
@@ -2848,6 +2851,12 @@ export const PAGES_PT: Record<PageKey, string> = {
   "l.capacity_view.to": " até {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "acima da capacidade a partir de {from}{v} ({demand}% solicitado, {capacity}% disponível)",
+  "l.capacity_view.capacity_undeclared":
+    "sem capacidade declarada em alguns dias com trabalho: nem acima nem dentro da capacidade",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "acima da capacidade a partir de {from}{v} ({demand} pedidos, mais do que qualquer capacidade pode ser)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: {demand} pedidos, mais do que qualquer capacidade pode ser",
   "l.capacity_view.over_capacity": "acima da capacidade",
   "l.capacity_view.committing_it_would_put_them":
     "; comprometê-lo os deixaria acima da capacidade",
@@ -3202,6 +3211,8 @@ export const PAGES_PT: Record<PageKey, string> = {
     " Arredondado: os três não coincidem ao minuto.",
   "l.work_view.capacity_not_checked_the_task":
     "Capacidade não verificada: a tarefa ainda não tem datas.",
+  "l.work_view.capacity_undeclared":
+    "Não há capacidade declarada para alguns destes dias, por isso isto não está nem acima nem dentro da capacidade da pessoa.",
   "l.work_view.within_the_person_s_capacity": "Dentro da capacidade da pessoa.",
   "l.work_view.give_1_to_40_whole":
     "Informe de 1 a 40 porcentagens inteiras, separadas por vírgulas.",

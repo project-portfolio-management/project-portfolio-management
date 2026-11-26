@@ -11,7 +11,10 @@
 //! Demand on a day is the summed `percent` of the person's **unfinished** tasks
 //! whose earliest dates cover it (on a day that task works) plus any fixed
 //! background load. Capacity is the person's availability range in force that
-//! day ([`crate::availability`]), 100% when none applies.
+//! day ([`crate::availability`]). A day no range covers has no declared capacity
+//! (CF-7): it is over only when its demand exceeds
+//! [`crate::availability::MAX_PERCENT`], is leveled down to that bound, and is
+//! otherwise reported in [`Proposal::capacity_undeclared`], never called within.
 //!
 //! The first over-allocated day (earliest date, then person) is resolved by
 //! **keeping** tasks in priority order until the capacity is spent and
@@ -34,7 +37,7 @@ use crate::datetime::Date;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::availability::{Alloc, Range, capacity_on};
+use crate::availability::{Alloc, DayVerdict, MAX_PERCENT, Range, capacity_on, day_verdict};
 use crate::cpm::{
     CpmError, CpmResult, Edge, Moved, Node, NodeResult, Options, WorkCalendar, analyze_with, diff,
 };
@@ -60,7 +63,7 @@ pub struct Demand {
 /// What one person brings to the window.
 #[derive(Debug, Clone, Default)]
 pub struct Resource {
-    /// Availability ranges (capacity is 100% where none applies).
+    /// Availability ranges (no capacity is declared on a day none covers).
     pub ranges: Vec<Range>,
     /// Fixed load from outside this network (other plans' bookings).
     pub background: Vec<Alloc>,
@@ -100,8 +103,9 @@ pub struct OverRun {
     pub to: Date,
     /// Summed percent asked for on each day (tasks and background).
     pub demand: i64,
-    /// The capacity in force on each day.
-    pub capacity: i32,
+    /// The capacity in force on each day; `None` where none is declared (the demand is then over
+    /// [`MAX_PERCENT`]).
+    pub capacity: Option<i32>,
     /// The tasks active on those days.
     pub tasks: Vec<Uuid>,
     /// Why it remains (set on `unresolved` runs): `fixed_tasks`, `critical_task`,
@@ -159,6 +163,9 @@ pub struct Proposal {
     pub critical_moved: bool,
     /// The iteration limit stopped the search early.
     pub truncated: bool,
+    /// People who, with the proposal applied, are asked for work on some day no availability range covers
+    /// (and no more than [`MAX_PERCENT`]): neither over nor within capacity on those days, sorted.
+    pub capacity_undeclared: Vec<String>,
 }
 
 /// One day on which a person's summed demand exceeds their capacity, with the tasks that contribute.
@@ -169,8 +176,8 @@ struct OverDay {
     day: Date,
     /// Summed percent asked for that day, from active tasks plus background assignments.
     demand: i64,
-    /// Capacity in force that day, in percent.
-    capacity: i32,
+    /// Capacity in force that day, in percent; `None` when none is declared.
+    capacity: Option<i32>,
     /// Indices into the analysis' `nodes`.
     active: Vec<usize>,
 }
@@ -202,6 +209,11 @@ fn run(input: &Input, overrides: &HashMap<Uuid, Date>) -> Result<CpmResult, CpmE
 
 /// Every over-allocated day with at least one task on it, earliest first.
 fn over_days(input: &Input, res: &CpmResult) -> Vec<OverDay> {
+    walk(input, res).0
+}
+
+/// Every over-allocated day (as [`over_days`]) and, sorted, the people with a day of unknown load.
+fn walk(input: &Input, res: &CpmResult) -> (Vec<OverDay>, Vec<String>) {
     let demand_of: HashMap<Uuid, &Demand> = input.demands.iter().map(|d| (d.pid, d)).collect();
     let calendar_of: HashMap<Uuid, &WorkCalendar> = input
         .nodes
@@ -223,6 +235,7 @@ fn over_days(input: &Input, res: &CpmResult) -> Vec<OverDay> {
     }
     let empty = Resource::default();
     let mut out = Vec::new();
+    let mut unknown: Vec<&str> = Vec::new();
     for (person, idxs) in by_person {
         let res_of = input.resources.get(person).unwrap_or(&empty);
         let first = idxs.iter().map(|i| res.nodes[*i].early_start).min();
@@ -257,7 +270,11 @@ fn over_days(input: &Input, res: &CpmResult) -> Vec<OverDay> {
                     .map(|a| i64::from(a.percent))
                     .sum();
                 let capacity = capacity_on(&res_of.ranges, day);
-                if tasks + background > i64::from(capacity) {
+                let verdict = day_verdict(tasks + background, capacity);
+                if verdict == DayVerdict::Unknown && unknown.last() != Some(&person) {
+                    unknown.push(person);
+                }
+                if verdict == DayVerdict::Over {
                     out.push(OverDay {
                         person: person.to_string(),
                         day,
@@ -274,7 +291,7 @@ fn over_days(input: &Input, res: &CpmResult) -> Vec<OverDay> {
         }
     }
     out.sort_by(|a, b| a.day.cmp(&b.day).then_with(|| a.person.cmp(&b.person)));
-    out
+    (out, unknown.into_iter().map(str::to_string).collect())
 }
 
 /// Merge consecutive over-allocated days for the same person into runs. A run continues only while demand and capacity are unchanged and the day is the next calendar day. `reason` is set from the run's tasks when it is non-empty.
@@ -443,7 +460,7 @@ pub fn propose(input: &Input, params: Params) -> Result<Proposal, CpmError> {
             let n = &current.nodes[i];
             let pct = i64::from(demand_of[&n.pid].percent);
             let fixed = blocked(n.pid, n).is_some() || frozen.contains_key(&n.pid);
-            if fixed || used + pct <= i64::from(d.capacity) {
+            if fixed || used + pct <= i64::from(d.capacity.unwrap_or(MAX_PERCENT)) {
                 used += pct;
             } else {
                 displaced.push(i);
@@ -558,6 +575,7 @@ pub fn propose(input: &Input, params: Params) -> Result<Proposal, CpmError> {
         finish_after: current.project_finish,
         finish_delay_days,
         truncated,
+        capacity_undeclared: walk(input, &current).1,
     })
 }
 
@@ -708,6 +726,20 @@ mod tests {
         assert_eq!(p.moves.len(), 1);
         assert_eq!(p.moves[0].scheduled_start, d(2026, 10, 6));
         assert!(p.unresolved.is_empty());
+        // Tuesday has no range: the moved task is not over there, and not called within capacity either (CF-7).
+        assert_eq!(p.capacity_undeclared, vec!["x".to_string()]);
+        // Declared full time from Tuesday on, nothing is left unknown.
+        r.get_mut("x").unwrap().ranges.push(Range {
+            from: d(2026, 10, 6),
+            to: d(2026, 12, 31),
+            max_percent: 100,
+        });
+        let p = go(&nodes, &[], &demands, &r, Params::default());
+        assert!(
+            p.capacity_undeclared.is_empty(),
+            "{:?}",
+            p.capacity_undeclared
+        );
     }
 
     #[test]

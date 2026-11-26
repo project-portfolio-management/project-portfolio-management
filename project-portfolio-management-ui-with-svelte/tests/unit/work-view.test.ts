@@ -110,6 +110,9 @@ describe("words", () => {
         to: "b",
       }),
     ).toMatch(/Over capacity on 1 calendar day /);
+    expect(capacityText({ checked: true, over_capacity: null })).toMatch(
+      /neither over nor within/,
+    );
     expect(capacityText({ checked: true, over_capacity: false })).toMatch(
       /Within/,
     );

@@ -3,6 +3,9 @@
 //! Demand is what the plans' **committed** allocations ask for, by role (or by
 //! skill tag) and period; supply is what the people whose primary role it is can
 //! give, read **per day** from their availability ([`crate::availability`]).
+//! Only **declared** capacity is supply (CF-7): a person-day no availability range
+//! covers adds nothing and is counted in `supply_undeclared_person_days`, so a
+//! gap over such days is a lower bound on what is known, not a measured shortfall.
 //! Both are summed as **percent-days** (an integer: percent × calendar days) and
 //! only then turned into **FTE**
 //! (`percent_days / (100 × calendar days in the period)`), so a role gap is
@@ -78,7 +81,7 @@ pub struct Person {
     pub person: String,
     /// Their primary role, if one is set.
     pub role: Option<String>,
-    /// Their availability ranges (100% where none applies).
+    /// Their availability ranges (no supply is counted on a day none covers).
     pub ranges: Vec<Range>,
 }
 
@@ -118,6 +121,23 @@ impl Grain {
             _ => None,
         }
     }
+}
+
+/// What `person` declared they can give over `period`, percent-days, and the days of it no range covers (CF-7).
+fn declared_supply(person: &Person, period: Period) -> (i64, i64) {
+    let (mut supply, mut undeclared) = (0_i64, 0_i64);
+    let mut day = period.from;
+    while day <= period.to {
+        match capacity_on(&person.ranges, day) {
+            Some(c) => supply += i64::from(c),
+            None => undeclared += 1,
+        }
+        day = match day.succ_opt() {
+            Some(next) => next,
+            None => break,
+        };
+    }
+    (supply, undeclared)
 }
 
 /// The periods covering `[from, to]`.
@@ -196,8 +216,10 @@ pub struct Row {
     pub placeholder_percent_days: i64,
     /// Proposed bookings, apart from the above.
     pub proposed_percent_days: i64,
-    /// What the role's people can give, percent-days; `None` for skills.
+    /// What the role's people have declared they can give, percent-days; `None` for skills.
     pub supply_percent_days: Option<i64>,
+    /// Person-days of the role's people with no availability declared: not supply, and not zero supply either.
+    pub supply_undeclared_person_days: i64,
     /// How many people supply it (headcount, never mixed with FTE).
     pub headcount: usize,
 }
@@ -300,20 +322,13 @@ pub fn plan(
                     .role
                     .clone()
                     .unwrap_or_else(|| UNCLASSIFIED.to_string());
-                let mut supply = 0_i64;
-                let mut day = p.from;
-                while day <= p.to {
-                    supply += i64::from(capacity_on(&person.ranges, day));
-                    day = match day.succ_opt() {
-                        Some(next) => next,
-                        None => break,
-                    };
-                }
+                let (supply, undeclared) = declared_supply(person, *p);
                 let row = rows.entry(key.clone()).or_insert_with(|| Row {
                     key: key.clone(),
                     ..Row::default()
                 });
                 *row.supply_percent_days.get_or_insert(0) += supply;
+                row.supply_undeclared_person_days += undeclared;
                 heads.entry(key).or_default().insert(person.person.as_str());
             }
             for (key, set) in heads {
@@ -487,11 +502,16 @@ mod tests {
             proposed: false,
         }
     }
+    /// A person declared full time for all of 2026 (CF-7: nothing is assumed where nothing is declared).
     fn person(who: &str, role: Option<&str>) -> Person {
         Person {
             person: who.to_string(),
             role: role.map(str::to_string),
-            ranges: vec![],
+            ranges: vec![Range {
+                from: d(2026, 1, 1),
+                to: d(2026, 12, 31),
+                max_percent: 100,
+            }],
         }
     }
     fn week() -> Vec<Period> {
@@ -554,13 +574,39 @@ mod tests {
     #[test]
     fn leave_lowers_supply_by_day() {
         let mut a = person("person:a", Some("dev"));
+        a.ranges = vec![
+            Range {
+                from: d(2026, 10, 5),
+                to: d(2026, 10, 8),
+                max_percent: 0,
+            },
+            Range {
+                from: d(2026, 10, 9),
+                to: d(2026, 12, 31),
+                max_percent: 100,
+            },
+        ];
+        let p = plan(&week(), &[], &[a], GroupBy::Role);
+        assert_eq!(p.periods[0].rows[0].supply_percent_days, Some(300));
+        assert_eq!(p.periods[0].rows[0].supply_undeclared_person_days, 0);
+    }
+
+    #[test]
+    fn undeclared_days_are_not_supply_and_are_counted_apart() {
+        // Leave declared for four days, nothing else: the other three days are not assumed full time.
+        let mut a = person("person:a", Some("dev"));
         a.ranges = vec![Range {
             from: d(2026, 10, 5),
             to: d(2026, 10, 8),
             max_percent: 0,
         }];
-        let p = plan(&week(), &[], &[a], GroupBy::Role);
-        assert_eq!(p.periods[0].rows[0].supply_percent_days, Some(300));
+        let mut b = person("person:b", Some("dev"));
+        b.ranges = vec![];
+        let p = plan(&week(), &[], &[a, b], GroupBy::Role);
+        let row = &p.periods[0].rows[0];
+        assert_eq!(row.supply_percent_days, Some(0));
+        assert_eq!(row.supply_undeclared_person_days, 3 + 7);
+        assert_eq!(row.headcount, 2, "they are still the role's people");
     }
 
     #[test]

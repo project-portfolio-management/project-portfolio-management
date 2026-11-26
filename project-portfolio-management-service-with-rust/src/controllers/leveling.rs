@@ -177,6 +177,7 @@ fn shape(c: &Computed, caller: &MaybeAuthUser, allow_critical: bool, percent: i3
     people.extend(p.moves.iter().map(|m| m.person.as_str()));
     people.extend(p.over_before.iter().map(|r| r.person.as_str()));
     people.extend(p.unresolved.iter().map(|r| r.person.as_str()));
+    people.extend(p.capacity_undeclared.iter().map(String::as_str));
     let label: HashMap<&str, String> = people
         .iter()
         .enumerate()
@@ -232,7 +233,13 @@ fn shape(c: &Computed, caller: &MaybeAuthUser, allow_critical: bool, percent: i3
         "finish_delay_days": p.finish_delay_days,
         "critical_moved": p.critical_moved,
         "truncated": p.truncated,
-        "note": "This is advice; nothing has been changed. A task is delayed only within its total float (the project finish does not move) unless allow_critical is set, in which case any critical task moved is marked and the finish impact is shown. A task already started, a task with a hard constraint, and a task whose delay would create negative float are never moved; what cannot be fixed is listed under unresolved with the reason. Demand counts each unfinished, assigned, scheduled task as load_percent of its assignee on each day it works, plus the person's committed bookings in other plans; capacity is their availability (100% when none). Apply with POST …/leveling/apply and confirm=true.",
+        // CF-7: who is asked for work on a day with no availability declared, after the proposal.
+        "capacity_undeclared": p.capacity_undeclared.iter().map(|person| {
+            let mut v = serde_json::json!({});
+            who(&mut v, person);
+            v
+        }).collect::<Vec<_>>(),
+        "note": "This is advice; nothing has been changed. A task is delayed only within its total float (the project finish does not move) unless allow_critical is set, in which case any critical task moved is marked and the finish impact is shown. A task already started, a task with a hard constraint, and a task whose delay would create negative float are never moved; what cannot be fixed is listed under unresolved with the reason. Demand counts each unfinished, assigned, scheduled task as load_percent of its assignee on each day it works, plus the person's committed bookings in other plans; capacity is their declared availability: a day no range covers is over only past 100% and is otherwise listed under capacity_undeclared, never called within capacity. Apply with POST …/leveling/apply and confirm=true.",
     })
 }
 

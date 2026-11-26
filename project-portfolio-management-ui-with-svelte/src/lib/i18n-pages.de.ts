@@ -1360,6 +1360,9 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Kein Startdatum würde sich ändern.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "Niemand ist überlastet, daher gibt es nichts auszugleichen.",
+  "p.plans.pid.leveling.capacity_undeclared_h": "Keine Kapazität angegeben",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "Diese Personen haben Arbeit an Tagen ohne angegebene Verfügbarkeit; an diesen Tagen sind sie weder über noch innerhalb der Kapazität:",
   "p.plans.pid.leveling.over_allocated_now": "Derzeit überlastet",
   "p.plans.pid.leveling.person": "Person",
   "p.plans.pid.leveling.plan": "← Plan",
@@ -2859,6 +2862,12 @@ export const PAGES_DE: Record<PageKey, string> = {
   "l.capacity_view.to": " bis {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "über der Kapazität ab {from}{v} ({demand} % angefragt, {capacity} % verfügbar)",
+  "l.capacity_view.capacity_undeclared":
+    "an einigen Tagen mit Arbeit ist keine Kapazität angegeben: weder über noch innerhalb der Kapazität",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "über der Kapazität ab {from}{v} ({demand} angefragt, mehr als jede Kapazität sein kann)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: {demand} angefragt, mehr als jede Kapazität sein kann",
   "l.capacity_view.over_capacity": "über der Kapazität",
   "l.capacity_view.committing_it_would_put_them":
     "; eine Zusage würde die Kapazität überschreiten",
@@ -3214,6 +3223,8 @@ export const PAGES_DE: Record<PageKey, string> = {
     " Gerundet: Die drei Werte stimmen nicht auf die Minute überein.",
   "l.work_view.capacity_not_checked_the_task":
     "Kapazität nicht geprüft: Die Aufgabe hat noch keine Termine.",
+  "l.work_view.capacity_undeclared":
+    "Für einige dieser Tage ist keine Kapazität angegeben, daher liegt dies weder über noch innerhalb der Kapazität der Person.",
   "l.work_view.within_the_person_s_capacity":
     "Innerhalb der Kapazität der Person.",
   "l.work_view.give_1_to_40_whole":

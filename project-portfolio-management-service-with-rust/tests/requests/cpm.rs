@@ -551,9 +551,11 @@ async fn capacity_is_read_per_day_from_availability_ranges() {
             }
         };
 
-        // No ranges: exactly as before (80% of 100 is not over).
+        // No ranges (CF-7): 80% is not over, and not within either: nothing is assumed.
         let before = cap("2026-10-05", "2026-10-18").await;
-        assert_eq!((before["over_allocated"].as_bool(), before["capacity"]["source"].as_str()), (Some(false), Some("default")));
+        assert_eq!((before["over_allocated"].as_bool(), before["capacity"]["source"].as_str()), (None, Some("undeclared")), "{before}");
+        assert_eq!(before["over_allocated_reason"], "capacity_undeclared");
+        assert_eq!((before["capacity"]["unknown_days"].as_i64(), before["capacity"]["min_percent"].as_i64()), (Some(14), None));
         assert_eq!(before["allocated_percent"], 80);
 
         // Validation and the range itself.
@@ -608,22 +610,27 @@ async fn capacity_is_read_per_day_from_availability_ranges() {
         sqlx::raw_sql(sqlx::AssertSqlSafe(format!("UPDATE person_availabilities SET deleted_at = now() WHERE person_ref = '{raw}'"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         assert!(insert("2026-12-05", "2026-12-10").await, "a removed range does not block");
 
-        // Capacity is per day: the 40% week is over, the full-capacity week is not, and the sum is unchanged.
+        // Capacity is per day: the 40% week is over (a provable over-allocation needs nothing else declared), the
+        // undeclared week before it is counted apart, and the sum is unchanged.
         let c = cap("2026-10-05", "2026-10-18").await;
         assert_eq!(c["over_allocated"], true, "{c}");
         assert_eq!(c["allocated_percent"], 80, "the old figure is unchanged");
-        assert_eq!(c["capacity"], json!({ "source": "availability", "min_percent": 40 }));
+        assert_eq!(c["capacity"], json!({ "source": "partly_declared", "min_percent": 40, "undeclared_days": 7, "unknown_days": 7 }));
         assert_eq!(c["over_capacity"], json!([{ "from": "2026-10-12", "to": "2026-10-18", "demand": 80, "capacity": 40 }]));
         let early = cap("2026-10-05", "2026-10-11").await;
-        assert_eq!((early["over_allocated"].as_bool(), early["capacity"]["source"].as_str()), (Some(false), Some("default")), "a window before the range is untouched");
+        assert_eq!((early["over_allocated"].as_bool(), early["capacity"]["source"].as_str()), (None, Some("undeclared")), "a window before the range is not assumed to be full time");
+        // Declared full time for that week, it is within capacity.
+        post(json!({ "person_ref": who, "from": "2026-10-05", "to": "2026-10-11", "max_percent": 100 })).await.assert_status_ok();
+        let early = cap("2026-10-05", "2026-10-11").await;
+        assert_eq!((early["over_allocated"].as_bool(), early["capacity"]["source"].as_str()), (Some(false), Some("availability")), "{early}");
 
         // The list, and removal through the POST twin restores the old answer.
         let list: Value = request.get(&format!("/api/availability?person_ref={who}")).await.json();
-        assert_eq!(list.as_array().unwrap().len(), 2);
-        assert_eq!(list[0]["note"], "part-time");
+        assert_eq!(list.as_array().unwrap().len(), 3);
+        assert_eq!(list[1]["note"], "part-time", "ordered by date: the full-time week, then part-time, then leave");
         request.post(&format!("/api/availability/{}/delete", part_time["pid"].as_str().unwrap())).await.assert_status_ok();
         let after = cap("2026-10-05", "2026-10-18").await;
-        assert_eq!(after["over_allocated"], false);
+        assert_eq!(after["over_allocated"], Value::Null, "the second week is undeclared again: {after}");
         // A leave day with demand is over capacity (0%).
         let leave = cap("2026-10-19", "2026-10-20").await;
         assert_eq!(leave["capacity"]["min_percent"], 0);
@@ -664,11 +671,12 @@ async fn proposed_bookings_never_count_until_committed() {
             }
         };
         // The firm figures ignore the proposal; the proposed series is separate; a person with only proposals still shows.
+        // Nothing is declared for either (CF-7): 70% is neither over nor within; 70 + 50 is over whatever is declared.
         let c = cap(a).await;
-        assert_eq!((c["allocated_percent"].as_i64(), c["over_allocated"].as_bool()), (Some(70), Some(false)), "{c}");
+        assert_eq!((c["allocated_percent"].as_i64(), c["over_allocated"].as_bool()), (Some(70), None), "{c}");
         assert_eq!(c["proposed"], json!({ "percent": 50, "allocations": 1, "would_exceed_capacity": true }));
         let cb = cap(b).await;
-        assert_eq!((cb["allocated_percent"].as_i64(), cb["proposed"]["percent"].as_i64(), cb["proposed"]["would_exceed_capacity"].as_bool()), (Some(0), Some(20), Some(false)));
+        assert_eq!((cb["allocated_percent"].as_i64(), cb["proposed"]["percent"].as_i64(), cb["proposed"]["would_exceed_capacity"].as_bool()), (Some(0), Some(20), None));
 
         // Committing the one that fits needs no confirmation; the one that overloads is a 409 with the numbers.
         request.post(&format!("/api/plans/{p}/allocations/{only_proposed}/commit")).await.assert_status_ok();
@@ -1782,9 +1790,21 @@ async fn portfolio_resources_show_role_gaps_placeholders_and_honest_hours() {
         let (alice, bob) = (who(1), who(2));
         let qs = "from=2026-10-05&to=2026-10-11&period=week";
 
-        // Two developers (2.00 FTE); demand 100% + 50% named, plus a 100% placeholder.
+        // Two developers (2.00 FTE once declared); demand 100% + 50% named, plus a 100% placeholder.
         for p in [&alice, &bob] {
             request.put("/api/resource-roles").json(&json!({ "person_ref": p, "role": "dev" })).await.assert_status_ok();
+        }
+        // CF-7: before any availability is declared, the role's supply is none declared, and the gap is not measured.
+        let r: Value = request.get(&format!("/api/resource-plan?{qs}")).await.json();
+        let row = r["periods"][0]["rows"].as_array().unwrap().iter().find(|x| x["key"] == "dev").cloned().unwrap();
+        assert_eq!((row["supply_fte"].as_f64(), row["supply_undeclared_person_days"].as_i64()), (Some(0.0), Some(14)), "{row}");
+        assert!(row["gap_fte"].is_null(), "{row}");
+        for p in [&alice, &bob] {
+            request
+                .post("/api/availability")
+                .json(&json!({ "person_ref": p, "from": "2026-01-01", "to": "2026-12-31", "max_percent": 100 }))
+                .await
+                .assert_status_ok();
         }
         let alloc = |plan: String, body: Value| {
             let request = &request;

@@ -1408,7 +1408,12 @@ export class PpmClient {
     pid: string,
     allocationPid: string,
     confirm = false,
-  ): Promise<{ pid: string; booking: string; over_capacity: boolean }> {
+  ): Promise<{
+    pid: string;
+    booking: string;
+    over_capacity: boolean | null;
+    days_capacity_unknown: number;
+  }> {
     return this.http.post(
       `/api/plans/${pid}/allocations/${allocationPid}/commit${confirm ? "?confirm=true" : ""}`,
     );

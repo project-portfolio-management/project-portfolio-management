@@ -1338,6 +1338,9 @@ export const PAGES_EN = {
     "No start date would change.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "Nobody is over-allocated, so there is nothing to level.",
+  "p.plans.pid.leveling.capacity_undeclared_h": "No capacity declared",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "These people have work on days with no availability declared; on those days they are neither over nor within capacity:",
   "p.plans.pid.leveling.over_allocated_now": "Over-allocated now",
   "p.plans.pid.leveling.person": "Person",
   "p.plans.pid.leveling.plan": "← Plan",
@@ -2772,6 +2775,12 @@ export const PAGES_EN = {
   "l.capacity_view.to": " to {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "over capacity from {from}{v} ({demand}% asked, {capacity}% available)",
+  "l.capacity_view.capacity_undeclared":
+    "no capacity declared on some days with work: neither over nor within capacity",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "over capacity from {from}{v} ({demand} asked, more than any capacity can be)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: {demand} asked, more than any capacity can be",
   "l.capacity_view.over_capacity": "over capacity",
   "l.capacity_view.committing_it_would_put_them":
     "; committing it would put them over capacity",
@@ -3104,6 +3113,8 @@ export const PAGES_EN = {
     " Rounded: the three do not match to the minute.",
   "l.work_view.capacity_not_checked_the_task":
     "Capacity not checked: the task has no dates yet.",
+  "l.work_view.capacity_undeclared":
+    "No capacity is declared for some of these days, so this is neither over nor within the person's capacity.",
   "l.work_view.within_the_person_s_capacity": "Within the person's capacity.",
   "l.work_view.give_1_to_40_whole":
     "Give 1 to 40 whole percentages, separated by commas.",

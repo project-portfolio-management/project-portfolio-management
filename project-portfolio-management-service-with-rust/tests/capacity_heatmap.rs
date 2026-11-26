@@ -152,6 +152,8 @@ async fn the_heatmap_keeps_its_promises() {
         // ── people and demand ──
         for (who, role) in [("person:d1", "Developer"), ("person:g1", "Designer")] {
             sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), '{who}', '{role}', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+            // CF-7: supply is what is declared; each supplier is declared full time around the window.
+            sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO person_availabilities (pid, person_ref, from_date, to_date, max_percent, created_at, updated_at) VALUES (gen_random_uuid(), '{who}', current_date - 400, current_date + 2000, 100, now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         }
         let alloc = |plan: &str, who: &str, role: &str, percent: i32| format!("INSERT INTO allocations (pid, plan_pid, person_ref, role, percent, start_date, end_date, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{plan}', '{who}', '{role}', {percent}, '{first}', '{last}', '[]', now(), now())");
         for sql in [

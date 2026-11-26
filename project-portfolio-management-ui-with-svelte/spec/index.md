@@ -1418,7 +1418,11 @@ calendar symbols), `tests/unit/ppm.test.ts` (paths and verbs).
   for a part-time spell or leave), the **hatched extension is proposed and never
   added into the firm figure**, and a strip marks the days over capacity. A
   marker and a sentence say the same thing (○ within capacity, ◐ within, but
-  committing the proposals would exceed it, ! over). `src/lib/capacity-view.ts`
+  committing the proposals would exceed it, ! over, ? **not declared**: CF-7, the
+  service answers `over_allocated: null` when no day is over and some day with work
+  has no availability range, and the meter is grey with no capacity line rather than
+  green; the leveling page lists the people with work on such days, and the
+  assignment check says "neither over nor within"). `src/lib/capacity-view.ts`
   holds the pure model; `tests/unit/capacity-view.test.ts` pins it.
 - **`/me/calendar`** also edits the caller's **availability ranges** (the most
   they can commit between two dates: 60 part-time, 0 leave). Capacity is read day

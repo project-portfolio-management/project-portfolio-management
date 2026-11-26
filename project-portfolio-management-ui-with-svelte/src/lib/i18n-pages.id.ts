@@ -1355,6 +1355,10 @@ export const PAGES_ID: Record<PageKey, string> = {
     "Tidak ada tanggal mulai yang akan berubah.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "Tidak ada yang dialokasikan berlebih, sehingga tidak ada yang perlu diratakan.",
+  "p.plans.pid.leveling.capacity_undeclared_h":
+    "Tidak ada kapasitas yang dinyatakan",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "Orang-orang ini memiliki pekerjaan pada hari tanpa ketersediaan yang dinyatakan; pada hari-hari itu mereka tidak melebihi dan tidak di dalam kapasitas:",
   "p.plans.pid.leveling.over_allocated_now": "Dialokasikan berlebih saat ini",
   "p.plans.pid.leveling.person": "Orang",
   "p.plans.pid.leveling.plan": "← Rencana",
@@ -2828,6 +2832,12 @@ export const PAGES_ID: Record<PageKey, string> = {
   "l.capacity_view.to": " hingga {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "melebihi kapasitas dari {from}{v} ({demand}% diminta, {capacity}% tersedia)",
+  "l.capacity_view.capacity_undeclared":
+    "tidak ada kapasitas yang dinyatakan pada beberapa hari kerja: tidak melebihi dan tidak di dalam kapasitas",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "melebihi kapasitas sejak {from}{v} ({demand} diminta, lebih dari kapasitas mana pun)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: {demand} diminta, lebih dari kapasitas mana pun",
   "l.capacity_view.over_capacity": "melebihi kapasitas",
   "l.capacity_view.committing_it_would_put_them":
     "; mengomitmenkannya akan membuat mereka melebihi kapasitas",
@@ -3176,6 +3186,8 @@ export const PAGES_ID: Record<PageKey, string> = {
     " Dibulatkan: ketiganya tidak cocok hingga ke menit.",
   "l.work_view.capacity_not_checked_the_task":
     "Kapasitas tidak diperiksa: tugas belum memiliki tanggal.",
+  "l.work_view.capacity_undeclared":
+    "Tidak ada kapasitas yang dinyatakan untuk beberapa hari ini, jadi ini tidak melebihi dan tidak di dalam kapasitas orang tersebut.",
   "l.work_view.within_the_person_s_capacity": "Dalam kapasitas orang tersebut.",
   "l.work_view.give_1_to_40_whole":
     "Isi 1 hingga 40 persentase bulat, dipisahkan koma.",

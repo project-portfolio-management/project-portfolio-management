@@ -1317,6 +1317,9 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plans.pid.leveling.no_start_date_would_change": "कोई आरंभ तिथि नहीं बदलेगी।",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "कोई भी अधिक आवंटित नहीं है, इसलिए समतल करने को कुछ नहीं है।",
+  "p.plans.pid.leveling.capacity_undeclared_h": "कोई क्षमता घोषित नहीं",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "इन लोगों के पास ऐसे दिनों में काम है जिन पर कोई उपलब्धता घोषित नहीं; उन दिनों वे न क्षमता से अधिक हैं, न उसके भीतर:",
   "p.plans.pid.leveling.over_allocated_now": "अभी अधिक आवंटित",
   "p.plans.pid.leveling.person": "व्यक्ति",
   "p.plans.pid.leveling.plan": "← योजना",
@@ -2734,6 +2737,12 @@ export const PAGES_HI: Record<PageKey, string> = {
   "l.capacity_view.to": " से {to} तक",
   "l.capacity_view.over_capacity_from_asked_available":
     "{from}{v} से क्षमता से अधिक ({demand}% माँगा गया, {capacity}% उपलब्ध)",
+  "l.capacity_view.capacity_undeclared":
+    "काम वाले कुछ दिनों पर कोई क्षमता घोषित नहीं: न क्षमता से अधिक, न उसके भीतर",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "{from}{v} से क्षमता से अधिक ({demand} माँगा गया, किसी भी क्षमता से अधिक)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: {demand} माँगा गया, किसी भी क्षमता से अधिक",
   "l.capacity_view.over_capacity": "क्षमता से अधिक",
   "l.capacity_view.committing_it_would_put_them":
     "; इसे प्रतिबद्ध करने से वे क्षमता से अधिक हो जाएँगे",
@@ -3064,6 +3073,8 @@ export const PAGES_HI: Record<PageKey, string> = {
     " पूर्णांकित: तीनों मान मिनट तक मेल नहीं खाते।",
   "l.work_view.capacity_not_checked_the_task":
     "क्षमता जाँची नहीं गई: कार्य की अभी कोई तिथियाँ नहीं हैं।",
+  "l.work_view.capacity_undeclared":
+    "इनमें से कुछ दिनों के लिए कोई क्षमता घोषित नहीं है, इसलिए यह व्यक्ति की क्षमता से न अधिक है, न उसके भीतर।",
   "l.work_view.within_the_person_s_capacity": "व्यक्ति की क्षमता के भीतर।",
   "l.work_view.give_1_to_40_whole": "अल्पविराम से अलग 1 से 40 पूर्ण प्रतिशत दें।",
   "l.work_view.the_percentages_add_up_to": "प्रतिशतों का योग {sum} है, 100 नहीं।",

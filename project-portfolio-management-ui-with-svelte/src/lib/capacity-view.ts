@@ -10,19 +10,23 @@
 import { dayNumber } from "./lily-grids";
 import type { OverCapacitySpan } from "./api/ppm";
 import { t } from "./i18n.svelte.js";
+import { formatPercentValue } from "./locale-format.js";
 
 /** The slice of a capacity row the model needs. */
 export interface CapacityPerson {
   person_ref: string;
   allocated_percent: number;
-  over_allocated: boolean;
-  capacity: { source: "default" | "availability"; min_percent: number };
+  over_allocated: boolean | null;
+  capacity: {
+    source: "availability" | "partly_declared" | "undeclared";
+    min_percent: number | null;
+  };
   peak_percent: number;
   over_capacity: OverCapacitySpan[];
   proposed: {
     percent: number;
     allocations: number;
-    would_exceed_capacity: boolean;
+    would_exceed_capacity: boolean | null;
   };
 }
 
@@ -33,9 +37,10 @@ export interface LoadModel {
   committedPct: number;
   /** Width of the proposed extension after the firm bar, in percent of the meter. */
   proposedPct: number;
-  /** Where the capacity line sits, in percent of the meter. */
-  capacityPct: number;
-  state: "over" | "proposed_over" | "ok";
+  /** Where the capacity line sits, in percent of the meter; `null` when no capacity is declared in the window. */
+  capacityPct: number | null;
+  /** `unknown`: no day is over, and some day with work has no declared capacity (CF-7). */
+  state: "over" | "proposed_over" | "unknown" | "ok";
   marker: string;
   label: string;
 }
@@ -46,41 +51,61 @@ const clampPct = (n: number) => Math.max(0, Math.min(100, n));
 export function loadModel(p: CapacityPerson): LoadModel {
   const committed = Math.max(0, p.allocated_percent);
   const proposed = Math.max(0, p.proposed.percent);
-  const capacity = Math.max(0, p.capacity.min_percent);
-  const need = Math.max(100, committed, committed + proposed, capacity);
+  const declared = p.capacity.min_percent;
+  const capacity = declared === null ? null : Math.max(0, declared);
+  const need = Math.max(100, committed, committed + proposed, capacity ?? 0);
   const scale = Math.ceil(need / 25) * 25;
-  const state: LoadModel["state"] = p.over_allocated
-    ? "over"
-    : p.proposed.would_exceed_capacity
-      ? "proposed_over"
-      : "ok";
-  const marker = state === "over" ? "!" : state === "proposed_over" ? "◐" : "○";
+  const state: LoadModel["state"] =
+    p.over_allocated === true
+      ? "over"
+      : p.proposed.would_exceed_capacity === true
+        ? "proposed_over"
+        : p.over_allocated === null
+          ? "unknown"
+          : "ok";
+  const marker =
+    state === "over"
+      ? "!"
+      : state === "proposed_over"
+        ? "◐"
+        : state === "unknown"
+          ? "?"
+          : "○";
   const parts: string[] = [];
   parts.push(
-    p.capacity.source === "availability"
+    capacity !== null
       ? t("l.capacity_view.committed_against_a_capacity_as", {
           committed,
           capacity,
         })
       : t("l.capacity_view.committed", { committed }),
   );
+  // An undeclared day over 100% is over whatever could be declared; its excess is measured against 100.
+  const excess = (s: OverCapacitySpan) => s.demand - (s.capacity ?? 100);
   if (p.over_capacity.length > 0) {
     const worst = p.over_capacity.reduce((a, b) =>
-      b.demand - b.capacity > a.demand - a.capacity ? b : a,
+      excess(b) > excess(a) ? b : a,
     );
+    const v =
+      worst.to === worst.from ? "" : t("l.capacity_view.to", { to: worst.to });
     parts.push(
-      t("l.capacity_view.over_capacity_from_asked_available", {
-        from: worst.from,
-        v:
-          worst.to === worst.from
-            ? ""
-            : t("l.capacity_view.to", { to: worst.to }),
-        demand: worst.demand,
-        capacity: worst.capacity,
-      }),
+      worst.capacity === null
+        ? t("l.capacity_view.over_capacity_from_asked_undeclared", {
+            from: worst.from,
+            v,
+            demand: formatPercentValue(worst.demand),
+          })
+        : t("l.capacity_view.over_capacity_from_asked_available", {
+            from: worst.from,
+            v,
+            demand: worst.demand,
+            capacity: worst.capacity,
+          }),
     );
-  } else if (p.over_allocated) {
+  } else if (p.over_allocated === true) {
     parts.push(t("l.capacity_view.over_capacity"));
+  } else if (p.over_allocated === null) {
+    parts.push(t("l.capacity_view.capacity_undeclared"));
   }
   if (p.proposed.allocations > 0) {
     parts.push(
@@ -98,7 +123,7 @@ export function loadModel(p: CapacityPerson): LoadModel {
     proposedPct:
       clampPct(((committed + proposed) / scale) * 100) -
       clampPct((committed / scale) * 100),
-    capacityPct: clampPct((capacity / scale) * 100),
+    capacityPct: capacity === null ? null : clampPct((capacity / scale) * 100),
     state,
     marker,
     label: parts.join("; "),
@@ -133,12 +158,19 @@ export function spanSegments(
       {
         startPct: ((start - a) / days) * 100,
         widthPct: ((end - start + 1) / days) * 100,
-        label: t("l.capacity_view.asked_available", {
-          from: s.from,
-          v: s.to === s.from ? "" : t("l.capacity_view.to", { to: s.to }),
-          demand: s.demand,
-          capacity: s.capacity,
-        }),
+        label:
+          s.capacity === null
+            ? t("l.capacity_view.asked_undeclared", {
+                from: s.from,
+                v: s.to === s.from ? "" : t("l.capacity_view.to", { to: s.to }),
+                demand: formatPercentValue(s.demand),
+              })
+            : t("l.capacity_view.asked_available", {
+                from: s.from,
+                v: s.to === s.from ? "" : t("l.capacity_view.to", { to: s.to }),
+                demand: s.demand,
+                capacity: s.capacity,
+              }),
       },
     ];
   });

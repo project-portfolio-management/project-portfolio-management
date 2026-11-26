@@ -1364,6 +1364,9 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Ni fyddai unrhyw ddyddiad dechrau yn newid.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "Does neb wedi'i or-neilltuo, felly nid oes dim i'w lefelu.",
+  "p.plans.pid.leveling.capacity_undeclared_h": "Dim capasiti wedi'i ddatgan",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "Mae gan y bobl hyn waith ar ddiwrnodau heb argaeledd wedi'i ddatgan; ar y diwrnodau hynny nid ydynt dros y capasiti nac o fewn iddo:",
   "p.plans.pid.leveling.over_allocated_now": "Wedi'u gor-neilltuo nawr",
   "p.plans.pid.leveling.person": "Person",
   "p.plans.pid.leveling.plan": "← Cynllun",
@@ -2839,6 +2842,12 @@ export const PAGES_CY: Record<PageKey, string> = {
   "l.capacity_view.to": " tan {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "dros y capasiti o {from}{v} (gofynnwyd am {demand}%, {capacity}% ar gael)",
+  "l.capacity_view.capacity_undeclared":
+    "dim capasiti wedi'i ddatgan ar rai diwrnodau gyda gwaith: nid dros y capasiti nac o fewn iddo",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "dros y capasiti o {from}{v} (gofynnwyd {demand}, mwy nag y gall unrhyw gapasiti fod)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: gofynnwyd {demand}, mwy nag y gall unrhyw gapasiti fod",
   "l.capacity_view.over_capacity": "dros y capasiti",
   "l.capacity_view.committing_it_would_put_them":
     "; byddai ymrwymo iddo yn eu rhoi dros eu capasiti",
@@ -3188,6 +3197,8 @@ export const PAGES_CY: Record<PageKey, string> = {
     " Talgrynnwyd: nid yw'r tri yn cyfateb i'r funud.",
   "l.work_view.capacity_not_checked_the_task":
     "Heb wirio'r capasiti: nid oes gan y dasg unrhyw ddyddiadau eto.",
+  "l.work_view.capacity_undeclared":
+    "Nid oes capasiti wedi'i ddatgan ar gyfer rhai o'r diwrnodau hyn, felly nid yw hyn dros gapasiti'r person nac o fewn iddo.",
   "l.work_view.within_the_person_s_capacity": "O fewn capasiti'r person.",
   "l.work_view.give_1_to_40_whole":
     "Rhowch 1 i 40 canran gyfan, wedi'u gwahanu gan atalnodau.",

@@ -1364,6 +1364,9 @@ export const PAGES_ES: Record<PageKey, string> = {
     "No cambiaría ninguna fecha de inicio.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "Nadie está sobreasignado, así que no hay nada que nivelar.",
+  "p.plans.pid.leveling.capacity_undeclared_h": "Sin capacidad declarada",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "Estas personas tienen trabajo en días sin disponibilidad declarada; esos días no están ni por encima ni dentro de la capacidad:",
   "p.plans.pid.leveling.over_allocated_now": "Sobreasignado ahora",
   "p.plans.pid.leveling.person": "Persona",
   "p.plans.pid.leveling.plan": "← Plan",
@@ -2855,6 +2858,12 @@ export const PAGES_ES: Record<PageKey, string> = {
   "l.capacity_view.to": " hasta {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "por encima de la capacidad desde {from}{v} ({demand} % solicitado, {capacity} % disponible)",
+  "l.capacity_view.capacity_undeclared":
+    "sin capacidad declarada en algunos días con trabajo: ni por encima ni dentro de la capacidad",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "por encima de la capacidad desde {from}{v} ({demand} solicitado, más de lo que puede ser cualquier capacidad)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: {demand} solicitado, más de lo que puede ser cualquier capacidad",
   "l.capacity_view.over_capacity": "por encima de la capacidad",
   "l.capacity_view.committing_it_would_put_them":
     "; comprometerlo la situaría por encima de su capacidad",
@@ -3211,6 +3220,8 @@ export const PAGES_ES: Record<PageKey, string> = {
     " Redondeado: los tres valores no coinciden al minuto.",
   "l.work_view.capacity_not_checked_the_task":
     "Capacidad no comprobada: la tarea aún no tiene fechas.",
+  "l.work_view.capacity_undeclared":
+    "No hay capacidad declarada para algunos de estos días, así que esto no está ni por encima ni dentro de la capacidad de la persona.",
   "l.work_view.within_the_person_s_capacity":
     "Dentro de la capacidad de la persona.",
   "l.work_view.give_1_to_40_whole":

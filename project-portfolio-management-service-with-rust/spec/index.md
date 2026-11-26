@@ -627,7 +627,7 @@ code. Landed 2026-07-18 (T-PPM-A, §13).
 | POST | `/api/plans/{pid}/milestones/{m_pid}/complete` | Mark complete (`done_at` stamped) |
 | POST / GET | `/api/plans/{pid}/allocations` | Per-person allocation |
 | DELETE | `/api/plans/{pid}/allocations/{a_pid}` | Remove an allocation |
-| GET | `/api/capacity` | Per-person rollup, flags > 100 % |
+| GET | `/api/capacity` | Per-person rollup, judged per day against declared availability: `over_allocated` is `true`, `false`, or `null` with `over_allocated_reason: capacity_undeclared` when no day is over and some day with demand has no range (CF-7; nothing is assumed) |
 | POST / GET | `/api/reports` | Saved report definitions |
 | DELETE | `/api/reports/{pid}` | Remove a saved report |
 | GET | `/api/reports/{pid}/run?format=json\|csv` | Run synchronously (row cap 1000; RFC-4180 CSV) |

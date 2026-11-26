@@ -1346,6 +1346,9 @@ export const PAGES_JA: Record<PageKey, string> = {
     "変更される開始日はありません。",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "過剰に割り当てられている人はいないため、平準化するものはありません。",
+  "p.plans.pid.leveling.capacity_undeclared_h": "キャパシティ未申告",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "これらの人には、空き状況が申告されていない日に作業があります。その日は超過でも範囲内でもありません：",
   "p.plans.pid.leveling.over_allocated_now": "現在過剰に割り当てられている人",
   "p.plans.pid.leveling.person": "担当者",
   "p.plans.pid.leveling.plan": "← 計画",
@@ -2804,6 +2807,12 @@ export const PAGES_JA: Record<PageKey, string> = {
   "l.capacity_view.to": " から {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "{from}{v} からキャパシティ超過（要求 {demand}%、利用可能 {capacity}%）",
+  "l.capacity_view.capacity_undeclared":
+    "作業のある一部の日にキャパシティが申告されていません：超過でも範囲内でもありません",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "{from}{v}からキャパシティ超過（{demand}を要求、どのキャパシティよりも多い）",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}：{demand}を要求、どのキャパシティよりも多い",
   "l.capacity_view.over_capacity": "キャパシティ超過",
   "l.capacity_view.committing_it_would_put_them":
     "。確保するとキャパシティを超過します",
@@ -3141,6 +3150,8 @@ export const PAGES_JA: Record<PageKey, string> = {
     " 丸め処理：3 つの値は分単位では一致しません。",
   "l.work_view.capacity_not_checked_the_task":
     "キャパシティは未確認です：タスクにまだ日付がありません。",
+  "l.work_view.capacity_undeclared":
+    "これらの日の一部にはキャパシティが申告されていないため、この人のキャパシティの超過でも範囲内でもありません。",
   "l.work_view.within_the_person_s_capacity": "担当者のキャパシティ内です。",
   "l.work_view.give_1_to_40_whole":
     "1〜40 個の整数のパーセンテージを、カンマ区切りで入力してください。",

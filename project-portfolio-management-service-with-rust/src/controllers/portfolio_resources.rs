@@ -192,6 +192,8 @@ async fn resource_plan(
                 .iter()
                 .map(|r| {
                     let supply = r.supply_percent_days;
+                    // CF-7: undeclared person-days are not supply; a gap over them is not measured, so it is null.
+                    let measured = r.supply_undeclared_person_days == 0;
                     serde_json::json!({
                         "key": r.key,
                         "demand_fte": fte(r.demand_percent_days, days),
@@ -200,7 +202,8 @@ async fn resource_plan(
                         "proposed_fte": fte(r.proposed_percent_days, days),
                         "supply_fte": supply.map(|s| fte(s, days)),
                         // Negative is a shortage; computed from exact percent-days.
-                        "gap_fte": supply.map(|s| fte(s - r.demand_percent_days, days)),
+                        "gap_fte": supply.filter(|_| measured).map(|s| fte(s - r.demand_percent_days, days)),
+                        "supply_undeclared_person_days": r.supply_undeclared_person_days,
                         "headcount": r.headcount,
                         "demand_percent_days": r.demand_percent_days,
                         "placeholder_percent_days": r.placeholder_percent_days,
@@ -602,8 +605,10 @@ async fn resolve_placeholder(
                 ErrorDetail::new(
                     "over_capacity",
                     format!(
-                        "giving this placeholder to that person would put them over capacity on {} calendar day(s) (peak {}% against a capacity of {}%); repeat the request with confirm=true to do it anyway",
-                        load.days_over, load.peak_demand, load.min_capacity
+                        "giving this placeholder to that person would put them over capacity on {} calendar day(s) (peak {}% against {}); repeat the request with confirm=true to do it anyway",
+                        load.days_over,
+                        load.peak_demand,
+                        load.capacity_phrase()
                     ),
                 ),
             ));

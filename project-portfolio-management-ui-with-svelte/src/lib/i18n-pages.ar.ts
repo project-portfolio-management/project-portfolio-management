@@ -1318,6 +1318,9 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.plans.pid.leveling.no_start_date_would_change": "لن يتغير أي تاريخ بدء.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "لا أحد محمّل فوق طاقته، فلا شيء يحتاج إلى تسوية.",
+  "p.plans.pid.leveling.capacity_undeclared_h": "لا توجد سعة مُعلنة",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "لدى هؤلاء الأشخاص عمل في أيام لم يُعلَن فيها توفّر؛ في تلك الأيام ليسوا فوق السعة ولا ضمنها:",
   "p.plans.pid.leveling.over_allocated_now": "محمّل فوق الطاقة حاليًا",
   "p.plans.pid.leveling.person": "الشخص",
   "p.plans.pid.leveling.plan": "← الخطة",
@@ -2739,6 +2742,12 @@ export const PAGES_AR: Record<PageKey, string> = {
   "l.capacity_view.to": " إلى {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "فوق السعة من {from}{v} ({demand}% مطلوب، {capacity}% متاح)",
+  "l.capacity_view.capacity_undeclared":
+    "لا توجد سعة مُعلنة في بعض أيام العمل: ليست فوق السعة ولا ضمنها",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "فوق السعة من {from}{v} (المطلوب {demand}، أكثر مما يمكن أن تكون عليه أي سعة)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: المطلوب {demand}، أكثر مما يمكن أن تكون عليه أي سعة",
   "l.capacity_view.over_capacity": "فوق السعة",
   "l.capacity_view.committing_it_would_put_them": "؛ اعتماده سيجعلهم فوق السعة",
   "l.capacity_view.proposed_not_counted": "{percent}% مقترح، غير محتسب{v}",
@@ -3063,6 +3072,8 @@ export const PAGES_AR: Record<PageKey, string> = {
     " مقرَّب: القيم الثلاث لا تتطابق حتى الدقيقة.",
   "l.work_view.capacity_not_checked_the_task":
     "لم تُفحص السعة: ليس للمهمة تواريخ بعد.",
+  "l.work_view.capacity_undeclared":
+    "لم تُعلَن سعة لبعض هذه الأيام، لذا ليس هذا فوق سعة الشخص ولا ضمنها.",
   "l.work_view.within_the_person_s_capacity": "ضمن سعة الشخص.",
   "l.work_view.give_1_to_40_whole":
     "أدخل من 1 إلى 40 نسبة مئوية صحيحة، مفصولة بفواصل.",

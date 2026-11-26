@@ -28,7 +28,9 @@
       {#if model.proposedPct > 0}
         <span class="proposed" style:left="{model.committedPct}%" style:width="{model.proposedPct}%"></span>
       {/if}
-      <span class="cap" style:left="{model.capacityPct}%"></span>
+      {#if model.capacityPct !== null}
+        <span class="cap" style:left="{model.capacityPct}%"></span>
+      {/if}
     </span>
     {#if segments.length > 0}
       <span class="strip" role="img" aria-label={t("c.CapacityMeter.days_over_capacity")}>
@@ -80,6 +82,10 @@
   }
   .fill.proposed_over {
     background: #b45309;
+  }
+  /* CF-7: no capacity declared on some day with work: grey, neither the "within" green nor the "over" red. */
+  .fill.unknown {
+    background: var(--mxi-color-muted);
   }
   .proposed {
     position: absolute;

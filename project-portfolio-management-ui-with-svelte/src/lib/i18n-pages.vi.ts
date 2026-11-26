@@ -1363,6 +1363,10 @@ export const PAGES_VI: Record<PageKey, string> = {
     "Không có ngày bắt đầu nào thay đổi.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "Không ai bị phân bổ quá mức, nên không có gì cần san bằng.",
+  "p.plans.pid.leveling.capacity_undeclared_h":
+    "Không có năng lực được khai báo",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "Những người này có việc vào những ngày không khai báo khả dụng; vào những ngày đó họ không vượt và cũng không trong năng lực:",
   "p.plans.pid.leveling.over_allocated_now": "Đang bị phân bổ quá mức",
   "p.plans.pid.leveling.person": "Người",
   "p.plans.pid.leveling.plan": "← Kế hoạch",
@@ -2834,6 +2838,12 @@ export const PAGES_VI: Record<PageKey, string> = {
   "l.capacity_view.to": " đến {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "vượt năng lực từ {from}{v} (yêu cầu {demand}%, sẵn có {capacity}%)",
+  "l.capacity_view.capacity_undeclared":
+    "không có năng lực được khai báo vào một số ngày có việc: không vượt và cũng không trong năng lực",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "vượt năng lực từ {from}{v} (yêu cầu {demand}, nhiều hơn mọi năng lực có thể có)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: yêu cầu {demand}, nhiều hơn mọi năng lực có thể có",
   "l.capacity_view.over_capacity": "vượt năng lực",
   "l.capacity_view.committing_it_would_put_them":
     "; cam kết việc này sẽ khiến họ vượt năng lực",
@@ -3178,6 +3188,8 @@ export const PAGES_VI: Record<PageKey, string> = {
     " Đã làm tròn: ba giá trị không khớp nhau đến từng phút.",
   "l.work_view.capacity_not_checked_the_task":
     "Chưa kiểm tra năng lực: nhiệm vụ chưa có ngày.",
+  "l.work_view.capacity_undeclared":
+    "Một số ngày này không có năng lực được khai báo, nên việc này không vượt và cũng không nằm trong năng lực của người đó.",
   "l.work_view.within_the_person_s_capacity":
     "Nằm trong năng lực của người đó.",
   "l.work_view.give_1_to_40_whole":

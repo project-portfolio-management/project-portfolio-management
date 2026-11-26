@@ -926,6 +926,7 @@ pub(crate) async fn heatmap(
 
     // Cells keyed by (pool or none, month index).
     let mut cells: BTreeMap<(Option<Uuid>, usize), Cell> = BTreeMap::new();
+    let mut undeclared: BTreeSet<(Option<Uuid>, usize)> = BTreeSet::new();
     for (mi, pr_rows) in plan.periods.iter().enumerate() {
         let days = pr_rows.period.days();
         for row in &pr_rows.rows {
@@ -937,6 +938,16 @@ pub(crate) async fn heatmap(
             {
                 *c.inputs.own_supply.get_or_insert(0) += rules::milli_fte(s, days);
             }
+            if row.headcount > 0 && row.supply_undeclared_person_days > 0 {
+                undeclared.insert((pool, mi));
+            }
+        }
+    }
+    // CF-7: a cell whose people have days with no availability declared has no own supply figure: what was declared
+    // is part of it, and calling it the whole would understate (or, as before, assume) supply.
+    for key in &undeclared {
+        if let Some(c) = cells.get_mut(key) {
+            c.inputs.own_supply = None;
         }
     }
     let by_month: HashMap<Date, usize> = periods

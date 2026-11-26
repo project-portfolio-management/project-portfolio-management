@@ -1280,6 +1280,9 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.plans.pid.leveling.no_start_date_would_change": "没有开始日期需要更改。",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "没有人超负荷，因此无需平衡。",
+  "p.plans.pid.leveling.capacity_undeclared_h": "未申报产能",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "这些人在未申报可用性的日子里有工作；在那些日子里，他们既不算超出产能，也不算在产能之内：",
   "p.plans.pid.leveling.over_allocated_now": "当前超负荷",
   "p.plans.pid.leveling.person": "人员",
   "p.plans.pid.leveling.plan": "← 计划",
@@ -2652,6 +2655,12 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "l.capacity_view.to": " 至 {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "自 {from}{v} 起超出产能（需求 {demand}%，可用 {capacity}%）",
+  "l.capacity_view.capacity_undeclared":
+    "部分有工作的日子未申报产能：既不算超出，也不算在产能之内",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "自 {from}{v} 起超出产能（要求 {demand}，多于任何产能可能的数值）",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}：要求 {demand}，多于任何产能可能的数值",
   "l.capacity_view.over_capacity": "超出产能",
   "l.capacity_view.committing_it_would_put_them": "；若确认将使其超出产能",
   "l.capacity_view.proposed_not_counted": "已提议 {percent}%，未计入{v}",
@@ -2960,6 +2969,8 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "l.work_view.the_work_was_worked_out": "已算出工时。",
   "l.work_view.rounded_the_three_do_not": " 已取整：三者精确到分钟时并不一致。",
   "l.work_view.capacity_not_checked_the_task": "未检查产能：任务尚无日期。",
+  "l.work_view.capacity_undeclared":
+    "其中部分日子未申报产能，因此既不算超出此人的产能，也不算在其产能之内。",
   "l.work_view.within_the_person_s_capacity": "在此人的产能范围内。",
   "l.work_view.give_1_to_40_whole": "请填写 1 到 40 个整数百分比，用逗号分隔。",
   "l.work_view.the_percentages_add_up_to": "百分比之和为 {sum}，而非 100。",

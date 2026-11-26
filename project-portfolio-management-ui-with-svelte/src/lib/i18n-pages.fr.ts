@@ -1367,6 +1367,9 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Aucune date de début ne changerait.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "Personne n'est surallouée : il n'y a rien à niveler.",
+  "p.plans.pid.leveling.capacity_undeclared_h": "Aucune capacité déclarée",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "Ces personnes ont du travail des jours sans disponibilité déclarée ; ces jours-là, elles ne sont ni au-delà ni dans leur capacité :",
   "p.plans.pid.leveling.over_allocated_now": "Surallouées actuellement",
   "p.plans.pid.leveling.person": "Personne",
   "p.plans.pid.leveling.plan": "← Plan",
@@ -2860,6 +2863,12 @@ export const PAGES_FR: Record<PageKey, string> = {
   "l.capacity_view.to": " au {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "au-delà de la capacité du {from}{v} ({demand} % demandé, {capacity} % disponible)",
+  "l.capacity_view.capacity_undeclared":
+    "aucune capacité déclarée certains jours travaillés : ni au-delà ni dans la capacité",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "au-delà de la capacité à partir du {from}{v} ({demand} demandés, plus que ne peut l'être toute capacité)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v} : {demand} demandés, plus que ne peut l'être toute capacité",
   "l.capacity_view.over_capacity": "au-delà de la capacité",
   "l.capacity_view.committing_it_would_put_them":
     " ; l'engager dépasserait sa capacité",
@@ -3215,6 +3224,8 @@ export const PAGES_FR: Record<PageKey, string> = {
     " Arrondi : les trois valeurs ne concordent pas à la minute près.",
   "l.work_view.capacity_not_checked_the_task":
     "Capacité non vérifiée : la tâche n'a pas encore de dates.",
+  "l.work_view.capacity_undeclared":
+    "Aucune capacité n'est déclarée pour certains de ces jours : ce n'est donc ni au-delà ni dans la capacité de la personne.",
   "l.work_view.within_the_person_s_capacity":
     "Dans la capacité de la personne.",
   "l.work_view.give_1_to_40_whole":

@@ -476,6 +476,12 @@ export interface LevelingProposal {
   finish_delay_days: number;
   critical_moved: boolean;
   truncated: boolean;
+  /** People with work on a day no availability range covers (CF-7): neither over nor within capacity there. */
+  capacity_undeclared: {
+    person: string;
+    person_ref: string | null;
+    masked?: boolean;
+  }[];
   note: string;
 }
 
@@ -1698,8 +1704,8 @@ export interface OverCapacitySpan {
   to: string;
   /** Summed percent asked for on each of those days. */
   demand: number;
-  /** The capacity in force on each of those days. */
-  capacity: number;
+  /** The capacity in force on each of those days; `null` where none is declared (the demand is then over 100). */
+  capacity: number | null;
 }
 
 /** One availability range (PJ-3): the most of their time a person can commit between two dates. */
@@ -1719,17 +1725,24 @@ export interface CapacityView {
     person_ref: string;
     /** Committed bookings only; a proposal never counts here. */
     allocated_percent: number;
-    over_allocated: boolean;
+    /** `null` when no day is over and some day with work has no declared capacity (CF-7: nothing is assumed). */
+    over_allocated: boolean | null;
+    over_allocated_reason?: "capacity_undeclared" | null;
     allocations: number;
-    /** `default` (100) or `availability` (a range applies in the window). */
-    capacity: { source: "default" | "availability"; min_percent: number };
+    /** Whether ranges cover every day of the window, some, or none; the lowest declared capacity, if any. */
+    capacity: {
+      source: "availability" | "partly_declared" | "undeclared";
+      min_percent: number | null;
+      undeclared_days: number;
+      unknown_days: number;
+    };
     peak_percent: number;
     over_capacity: OverCapacitySpan[];
     /** The hoped-for bookings, kept apart from the firm figures. */
     proposed: {
       percent: number;
       allocations: number;
-      would_exceed_capacity: boolean;
+      would_exceed_capacity: boolean | null;
     };
   }[];
 }
@@ -2114,7 +2127,8 @@ export interface AssignmentResult {
   capacity: {
     checked: boolean;
     reason?: string;
-    over_capacity?: boolean;
+    /** `null` when no day is over and some has no declared capacity (CF-7). */
+    over_capacity?: boolean | null;
     /** Calendar days on which demand exceeds capacity. */
     days_over?: number;
     from?: string;

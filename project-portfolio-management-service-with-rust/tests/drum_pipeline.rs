@@ -134,6 +134,8 @@ async fn two_projects_needing_the_drum_are_staggered_and_nothing_is_moved() {
         let design: Value = with!(request.post("/api/skill-pools"), writer).json(&json!({ "name": "Design", "roles": ["Designer"] })).await.json();
         let (eng, design) = (eng["pid"].as_str().unwrap().to_string(), design["pid"].as_str().unwrap().to_string());
         sqlx::raw_sql("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), 'person:d1', 'Developer', now(), now())").execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        // CF-7: supply is what is declared; the developer is declared full time around the window.
+        sqlx::raw_sql("INSERT INTO person_availabilities (pid, person_ref, from_date, to_date, max_percent, created_at, updated_at) VALUES (gen_random_uuid(), 'person:d1', current_date - 400, current_date + 2000, 100, now(), now())").execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let alloc = |plan: &str, who: &str, percent: i32| format!("INSERT INTO allocations (pid, plan_pid, person_ref, role, percent, start_date, end_date, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{plan}', '{who}', 'Developer', {percent}, '{first}', '{last}', '[]', now(), now())");
         for sql in [alloc(&apollo, "person:d1", 100), alloc(&gemini, "person:d2", 100), alloc(&secret, "person:s1", 100)] {
             sqlx::raw_sql(sqlx::AssertSqlSafe(&*sql)).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();

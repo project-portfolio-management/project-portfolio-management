@@ -128,6 +128,16 @@
     </ul>
   {/if}
 
+  {#if proposal.capacity_undeclared.length > 0}
+    <h2>{t("p.plans.pid.leveling.capacity_undeclared_h")}</h2>
+    <p>{t("p.plans.pid.leveling.capacity_undeclared_p")}</p>
+    <ul data-testid="capacity-undeclared">
+      {#each proposal.capacity_undeclared as u (u.person)}
+        <li>{u.person_ref ?? u.person}</li>
+      {/each}
+    </ul>
+  {/if}
+
   <h2>{t("p.plans.pid.leveling.proposed_start_dates")}</h2>
   {#if proposal.moves.length === 0}
     <p>{t("p.plans.pid.leveling.no_start_date_would_change")}</p>

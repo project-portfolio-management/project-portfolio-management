@@ -1319,6 +1319,9 @@ export const PAGES_KO: Record<PageKey, string> = {
     "변경될 시작일이 없습니다.",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "과다 배정된 인력이 없으므로 평준화할 것이 없습니다.",
+  "p.plans.pid.leveling.capacity_undeclared_h": "신고된 용량 없음",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "이 사람들은 가용성이 신고되지 않은 날에 작업이 있습니다. 그날에는 용량 초과도 아니고 범위 안도 아닙니다:",
   "p.plans.pid.leveling.over_allocated_now": "현재 과다 배정됨",
   "p.plans.pid.leveling.person": "인력",
   "p.plans.pid.leveling.plan": "← 계획",
@@ -2764,6 +2767,12 @@ export const PAGES_KO: Record<PageKey, string> = {
   "l.capacity_view.to": " ~ {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "{from}{v}부터 용량 초과 (요청 {demand}%, 가용 {capacity}%)",
+  "l.capacity_view.capacity_undeclared":
+    "작업이 있는 일부 날짜에 신고된 용량이 없습니다: 용량 초과도 아니고 범위 안도 아닙니다",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "{from}{v}부터 용량 초과 ({demand} 요청, 어떤 용량보다도 많음)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: {demand} 요청, 어떤 용량보다도 많음",
   "l.capacity_view.over_capacity": "용량 초과",
   "l.capacity_view.committing_it_would_put_them":
     "; 이를 확정하면 용량을 초과하게 됩니다",
@@ -3098,6 +3107,8 @@ export const PAGES_KO: Record<PageKey, string> = {
     " 반올림됨: 세 값이 분 단위까지 정확히 일치하지는 않습니다.",
   "l.work_view.capacity_not_checked_the_task":
     "용량을 확인하지 않음: 작업에 아직 날짜가 없습니다.",
+  "l.work_view.capacity_undeclared":
+    "이 날짜 중 일부에는 신고된 용량이 없으므로, 이 사람의 용량을 초과하지도 범위 안에 있지도 않습니다.",
   "l.work_view.within_the_person_s_capacity": "사람의 용량 이내입니다.",
   "l.work_view.give_1_to_40_whole":
     "1개에서 40개의 정수 백분율을 쉼표로 구분하여 입력하십시오.",

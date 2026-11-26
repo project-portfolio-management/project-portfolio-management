@@ -305,8 +305,10 @@ async fn capacity_check(
     Ok(serde_json::json!({
         "checked": true,
         "from": from, "to": to,
-        "over_capacity": load.days_over > 0,
+        // CF-7: `null` when no day is provably over but some has no declared capacity.
+        "over_capacity": load.over(),
         "days_over": load.days_over,
+        "days_capacity_unknown": load.days_unknown,
         "min_capacity_percent": load.min_capacity,
         "over": load.over,
     }))

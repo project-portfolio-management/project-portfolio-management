@@ -10,7 +10,7 @@ const person = (over: Partial<CapacityPerson> = {}): CapacityPerson => ({
   person_ref: "person:x",
   allocated_percent: 70,
   over_allocated: false,
-  capacity: { source: "default", min_percent: 100 },
+  capacity: { source: "availability", min_percent: 100 },
   peak_percent: 70,
   over_capacity: [],
   proposed: { percent: 0, allocations: 0, would_exceed_capacity: false },
@@ -18,6 +18,40 @@ const person = (over: Partial<CapacityPerson> = {}): CapacityPerson => ({
 });
 
 describe("loadModel", () => {
+  it("calls a load with no declared capacity neither over nor within (CF-7)", () => {
+    const m = loadModel(
+      person({
+        over_allocated: null,
+        capacity: { source: "undeclared", min_percent: null },
+      }),
+    );
+    expect(m.state).toBe("unknown");
+    expect(m.marker).toBe("?");
+    expect(m.capacityPct).toBeNull();
+    expect(m.label).toContain("no capacity declared");
+    expect(m.label).not.toContain("against a capacity");
+  });
+  it("measures an undeclared day over 100% against the 100 no capacity can exceed", () => {
+    const m = loadModel(
+      person({
+        allocated_percent: 130,
+        over_allocated: true,
+        capacity: { source: "undeclared", min_percent: null },
+        over_capacity: [
+          { from: "2026-10-05", to: "2026-10-09", demand: 130, capacity: null },
+        ],
+      }),
+    );
+    expect(m.state).toBe("over");
+    expect(m.label).toContain("more than any capacity can be");
+    expect(m.label).toContain("130%");
+    expect(
+      spanSegments("2026-10-05", "2026-10-09", [
+        { from: "2026-10-05", to: "2026-10-09", demand: 130, capacity: null },
+      ])[0]?.label,
+    ).toContain("more than any capacity can be");
+  });
+
   it("scales the meter to at least 100 and in steps of 25", () => {
     expect(loadModel(person()).scale).toBe(100);
     expect(

@@ -220,6 +220,8 @@ async fn the_bridge_keeps_one_owner_per_fact() {
         let other: Value = with!(request.post("/api/skill-pools")).json(&json!({ "name": format!("Other {tag}") })).await.json();
         let other = other["pid"].as_str().unwrap().to_string();
         sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO resource_roles (pid, person_ref, role, created_at, updated_at) VALUES (gen_random_uuid(), 'person:b{tag}', '{role}', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        // CF-7: supply here is what is declared; the person is declared full time around the window.
+        sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO person_availabilities (pid, person_ref, from_date, to_date, max_percent, created_at, updated_at) VALUES (gen_random_uuid(), 'person:b{tag}', current_date - 400, current_date + 2000, 100, now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         sqlx::raw_sql(sqlx::AssertSqlSafe(format!("INSERT INTO allocations (pid, plan_pid, person_ref, role, percent, start_date, end_date, skills_required, created_at, updated_at) VALUES (gen_random_uuid(), '{prog}', 'person:b{tag}', '{role}', 100, '{first}', '{last}', '[]', now(), now())"))).execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let heat = || async { with!(request.get(&format!("/api/capacity-heatmap?from={month}&months=2"))).await };
         let cell = |v: &Value, m: &str| v["pools"].as_array().unwrap().iter().find(|p| p["name"] == pool_name.as_str()).unwrap()["cells"].as_array().unwrap().iter().find(|c| c["month"] == m).cloned().unwrap();

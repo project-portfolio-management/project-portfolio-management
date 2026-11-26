@@ -258,10 +258,10 @@ pub(super) async fn commit_allocation(
             axa::error::ErrorDetail::new(
                 "over_capacity",
                 format!(
-                    "committing this would put the person over capacity on {} calendar day(s) (peak {}% against a capacity of {}%); repeat the request with ?confirm=true to commit anyway. Over: {}",
+                    "committing this would put the person over capacity on {} calendar day(s) (peak {}% against {}); repeat the request with ?confirm=true to commit anyway. Over: {}",
                     load.days_over,
                     load.peak_demand,
-                    load.min_capacity,
+                    load.capacity_phrase(),
                     serde_json::to_string(&load.over).unwrap_or_default()
                 ),
             ),
@@ -282,14 +282,16 @@ pub(super) async fn commit_allocation(
         caller.actor(),
         Some(
             serde_json::json!({ "over_capacity": over, "days_over": load.days_over,
-                                  "peak_percent": load.peak_demand }),
+                                  "peak_percent": load.peak_demand, "days_capacity_unknown": load.days_unknown }),
         ),
     )
     .await
     .map_err(super::super::audit_failed)?;
     tx.commit().await?;
     format::json(
-        serde_json::json!({ "pid": row_pid, "booking": "committed", "over_capacity": over }),
+        // CF-7: only a provable over-commitment needs confirming; days with no declared capacity are counted, not judged.
+        serde_json::json!({ "pid": row_pid, "booking": "committed", "over_capacity": load.over(),
+                            "days_capacity_unknown": load.days_unknown }),
     )
 }
 
@@ -391,10 +393,9 @@ pub(super) async fn capacity(
             .map(|a| (a.percent, a.start_date, a.end_date))
             .collect();
         let total = rules::summed_percent(&theirs, from, to);
-        // PJ-3: capacity is read per day from the person's availability ranges.
-        // With none in the window the answer is exactly what it was before
-        // (summed demand over 100); with some, a day is over when its demand
-        // exceeds the capacity in force that day.
+        // PJ-3: capacity is read per day from the person's availability ranges. CF-7: a day no range covers has
+        // no declared capacity; it is over only past 100% (no range allows more), and otherwise unknown, so the
+        // person is `over_allocated: null` rather than within capacity.
         let ranges = all_ranges.get(person).map_or(&[][..], Vec::as_slice);
         let in_window: Vec<_> = ranges
             .iter()
@@ -418,28 +419,29 @@ pub(super) async fn capacity(
                     && a.end_date.is_none_or(|e| e >= from)
             })
             .collect();
-        let would_exceed = !proposed.is_empty() && {
+        let would_exceed = if proposed.is_empty() {
+            Some(false)
+        } else {
             let mut both = allocs.clone();
             both.extend(proposed.iter().map(|a| crate::availability::Alloc {
                 percent: a.percent,
                 start: a.start_date,
                 end: a.end_date,
             }));
-            crate::availability::load(from, to, &both, &in_window).days_over > 0
+            crate::availability::load(from, to, &both, &in_window).over()
         };
-        let over_allocated = if in_window.is_empty() {
-            total > 100
-        } else {
-            load.days_over > 0
-        };
+        let over_allocated = load.over();
         out.push(serde_json::json!({
             "person_ref": person,
             "allocated_percent": total,
             "over_allocated": over_allocated,
+            "over_allocated_reason": over_allocated.is_none().then_some("capacity_undeclared"),
             "allocations": theirs.len(),
             "capacity": {
-                "source": if in_window.is_empty() { "default" } else { "availability" },
+                "source": load.source(),
                 "min_percent": load.min_capacity,
+                "undeclared_days": load.days_undeclared,
+                "unknown_days": load.days_unknown,
             },
             "peak_percent": load.peak_demand,
             "over_capacity": load.over,

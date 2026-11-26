@@ -185,6 +185,7 @@ const PROPOSAL = {
   finish_delay_days: 0,
   critical_moved: false,
   truncated: false,
+  capacity_undeclared: [{ person: "person-2", person_ref: "person:def" }],
   note: "This is advice; nothing has been changed.",
 };
 
@@ -211,6 +212,10 @@ test("leveling: nothing is applied until the moves are ticked, confirmed and sen
   await page.goto(`/en-001/plans/${PLAN}/leveling`);
   await expect(page.getByText("This is advice.")).toBeVisible();
   await expect(page.getByText("person:abc is asked for 200%")).toBeVisible();
+  // CF-7: who has work on days with no availability declared is listed, not called within capacity.
+  await expect(page.getByTestId("capacity-undeclared")).toContainText(
+    "person:def",
+  );
   const apply = page.getByRole("button", { name: /^Apply \d+ move/ });
   await expect(apply).toBeDisabled();
   await page.getByLabel(/I have read the proposal/).check();

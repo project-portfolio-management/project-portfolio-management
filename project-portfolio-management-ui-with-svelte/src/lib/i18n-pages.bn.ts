@@ -1324,6 +1324,9 @@ export const PAGES_BN: Record<PageKey, string> = {
     "কোনো শুরুর তারিখ বদলাবে না।",
   "p.plans.pid.leveling.nobody_is_over_allocated_so":
     "কেউ অতিরিক্ত বরাদ্দপ্রাপ্ত নন, তাই সমতল করার কিছু নেই।",
+  "p.plans.pid.leveling.capacity_undeclared_h": "কোনো সক্ষমতা ঘোষিত নেই",
+  "p.plans.pid.leveling.capacity_undeclared_p":
+    "এই ব্যক্তিদের এমন দিনে কাজ আছে যেদিন কোনো প্রাপ্যতা ঘোষিত নেই; সেই দিনগুলোতে তাঁরা সক্ষমতার বেশিও নন, মধ্যেও নন:",
   "p.plans.pid.leveling.over_allocated_now": "এখন অতিরিক্ত বরাদ্দপ্রাপ্ত",
   "p.plans.pid.leveling.person": "ব্যক্তি",
   "p.plans.pid.leveling.plan": "← পরিকল্পনা",
@@ -2766,6 +2769,12 @@ export const PAGES_BN: Record<PageKey, string> = {
   "l.capacity_view.to": " থেকে {to}",
   "l.capacity_view.over_capacity_from_asked_available":
     "{from}{v} থেকে সক্ষমতার বেশি ({demand}% চাওয়া হয়েছে, {capacity}% উপলব্ধ)",
+  "l.capacity_view.capacity_undeclared":
+    "কাজ থাকা কিছু দিনে কোনো সক্ষমতা ঘোষিত নেই: সক্ষমতার বেশিও নয়, মধ্যেও নয়",
+  "l.capacity_view.over_capacity_from_asked_undeclared":
+    "{from}{v} থেকে সক্ষমতার বেশি ({demand} চাওয়া হয়েছে, যেকোনো সক্ষমতার চেয়ে বেশি)",
+  "l.capacity_view.asked_undeclared":
+    "{from}{v}: {demand} চাওয়া হয়েছে, যেকোনো সক্ষমতার চেয়ে বেশি",
   "l.capacity_view.over_capacity": "সক্ষমতার বেশি",
   "l.capacity_view.committing_it_would_put_them":
     "; এটি প্রতিশ্রুত করলে তাঁরা সক্ষমতার বেশি কাজে পড়বেন",
@@ -3100,6 +3109,8 @@ export const PAGES_BN: Record<PageKey, string> = {
     " পূর্ণসংখ্যায় আনা হয়েছে: তিনটি মিনিট পর্যন্ত মেলে না।",
   "l.work_view.capacity_not_checked_the_task":
     "সক্ষমতা যাচাই হয়নি: কাজটির এখনো কোনো তারিখ নেই।",
+  "l.work_view.capacity_undeclared":
+    "এই দিনগুলোর কয়েকটিতে কোনো সক্ষমতা ঘোষিত নেই, তাই এটি ব্যক্তির সক্ষমতার বেশিও নয়, মধ্যেও নয়।",
   "l.work_view.within_the_person_s_capacity": "ব্যক্তির সক্ষমতার মধ্যে।",
   "l.work_view.give_1_to_40_whole":
     "কমা দিয়ে আলাদা করে ১ থেকে ৪০টি পূর্ণ শতাংশ দিন।",

@@ -71,6 +71,30 @@ describe("isPeerPoolRef (FB-1)", () => {
 });
 
 describe("cellView (FB-2, FB-6)", () => {
+  it("a cell whose people have not declared their availability says so, with no supply or gap (CF-7)", () => {
+    const v = cellView(
+      {
+        ...base,
+        state: "supply_undeclared",
+        word: "availability not declared",
+        shape: "question mark",
+        colour: "grey",
+        supply_fte: null,
+        own_supply_fte: null,
+        gap_fte: null,
+      },
+      "en-GB",
+    );
+    expect(v).toMatchObject({
+      symbol: "?",
+      tone: "grey",
+      word: "availability not declared",
+      supply: "not declared",
+      supplyKnown: false,
+      gap: null,
+    });
+  });
+
   it("an unlinked cell says its supply was entered here, with the service's word and shape", () => {
     const v = cellView(base, "en-GB");
     expect(v).toMatchObject({

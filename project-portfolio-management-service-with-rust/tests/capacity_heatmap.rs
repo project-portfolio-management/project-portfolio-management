@@ -180,6 +180,13 @@ async fn the_heatmap_keeps_its_promises() {
         assert_eq!((e["word"].as_str(), e["shape"].as_str(), e["colour"].as_str()), (Some("shortfall"), Some("triangle"), Some("red")));
         let d = cell(&v, "Design", &month);
         assert_eq!((d["word"].as_str(), d["shape"].as_str(), d["gap_fte"].as_f64()), (Some("tight"), Some("diamond"), Some(0.0)));
+        // CF-7: with the designer's availability withdrawn, Design's supply is not declared: no gap is stated.
+        sqlx::raw_sql("UPDATE person_availabilities SET deleted_at = now() WHERE person_ref = 'person:g1'").execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
+        let (_, undeclared) = get(format!("?from={month}&months=2")).await;
+        let d = cell(&undeclared, "Design", &month);
+        assert_eq!((d["state"].as_str(), d["word"].as_str(), d["shape"].as_str()), (Some("supply_undeclared"), Some("availability not declared"), Some("question mark")), "{d}");
+        assert!(d["gap_fte"].is_null() && d["supply_fte"].is_null(), "{d}");
+        sqlx::raw_sql("UPDATE person_availabilities SET deleted_at = NULL WHERE person_ref = 'person:g1'").execute(project_portfolio_management::db::pool(&ctx)).await.unwrap();
         let a = cell(&v, "Data", &month);
         assert_eq!((a["word"].as_str(), a["shape"].as_str()), (Some("no supply recorded"), Some("dash")));
         assert!(a["supply_fte"].is_null() && a["gap_fte"].is_null(), "no zero capacity is invented: {a}");

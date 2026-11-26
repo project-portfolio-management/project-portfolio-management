@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 26 November (heatmap: "availability not declared")
+
+- A capacity-heatmap cell whose people have days with no availability declared is now `supply_undeclared`
+  ("availability not declared", a grey question mark) with no supply or gap, instead of "no supply recorded" (CF-7's
+  follow-up). Two new strings in every locale, machine-written in 13 and none reviewed; the Welsh ones are in the review
+  CSV. Not re-run: the full Playwright suite (the heatmap and bridge specs were).
+
 ## 26 November (CI fixes found by a run on the branch)
 
 - The benefits topic and the chief-legal-officer page in `ar-001`, `ar-dz`, `ar-eg` and `ur-001` had their `README.md`

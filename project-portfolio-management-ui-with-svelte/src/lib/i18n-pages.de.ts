@@ -6141,6 +6141,7 @@ export const PAGES_DE: Record<PageKey, string> = {
     "{over} von {considered} Pool-Monaten sind überbucht; für {unknown} ist keine Aussage möglich.",
   "p.people_impact.no_total":
     "Es wird keine Summe angegeben: Eine Person kann in mehr als einem Pool zählen.",
+  "l.enum.pk_heat.supply_undeclared": "Verfügbarkeit nicht angegeben",
   "l.enum.pk_heat.supply_unknown": "Angebot unbekannt",
   "p.capacity_heatmap.nav": "Kapazitäts-Heatmap",
   "p.capacity_heatmap.title": "Kapazitäts-Heatmap — PPM",
@@ -6164,6 +6165,7 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "Angebot: {fte}",
   "p.capacity_heatmap.gap": "Lücke: {fte}",
   "p.capacity_heatmap.unknown": "unbekannt",
+  "p.capacity_heatmap.not_declared": "nicht angegeben",
   "p.capacity_heatmap.none_recorded": "nichts erfasst",
   "p.capacity_heatmap.source_wpm": "Angebot aus dem Personaldienst",
   "p.capacity_heatmap.source_here": "Hier eingegebenes Angebot",

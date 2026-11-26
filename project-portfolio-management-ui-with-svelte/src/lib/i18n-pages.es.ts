@@ -6112,6 +6112,7 @@ export const PAGES_ES: Record<PageKey, string> = {
     "{over} de {considered} meses-grupo están sobrecomprometidos; de {unknown} no se puede saber.",
   "p.people_impact.no_total":
     "No se ofrece un total: una persona puede contar en más de un grupo.",
+  "l.enum.pk_heat.supply_undeclared": "disponibilidad no declarada",
   "l.enum.pk_heat.supply_unknown": "oferta desconocida",
   "p.capacity_heatmap.nav": "Mapa de calor de capacidad",
   "p.capacity_heatmap.title": "Mapa de calor de capacidad — PPM",
@@ -6136,6 +6137,7 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "Oferta: {fte}",
   "p.capacity_heatmap.gap": "Brecha: {fte}",
   "p.capacity_heatmap.unknown": "desconocido",
+  "p.capacity_heatmap.not_declared": "no declarada",
   "p.capacity_heatmap.none_recorded": "nada registrado",
   "p.capacity_heatmap.source_wpm": "Oferta del servicio de personal",
   "p.capacity_heatmap.source_here": "Oferta introducida aquí",

@@ -948,6 +948,7 @@ pub(crate) async fn heatmap(
     for key in &undeclared {
         if let Some(c) = cells.get_mut(key) {
             c.inputs.own_supply = None;
+            c.inputs.own_supply_undeclared = true;
         }
     }
     let by_month: HashMap<Date, usize> = periods

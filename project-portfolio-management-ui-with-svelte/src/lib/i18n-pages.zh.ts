@@ -5541,6 +5541,7 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.people_impact.over_counts":
     "{considered} 个池·月中有 {over} 个超额；{unknown} 个无法判断。",
   "p.people_impact.no_total": "不提供总数：一个人可能计入多个技能池。",
+  "l.enum.pk_heat.supply_undeclared": "未申报可用性",
   "l.enum.pk_heat.supply_unknown": "供给未知",
   "p.capacity_heatmap.nav": "产能热力图",
   "p.capacity_heatmap.title": "产能热力图 — PPM",
@@ -5562,6 +5563,7 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "供给：{fte}",
   "p.capacity_heatmap.gap": "缺口：{fte}",
   "p.capacity_heatmap.unknown": "未知",
+  "p.capacity_heatmap.not_declared": "未申报",
   "p.capacity_heatmap.none_recorded": "无记录",
   "p.capacity_heatmap.source_wpm": "供给来自劳动力服务",
   "p.capacity_heatmap.source_here": "在此录入的供给",

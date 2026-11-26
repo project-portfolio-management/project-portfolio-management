@@ -329,7 +329,7 @@ pub fn schemas() -> Value {
             "peer_demand_send": { "type": "object", "nullable": true, "additionalProperties": true, "description": "On a demand commitment of a linked pool, or one with a send recorded: the latest send to the workforce service (outcome, detail, fte_centi, peer_event_id, at); fte_centi 0 is a withdrawal (FB-5)." } })),
         "CapacityCommitmentList": obj(&["commitments"], json!({ "commitments": list(r("CapacityCommitment")) })),
         "HeatmapCell": obj(&["month", "state", "word", "shape", "colour", "demand_fte"], json!({
-            "month": s(), "state": en(&["shortfall", "tight", "enough", "no_supply_recorded", "no_demand", "nothing_recorded", "supply_unknown"]),
+            "month": s(), "state": en(&["shortfall", "tight", "enough", "no_supply_recorded", "supply_undeclared", "no_demand", "nothing_recorded", "supply_unknown"]),
             "supply_source": en(&["here", "wpm"]), "entered_here_supply_fte": { "type": "number", "nullable": true },
             "peer_supply": { "type": "object", "additionalProperties": true, "description": "For a linked pool: source wpm, status (live, last_received, hidden, unknown), supply_fte, as_of, age_seconds, reason." },
             "word": s(), "shape": s(), "colour": s(), "demand_fte": num(), "own_demand_fte": num(), "partner_demand_fte": num(),

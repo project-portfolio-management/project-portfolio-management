@@ -5902,6 +5902,7 @@ export const PAGES_EN = {
     "{over} of {considered} pool-months are over; {unknown} cannot be said.",
   "p.people_impact.no_total":
     "No total is given: a person can count in more than one pool.",
+  "l.enum.pk_heat.supply_undeclared": "availability not declared",
   "l.enum.pk_heat.supply_unknown": "supply unknown",
   "p.capacity_heatmap.nav": "Capacity heatmap",
   "p.capacity_heatmap.title": "Capacity heatmap — PPM",
@@ -5925,6 +5926,7 @@ export const PAGES_EN = {
   "p.capacity_heatmap.supply": "Supply: {fte}",
   "p.capacity_heatmap.gap": "Gap: {fte}",
   "p.capacity_heatmap.unknown": "unknown",
+  "p.capacity_heatmap.not_declared": "not declared",
   "p.capacity_heatmap.none_recorded": "none recorded",
   "p.capacity_heatmap.source_wpm": "Supply from the workforce service",
   "p.capacity_heatmap.source_here": "Supply entered here",

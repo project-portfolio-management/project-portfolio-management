@@ -6137,6 +6137,7 @@ export const PAGES_FR: Record<PageKey, string> = {
     "{over} mois-viviers sur {considered} sont surengagés ; {unknown} ne peuvent pas être déterminés.",
   "p.people_impact.no_total":
     "Aucun total n'est donné : une personne peut compter dans plusieurs viviers.",
+  "l.enum.pk_heat.supply_undeclared": "disponibilité non déclarée",
   "l.enum.pk_heat.supply_unknown": "offre inconnue",
   "p.capacity_heatmap.nav": "Carte de chaleur de la capacité",
   "p.capacity_heatmap.title": "Carte de chaleur de la capacité — PPM",
@@ -6161,6 +6162,7 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "Offre : {fte}",
   "p.capacity_heatmap.gap": "Écart : {fte}",
   "p.capacity_heatmap.unknown": "inconnu",
+  "p.capacity_heatmap.not_declared": "non déclarée",
   "p.capacity_heatmap.none_recorded": "rien d'enregistré",
   "p.capacity_heatmap.source_wpm": "Offre issue du service des effectifs",
   "p.capacity_heatmap.source_here": "Offre saisie ici",

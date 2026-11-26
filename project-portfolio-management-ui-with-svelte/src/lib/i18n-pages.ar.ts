@@ -5758,6 +5758,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.people_impact.over_counts":
     "{over} من {considered} شهرًا للمجمّعات تجاوزت؛ و{unknown} لا يمكن الحكم عليها.",
   "p.people_impact.no_total": "لا يُعطى إجمالي: قد يُحتسب الشخص في أكثر من مجمّع.",
+  "l.enum.pk_heat.supply_undeclared": "التوفّر غير مُعلن",
   "l.enum.pk_heat.supply_unknown": "العرض غير معروف",
   "p.capacity_heatmap.nav": "خريطة السعة الحرارية",
   "p.capacity_heatmap.title": "خريطة السعة الحرارية — PPM",
@@ -5780,6 +5781,7 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "العرض: {fte}",
   "p.capacity_heatmap.gap": "الفجوة: {fte}",
   "p.capacity_heatmap.unknown": "غير معروف",
+  "p.capacity_heatmap.not_declared": "غير مُعلن",
   "p.capacity_heatmap.none_recorded": "لا شيء مسجَّل",
   "p.capacity_heatmap.source_wpm": "العرض من خدمة القوى العاملة",
   "p.capacity_heatmap.source_here": "العرض المُدخل هنا",

@@ -5779,6 +5779,7 @@ export const PAGES_HI: Record<PageKey, string> = {
     "{considered} में से {over} पूल-माह अधिक हैं; {unknown} के बारे में कहा नहीं जा सकता।",
   "p.people_impact.no_total":
     "कोई कुल नहीं दिया गया: एक व्यक्ति एक से अधिक पूल में गिना जा सकता है।",
+  "l.enum.pk_heat.supply_undeclared": "उपलब्धता घोषित नहीं",
   "l.enum.pk_heat.supply_unknown": "आपूर्ति अज्ञात",
   "p.capacity_heatmap.nav": "क्षमता हीटमैप",
   "p.capacity_heatmap.title": "क्षमता हीटमैप — PPM",
@@ -5801,6 +5802,7 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "आपूर्ति: {fte}",
   "p.capacity_heatmap.gap": "अंतर: {fte}",
   "p.capacity_heatmap.unknown": "अज्ञात",
+  "p.capacity_heatmap.not_declared": "घोषित नहीं",
   "p.capacity_heatmap.none_recorded": "कुछ दर्ज नहीं",
   "p.capacity_heatmap.source_wpm": "कार्यबल सेवा से आपूर्ति",
   "p.capacity_heatmap.source_here": "यहाँ दर्ज आपूर्ति",

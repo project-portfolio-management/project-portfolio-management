@@ -5956,6 +5956,7 @@ export const PAGES_JA: Record<PageKey, string> = {
     "{considered} プール月のうち {over} が超過です。{unknown} は判定できません。",
   "p.people_impact.no_total":
     "合計は示しません。一人が複数のプールに数えられる場合があるためです。",
+  "l.enum.pk_heat.supply_undeclared": "空き状況が未申告",
   "l.enum.pk_heat.supply_unknown": "供給不明",
   "p.capacity_heatmap.nav": "キャパシティヒートマップ",
   "p.capacity_heatmap.title": "キャパシティヒートマップ — PPM",
@@ -5979,6 +5980,7 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "供給：{fte}",
   "p.capacity_heatmap.gap": "ギャップ：{fte}",
   "p.capacity_heatmap.unknown": "不明",
+  "p.capacity_heatmap.not_declared": "未申告",
   "p.capacity_heatmap.none_recorded": "記録なし",
   "p.capacity_heatmap.source_wpm": "要員管理サービスからの供給",
   "p.capacity_heatmap.source_here": "ここで入力した供給",

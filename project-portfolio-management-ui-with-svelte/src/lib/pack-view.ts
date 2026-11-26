@@ -91,6 +91,7 @@ const HEAT: Record<string, { symbol: string; tone: Tone }> = {
   tight: { symbol: "◆", tone: "amber" },
   enough: { symbol: "●", tone: "green" },
   no_supply_recorded: { symbol: "–", tone: "grey" },
+  supply_undeclared: { symbol: "?", tone: "grey" },
   no_demand: { symbol: "○", tone: "grey" },
   nothing_recorded: { symbol: "", tone: "grey" },
 };

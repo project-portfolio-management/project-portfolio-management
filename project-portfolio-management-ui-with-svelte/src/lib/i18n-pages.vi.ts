@@ -6002,6 +6002,7 @@ export const PAGES_VI: Record<PageKey, string> = {
     "{over} trong {considered} tháng-nhóm bị vượt mức; {unknown} không thể xác định.",
   "p.people_impact.no_total":
     "Không đưa ra tổng: một người có thể được tính trong nhiều nhóm.",
+  "l.enum.pk_heat.supply_undeclared": "chưa khai báo khả dụng",
   "l.enum.pk_heat.supply_unknown": "chưa biết nguồn cung",
   "p.capacity_heatmap.nav": "Bản đồ nhiệt năng lực",
   "p.capacity_heatmap.title": "Bản đồ nhiệt năng lực — PPM",
@@ -6025,6 +6026,7 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "Nguồn cung: {fte}",
   "p.capacity_heatmap.gap": "Chênh lệch: {fte}",
   "p.capacity_heatmap.unknown": "chưa biết",
+  "p.capacity_heatmap.not_declared": "chưa khai báo",
   "p.capacity_heatmap.none_recorded": "chưa ghi nhận",
   "p.capacity_heatmap.source_wpm": "Nguồn cung từ dịch vụ nhân lực",
   "p.capacity_heatmap.source_here": "Nguồn cung nhập tại đây",

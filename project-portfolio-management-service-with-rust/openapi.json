@@ -2343,6 +2343,7 @@
               "tight",
               "enough",
               "no_supply_recorded",
+              "supply_undeclared",
               "no_demand",
               "nothing_recorded",
               "supply_unknown"

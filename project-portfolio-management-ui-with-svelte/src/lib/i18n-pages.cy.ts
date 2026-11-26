@@ -6032,6 +6032,7 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae {over} o {considered} mis cronfa dros y terfyn; ni ellir dweud am {unknown}.",
   "p.people_impact.no_total":
     "Ni roddir cyfanswm: gall person gyfrif mewn mwy nag un gronfa.",
+  "l.enum.pk_heat.supply_undeclared": "argaeledd heb ei ddatgan",
   "l.enum.pk_heat.supply_unknown": "cyflenwad anhysbys",
   "p.capacity_heatmap.nav": "Map gwres capasiti",
   "p.capacity_heatmap.title": "Map gwres capasiti — PPM",
@@ -6055,6 +6056,7 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "Cyflenwad: {fte}",
   "p.capacity_heatmap.gap": "Bwlch: {fte}",
   "p.capacity_heatmap.unknown": "anhysbys",
+  "p.capacity_heatmap.not_declared": "heb ei ddatgan",
   "p.capacity_heatmap.none_recorded": "dim wedi'i gofnodi",
   "p.capacity_heatmap.source_wpm": "Cyflenwad o'r gwasanaeth gweithlu",
   "p.capacity_heatmap.source_here": "Cyflenwad a gofnodwyd yma",

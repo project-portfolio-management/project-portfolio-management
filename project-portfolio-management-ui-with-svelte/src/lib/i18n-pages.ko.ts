@@ -5861,6 +5861,7 @@ export const PAGES_KO: Record<PageKey, string> = {
     "{considered}개 풀-월 중 {over}개가 초과이며, {unknown}개는 판단할 수 없습니다.",
   "p.people_impact.no_total":
     "합계는 제공하지 않습니다. 한 사람이 둘 이상의 풀에 포함될 수 있습니다.",
+  "l.enum.pk_heat.supply_undeclared": "가용성 미신고",
   "l.enum.pk_heat.supply_unknown": "공급 알 수 없음",
   "p.capacity_heatmap.nav": "역량 히트맵",
   "p.capacity_heatmap.title": "역량 히트맵 — PPM",
@@ -5883,6 +5884,7 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "공급: {fte}",
   "p.capacity_heatmap.gap": "격차: {fte}",
   "p.capacity_heatmap.unknown": "알 수 없음",
+  "p.capacity_heatmap.not_declared": "미신고",
   "p.capacity_heatmap.none_recorded": "기록 없음",
   "p.capacity_heatmap.source_wpm": "인력 서비스의 공급",
   "p.capacity_heatmap.source_here": "여기에 입력한 공급",

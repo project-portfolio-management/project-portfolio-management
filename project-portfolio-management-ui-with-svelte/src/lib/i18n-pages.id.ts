@@ -6023,6 +6023,7 @@ export const PAGES_ID: Record<PageKey, string> = {
     "{over} dari {considered} bulan-kolam melebihi komitmen; {unknown} tidak dapat ditentukan.",
   "p.people_impact.no_total":
     "Tidak ada total yang diberikan: satu orang dapat dihitung di lebih dari satu kolam.",
+  "l.enum.pk_heat.supply_undeclared": "ketersediaan tidak dinyatakan",
   "l.enum.pk_heat.supply_unknown": "pasokan tidak diketahui",
   "p.capacity_heatmap.nav": "Peta panas kapasitas",
   "p.capacity_heatmap.title": "Peta panas kapasitas — PPM",
@@ -6047,6 +6048,7 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "Pasokan: {fte}",
   "p.capacity_heatmap.gap": "Selisih: {fte}",
   "p.capacity_heatmap.unknown": "tidak diketahui",
+  "p.capacity_heatmap.not_declared": "tidak dinyatakan",
   "p.capacity_heatmap.none_recorded": "tidak ada yang dicatat",
   "p.capacity_heatmap.source_wpm": "Pasokan dari layanan tenaga kerja",
   "p.capacity_heatmap.source_here": "Pasokan dimasukkan di sini",

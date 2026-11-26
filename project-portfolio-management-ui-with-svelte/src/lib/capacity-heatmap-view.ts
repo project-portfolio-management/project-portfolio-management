@@ -211,7 +211,9 @@ export function cellView(
       ? fte(c.supply_fte as number, locale)
       : linked
         ? t("p.capacity_heatmap.unknown")
-        : t("p.capacity_heatmap.none_recorded"),
+        : c.state === "supply_undeclared"
+          ? t("p.capacity_heatmap.not_declared")
+          : t("p.capacity_heatmap.none_recorded"),
     supplyKnown,
     gap: supplyKnown && c.gap_fte !== null ? fte(c.gap_fte, locale) : null,
     source: linked

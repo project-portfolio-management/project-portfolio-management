@@ -5844,6 +5844,7 @@ export const PAGES_BN: Record<PageKey, string> = {
     "{considered}টি পুল-মাসের মধ্যে {over}টি অতিরিক্ত; {unknown}টি সম্পর্কে বলা যায় না।",
   "p.people_impact.no_total":
     "কোনো মোট দেওয়া হয়নি: একজন ব্যক্তি একাধিক পুলে গণ্য হতে পারেন।",
+  "l.enum.pk_heat.supply_undeclared": "প্রাপ্যতা ঘোষিত নয়",
   "l.enum.pk_heat.supply_unknown": "সরবরাহ অজানা",
   "p.capacity_heatmap.nav": "সক্ষমতার হিটম্যাপ",
   "p.capacity_heatmap.title": "সক্ষমতার হিটম্যাপ — PPM",
@@ -5866,6 +5867,7 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "সরবরাহ: {fte}",
   "p.capacity_heatmap.gap": "ঘাটতি: {fte}",
   "p.capacity_heatmap.unknown": "অজানা",
+  "p.capacity_heatmap.not_declared": "ঘোষিত নয়",
   "p.capacity_heatmap.none_recorded": "কিছু লিপিবদ্ধ নেই",
   "p.capacity_heatmap.source_wpm": "কর্মীবাহিনী সেবা থেকে সরবরাহ",
   "p.capacity_heatmap.source_here": "এখানে দেওয়া সরবরাহ",

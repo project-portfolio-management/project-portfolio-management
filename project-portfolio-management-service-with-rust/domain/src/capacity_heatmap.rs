@@ -4,7 +4,9 @@
 //! Capacity is counted in thousandths of a full-time equivalent (milli-FTE), whole numbers. A cell
 //! says what is asked (demand), what is on offer (supply: the organization's own people plus partners'
 //! commitments) and the gap, and it says so with a **word and a shape** as well as a colour. A pool
-//! with no supplier and no partner commitment is **no supply recorded**, not zero capacity.
+//! with no supplier and no partner commitment is **no supply recorded**, not zero capacity. A pool whose people have
+//! months with no availability declared is **availability not declared** (CF-7): what they declared is not the
+//! whole supply, so no gap is stated.
 
 #![expect(missing_docs)]
 
@@ -32,12 +34,15 @@ pub struct Inputs {
     pub partner_committed: Option<i64>,
     /// What partners have delivered, where recorded.
     pub partner_delivered: Option<i64>,
+    /// Some of the pool's own people have days in the cell with no availability declared (CF-7).
+    pub own_supply_undeclared: bool,
 }
 
 /// The reading of a cell.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Verdict {
-    /// `shortfall`, `tight`, `enough`, `no_supply_recorded`, `no_demand` or `nothing_recorded`.
+    /// `shortfall`, `tight`, `enough`, `no_supply_recorded`, `supply_undeclared`, `no_demand` or
+    /// `nothing_recorded` (and `supply_unknown` from [`linked_verdict`]).
     pub state: &'static str,
     pub word: &'static str,
     /// A shape that carries the meaning without colour.
@@ -66,6 +71,18 @@ pub fn verdict(i: &Inputs) -> Option<Verdict> {
         )
     };
     let short = matches!((i.partner_committed, i.partner_delivered), (Some(c), Some(d)) if d < c);
+    if i.own_supply_undeclared && demand > 0 {
+        return Some(Verdict {
+            state: "supply_undeclared",
+            word: "availability not declared",
+            shape: "question mark",
+            colour: "grey",
+            demand,
+            supply: None,
+            gap: None,
+            partner_delivery_short: short,
+        });
+    }
     let (state, word, shape, colour) = match supply {
         None if demand == 0 => ("nothing_recorded", "nothing recorded", "blank", "none"),
         None => ("no_supply_recorded", "no supply recorded", "dash", "grey"),
@@ -102,6 +119,7 @@ pub fn linked_verdict(i: &Inputs, peer_supply: Option<i64>) -> Option<Verdict> {
         own_supply: peer_supply,
         partner_committed: None,
         partner_delivered: None,
+        own_supply_undeclared: false,
     };
     let v = verdict(&demand_only)?;
     if peer_supply.is_some() {
@@ -161,6 +179,7 @@ mod tests {
             own_supply: os,
             partner_committed: pc,
             partner_delivered: pdl,
+            own_supply_undeclared: false,
         }
     }
 
@@ -179,6 +198,32 @@ mod tests {
         );
         assert_eq!(milli_fte(0, 30), 0);
         assert_eq!(milli_fte(10, 0), 0);
+    }
+
+    #[test]
+    fn a_pool_with_undeclared_availability_states_no_gap() {
+        let v = verdict(&Inputs {
+            own_demand: 2000,
+            own_supply: Some(500),
+            own_supply_undeclared: true,
+            ..Inputs::default()
+        });
+        assert_eq!(
+            (v.state, v.word, v.shape, v.supply, v.gap),
+            (
+                "supply_undeclared",
+                "availability not declared",
+                "question mark",
+                None,
+                None
+            )
+        );
+        // With nothing asked there is nothing to judge.
+        let v = verdict(&Inputs {
+            own_supply_undeclared: true,
+            ..Inputs::default()
+        });
+        assert_eq!(v.state, "nothing_recorded");
     }
 
     #[test]

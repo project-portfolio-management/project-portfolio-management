@@ -6049,6 +6049,7 @@ export const PAGES_RU: Record<PageKey, string> = {
     "Месяцев пулов с превышением: {over} из {considered}; невозможно сказать: {unknown}.",
   "p.people_impact.no_total":
     "Итог не указан: человек может входить в несколько пулов.",
+  "l.enum.pk_heat.supply_undeclared": "доступность не заявлена",
   "l.enum.pk_heat.supply_unknown": "предложение неизвестно",
   "p.capacity_heatmap.nav": "Тепловая карта мощности",
   "p.capacity_heatmap.title": "Тепловая карта мощности — PPM",
@@ -6072,6 +6073,7 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.capacity_heatmap.supply": "Предложение: {fte}",
   "p.capacity_heatmap.gap": "Разрыв: {fte}",
   "p.capacity_heatmap.unknown": "неизвестно",
+  "p.capacity_heatmap.not_declared": "не заявлено",
   "p.capacity_heatmap.none_recorded": "не записано",
   "p.capacity_heatmap.source_wpm": "Предложение из службы кадровых ресурсов",
   "p.capacity_heatmap.source_here": "Предложение, введённое здесь",

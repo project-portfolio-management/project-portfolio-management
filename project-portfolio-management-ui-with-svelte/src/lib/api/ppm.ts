@@ -221,6 +221,7 @@ import type {
   ResourcePlan,
   ReviewGateBody,
   Risk,
+  RiskScoreRow,
   RiskUpdateBody,
   RiskHeatmap,
   RiskRegister,
@@ -480,6 +481,13 @@ export class PpmClient {
     body: RiskUpdateBody,
   ): Promise<Risk> {
     return this.http.put(`/api/plans/${pid}/risks/${riskPid}`, { body });
+  }
+  /** A risk's score history, oldest first (OF-3). */
+  riskScores(
+    pid: string,
+    riskPid: string,
+  ): Promise<{ risk_pid: string; scores: RiskScoreRow[]; note: string }> {
+    return this.http.get(`/api/plans/${pid}/risks/${riskPid}/scores`);
   }
   escalateRisk(pid: string, riskPid: string): Promise<Risk> {
     return this.http.post(`/api/plans/${pid}/risks/${riskPid}/escalate`, {

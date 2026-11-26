@@ -6752,6 +6752,12 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "समीक्षा तिथि",
   "p.risk_edit.save": "जोखिम सहेजें",
   "p.risk_edit.close": "फ़ॉर्म बंद करें",
+  "p.risk_edit.f_reason": "स्कोर क्यों बदला (वैकल्पिक)",
+  "p.risk_edit.history_h": "स्कोर का इतिहास",
+  "p.risk_edit.history_row":
+    "{date}: संभावना {probability} × प्रभाव {impact} = {score}।",
+  "p.risk_edit.history_reason": "कारण: {reason}",
+  "p.risk_edit.history_first": "पहला ज्ञात स्कोर; इतिहास यहीं से शुरू हुआ।",
   "p.plan_issues.refused_gone":
     "वह मुद्दा अब इस योजना में नहीं है; सूची फिर से पढ़ी गई।",
   "p.plan_issues.refused_remove":

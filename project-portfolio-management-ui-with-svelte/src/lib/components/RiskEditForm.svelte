@@ -8,7 +8,8 @@
   import { errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { enumLabel } from "#lib/enum-labels.js";
-  import { PpmClient, type Risk } from "#lib/api/ppm.js";
+  import { formatDate } from "#lib/locale-format.js";
+  import { PpmClient, type Risk, type RiskScoreRow } from "#lib/api/ppm.js";
   import {
     MITIGATION_MAX_BYTES,
     SCORE_MAX,
@@ -36,6 +37,18 @@
   let busy = $state(false);
   const choices = $derived(statusChoices(risk.status));
   const score = { min: SCORE_MIN, max: SCORE_MAX };
+  // The score history (OF-3); a failed read shows nothing rather than an error, the form still works.
+  let history = $state<RiskScoreRow[]>([]);
+  async function loadHistory() {
+    try {
+      history = (await ppm.riskScores(pid, risk.pid)).scores;
+    } catch {
+      history = [];
+    }
+  }
+  $effect(() => {
+    void loadHistory();
+  });
 
   async function save(e: SubmitEvent) {
     e.preventDefault();
@@ -55,7 +68,9 @@
     try {
       await ppm.updateRisk(pid, risk.pid, r.body);
       notice = t("p.risk_edit.saved", { title: risk.title });
+      form.reason = "";
       await onsaved();
+      await loadHistory();
     } catch (err) {
       const k = riskRefusalKey(err);
       error = k ? t(k) : errorText(err, "p.risk_edit.could_not_save");
@@ -95,11 +110,26 @@
     <label>{t("p.risk_edit.f_review_date")}
       <input type="date" bind:value={form.reviewDate} />
     </label>
+    <label>{t("p.risk_edit.f_reason")}
+      <input type="text" maxlength="500" bind:value={form.reason} />
+    </label>
     <div class="row">
       <button class="button primary small" type="submit" disabled={busy}>{t("p.risk_edit.save")}</button>
       <button class="button small" type="button" onclick={onclose}>{t("p.risk_edit.close")}</button>
     </div>
   </form>
+  {#if history.length > 0}
+    <h4>{t("p.risk_edit.history_h")}</h4>
+    <ul class="small">
+      {#each history as h, i (i)}
+        <li>
+          {t("p.risk_edit.history_row", { date: formatDate(h.recorded_at), probability: h.probability, impact: h.impact, score: h.score })}
+          {#if h.backfilled}{t("p.risk_edit.history_first")}{/if}
+          {#if h.reason}{t("p.risk_edit.history_reason", { reason: h.reason })}{/if}
+        </li>
+      {/each}
+    </ul>
+  {/if}
 </section>
 
 <style>

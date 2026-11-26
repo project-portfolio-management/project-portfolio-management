@@ -16,6 +16,8 @@ export interface CreateRiskBody {
   mitigation?: string | null;
   owner_ref?: string | null;
   review_date?: string | null;
+  /** Why it was scored so; kept with the first score in the history (OF-3), at most 500 characters. */
+  reason?: string | null;
 }
 
 /** `PUT /api/plans/{pid}/risks/{risk_pid}`: only the fields that change; one left out keeps what is stored. */
@@ -25,6 +27,20 @@ export interface RiskUpdateBody {
   impact?: number;
   mitigation?: string;
   review_date?: string;
+  /** Why the score changed; kept with the score history (OF-3), at most 500 characters. */
+  reason?: string;
+}
+
+/** One row of a risk's score history, oldest first (`GET /api/plans/{pid}/risks/{risk_pid}/scores`, OF-3). */
+export interface RiskScoreRow {
+  probability: number;
+  impact: number;
+  score: number;
+  recorded_at: string;
+  actor: string | null;
+  reason: string | null;
+  /** The first score known when the history began, not the risk's past. */
+  backfilled: boolean;
 }
 
 /** `POST /api/plans/{pid}/tasks`. */

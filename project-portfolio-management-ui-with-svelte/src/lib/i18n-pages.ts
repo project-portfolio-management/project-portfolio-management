@@ -6911,6 +6911,12 @@ export const PAGES_EN = {
   "p.risk_edit.f_review_date": "Review date",
   "p.risk_edit.save": "Save the risk",
   "p.risk_edit.close": "Close the form",
+  "p.risk_edit.f_reason": "Why the score changed (optional)",
+  "p.risk_edit.history_h": "Score history",
+  "p.risk_edit.history_row":
+    "{date}: likelihood {probability} × impact {impact} = {score}.",
+  "p.risk_edit.history_reason": "Reason: {reason}",
+  "p.risk_edit.history_first": "First known score; the history began here.",
   "p.plan_issues.refused_gone":
     "That issue is no longer on this plan; the list was read again.",
   "p.plan_issues.refused_remove":

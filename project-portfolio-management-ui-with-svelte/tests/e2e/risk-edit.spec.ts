@@ -190,6 +190,68 @@ for (const [code, words] of [
   });
 }
 
+test("shows the score history, and sends the reason only with a changed score (OF-3)", async ({
+  page,
+}) => {
+  const sent = await stub(page);
+  await page.route(`**/api/plans/${PID}/risks/${R1}/scores`, (r) =>
+    r.fulfill({
+      json: {
+        risk_pid: R1,
+        note: "service text",
+        scores: [
+          {
+            probability: 2,
+            impact: 4,
+            score: 8,
+            recorded_at: "2026-11-01T09:00:00Z",
+            actor: null,
+            reason: null,
+            backfilled: true,
+          },
+          {
+            probability: 3,
+            impact: 4,
+            score: 12,
+            recorded_at: "2026-11-20T09:00:00Z",
+            actor: null,
+            reason: "Supplier slipped twice",
+            backfilled: false,
+          },
+        ],
+      },
+    }),
+  );
+  await openForm(page);
+  const form = page.getByRole("region", {
+    name: "Change the risk “Supplier fails”",
+  });
+  await expect(
+    form.getByRole("heading", { name: "Score history" }),
+  ).toBeVisible();
+  await expect(form.getByRole("listitem")).toHaveText([
+    /1 Nov 2026: likelihood 2 × impact 4 = 8\. First known score/,
+    /20 Nov 2026: likelihood 3 × impact 4 = 12\.\s+Reason: Supplier slipped twice/,
+  ]);
+  // A reason with no score change is not sent.
+  await form.getByLabel("Why the score changed (optional)").fill("Just a note");
+  await form.getByLabel("Review date").fill("2026-12-15");
+  await form.getByRole("button", { name: "Save the risk" }).click();
+  await expect.poll(() => sent.length).toBe(1);
+  expect(sent[0].body).toEqual({ review_date: "2026-12-15" });
+  await expect(form.getByRole("status")).toHaveText(
+    "The risk “Supplier fails” was saved.",
+  );
+  // With a changed score it is.
+  await form
+    .getByLabel("Why the score changed (optional)")
+    .fill("Vendor slipped");
+  await form.getByLabel("Impact (1 to 5)").fill("5");
+  await form.getByRole("button", { name: "Save the risk" }).click();
+  await expect.poll(() => sent.length).toBe(2);
+  expect(sent[1].body).toEqual({ impact: 5, reason: "Vendor slipped" });
+});
+
 test("reads in Welsh, and passes axe with the form open", async ({ page }) => {
   await stub(page);
   await openForm(page, "cy-001", "Newid: Supplier fails");

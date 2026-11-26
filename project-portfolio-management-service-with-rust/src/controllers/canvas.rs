@@ -412,6 +412,9 @@ pub(crate) struct PromotePayload {
     /// Risk only — 1–5.
     #[serde(default)]
     impact: Option<i32>,
+    /// Risk only — why it was scored so; kept with the first score in the history (OF-3), at most 500 characters.
+    #[serde(default)]
+    reason: Option<String>,
 }
 
 /// `POST /api/canvases/{pid}/items/{item_pid}/promote` — turn an item
@@ -475,6 +478,21 @@ async fn promote_item(
                 ));
             };
             gov_rules::risk_exposure(probability, impact).map_err(|e| unprocessable(&e))?;
+            if payload
+                .reason
+                .as_deref()
+                .is_some_and(|r| r.chars().count() > 500)
+            {
+                return Err(unprocessable("reason is at most 500 characters"));
+            }
+            // The score history trigger reads who and why from the transaction (OF-3).
+            sqlx::query(
+                "SELECT set_config('ppm.actor', $1, true), set_config('ppm.reason', $2, true)",
+            )
+            .bind(actor.unwrap_or_default())
+            .bind(payload.reason.clone().unwrap_or_default())
+            .fetch_one(tx.conn())
+            .await?;
             sqlx::query(
                 "INSERT INTO risks
                      (pid, plan_pid, title, description, probability, impact, status, owner_ref, mitigation,

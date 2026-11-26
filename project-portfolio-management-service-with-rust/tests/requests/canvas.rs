@@ -254,10 +254,18 @@ async fn promotion_writes_the_target_audits_the_source_and_is_not_repeatable() {
         );
         let risk: Value = request
             .post(&format!("/api/canvases/{c}/items/{it3}/promote"))
-            .json(&json!({ "target": "risk", "probability": 3, "impact": 4 }))
+            .json(&json!({ "target": "risk", "probability": 3, "impact": 4, "reason": "Single supplier" }))
             .await
             .json();
         assert_eq!(risk["kind"], "risk");
+        // OF-3: the promoted risk's first score carries the reason.
+        let first: Vec<(i32, Option<String>)> = sqlx::query_as(
+            "SELECT score, reason FROM risk_scores WHERE risk_pid IN (SELECT pid FROM risks WHERE title = 'Supplier failure')",
+        )
+        .fetch_all(project_portfolio_management::db::pool(&ctx))
+        .await
+        .unwrap();
+        assert_eq!(first, vec![(12, Some("Single supplier".to_string()))]);
         let risks: Value = request.get(&format!("/api/plans/{p}/risks")).await.json();
         assert!(format!("{risks}").contains("Supplier failure"));
 

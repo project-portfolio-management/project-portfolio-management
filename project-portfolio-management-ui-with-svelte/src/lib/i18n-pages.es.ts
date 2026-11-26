@@ -7163,6 +7163,13 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "Fecha de revisión",
   "p.risk_edit.save": "Guardar el riesgo",
   "p.risk_edit.close": "Cerrar el formulario",
+  "p.risk_edit.f_reason": "Por qué cambió la puntuación (opcional)",
+  "p.risk_edit.history_h": "Historial de la puntuación",
+  "p.risk_edit.history_row":
+    "{date}: probabilidad {probability} × impacto {impact} = {score}.",
+  "p.risk_edit.history_reason": "Motivo: {reason}",
+  "p.risk_edit.history_first":
+    "Primera puntuación conocida; el historial empieza aquí.",
   "p.plan_issues.refused_gone":
     "Esa incidencia ya no está en este plan; se volvió a leer la lista.",
   "p.plan_issues.refused_remove":

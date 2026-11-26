@@ -6458,6 +6458,12 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "复核日期",
   "p.risk_edit.save": "保存风险",
   "p.risk_edit.close": "关闭表单",
+  "p.risk_edit.f_reason": "分数变化的原因（可选）",
+  "p.risk_edit.history_h": "分数历史",
+  "p.risk_edit.history_row":
+    "{date}：可能性 {probability} × 影响 {impact} = {score}。",
+  "p.risk_edit.history_reason": "原因：{reason}",
+  "p.risk_edit.history_first": "已知的第一个分数；历史从这里开始。",
   "p.plan_issues.refused_gone": "该问题已不在此计划中；已重新读取列表。",
   "p.plan_issues.refused_remove":
     "已拒绝：您不能删除此计划的问题。未删除任何内容。",

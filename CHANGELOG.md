@@ -24,6 +24,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 - Not done or not verified: the figure is a local macOS run; CI's `coverage` job has not run it. The margin over 95% is
   only 14 lines. No threshold was added.
 
+## 25 November (risk history screen, reason on canvas promotion)
+
+- The risk form on the governance page has an optional "why the score changed" field, sent only with a changed score,
+  and lists the score history (dates in the page's locale); `POST /api/canvases/{pid}/items/{item_pid}/promote` takes the same optional `reason` for
+  a risk. Five new strings in every locale; the 13 non-English ones are machine-written and none reviewed, the Welsh ones
+  are in `governance/welsh-translation-review.csv`.
+- Not done: no chart of the history; the history shows no actor (an opaque reference); OF-3 steps 2 to 4, OF-2 and the
+  aggregate-series interface remain unbuilt.
+
 ## 25 November (risk history read, cutover signature display)
 
 - `GET /api/plans/{pid}/risks/{risk_pid}/scores` reads the risk score history; `POST …/risks` takes an optional `reason`.

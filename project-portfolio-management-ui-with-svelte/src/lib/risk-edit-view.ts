@@ -32,6 +32,8 @@ export interface RiskForm {
   impact: string | number;
   mitigation: string;
   reviewDate: string;
+  /** Why the score changed (optional); sent only with a changed score. */
+  reason: string;
 }
 
 export function formFromRisk(r: Risk): RiskForm {
@@ -41,6 +43,7 @@ export function formFromRisk(r: Risk): RiskForm {
     impact: r.impact,
     mitigation: r.mitigation ?? "",
     reviewDate: r.review_date ?? "",
+    reason: "",
   };
 }
 
@@ -104,6 +107,12 @@ export function riskBody(
     body.mitigation = f.mitigation.trim();
   if (f.reviewDate !== (current.review_date ?? ""))
     body.review_date = f.reviewDate;
+  const why = f.reason.trim();
+  if (
+    why !== "" &&
+    (body.probability !== undefined || body.impact !== undefined)
+  )
+    body.reason = why;
   return Object.keys(body).length === 0 ? null : { body };
 }
 

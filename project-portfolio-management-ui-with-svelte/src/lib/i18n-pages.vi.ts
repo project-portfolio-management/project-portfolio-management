@@ -7011,6 +7011,13 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "Ngày rà soát",
   "p.risk_edit.save": "Lưu rủi ro",
   "p.risk_edit.close": "Đóng biểu mẫu",
+  "p.risk_edit.f_reason": "Vì sao điểm thay đổi (không bắt buộc)",
+  "p.risk_edit.history_h": "Lịch sử điểm",
+  "p.risk_edit.history_row":
+    "{date}: khả năng {probability} × tác động {impact} = {score}.",
+  "p.risk_edit.history_reason": "Lý do: {reason}",
+  "p.risk_edit.history_first":
+    "Điểm đầu tiên được biết; lịch sử bắt đầu từ đây.",
   "p.plan_issues.refused_gone":
     "Vấn đề đó không còn trên kế hoạch này; danh sách đã được đọc lại.",
   "p.plan_issues.refused_remove":

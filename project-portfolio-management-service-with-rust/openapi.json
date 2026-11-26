@@ -5653,6 +5653,12 @@
                     "nullable": true,
                     "type": "integer"
                   },
+                  "reason": {
+                    "default": null,
+                    "description": "Risk only — why it was scored so; kept with the first score in the history (OF-3), at most 500 characters.",
+                    "nullable": true,
+                    "type": "string"
+                  },
                   "target": {
                     "description": "`idea` | `risk` | `objective`.",
                     "type": "string"

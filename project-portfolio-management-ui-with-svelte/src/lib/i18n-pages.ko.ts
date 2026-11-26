@@ -6857,6 +6857,13 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "검토일",
   "p.risk_edit.save": "위험 저장",
   "p.risk_edit.close": "양식 닫기",
+  "p.risk_edit.f_reason": "점수가 바뀐 이유(선택)",
+  "p.risk_edit.history_h": "점수 이력",
+  "p.risk_edit.history_row":
+    "{date}: 가능성 {probability} × 영향 {impact} = {score}.",
+  "p.risk_edit.history_reason": "이유: {reason}",
+  "p.risk_edit.history_first":
+    "처음 알려진 점수이며, 이력은 여기서 시작됩니다.",
   "p.plan_issues.refused_gone":
     "해당 이슈가 더 이상 이 계획에 없어 목록을 다시 불러왔습니다.",
   "p.plan_issues.refused_remove":

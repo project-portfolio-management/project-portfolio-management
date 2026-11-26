@@ -7074,6 +7074,13 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "Дата пересмотра",
   "p.risk_edit.save": "Сохранить риск",
   "p.risk_edit.close": "Закрыть форму",
+  "p.risk_edit.f_reason": "Почему изменилась оценка (необязательно)",
+  "p.risk_edit.history_h": "История оценок",
+  "p.risk_edit.history_row":
+    "{date}: вероятность {probability} × влияние {impact} = {score}.",
+  "p.risk_edit.history_reason": "Причина: {reason}",
+  "p.risk_edit.history_first":
+    "Первая известная оценка; история начинается здесь.",
   "p.plan_issues.refused_gone":
     "Этой проблемы больше нет в плане; список перечитан.",
   "p.plan_issues.refused_remove":

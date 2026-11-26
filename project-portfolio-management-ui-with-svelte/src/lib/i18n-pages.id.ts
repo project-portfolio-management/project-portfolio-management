@@ -7064,6 +7064,13 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "Tanggal tinjauan",
   "p.risk_edit.save": "Simpan risiko",
   "p.risk_edit.close": "Tutup formulir",
+  "p.risk_edit.f_reason": "Mengapa skor berubah (opsional)",
+  "p.risk_edit.history_h": "Riwayat skor",
+  "p.risk_edit.history_row":
+    "{date}: kemungkinan {probability} × dampak {impact} = {score}.",
+  "p.risk_edit.history_reason": "Alasan: {reason}",
+  "p.risk_edit.history_first":
+    "Skor pertama yang diketahui; riwayat dimulai di sini.",
   "p.plan_issues.refused_gone":
     "Isu itu sudah tidak ada di rencana ini; daftar telah dibaca ulang.",
   "p.plan_issues.refused_remove":

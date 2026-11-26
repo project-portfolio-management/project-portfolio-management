@@ -7070,6 +7070,13 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "Dyddiad adolygu",
   "p.risk_edit.save": "Cadw'r risg",
   "p.risk_edit.close": "Cau'r ffurflen",
+  "p.risk_edit.f_reason": "Pam y newidiodd y sgôr (dewisol)",
+  "p.risk_edit.history_h": "Hanes y sgôr",
+  "p.risk_edit.history_row":
+    "{date}: tebygolrwydd {probability} × effaith {impact} = {score}.",
+  "p.risk_edit.history_reason": "Rheswm: {reason}",
+  "p.risk_edit.history_first":
+    "Y sgôr gyntaf a wyddys; dechreuodd y hanes yma.",
   "p.plan_issues.refused_gone":
     "Nid yw'r mater hwnnw ar y cynllun hwn mwyach; darllenwyd y rhestr eto.",
   "p.plan_issues.refused_remove":

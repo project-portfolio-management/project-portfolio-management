@@ -6727,6 +6727,12 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "تاريخ المراجعة",
   "p.risk_edit.save": "حفظ الخطر",
   "p.risk_edit.close": "إغلاق النموذج",
+  "p.risk_edit.f_reason": "سبب تغيّر الدرجة (اختياري)",
+  "p.risk_edit.history_h": "سجل الدرجات",
+  "p.risk_edit.history_row":
+    "{date}: الاحتمال {probability} × الأثر {impact} = {score}.",
+  "p.risk_edit.history_reason": "السبب: {reason}",
+  "p.risk_edit.history_first": "أول درجة معروفة؛ بدأ السجل من هنا.",
   "p.plan_issues.refused_gone":
     "لم تعد تلك المشكلة ضمن هذه الخطة؛ أُعيدت قراءة القائمة.",
   "p.plan_issues.refused_remove":

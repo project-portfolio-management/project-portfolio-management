@@ -6966,6 +6966,13 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "レビュー日",
   "p.risk_edit.save": "リスクを保存",
   "p.risk_edit.close": "フォームを閉じる",
+  "p.risk_edit.f_reason": "スコアを変えた理由（任意）",
+  "p.risk_edit.history_h": "スコアの履歴",
+  "p.risk_edit.history_row":
+    "{date}：可能性 {probability} × 影響 {impact} = {score}。",
+  "p.risk_edit.history_reason": "理由：{reason}",
+  "p.risk_edit.history_first":
+    "最初に分かっているスコア。履歴はここから始まります。",
   "p.plan_issues.refused_gone":
     "その課題はこの計画にもうありません。一覧を再読み込みしました。",
   "p.plan_issues.refused_remove":

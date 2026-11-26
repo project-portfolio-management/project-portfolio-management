@@ -6822,6 +6822,12 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.risk_edit.f_review_date": "পর্যালোচনার তারিখ",
   "p.risk_edit.save": "ঝুঁকি সংরক্ষণ করুন",
   "p.risk_edit.close": "ফর্ম বন্ধ করুন",
+  "p.risk_edit.f_reason": "স্কোর কেন বদলেছে (ঐচ্ছিক)",
+  "p.risk_edit.history_h": "স্কোরের ইতিহাস",
+  "p.risk_edit.history_row":
+    "{date}: সম্ভাবনা {probability} × প্রভাব {impact} = {score}।",
+  "p.risk_edit.history_reason": "কারণ: {reason}",
+  "p.risk_edit.history_first": "প্রথম জানা স্কোর; ইতিহাস এখান থেকে শুরু।",
   "p.plan_issues.refused_gone":
     "ওই সমস্যা আর এই পরিকল্পনায় নেই; তালিকা আবার পড়া হয়েছে।",
   "p.plan_issues.refused_remove":

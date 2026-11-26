@@ -6,7 +6,7 @@
 //!
 //! * **Placement.** An item is in one of three horizons (`now`, `next`, `later`) or one of three sections around them
 //!   (`recently_delivered`, `delivered_this_year`, `not_doing`), or in none: an unplaced item is kept for its editors
-//!   and never shown publicly. [`PLACEMENTS`] is in page order.
+//!   and never shown publicly. [`PLACEMENTS`](crate::public_roadmap::PLACEMENTS) is in page order.
 //! * **Details** are a list nested at most three levels: the first line is at the top, and each line is at most one
 //!   level deeper than the line above.
 //! * **Text is stored as typed, trimmed** at its ends, never parsed as a number, date or formula.

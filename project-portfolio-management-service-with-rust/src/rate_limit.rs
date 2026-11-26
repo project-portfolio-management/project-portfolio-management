@@ -10,7 +10,7 @@
 //! - **lockout** — a client address that has earned `LOCKOUT_CLIENT_ADDRESS_AFTER_COUNT` authentication failures
 //!   (`401`) is refused until its window ends, so a password-guessing or token-guessing client is stopped before the
 //!   auth guard does any work. Only a `401` counts, so a client that signs in correctly is never slowed. It is
-//!   `axa-ratelimit`'s [`axa::ratelimit::lock_out_failures`], which reads the address [`client_address_mw`] records.
+//!   `axa-ratelimit`'s [`axa::ratelimit::lock_out_failures`], which reads the address [`client_address_mw`](crate::rate_limit::client_address_mw) records.
 //!
 //! The three health probes, `/_health/live`, `/_health/ready` and `/_health/startup`, are exempt. A refused request is
 //! `429` with `Retry-After` and the `RateLimit-Limit` / `RateLimit-Remaining` / `RateLimit-Reset` headers (whole seconds); an allowed one carries the

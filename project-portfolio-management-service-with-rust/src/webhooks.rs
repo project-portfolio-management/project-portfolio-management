@@ -9,7 +9,7 @@
 //! bus. The relay's primary sink ([`crate::relay::LoggingSink`] /
 //! `crate::relay::FluvioSink`) is the at-least-once path the family
 //! already depends on: a send failure there leaves the outbox row
-//! unpublished so [`crate::relay::drain_once`] retries it. Webhook
+//! unpublished so the relay ([`crate::relay::run`]) retries it. Webhook
 //! delivery must never gate that — an operator's slow or unreachable
 //! receiver would otherwise stall the entire outbox forever. So
 //! `WebhookSink::send` never returns an error: each matching target

@@ -43,7 +43,7 @@ use sqlx::{AssertSqlSafe, Connection, PgConnection, PgPool, SqlSafeStr};
 #[allow(clippy::unreadable_literal)] // the versions are timestamps, written by `build.rs` as they are in the file names
 const FILES: &[(i64, &str, &str)] = include!(concat!(env!("OUT_DIR"), "/migrations.rs"));
 
-/// Every migration, read from [`FILES`] as sqlx's own resolver reads a directory (a unit test holds the two equal):
+/// Every migration, read from `FILES` as sqlx's own resolver reads a directory (a unit test holds the two equal):
 /// `<version>_<description>.sql`, `.up.sql` or `.down.sql`, the description with spaces for underscores, the
 /// checksum the SHA-384 of the text.
 pub static MIGRATOR: LazyLock<Migrator> = LazyLock::new(|| {

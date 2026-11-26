@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 26 November (rustdoc links fixed and checked in CI)
+
+- Eleven broken, ambiguous or private intra-doc links fixed in the service workspace and the matcher (a link to the
+  removed `relay::drain_once` now names `relay::run`). CI's `api` and `matcher` jobs now run `cargo doc` with
+  `RUSTDOCFLAGS=-D warnings` (the service with `--document-private-items`), and AGENTS.md lists the commands. Both build
+  clean locally. Not verified: the new CI steps have not run on a GitHub runner yet.
+
 ## 26 November (UI: the deprecated `$lib` alias removed)
 
 - The UI's `vite.config.ts` no longer sets SvelteKit's deprecated `config.alias` (`$lib`); the six unit-test files that

@@ -1,7 +1,7 @@
 //! The durable event bus's outbox events, kept in `axa-outbox`'s record (`axa_outbox_events`, `axa_outbox_payloads`,
 //! `axa_outbox_attempts`; `agents/share/event-bus.md` §3, §5). Every event is kept: the record refuses changes.
 //!
-//! [`event`] is the **pure** envelope-to-event mapping, unit-tested with no database. [`write`] puts the event on
+//! [`event`] is the **pure** envelope-to-event mapping, unit-tested with no database. [`write()`] puts the event on
 //! the handler's transaction, so the change and its event commit or roll back together; it takes a transaction and
 //! not a connection, as an event written outside one is the bug the outbox exists to prevent. [`recent`] reads the
 //! last rows for the operator's `/events/recent`, and locks nothing. The relay is [`crate::relay`].

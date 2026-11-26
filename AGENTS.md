@@ -43,8 +43,10 @@ maintainers' decision.
 ```bash
 # service (a workspace: the service, `domain` and `migration`; run from its directory)
 cargo fmt --all --check && cargo clippy --workspace --all-targets --all-features -- -D warnings && cargo test --workspace --lib
+RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --document-private-items
 # matcher
 cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings && cargo test --lib
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 # service: the one integration-test binary (tests/main.rs; each former tests/*.rs binary is a module of it), database-free part
 cargo test --test main
 # database tests need Postgres 18 (the file also starts a Redis 8 on 127.0.0.1:6379, password `redis`, not needed by the tests): podman compose -f project-portfolio-management-service-with-rust/compose.test.yaml up -d --wait

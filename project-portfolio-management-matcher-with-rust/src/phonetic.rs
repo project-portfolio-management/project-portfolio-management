@@ -59,7 +59,7 @@ fn latin_letters(s: &str) -> Option<Vec<char>> {
 /// another script (see the module documentation).
 ///
 /// Implements classic American (Russell) Soundex: retain the first
-/// letter, map the rest to digit groups via [`digit`], drop zeros
+/// letter, map the rest to digit groups via `digit`, drop zeros
 /// (vowels + H/W/Y), collapse adjacent equal digits, then truncate or
 /// zero-pad to exactly four characters.
 ///

@@ -4,15 +4,15 @@
 //! order of checks and the same error kinds, because a request body's or a query parameter's error message
 //! reaches the client:
 //!
-//! - [`rfc3339_relaxed`]: a request body's instant (serde) and `str::parse`. A space or `t` for `T`, spaces
+//! - `rfc3339_relaxed`: a request body's instant (serde) and `str::parse`. A space or `t` for `T`, spaces
 //!   between any two parts, unpadded fields, a signed year of any width, any number of fraction digits (past
 //!   nine ignored), `UTC` (any case) or `Z` for a zero offset, an offset with or without its colon, and the
 //!   minus sign U+2212.
-//! - [`rfc3339_strict`]: `parse_from_rfc3339` (query parameters): four-digit year, two-digit fields, `T`, `t` or
+//! - `rfc3339_strict`: `parse_from_rfc3339` (query parameters): four-digit year, two-digit fields, `T`, `t` or
 //!   one space, a colon in the offset.
-//! - [`date`]: a request body's date (serde) and `str::parse`: `year-month-day` with unpadded fields, spaces
+//! - `date`: a request body's date (serde) and `str::parse`: `year-month-day` with unpadded fields, spaces
 //!   around the dashes and a signed year.
-//! - [`strptime`]: the handful of `%` patterns the service reads with (`%Y-%m-%d`, `%d/%m/%Y`, and the
+//! - `strptime`: the handful of `%` patterns the service reads with (`%Y-%m-%d`, `%d/%m/%Y`, and the
 //!   database's text form `%Y-%m-%d %H:%M:%S%.f%#z`).
 //!
 //! What cannot be kept: a leap second (`:60`) is read as `:59` and the same fraction (jiff has no leap

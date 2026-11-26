@@ -15,7 +15,7 @@
 //!
 //! Their method names are the old ones where the service called them, so call sites read as they did.
 //!
-//! **Written** ([`format`]): JSON `2026-10-30T09:15:00.123400Z` (a zero offset is `Z`; the fraction in groups
+//! **Written** ([`format`](mod@format)): JSON `2026-10-30T09:15:00.123400Z` (a zero offset is `Z`; the fraction in groups
 //! of three digits); `to_rfc3339` `…+00:00`; `Display` `2026-10-30 09:15:00.123400 UTC` (or `… +00:00` for an
 //! [`OffsetDateTime`]); `Debug` `…Z` (or `…+00:00`); dates `YYYY-MM-DD`.
 //!

@@ -9536,6 +9536,47 @@ export const PAGES_EN = {
   "p.product_roadmaps.families_h": "Product families",
   "p.product_roadmaps.families_none": "No product family yet.",
   "p.product_roadmaps.products": "products: {n}",
+  "p.roadmap_categories.title": "Roadmap categories",
+  "p.roadmap_categories.title_ppm": "Roadmap categories — PPM",
+  "p.roadmap_categories.intro":
+    "The categories a product roadmap is filed under. A category is defined once, so renaming one renames it on every roadmap that uses it.",
+  "p.roadmap_categories.back": "Back to the product roadmaps",
+  "p.roadmap_categories.loading": "Loading the categories…",
+  "p.roadmap_categories.could_not_load": "Could not load the categories.",
+  "p.roadmap_categories.none": "No category yet.",
+  "p.roadmap_categories.is_retired": "retired",
+  "p.roadmap_categories.translations_are": "translations: {list}",
+  "p.roadmap_categories.change_h": "Change “{name}”",
+  "p.roadmap_categories.f_name": "Name (up to 100 characters)",
+  "p.roadmap_categories.f_translations":
+    "Its name in other languages, one to a line: a language code, a colon, the name (cy: Cleifion)",
+  "p.roadmap_categories.save": "Save the category",
+  "p.roadmap_categories.cancel": "Cancel",
+  "p.roadmap_categories.change": "Change",
+  "p.roadmap_categories.retire": "Retire",
+  "p.roadmap_categories.restore": "Restore",
+  "p.roadmap_categories.retire_ask":
+    "Retire “{name}”? It can no longer be chosen; a roadmap that has it keeps it.",
+  "p.roadmap_categories.retired": "Retired “{name}”.",
+  "p.roadmap_categories.restored": "Restored “{name}”.",
+  "p.roadmap_categories.add_h": "Add a category",
+  "p.roadmap_categories.add": "Add the category",
+  "p.roadmap_categories.added": "Added “{name}”.",
+  "p.roadmap_categories.saved": "Saved “{name}”.",
+  "p.roadmap_categories.name_bad": "A name is required, up to 100 characters.",
+  "p.roadmap_categories.code_bad":
+    "Each translation starts with a language code such as cy or zh-cn, then a colon.",
+  "p.roadmap_categories.text_bad":
+    "Each translation is 1 to 100 characters after its colon.",
+  "p.roadmap_categories.code_twice": "Each language may be given only once.",
+  "p.roadmap_categories.too_many": "At most 50 translations.",
+  "p.roadmap_categories.taken": "A category with that name exists already.",
+  "p.roadmap_categories.forbidden":
+    "Changing the categories needs an administrator.",
+  "p.roadmap_categories.could_not_save": "Could not save the category.",
+  "p.product_roadmap.f_category": "Category (optional)",
+  "p.product_roadmap.no_category": "No category",
+  "p.product_roadmap.manage_categories": "Change the categories",
 } as const;
 
 /** A key in the page and component catalogue. */

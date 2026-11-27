@@ -9736,4 +9736,46 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.product_roadmaps.families_h": "Семейства продуктов",
   "p.product_roadmaps.families_none": "Семейств продуктов пока нет.",
   "p.product_roadmaps.products": "продуктов: {n}",
+  "p.roadmap_categories.title": "Категории дорожных карт",
+  "p.roadmap_categories.title_ppm": "Категории дорожных карт — PPM",
+  "p.roadmap_categories.intro":
+    "Категории, к которым относят дорожную карту продукта. Категория задаётся один раз, поэтому переименование меняет её на всех дорожных картах, где она есть.",
+  "p.roadmap_categories.back": "Назад к дорожным картам продуктов",
+  "p.roadmap_categories.loading": "Загрузка категорий…",
+  "p.roadmap_categories.could_not_load": "Не удалось загрузить категории.",
+  "p.roadmap_categories.none": "Категорий пока нет.",
+  "p.roadmap_categories.is_retired": "выведена из работы",
+  "p.roadmap_categories.translations_are": "переводы: {list}",
+  "p.roadmap_categories.change_h": "Изменить «{name}»",
+  "p.roadmap_categories.f_name": "Название (до 100 символов)",
+  "p.roadmap_categories.f_translations":
+    "Её название на других языках, по одному в строке: код языка, двоеточие, название (cy: Cleifion)",
+  "p.roadmap_categories.save": "Сохранить категорию",
+  "p.roadmap_categories.cancel": "Отмена",
+  "p.roadmap_categories.change": "Изменить",
+  "p.roadmap_categories.retire": "Вывести из работы",
+  "p.roadmap_categories.restore": "Вернуть",
+  "p.roadmap_categories.retire_ask":
+    "Вывести «{name}» из работы? Её больше нельзя будет выбрать; дорожная карта, где она есть, её сохранит.",
+  "p.roadmap_categories.retired": "«{name}» выведена из работы.",
+  "p.roadmap_categories.restored": "«{name}» возвращена.",
+  "p.roadmap_categories.add_h": "Добавить категорию",
+  "p.roadmap_categories.add": "Добавить эту категорию",
+  "p.roadmap_categories.added": "«{name}» добавлена.",
+  "p.roadmap_categories.saved": "«{name}» сохранена.",
+  "p.roadmap_categories.name_bad": "Нужно название, до 100 символов.",
+  "p.roadmap_categories.code_bad":
+    "Каждый перевод начинается с кода языка, например cy или zh-cn, затем двоеточие.",
+  "p.roadmap_categories.text_bad":
+    "Каждый перевод — от 1 до 100 символов после двоеточия.",
+  "p.roadmap_categories.code_twice":
+    "Каждый язык можно указать только один раз.",
+  "p.roadmap_categories.too_many": "Не больше 50 переводов.",
+  "p.roadmap_categories.taken": "Категория с таким названием уже есть.",
+  "p.roadmap_categories.forbidden":
+    "Чтобы менять категории, нужен администратор.",
+  "p.roadmap_categories.could_not_save": "Не удалось сохранить категорию.",
+  "p.product_roadmap.f_category": "Категория (необязательно)",
+  "p.product_roadmap.no_category": "Без категории",
+  "p.product_roadmap.manage_categories": "Изменить категории",
 };

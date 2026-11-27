@@ -14,11 +14,12 @@
   import { page } from "$app/state";
   import { askConfirm } from "#lib/confirm.svelte.js";
   import { errorText } from "#lib/error-text.js";
-  import { localeHref, t, tDynamic } from "#lib/i18n.svelte.js";
+  import { i18n, localeHref, t, tDynamic } from "#lib/i18n.svelte.js";
   import { formatDate, formatInteger } from "#lib/locale-format.js";
   import { ApiError } from "#lib/api/client.js";
   import { PlanRepository } from "#lib/api/plans.js";
   import { PpmClient, type ProductRoadmap } from "#lib/api/ppm.js";
+  import { shownName, type RoadmapCategory } from "#lib/roadmap-category-view.js";
   import {
     PHASE_MAX,
     PLACEMENTS,
@@ -48,6 +49,7 @@
   const pid = $derived(page.params.pid ?? "");
 
   let roadmap = $state<ProductRoadmap | null>(null);
+  let categories = $state<RoadmapCategory[]>([]);
   let isProduct = $state<boolean | null>(null);
   let loaded = $state(false);
   let loadError = $state<string | null>(null);
@@ -66,8 +68,14 @@
 
   async function load() {
     try {
-      const [r, plan] = await Promise.all([ppm.productRoadmap(pid), repo.get(pid)]);
+      const [r, plan, cats] = await Promise.all([
+        ppm.productRoadmap(pid),
+        repo.get(pid),
+        // The categories only fill the picker; without them the roadmap still reads.
+        ppm.roadmapCategories().catch(() => [] as RoadmapCategory[]),
+      ]);
       roadmap = r;
+      categories = cats;
       isProduct = plan.kind === "Product";
       form = roadmapFormOf(r);
       loaded = true;
@@ -307,6 +315,16 @@
     <label>{roadmap ? t("p.product_roadmap.f_slug") : t("p.product_roadmap.f_slug_new")} <input bind:value={form.slug} maxlength={SLUG_MAX} autocomplete="off" /></label>
     <label>{t("p.product_roadmap.f_vision")} <textarea rows="2" maxlength={TEXT_MAX} bind:value={form.vision}></textarea></label>
     <label>{t("p.product_roadmap.f_service")} <textarea rows="2" maxlength={TEXT_MAX} bind:value={form.service_description}></textarea></label>
+    <label
+      >{t("p.product_roadmap.f_category")}
+      <select bind:value={form.category}>
+        <option value="">{t("p.product_roadmap.no_category")}</option>
+        {#each categories.filter((c) => c.active || c.pid === roadmap?.category_pid) as c (c.pid)}
+          <option value={c.pid}>{shownName(c, i18n.locale)}{c.active ? "" : ` (${t("p.roadmap_categories.is_retired")})`}</option>
+        {/each}
+      </select></label
+    >
+    <p class="small muted"><a href={localeHref("/roadmap-categories")}>{t("p.product_roadmap.manage_categories")}</a></p>
     <button class="button" class:primary={!roadmap} type="submit" disabled={busy}>{roadmap ? t("p.product_roadmap.save") : t("p.product_roadmap.make")}</button>
   </form>
 

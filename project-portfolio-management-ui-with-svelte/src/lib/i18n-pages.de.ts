@@ -9985,4 +9985,50 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.product_roadmaps.families_h": "Produktfamilien",
   "p.product_roadmaps.families_none": "Noch keine Produktfamilie.",
   "p.product_roadmaps.products": "Produkte: {n}",
+  "p.roadmap_categories.title": "Roadmap-Kategorien",
+  "p.roadmap_categories.title_ppm": "Roadmap-Kategorien — PPM",
+  "p.roadmap_categories.intro":
+    "Die Kategorien, unter denen eine Produkt-Roadmap abgelegt wird. Eine Kategorie wird einmal festgelegt, daher benennt eine Umbenennung sie auf jeder Roadmap um, die sie nutzt.",
+  "p.roadmap_categories.back": "Zurück zu den Produkt-Roadmaps",
+  "p.roadmap_categories.loading": "Kategorien werden geladen…",
+  "p.roadmap_categories.could_not_load":
+    "Die Kategorien konnten nicht geladen werden.",
+  "p.roadmap_categories.none": "Noch keine Kategorie.",
+  "p.roadmap_categories.is_retired": "außer Dienst",
+  "p.roadmap_categories.translations_are": "Übersetzungen: {list}",
+  "p.roadmap_categories.change_h": "„{name}“ ändern",
+  "p.roadmap_categories.f_name": "Name (bis zu 100 Zeichen)",
+  "p.roadmap_categories.f_translations":
+    "Ihr Name in anderen Sprachen, einer pro Zeile: ein Sprachcode, ein Doppelpunkt, der Name (cy: Cleifion)",
+  "p.roadmap_categories.save": "Kategorie speichern",
+  "p.roadmap_categories.cancel": "Abbrechen",
+  "p.roadmap_categories.change": "Ändern",
+  "p.roadmap_categories.retire": "Außer Dienst stellen",
+  "p.roadmap_categories.restore": "Wiederherstellen",
+  "p.roadmap_categories.retire_ask":
+    "„{name}“ außer Dienst stellen? Sie kann nicht mehr gewählt werden; eine Roadmap, die sie hat, behält sie.",
+  "p.roadmap_categories.retired": "„{name}“ außer Dienst gestellt.",
+  "p.roadmap_categories.restored": "„{name}“ wiederhergestellt.",
+  "p.roadmap_categories.add_h": "Eine Kategorie hinzufügen",
+  "p.roadmap_categories.add": "Kategorie hinzufügen",
+  "p.roadmap_categories.added": "„{name}“ hinzugefügt.",
+  "p.roadmap_categories.saved": "„{name}“ gespeichert.",
+  "p.roadmap_categories.name_bad":
+    "Ein Name ist erforderlich, bis zu 100 Zeichen.",
+  "p.roadmap_categories.code_bad":
+    "Jede Übersetzung beginnt mit einem Sprachcode wie cy oder zh-cn, dann einem Doppelpunkt.",
+  "p.roadmap_categories.text_bad":
+    "Jede Übersetzung hat nach ihrem Doppelpunkt 1 bis 100 Zeichen.",
+  "p.roadmap_categories.code_twice":
+    "Jede Sprache darf nur einmal angegeben werden.",
+  "p.roadmap_categories.too_many": "Höchstens 50 Übersetzungen.",
+  "p.roadmap_categories.taken":
+    "Eine Kategorie mit diesem Namen gibt es bereits.",
+  "p.roadmap_categories.forbidden":
+    "Die Kategorien zu ändern erfordert eine Administratorin oder einen Administrator.",
+  "p.roadmap_categories.could_not_save":
+    "Die Kategorie konnte nicht gespeichert werden.",
+  "p.product_roadmap.f_category": "Kategorie (optional)",
+  "p.product_roadmap.no_category": "Keine Kategorie",
+  "p.product_roadmap.manage_categories": "Die Kategorien ändern",
 };

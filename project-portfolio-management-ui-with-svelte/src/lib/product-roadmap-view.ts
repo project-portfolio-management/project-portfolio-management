@@ -52,12 +52,22 @@ function tagProblems(tags: readonly string[], out: string[]) {
   }
 }
 
-/** The roadmap's own fields as its form holds them. */
+/** The roadmap's own fields as its form holds them; `category` is a category's id, or "" for none. */
 export interface RoadmapForm {
   title: string;
   slug: string;
   vision: string;
   service_description: string;
+  category: string;
+}
+
+/** What `PUT /api/plans/{pid}/roadmap` takes: an absent field is kept, `""` clears a text, `null` clears the category. */
+export interface RoadmapBody {
+  title?: string;
+  slug?: string;
+  vision?: string;
+  service_description?: string;
+  category_pid?: string | null;
 }
 
 /** What the service holds of them. */
@@ -66,6 +76,7 @@ export interface RoadmapFields {
   slug: string;
   vision: string | null;
   service_description: string | null;
+  category_pid?: string | null;
 }
 
 export const roadmapFormOf = (r: RoadmapFields | null): RoadmapForm => ({
@@ -73,6 +84,7 @@ export const roadmapFormOf = (r: RoadmapFields | null): RoadmapForm => ({
   slug: r?.slug ?? "",
   vision: r?.vision ?? "",
   service_description: r?.service_description ?? "",
+  category: r?.category_pid ?? "",
 });
 
 /**
@@ -83,10 +95,7 @@ export const roadmapFormOf = (r: RoadmapFields | null): RoadmapForm => ({
 export function roadmapChange(
   f: RoadmapForm,
   r: RoadmapFields | null,
-):
-  | { body: Partial<Record<keyof RoadmapForm, string>> }
-  | { problems: string[] }
-  | null {
+): { body: RoadmapBody } | { problems: string[] } | null {
   const problems: string[] = [];
   const title = f.title.trim();
   const slug = f.slug.trim();
@@ -97,13 +106,14 @@ export function roadmapChange(
   if (chars(f.vision) > TEXT_MAX || chars(f.service_description) > TEXT_MAX)
     problems.push("p.product_roadmap.text_long");
   if (problems.length > 0) return { problems };
-  const body: Partial<Record<keyof RoadmapForm, string>> = {};
+  const body: RoadmapBody = {};
   if (!r) {
     body.title = title;
     if (slug !== "") body.slug = slug;
     if (f.vision.trim() !== "") body.vision = f.vision.trim();
     if (f.service_description.trim() !== "")
       body.service_description = f.service_description.trim();
+    if (f.category !== "") body.category_pid = f.category;
     return { body };
   }
   if (title !== r.title) body.title = title;
@@ -111,6 +121,8 @@ export function roadmapChange(
   if (f.vision.trim() !== (r.vision ?? "")) body.vision = f.vision.trim();
   if (f.service_description.trim() !== (r.service_description ?? ""))
     body.service_description = f.service_description.trim();
+  if (f.category !== (r.category_pid ?? ""))
+    body.category_pid = f.category === "" ? null : f.category;
   return Object.keys(body).length === 0 ? null : { body };
 }
 

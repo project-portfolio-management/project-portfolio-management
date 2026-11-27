@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/roadmap-categories` and a roadmap's category (RE-7, 2026-11-27)
+
+- Three client methods; `src/lib/roadmap-category-view.ts`; the category picker on `/plans/[pid]/roadmap`
+  (`RoadmapBody` with `category_pid`); a top-navigation section; 35 strings in every locale.
+
 ### Added — `/roadmaps` (RE-3, RE-5, 2026-11-27)
 
 - Three client methods (the lists read every page); a top-navigation section; 14 strings in every locale.

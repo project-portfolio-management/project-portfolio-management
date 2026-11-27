@@ -88,6 +88,12 @@ export function buildNavItems(): NavEntry[] {
       },
     },
     {
+      href: "/roadmap-categories",
+      get label() {
+        return t("p.roadmap_categories.title");
+      },
+    },
+    {
       href: "/approvals",
       get label() {
         return t("p.approvals.title");

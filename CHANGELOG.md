@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (roadmap categories)
+
+- A new `/roadmap-categories` ("Roadmap categories") adds, renames and translates the categories roadmaps are filed
+  under, retires one after a question or restores it, every problem said first; a roadmap's page now chooses its
+  category. 35 new strings in every locale, machine-written in 14, none reviewed. Not verified: against a real
+  service, or who the service lets change the categories.
+
 ## 27 November (the product roadmaps list)
 
 - A new `/roadmaps` ("Product roadmaps") lists the roadmaps due a review, every roadmap the reader may read with its

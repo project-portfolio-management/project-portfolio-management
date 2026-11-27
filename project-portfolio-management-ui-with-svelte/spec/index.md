@@ -3577,7 +3577,16 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   linking to its editor, its address, published or not, how fresh, items placed and not, its family), and the product
   families with how many products each has (`GET /api/roadmap-families`, every page). Read only.
   `tests/e2e/roadmaps.spec.ts`.
+- **`/roadmap-categories`** ("Roadmap categories", a top-navigation section, RE-7, 2026-11-27): the categories a roadmap
+  is filed under, defined once so a rename reaches every roadmap that uses it (`GET /api/roadmap-categories`, active
+  first; each shown in the reader's language where it has a translation). One is added (`POST`) or changed (`PUT`: its
+  name, and the whole set of its translations written one `code: text` to a line; only what changed sent), every
+  problem said first (a name up to 100 characters; a language code such as `cy` or `zh-cn`; each translation 1 to 100
+  characters; at most 50), a name already taken refused before sending and a 409 meanwhile in the same sentence. One is
+  retired after a question (no longer chosen; a roadmap that has it keeps it) or restored. On `/plans/[pid]/roadmap` the
+  roadmap's own form chooses its category from the active ones (a retired one shown only while it is the roadmap's),
+  `null` clearing it. Rules in `src/lib/roadmap-category-view.ts`; `tests/e2e/roadmap-categories.spec.ts`.
 - **Not built** in part l: gathering several edits into one pending change set (each edit above is saved at once),
   translations, an item's details and
-  organizations, the roadmap's category and family (setting them), `/roadmap-categories`, and organizations' short and
+  organizations, the roadmap's family, and organizations' short and
   translated names.

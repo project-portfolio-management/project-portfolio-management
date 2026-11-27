@@ -9789,4 +9789,46 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.product_roadmaps.families_h": "Keluarga produk",
   "p.product_roadmaps.families_none": "Belum ada keluarga produk.",
   "p.product_roadmaps.products": "produk: {n}",
+  "p.roadmap_categories.title": "Kategori peta jalan",
+  "p.roadmap_categories.title_ppm": "Kategori peta jalan — PPM",
+  "p.roadmap_categories.intro":
+    "Kategori tempat peta jalan produk diarsipkan. Kategori didefinisikan sekali, jadi mengganti namanya mengganti nama di setiap peta jalan yang memakainya.",
+  "p.roadmap_categories.back": "Kembali ke peta jalan produk",
+  "p.roadmap_categories.loading": "Memuat kategori…",
+  "p.roadmap_categories.could_not_load": "Tidak dapat memuat kategori.",
+  "p.roadmap_categories.none": "Belum ada kategori.",
+  "p.roadmap_categories.is_retired": "dipensiunkan",
+  "p.roadmap_categories.translations_are": "terjemahan: {list}",
+  "p.roadmap_categories.change_h": "Ubah “{name}”",
+  "p.roadmap_categories.f_name": "Nama (hingga 100 karakter)",
+  "p.roadmap_categories.f_translations":
+    "Namanya dalam bahasa lain, satu per baris: kode bahasa, titik dua, nama (cy: Cleifion)",
+  "p.roadmap_categories.save": "Simpan kategori",
+  "p.roadmap_categories.cancel": "Batal",
+  "p.roadmap_categories.change": "Ubah",
+  "p.roadmap_categories.retire": "Pensiunkan",
+  "p.roadmap_categories.restore": "Pulihkan",
+  "p.roadmap_categories.retire_ask":
+    "Pensiunkan “{name}”? Tidak dapat dipilih lagi; peta jalan yang memilikinya tetap menyimpannya.",
+  "p.roadmap_categories.retired": "“{name}” dipensiunkan.",
+  "p.roadmap_categories.restored": "“{name}” dipulihkan.",
+  "p.roadmap_categories.add_h": "Tambah kategori",
+  "p.roadmap_categories.add": "Tambahkan kategori",
+  "p.roadmap_categories.added": "“{name}” ditambahkan.",
+  "p.roadmap_categories.saved": "“{name}” disimpan.",
+  "p.roadmap_categories.name_bad": "Nama wajib diisi, hingga 100 karakter.",
+  "p.roadmap_categories.code_bad":
+    "Setiap terjemahan diawali kode bahasa seperti cy atau zh-cn, lalu titik dua.",
+  "p.roadmap_categories.text_bad":
+    "Setiap terjemahan 1 hingga 100 karakter setelah titik duanya.",
+  "p.roadmap_categories.code_twice":
+    "Setiap bahasa hanya boleh diberikan sekali.",
+  "p.roadmap_categories.too_many": "Paling banyak 50 terjemahan.",
+  "p.roadmap_categories.taken": "Kategori dengan nama itu sudah ada.",
+  "p.roadmap_categories.forbidden":
+    "Mengubah kategori memerlukan administrator.",
+  "p.roadmap_categories.could_not_save": "Tidak dapat menyimpan kategori.",
+  "p.product_roadmap.f_category": "Kategori (opsional)",
+  "p.product_roadmap.no_category": "Tanpa kategori",
+  "p.product_roadmap.manage_categories": "Ubah kategori",
 };

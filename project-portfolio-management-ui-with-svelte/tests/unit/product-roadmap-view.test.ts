@@ -23,6 +23,7 @@ const r = {
   slug: "payments",
   vision: "Pay in a tap",
   service_description: null,
+  category_pid: null,
 };
 const item = (
   pid: string,
@@ -189,5 +190,32 @@ describe("publishing (RE-2)", () => {
     expect(valueWords("tags", [], words)).toBe("none");
     expect(fieldKey("vision")).toBe("p.product_roadmap.field.vision");
     expect(fieldKey(null)).toBe("p.product_roadmap.field.item");
+  });
+});
+
+describe("a roadmap's category (RE-7)", () => {
+  const r = {
+    title: "Payments",
+    slug: "payments",
+    vision: null,
+    service_description: null,
+    category_pid: "c1",
+  };
+  it("sends a chosen category, null to clear it, and nothing when it is the same", () => {
+    expect(roadmapChange(roadmapFormOf(r), r)).toBeNull();
+    expect(roadmapChange({ ...roadmapFormOf(r), category: "c2" }, r)).toEqual({
+      body: { category_pid: "c2" },
+    });
+    expect(roadmapChange({ ...roadmapFormOf(r), category: "" }, r)).toEqual({
+      body: { category_pid: null },
+    });
+    expect(
+      roadmapChange(
+        { ...roadmapFormOf(null), title: "New", category: "c1" },
+        null,
+      ),
+    ).toEqual({
+      body: { title: "New", category_pid: "c1" },
+    });
   });
 });

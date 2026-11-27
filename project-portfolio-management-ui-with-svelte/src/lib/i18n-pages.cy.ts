@@ -9763,4 +9763,47 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.product_roadmaps.families_h": "Teuluoedd cynnyrch",
   "p.product_roadmaps.families_none": "Dim teulu cynnyrch eto.",
   "p.product_roadmaps.products": "cynhyrchion: {n}",
+  "p.roadmap_categories.title": "Categorïau mapiau ffordd",
+  "p.roadmap_categories.title_ppm": "Categorïau mapiau ffordd — PPM",
+  "p.roadmap_categories.intro":
+    "Y categorïau y caiff map ffordd cynnyrch ei ffeilio odanynt. Caiff categori ei ddiffinio unwaith, felly mae ailenwi un yn ei ailenwi ar bob map ffordd sy'n ei ddefnyddio.",
+  "p.roadmap_categories.back": "Yn ôl i fapiau ffordd y cynhyrchion",
+  "p.roadmap_categories.loading": "Wrthi'n llwytho'r categorïau…",
+  "p.roadmap_categories.could_not_load": "Methu llwytho'r categorïau.",
+  "p.roadmap_categories.none": "Dim categori eto.",
+  "p.roadmap_categories.is_retired": "wedi'i ymddeol",
+  "p.roadmap_categories.translations_are": "cyfieithiadau: {list}",
+  "p.roadmap_categories.change_h": "Newid “{name}”",
+  "p.roadmap_categories.f_name": "Enw (hyd at 100 nod)",
+  "p.roadmap_categories.f_translations":
+    "Ei enw mewn ieithoedd eraill, un i bob llinell: cod iaith, colon, yr enw (cy: Cleifion)",
+  "p.roadmap_categories.save": "Cadw'r categori",
+  "p.roadmap_categories.cancel": "Canslo",
+  "p.roadmap_categories.change": "Newid",
+  "p.roadmap_categories.retire": "Ymddeol",
+  "p.roadmap_categories.restore": "Adfer",
+  "p.roadmap_categories.retire_ask":
+    "Ymddeol “{name}”? Ni ellir ei ddewis mwyach; mae map ffordd sydd ag ef yn ei gadw.",
+  "p.roadmap_categories.retired": "Ymddeolwyd “{name}”.",
+  "p.roadmap_categories.restored": "Adferwyd “{name}”.",
+  "p.roadmap_categories.add_h": "Ychwanegu categori",
+  "p.roadmap_categories.add": "Ychwanegu'r categori",
+  "p.roadmap_categories.added": "Ychwanegwyd “{name}”.",
+  "p.roadmap_categories.saved": "Cadwyd “{name}”.",
+  "p.roadmap_categories.name_bad": "Mae angen enw, hyd at 100 nod.",
+  "p.roadmap_categories.code_bad":
+    "Mae pob cyfieithiad yn dechrau â chod iaith fel cy neu zh-cn, yna colon.",
+  "p.roadmap_categories.text_bad":
+    "Mae pob cyfieithiad yn 1 i 100 nod ar ôl ei golon.",
+  "p.roadmap_categories.code_twice":
+    "Dim ond unwaith y caiff pob iaith ei rhoi.",
+  "p.roadmap_categories.too_many": "50 cyfieithiad ar y mwyaf.",
+  "p.roadmap_categories.taken":
+    "Mae categori gyda'r enw hwnnw yn bodoli eisoes.",
+  "p.roadmap_categories.forbidden":
+    "Mae newid y categorïau yn gofyn am weinyddwr.",
+  "p.roadmap_categories.could_not_save": "Methu cadw'r categori.",
+  "p.product_roadmap.f_category": "Categori (dewisol)",
+  "p.product_roadmap.no_category": "Dim categori",
+  "p.product_roadmap.manage_categories": "Newid y categorïau",
 };

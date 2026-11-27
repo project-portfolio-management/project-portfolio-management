@@ -9858,4 +9858,47 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.product_roadmaps.families_h": "Famílias de produtos",
   "p.product_roadmaps.families_none": "Ainda sem famílias de produtos.",
   "p.product_roadmaps.products": "produtos: {n}",
+  "p.roadmap_categories.title": "Categorias de roteiros",
+  "p.roadmap_categories.title_ppm": "Categorias de roteiros — PPM",
+  "p.roadmap_categories.intro":
+    "As categorias em que um roteiro de produto é arquivado. Uma categoria é definida uma vez, por isso mudar-lhe o nome muda-o em todos os roteiros que a usam.",
+  "p.roadmap_categories.back": "Voltar aos roteiros de produto",
+  "p.roadmap_categories.loading": "A carregar as categorias…",
+  "p.roadmap_categories.could_not_load":
+    "Não foi possível carregar as categorias.",
+  "p.roadmap_categories.none": "Ainda sem categorias.",
+  "p.roadmap_categories.is_retired": "retirada",
+  "p.roadmap_categories.translations_are": "traduções: {list}",
+  "p.roadmap_categories.change_h": "Alterar «{name}»",
+  "p.roadmap_categories.f_name": "Nome (até 100 caracteres)",
+  "p.roadmap_categories.f_translations":
+    "O seu nome noutras línguas, um por linha: um código de língua, dois pontos, o nome (cy: Cleifion)",
+  "p.roadmap_categories.save": "Guardar a categoria",
+  "p.roadmap_categories.cancel": "Cancelar",
+  "p.roadmap_categories.change": "Alterar",
+  "p.roadmap_categories.retire": "Retirar",
+  "p.roadmap_categories.restore": "Repor",
+  "p.roadmap_categories.retire_ask":
+    "Retirar «{name}»? Deixa de poder ser escolhida; um roteiro que a tenha mantém-na.",
+  "p.roadmap_categories.retired": "«{name}» retirada.",
+  "p.roadmap_categories.restored": "«{name}» reposta.",
+  "p.roadmap_categories.add_h": "Adicionar uma categoria",
+  "p.roadmap_categories.add": "Adicionar a categoria",
+  "p.roadmap_categories.added": "«{name}» adicionada.",
+  "p.roadmap_categories.saved": "«{name}» guardada.",
+  "p.roadmap_categories.name_bad": "É necessário um nome, até 100 caracteres.",
+  "p.roadmap_categories.code_bad":
+    "Cada tradução começa por um código de língua como cy ou zh-cn e dois pontos.",
+  "p.roadmap_categories.text_bad":
+    "Cada tradução tem de 1 a 100 caracteres após os dois pontos.",
+  "p.roadmap_categories.code_twice": "Cada língua só pode ser dada uma vez.",
+  "p.roadmap_categories.too_many": "No máximo 50 traduções.",
+  "p.roadmap_categories.taken": "Já existe uma categoria com esse nome.",
+  "p.roadmap_categories.forbidden":
+    "Alterar as categorias requer um administrador.",
+  "p.roadmap_categories.could_not_save":
+    "Não foi possível guardar a categoria.",
+  "p.product_roadmap.f_category": "Categoria (opcional)",
+  "p.product_roadmap.no_category": "Sem categoria",
+  "p.product_roadmap.manage_categories": "Alterar as categorias",
 };

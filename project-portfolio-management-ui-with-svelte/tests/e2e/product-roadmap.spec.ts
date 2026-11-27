@@ -448,3 +448,37 @@ test("a change set refused for a conflict names it in the page's words", async (
       .getByRole("button", { name: "Publish the change set" }),
   ).toHaveCount(0);
 });
+
+test("a roadmap is filed under a category, a retired one shown only while it is the roadmap's (RE-7)", async ({
+  page,
+}) => {
+  const sent = await stub(page);
+  await page.route("**/api/roadmap-categories", (r) =>
+    r.fulfill({
+      json: {
+        categories: [
+          { pid: "c1", name: "Patients", translations: {}, active: true },
+          { pid: "c2", name: "Staff", translations: {}, active: false },
+        ],
+      },
+    }),
+  );
+  await page.goto(`/en-001/plans/${PID}/roadmap`);
+  await settle(page);
+  const own = page.getByRole("form", { name: "The roadmap" });
+  const picker = own.getByRole("combobox", { name: "Category (optional)" });
+  await expect(picker.getByRole("option")).toHaveText([
+    "No category",
+    "Patients",
+  ]);
+  await picker.selectOption("c1");
+  await own.getByRole("button", { name: "Save the roadmap" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Saved the roadmap.",
+  );
+  expect(sent.at(-1)).toEqual({
+    method: "PUT",
+    path: `/api/plans/${PID}/roadmap`,
+    body: { category_pid: "c1" },
+  });
+});

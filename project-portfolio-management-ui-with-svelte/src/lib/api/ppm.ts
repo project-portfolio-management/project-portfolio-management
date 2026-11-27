@@ -21,13 +21,14 @@ import type {
 import type { CapacityHeatmap } from "#lib/capacity-heatmap-view.js";
 import type { DefBody } from "#lib/custom-field-view.js";
 import type { ApprovalRequestBody } from "#lib/approvals-view.js";
+import type { RoadmapCategory } from "#lib/roadmap-category-view.js";
 import type {
   ChangeLine,
   ChangeSet,
   ConflictLine,
   ItemBody,
   Placement,
-  RoadmapForm,
+  RoadmapBody,
   RoadmapItem,
 } from "#lib/product-roadmap-view.js";
 import type {
@@ -2555,6 +2556,33 @@ export class PpmClient {
       { body: {} },
     );
   }
+  /** Every roadmap category, active first, then by name (RE-7). */
+  async roadmapCategories(): Promise<RoadmapCategory[]> {
+    const r = await this.http.get<{ categories: RoadmapCategory[] }>(
+      "/api/roadmap-categories",
+    );
+    return r?.categories ?? [];
+  }
+  /** Define a category; 409 when its name is taken, ignoring case. */
+  addRoadmapCategory(body: {
+    name: string;
+    translations?: Record<string, string>;
+  }): Promise<RoadmapCategory> {
+    return this.http.post("/api/roadmap-categories", { body });
+  }
+  /** Rename, translate (the whole set), retire (`active: false`) or restore a category. */
+  changeRoadmapCategory(
+    pid: string,
+    body: {
+      name?: string;
+      translations?: Record<string, string>;
+      active?: boolean;
+    },
+  ): Promise<RoadmapCategory> {
+    return this.http.put(`/api/roadmap-categories/${encodeURIComponent(pid)}`, {
+      body,
+    });
+  }
   /** Every roadmap of a live plan the caller may read, published or not, by title, every page (RE-5). */
   async publicRoadmaps(): Promise<ListedRoadmap[]> {
     const first = await this.http.getPage<ListedRoadmap>(
@@ -2585,10 +2613,7 @@ export class PpmClient {
     }
   }
   /** Make the roadmap (a Product plan only) or change its own fields; an absent field is kept, `""` clears it. */
-  saveProductRoadmap(
-    pid: string,
-    body: Partial<RoadmapForm>,
-  ): Promise<ProductRoadmap> {
+  saveProductRoadmap(pid: string, body: RoadmapBody): Promise<ProductRoadmap> {
     return this.http.put(`/api/plans/${encodeURIComponent(pid)}/roadmap`, {
       body,
     });

@@ -9321,6 +9321,18 @@ export const PAGES_EN = {
   "p.processes.cancel_edit": "Cancel",
   "p.processes.versions": "Versions, newest first",
   "p.processes.current": "current",
+  "p.announcements.title_bad": "A title is required, up to 120 characters.",
+  "p.announcements.body_bad": "A message is required, up to 4,000 characters.",
+  "p.announcements.time_bad": "A time could not be read; choose it again.",
+  "p.announcements.expires_bad":
+    "The expiry must come after the time it is published.",
+  "p.announcements.saved": "Saved “{title}”.",
+  "p.announcements.could_not_save": "Could not save the announcement.",
+  "p.announcements.change_h": "Change “{title}”",
+  "p.announcements.change": "Change",
+  "p.announcements.publish_at": "Published from",
+  "p.announcements.save": "Save the changes",
+  "p.announcements.cancel": "Cancel",
 } as const;
 
 /** A key in the page and component catalogue. */

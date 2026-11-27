@@ -9750,4 +9750,20 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.processes.cancel_edit": "Abbrechen",
   "p.processes.versions": "Fassungen, neueste zuerst",
   "p.processes.current": "aktuell",
+  "p.announcements.title_bad":
+    "Ein Titel ist erforderlich, bis zu 120 Zeichen.",
+  "p.announcements.body_bad":
+    "Eine Nachricht ist erforderlich, bis zu 4.000 Zeichen.",
+  "p.announcements.time_bad":
+    "Eine Zeit konnte nicht gelesen werden; wählen Sie sie erneut.",
+  "p.announcements.expires_bad":
+    "Das Ablaufdatum muss nach dem Veröffentlichungszeitpunkt liegen.",
+  "p.announcements.saved": "„{title}“ gespeichert.",
+  "p.announcements.could_not_save":
+    "Die Mitteilung konnte nicht gespeichert werden.",
+  "p.announcements.change_h": "„{title}“ ändern",
+  "p.announcements.change": "Ändern",
+  "p.announcements.publish_at": "Veröffentlicht ab",
+  "p.announcements.save": "Änderungen speichern",
+  "p.announcements.cancel": "Abbrechen",
 };

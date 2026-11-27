@@ -9385,4 +9385,16 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.processes.cancel_edit": "キャンセル",
   "p.processes.versions": "バージョン（新しい順）",
   "p.processes.current": "現行",
+  "p.announcements.title_bad": "タイトルは必須で、120 文字までです。",
+  "p.announcements.body_bad": "本文は必須で、4,000 文字までです。",
+  "p.announcements.time_bad":
+    "時刻を読み取れませんでした。もう一度選んでください。",
+  "p.announcements.expires_bad": "有効期限は公開時刻より後にしてください。",
+  "p.announcements.saved": "「{title}」を保存しました。",
+  "p.announcements.could_not_save": "お知らせを保存できませんでした。",
+  "p.announcements.change_h": "「{title}」を変更",
+  "p.announcements.change": "変更",
+  "p.announcements.publish_at": "公開開始",
+  "p.announcements.save": "変更を保存",
+  "p.announcements.cancel": "キャンセル",
 };

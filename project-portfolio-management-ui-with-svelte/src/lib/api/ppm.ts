@@ -2560,6 +2560,15 @@ export class PpmClient {
   publishAnnouncement(body: AnnouncementInput): Promise<Announcement> {
     return this.http.post("/api/announcements", { body });
   }
+  /** Replace an announcement (a publisher); an absent `expires_at` clears it, and an absent `publish_at` keeps it. */
+  updateAnnouncement(
+    pid: string,
+    body: AnnouncementInput,
+  ): Promise<Announcement> {
+    return this.http.put(`/api/announcements/${encodeURIComponent(pid)}`, {
+      body,
+    });
+  }
   retractAnnouncement(pid: string): Promise<void> {
     return this.http.delete(`/api/announcements/${pid}`);
   }

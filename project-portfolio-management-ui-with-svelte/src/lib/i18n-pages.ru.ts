@@ -9514,4 +9514,16 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.processes.cancel_edit": "Отмена",
   "p.processes.versions": "Версии, новейшая первой",
   "p.processes.current": "текущая",
+  "p.announcements.title_bad": "Нужен заголовок, до 120 символов.",
+  "p.announcements.body_bad": "Нужен текст, до 4000 символов.",
+  "p.announcements.time_bad": "Не удалось прочитать время; выберите его снова.",
+  "p.announcements.expires_bad":
+    "Срок действия должен заканчиваться после публикации.",
+  "p.announcements.saved": "«{title}» сохранено.",
+  "p.announcements.could_not_save": "Не удалось сохранить объявление.",
+  "p.announcements.change_h": "Изменить «{title}»",
+  "p.announcements.change": "Изменить",
+  "p.announcements.publish_at": "Опубликовано с",
+  "p.announcements.save": "Сохранить изменения",
+  "p.announcements.cancel": "Отмена",
 };

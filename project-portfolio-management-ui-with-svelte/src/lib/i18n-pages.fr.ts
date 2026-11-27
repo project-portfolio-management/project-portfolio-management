@@ -9711,4 +9711,18 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.processes.cancel_edit": "Annuler",
   "p.processes.versions": "Versions, la plus récente d'abord",
   "p.processes.current": "actuelle",
+  "p.announcements.title_bad": "Un titre est requis, jusqu'à 120 caractères.",
+  "p.announcements.body_bad":
+    "Un message est requis, jusqu'à 4 000 caractères.",
+  "p.announcements.time_bad":
+    "Une heure n'a pas pu être lue ; choisissez-la de nouveau.",
+  "p.announcements.expires_bad":
+    "L'expiration doit suivre l'heure de publication.",
+  "p.announcements.saved": "« {title} » enregistré.",
+  "p.announcements.could_not_save": "Impossible d'enregistrer l'annonce.",
+  "p.announcements.change_h": "Modifier « {title} »",
+  "p.announcements.change": "Modifier",
+  "p.announcements.publish_at": "Publié à partir de",
+  "p.announcements.save": "Enregistrer les modifications",
+  "p.announcements.cancel": "Annuler",
 };

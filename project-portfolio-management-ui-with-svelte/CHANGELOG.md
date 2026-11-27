@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — changing an announcement (2026-11-27)
+
+- `/announcements`: a publisher's inline change; `updateAnnouncement`; `localInput`, `formOf` and `announcementEdit`
+  in `src/lib/announcement-view.ts`; 11 strings in every locale.
+
 ### Added — changing and retiring an approval process (PL-2, 2026-11-27)
 
 - `/approval-processes`: change (a new version), its versions, retire; three client methods; `draftsOf` and `editBody`

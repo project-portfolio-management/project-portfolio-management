@@ -143,3 +143,65 @@ test.describe("announcements", () => {
     ).toEqual([]);
   });
 });
+
+test("a publisher changes an announcement in place: every problem first, nothing sent unchanged, the expiry kept", async ({
+  page,
+}) => {
+  const sent: Array<{ path: string; body: Record<string, unknown> }> = [];
+  let feed = FEED.map((a) => ({ ...a }));
+  const later = new Date(NOW + 7 * 86_400_000).toISOString();
+  feed[1] = { ...feed[1]!, expires_at: later };
+  await page.route("**/api/announcements**", async (r) => {
+    if (r.request().method() === "PUT") {
+      const body = r.request().postDataJSON() as Record<string, unknown>;
+      sent.push({ path: new URL(r.request().url()).pathname, body });
+      feed = feed.map((a) =>
+        a.pid === "a2" ? { ...a, ...body } : a,
+      ) as typeof feed;
+      return r.fulfill({ json: feed[1] });
+    }
+    return r.fulfill({ json: { announcements: feed, total: 2 } });
+  });
+  await page.goto("/en-001/announcements", { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Change “New report pack”" }).click();
+  const form = page.getByRole("form", { name: "Change “New report pack”" });
+  await form.getByRole("button", { name: "Save the changes" }).click();
+  expect(sent).toEqual([]);
+  await expect(form).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Change “New report pack”" }).click();
+  await form.getByLabel("Title").fill(" ");
+  await form.getByLabel("Message").fill("");
+  await form.getByRole("button", { name: "Save the changes" }).click();
+  await expect(
+    page.getByTestId("announcement-problems").getByRole("listitem"),
+  ).toHaveText([
+    "A title is required, up to 120 characters.",
+    "A message is required, up to 4,000 characters.",
+  ]);
+  expect(sent).toEqual([]);
+  await form.getByLabel("Title").fill("New report pack, with charts");
+  await form
+    .getByLabel("Message")
+    .fill("The director pack is live, with charts.");
+  await form.getByLabel("Severity").selectOption("important");
+  await form.getByRole("button", { name: "Save the changes" }).click();
+  await expect(page.getByTestId("announcement-notice")).toHaveText(
+    "Saved “New report pack, with charts”.",
+  );
+  expect(sent).toEqual([
+    {
+      path: "/api/proxy/api/announcements/a2",
+      body: {
+        title: "New report pack, with charts",
+        body: "The director pack is live, with charts.",
+        severity: "important",
+        pinned: false,
+        expires_at: later,
+      },
+    },
+  ]);
+  await expect(page.getByTestId("announcements")).toContainText(
+    "New report pack, with charts",
+  );
+});

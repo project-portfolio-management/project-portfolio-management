@@ -9546,4 +9546,16 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.processes.cancel_edit": "Canslo",
   "p.processes.versions": "Fersiynau, y diweddaraf yn gyntaf",
   "p.processes.current": "cyfredol",
+  "p.announcements.title_bad": "Mae angen teitl, hyd at 120 nod.",
+  "p.announcements.body_bad": "Mae angen neges, hyd at 4,000 nod.",
+  "p.announcements.time_bad": "Methu darllen amser; dewiswch ef eto.",
+  "p.announcements.expires_bad":
+    "Rhaid i'r dyddiad dod i ben ddod ar ôl yr amser cyhoeddi.",
+  "p.announcements.saved": "Cadwyd “{title}”.",
+  "p.announcements.could_not_save": "Methu cadw'r cyhoeddiad.",
+  "p.announcements.change_h": "Newid “{title}”",
+  "p.announcements.change": "Newid",
+  "p.announcements.publish_at": "Cyhoeddwyd o",
+  "p.announcements.save": "Cadw'r newidiadau",
+  "p.announcements.cancel": "Canslo",
 };

@@ -9637,4 +9637,17 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.processes.cancel_edit": "Cancelar",
   "p.processes.versions": "Versões, a mais recente primeiro",
   "p.processes.current": "atual",
+  "p.announcements.title_bad": "É necessário um título, até 120 caracteres.",
+  "p.announcements.body_bad": "É necessária uma mensagem, até 4000 caracteres.",
+  "p.announcements.time_bad":
+    "Não foi possível ler uma hora; escolha-a de novo.",
+  "p.announcements.expires_bad":
+    "A expiração tem de ser depois da hora de publicação.",
+  "p.announcements.saved": "«{title}» guardado.",
+  "p.announcements.could_not_save": "Não foi possível guardar o anúncio.",
+  "p.announcements.change_h": "Alterar «{title}»",
+  "p.announcements.change": "Alterar",
+  "p.announcements.publish_at": "Publicado a partir de",
+  "p.announcements.save": "Guardar as alterações",
+  "p.announcements.cancel": "Cancelar",
 };

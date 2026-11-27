@@ -3530,4 +3530,11 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   name is sent only when it changed. The form lists every version newest first with when and by whom and its steps.
   A definition is retired after a question (`DELETE`; runs already going go on). A refusal for not being its definer
   or an administrator (403) is said in the page's words. `tests/e2e/approval-processes.spec.ts`.
-- **Not built** in part n: a task's custom field values, editing an announcement, approval requests outside a process.
+- **An announcement changed** (`/announcements`, 2026-11-27): a publisher changes one in place: title, message,
+  severity, pinned, when it is published from and its expiry (`datetime-local`, in the reader's zone). Every problem
+  is said first (a title up to 120 characters, a message up to 4,000, an expiry after the publishing time); nothing is
+  sent when nothing changed, seconds on a stored time included. The service replaces the whole announcement and
+  clears an expiry left out, so the expiry is always sent (the stored one, as it was, when unchanged); the publishing
+  time only when it changed (`PUT /api/announcements/{pid}`). Rules in `announcement-view.ts`;
+  `tests/e2e/announcements.spec.ts`.
+- **Not built** in part n: a task's custom field values, approval requests outside a process.

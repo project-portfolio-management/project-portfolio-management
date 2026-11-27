@@ -16,6 +16,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (changing an announcement)
+
+- `/announcements` lets a publisher change an announcement in place, every problem said first, nothing sent when
+  nothing changed, and its expiry kept unless it is cleared. 11 new strings in every locale, machine-written in 14,
+  none reviewed. Not verified: against a real service.
+
 ## 27 November (changing and retiring an approval process)
 
 - `/approval-processes` changes a process definition (saved as a new version; runs already going keep theirs; nothing

@@ -9537,4 +9537,74 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.goals.added": "« {title} » ajouté.",
   "p.goals.saved": "« {title} » enregistré.",
   "p.goals.removed": "« {title} » retiré.",
+  "p.custom_fields.title": "Champs personnalisés",
+  "p.custom_fields.title_ppm": "Champs personnalisés — PPM",
+  "p.custom_fields.intro":
+    "Des champs qu'un administrateur ajoute à chaque plan ou tâche, chacun avec un type par rapport auquel ses valeurs sont vérifiées. Les valeurs sont stockées à part du plan : elles n'influent jamais sur la mise en correspondance.",
+  "p.custom_fields.loading": "Chargement des champs personnalisés…",
+  "p.custom_fields.could_not_load":
+    "Impossible de charger les champs personnalisés.",
+  "p.custom_fields.for.plan": "Champs des plans",
+  "p.custom_fields.for.task": "Champs des tâches",
+  "p.custom_fields.none": "Aucun déclaré pour l'instant.",
+  "p.custom_fields.type.text": "Texte",
+  "p.custom_fields.type.date": "Une date",
+  "p.custom_fields.type.bool": "Oui ou non",
+  "p.custom_fields.type.integer": "Nombre entier",
+  "p.custom_fields.type.list": "Un choix dans une liste",
+  "p.custom_fields.type.multi_list": "Plusieurs choix dans une liste",
+  "p.custom_fields.is_required": "obligatoire",
+  "p.custom_fields.kinds_only": "uniquement pour les plans de type : {kinds}",
+  "p.custom_fields.choices": "choix : {options}",
+  "p.custom_fields.withdraw": "Retirer",
+  "p.custom_fields.withdraw_ask":
+    "Retirer le champ « {label} » ? Les valeurs déjà enregistrées restent lisibles, marquées comme retirées, et aucune nouvelle ne peut être saisie.",
+  "p.custom_fields.withdrawn": "« {label} » retiré.",
+  "p.custom_fields.could_not_withdraw": "Impossible de retirer le champ.",
+  "p.custom_fields.declare_h": "Déclarer un champ",
+  "p.custom_fields.key_field":
+    "Clé (minuscules, chiffres et tirets bas, commençant par une lettre)",
+  "p.custom_fields.label_field": "Libellé (jusqu'à 100 caractères)",
+  "p.custom_fields.type_field": "Type de valeur",
+  "p.custom_fields.applies_field": "S'applique à",
+  "p.custom_fields.applies.plan": "Les plans",
+  "p.custom_fields.applies.task": "Les tâches",
+  "p.custom_fields.kinds_field":
+    "Uniquement pour ces types de plan (facultatif, séparés par des virgules)",
+  "p.custom_fields.options_field":
+    "Choix, un par ligne (jusqu'à 100, chacun jusqu'à 100 caractères)",
+  "p.custom_fields.required_field":
+    "Chaque plan ou tâche doit avoir une valeur",
+  "p.custom_fields.declare": "Déclarer le champ",
+  "p.custom_fields.key_bad":
+    "La clé doit contenir des minuscules, chiffres et tirets bas, commencer par une lettre et faire au plus 100 caractères.",
+  "p.custom_fields.label_bad":
+    "Un libellé est requis, de 100 caractères au plus.",
+  "p.custom_fields.options_none":
+    "Un champ de liste demande au moins un choix.",
+  "p.custom_fields.options_long":
+    "Une liste contient au plus 100 choix, de 100 caractères chacun au plus.",
+  "p.custom_fields.options_twice": "Chaque choix ne peut figurer qu'une fois.",
+  "p.custom_fields.key_taken":
+    "Un champ avec cette clé existe déjà pour ce type d'élément.",
+  "p.custom_fields.could_not_declare": "Impossible de déclarer le champ.",
+  "p.custom_fields.declared": "« {label} » déclaré.",
+  "p.custom_fields.search_h": "Chercher par la valeur d'un champ",
+  "p.custom_fields.field_field": "Champ",
+  "p.custom_fields.choose": "Choisir…",
+  "p.custom_fields.value_field": "Valeur",
+  "p.custom_fields.yes": "Oui",
+  "p.custom_fields.no": "Non",
+  "p.custom_fields.search": "Chercher",
+  "p.custom_fields.found.plan":
+    "Plans correspondants que vous pouvez voir : {n}",
+  "p.custom_fields.found.task":
+    "Tâches correspondantes que vous pouvez voir : {n}",
+  "p.custom_fields.truncated":
+    "Plus de 5 000 valeurs sont enregistrées pour ce champ ; seules les 5 000 premières ont été examinées.",
+  "p.custom_fields.field_required": "Choisissez un champ.",
+  "p.custom_fields.value_required": "Indiquez une valeur à chercher.",
+  "p.custom_fields.value_integer": "La valeur doit être un nombre entier.",
+  "p.custom_fields.value_date": "La valeur doit être un vrai jour.",
+  "p.custom_fields.could_not_search": "Impossible de chercher dans le champ.",
 };

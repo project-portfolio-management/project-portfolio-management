@@ -9570,4 +9570,75 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.goals.added": "„{title}“ hinzugefügt.",
   "p.goals.saved": "„{title}“ gespeichert.",
   "p.goals.removed": "„{title}“ entfernt.",
+  "p.custom_fields.title": "Benutzerdefinierte Felder",
+  "p.custom_fields.title_ppm": "Benutzerdefinierte Felder — PPM",
+  "p.custom_fields.intro":
+    "Felder, die eine Administratorin oder ein Administrator jedem Plan oder jeder Aufgabe hinzufügt, jedes mit einem Typ, gegen den seine Werte geprüft werden. Die Werte liegen getrennt vom Plan und beeinflussen den Abgleich daher nie.",
+  "p.custom_fields.loading": "Benutzerdefinierte Felder werden geladen…",
+  "p.custom_fields.could_not_load":
+    "Die benutzerdefinierten Felder konnten nicht geladen werden.",
+  "p.custom_fields.for.plan": "Felder an Plänen",
+  "p.custom_fields.for.task": "Felder an Aufgaben",
+  "p.custom_fields.none": "Noch keine festgelegt.",
+  "p.custom_fields.type.text": "Freitext",
+  "p.custom_fields.type.date": "Datum",
+  "p.custom_fields.type.bool": "Ja oder nein",
+  "p.custom_fields.type.integer": "Ganze Zahl",
+  "p.custom_fields.type.list": "Eine Auswahl aus einer Liste",
+  "p.custom_fields.type.multi_list": "Mehrere Auswahlen aus einer Liste",
+  "p.custom_fields.is_required": "erforderlich",
+  "p.custom_fields.kinds_only": "nur für Pläne der Art: {kinds}",
+  "p.custom_fields.choices": "Auswahlen: {options}",
+  "p.custom_fields.withdraw": "Zurückziehen",
+  "p.custom_fields.withdraw_ask":
+    "Das Feld „{label}“ zurückziehen? Bereits gespeicherte Werte bleiben lesbar, als zurückgezogen markiert, und neue können nicht gesetzt werden.",
+  "p.custom_fields.withdrawn": "„{label}“ zurückgezogen.",
+  "p.custom_fields.could_not_withdraw":
+    "Das Feld konnte nicht zurückgezogen werden.",
+  "p.custom_fields.declare_h": "Ein Feld festlegen",
+  "p.custom_fields.key_field":
+    "Schlüssel (Kleinbuchstaben, Ziffern und Unterstriche, beginnend mit einem Buchstaben)",
+  "p.custom_fields.label_field": "Bezeichnung (bis zu 100 Zeichen)",
+  "p.custom_fields.type_field": "Art des Werts",
+  "p.custom_fields.applies_field": "Gilt für",
+  "p.custom_fields.applies.plan": "Pläne",
+  "p.custom_fields.applies.task": "Aufgaben",
+  "p.custom_fields.kinds_field":
+    "Nur für diese Planarten (optional, durch Kommas getrennt)",
+  "p.custom_fields.options_field":
+    "Auswahlen, eine pro Zeile (bis zu 100, jede bis zu 100 Zeichen)",
+  "p.custom_fields.required_field":
+    "Jeder Plan bzw. jede Aufgabe muss einen Wert haben",
+  "p.custom_fields.declare": "Feld festlegen",
+  "p.custom_fields.key_bad":
+    "Der Schlüssel muss aus Kleinbuchstaben, Ziffern und Unterstrichen bestehen, mit einem Buchstaben beginnen und höchstens 100 Zeichen lang sein.",
+  "p.custom_fields.label_bad":
+    "Eine Bezeichnung ist erforderlich, höchstens 100 Zeichen.",
+  "p.custom_fields.options_none":
+    "Ein Listenfeld braucht mindestens eine Auswahl.",
+  "p.custom_fields.options_long":
+    "Eine Liste enthält höchstens 100 Auswahlen, jede höchstens 100 Zeichen.",
+  "p.custom_fields.options_twice": "Jede Auswahl darf nur einmal vorkommen.",
+  "p.custom_fields.key_taken":
+    "Für diese Art von Gegenstand gibt es bereits ein Feld mit diesem Schlüssel.",
+  "p.custom_fields.could_not_declare":
+    "Das Feld konnte nicht festgelegt werden.",
+  "p.custom_fields.declared": "„{label}“ festgelegt.",
+  "p.custom_fields.search_h": "Nach dem Wert eines Felds suchen",
+  "p.custom_fields.field_field": "Feldname",
+  "p.custom_fields.choose": "Auswählen…",
+  "p.custom_fields.value_field": "Wert",
+  "p.custom_fields.yes": "Ja",
+  "p.custom_fields.no": "Nein",
+  "p.custom_fields.search": "Suchen",
+  "p.custom_fields.found.plan": "Passende Pläne, die Sie sehen können: {n}",
+  "p.custom_fields.found.task": "Passende Aufgaben, die Sie sehen können: {n}",
+  "p.custom_fields.truncated":
+    "Für dieses Feld sind mehr als 5.000 Werte gespeichert; nur die ersten 5.000 wurden betrachtet.",
+  "p.custom_fields.field_required": "Wählen Sie ein Feld.",
+  "p.custom_fields.value_required": "Geben Sie einen Wert zum Suchen an.",
+  "p.custom_fields.value_integer": "Der Wert muss eine ganze Zahl sein.",
+  "p.custom_fields.value_date": "Der Wert muss ein echter Tag sein.",
+  "p.custom_fields.could_not_search":
+    "Das Feld konnte nicht durchsucht werden.",
 };

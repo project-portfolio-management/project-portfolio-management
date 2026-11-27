@@ -3492,5 +3492,15 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   position, so every change sends the list's `ETag` from the last answer as `If-Match` (the client reads it through
   `RequestOptions.onResponse`); a 412 (the list changed meanwhile) or a 404 (the goal is gone) is said in the page's
   words and the list read again. Rules in `src/lib/goal-view.ts`; `tests/e2e/goals.spec.ts`.
-- **Not built** in part n: custom fields, onboarding templates, a framework's and a way of
+- **`/custom-fields`** ("Custom fields", a top-navigation section, RM-1, 2026-11-27) lists the live definitions for
+  plans and for tasks: label, key, type in words, required, the plan kinds it is limited to and a list's choices. A
+  field is declared with every problem the service would find said first and all at once (a lowercase key, a label up to
+  100 characters, a list's choices: at least one, at most 100, each up to 100 characters, none twice); a key already
+  taken for that subject type is refused before sending and a 409 meanwhile in the same sentence; kinds are sent only
+  for a plan field and choices only for a list one. A definition is withdrawn after a question (values stay readable,
+  marked withdrawn). A search finds the plans (linked) or tasks whose value equals one given in the field's own terms
+  (yes or no, a choice, a real day, a whole number), only those the reader may see, and says when the service looked
+  at only the first 5,000 values. Rules in `src/lib/custom-field-view.ts`; `tests/e2e/custom-fields.spec.ts`. The
+  values of one plan or task (`GET`/`PUT /api/custom-fields/values`) have no screen yet.
+- **Not built** in part n: a plan's or a task's custom field values, onboarding templates, a framework's and a way of
   working's text and versions, editing a process definition or an announcement, approval requests outside a process.

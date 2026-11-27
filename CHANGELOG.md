@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (custom fields)
+
+- A new `/custom-fields` ("Custom fields") lists the field definitions for plans and tasks, declares one with every
+  problem said first, withdraws one after a question, and finds the plans or tasks whose value matches. Values on one
+  plan or task have no screen yet. 55 new strings in every locale, machine-written in 14, none reviewed. Not verified:
+  against a real service.
+
 ## 27 November (a plan's goals)
 
 - A new `/plans/[pid]/goals` ("Goals") lists a plan's goals in order and adds, changes or removes one (after a

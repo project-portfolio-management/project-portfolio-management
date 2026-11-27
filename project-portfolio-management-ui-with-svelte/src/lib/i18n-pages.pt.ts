@@ -9465,4 +9465,71 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.goals.added": "«{title}» adicionada.",
   "p.goals.saved": "«{title}» guardada.",
   "p.goals.removed": "«{title}» removida.",
+  "p.custom_fields.title": "Campos personalizados",
+  "p.custom_fields.title_ppm": "Campos personalizados — PPM",
+  "p.custom_fields.intro":
+    "Campos que um administrador acrescenta a cada plano ou tarefa, cada um com um tipo contra o qual os seus valores são verificados. Os valores ficam à parte do plano, por isso nunca afetam a correspondência.",
+  "p.custom_fields.loading": "A carregar os campos personalizados…",
+  "p.custom_fields.could_not_load":
+    "Não foi possível carregar os campos personalizados.",
+  "p.custom_fields.for.plan": "Campos dos planos",
+  "p.custom_fields.for.task": "Campos das tarefas",
+  "p.custom_fields.none": "Ainda nenhum declarado.",
+  "p.custom_fields.type.text": "Texto livre",
+  "p.custom_fields.type.date": "Data",
+  "p.custom_fields.type.bool": "Sim ou não",
+  "p.custom_fields.type.integer": "Número inteiro",
+  "p.custom_fields.type.list": "Uma escolha de uma lista",
+  "p.custom_fields.type.multi_list": "Várias escolhas de uma lista",
+  "p.custom_fields.is_required": "obrigatório",
+  "p.custom_fields.kinds_only": "só para planos do tipo: {kinds}",
+  "p.custom_fields.choices": "escolhas: {options}",
+  "p.custom_fields.withdraw": "Retirar",
+  "p.custom_fields.withdraw_ask":
+    "Retirar o campo «{label}»? Os valores já guardados continuam legíveis, marcados como retirados, e não se podem definir novos.",
+  "p.custom_fields.withdrawn": "«{label}» retirado.",
+  "p.custom_fields.could_not_withdraw": "Não foi possível retirar o campo.",
+  "p.custom_fields.declare_h": "Declarar um campo",
+  "p.custom_fields.key_field":
+    "Chave (minúsculas, algarismos e sublinhados, a começar por uma letra)",
+  "p.custom_fields.label_field": "Etiqueta (até 100 caracteres)",
+  "p.custom_fields.type_field": "Tipo de valor",
+  "p.custom_fields.applies_field": "Aplica-se a",
+  "p.custom_fields.applies.plan": "Planos",
+  "p.custom_fields.applies.task": "Tarefas",
+  "p.custom_fields.kinds_field":
+    "Só para estes tipos de plano (opcional, separados por vírgulas)",
+  "p.custom_fields.options_field":
+    "Escolhas, uma por linha (até 100, cada uma até 100 caracteres)",
+  "p.custom_fields.required_field": "Cada plano ou tarefa tem de ter um valor",
+  "p.custom_fields.declare": "Declarar o campo",
+  "p.custom_fields.key_bad":
+    "A chave tem de ter minúsculas, algarismos e sublinhados, começar por uma letra e ter no máximo 100 caracteres.",
+  "p.custom_fields.label_bad":
+    "É necessária uma etiqueta, com 100 caracteres no máximo.",
+  "p.custom_fields.options_none":
+    "Um campo de lista precisa de pelo menos uma escolha.",
+  "p.custom_fields.options_long":
+    "Uma lista tem no máximo 100 escolhas, cada uma com 100 caracteres no máximo.",
+  "p.custom_fields.options_twice": "Cada escolha só pode aparecer uma vez.",
+  "p.custom_fields.key_taken":
+    "Já existe um campo com esta chave para esse tipo de elemento.",
+  "p.custom_fields.could_not_declare": "Não foi possível declarar o campo.",
+  "p.custom_fields.declared": "«{label}» declarado.",
+  "p.custom_fields.search_h": "Procurar pelo valor de um campo",
+  "p.custom_fields.field_field": "Campo",
+  "p.custom_fields.choose": "Escolha…",
+  "p.custom_fields.value_field": "Valor",
+  "p.custom_fields.yes": "Sim",
+  "p.custom_fields.no": "Não",
+  "p.custom_fields.search": "Procurar",
+  "p.custom_fields.found.plan": "Planos correspondentes que pode ver: {n}",
+  "p.custom_fields.found.task": "Tarefas correspondentes que pode ver: {n}",
+  "p.custom_fields.truncated":
+    "Há mais de 5000 valores guardados para este campo; só os primeiros 5000 foram analisados.",
+  "p.custom_fields.field_required": "Escolha um campo.",
+  "p.custom_fields.value_required": "Indique um valor a procurar.",
+  "p.custom_fields.value_integer": "O valor tem de ser um número inteiro.",
+  "p.custom_fields.value_date": "O valor tem de ser um dia real.",
+  "p.custom_fields.could_not_search": "Não foi possível procurar no campo.",
 };

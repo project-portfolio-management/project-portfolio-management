@@ -76,6 +76,12 @@ export function buildNavItems(): NavEntry[] {
       },
     },
     {
+      href: "/custom-fields",
+      get label() {
+        return t("p.custom_fields.title");
+      },
+    },
+    {
       href: "/exceptions",
       get label() {
         return t("p.exceptions.title");

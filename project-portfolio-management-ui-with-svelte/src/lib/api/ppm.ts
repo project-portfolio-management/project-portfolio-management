@@ -19,6 +19,7 @@ import type {
   TriageOutcome,
 } from "#lib/threshold-view.js";
 import type { CapacityHeatmap } from "#lib/capacity-heatmap-view.js";
+import type { DefBody } from "#lib/custom-field-view.js";
 import type {
   CapacityCommitment,
   CommitmentInput,
@@ -360,6 +361,8 @@ import type {
   BulkJobStarted,
   BulkJobStatus,
   ReviewQueueItem,
+  CustomFieldDef,
+  CustomFieldSearch,
   GoalList,
   IndexedGoal,
   ResourceRole,
@@ -2350,6 +2353,28 @@ export class PpmClient {
       },
     );
     return { goals: goals ?? [], etag: next };
+  }
+
+  /** Live custom field definitions, oldest first (RM-1). */
+  customFields(): Promise<CustomFieldDef[]> {
+    return this.http.get("/api/custom-fields");
+  }
+  /** Declare a field; 409 when its key is taken for the subject type. */
+  declareCustomField(body: DefBody): Promise<CustomFieldDef> {
+    return this.http.post("/api/custom-fields", { body });
+  }
+  /** Withdraw a definition; values already stored stay readable, marked withdrawn. */
+  withdrawCustomField(pid: string): Promise<void> {
+    return this.http.delete(`/api/custom-fields/${encodeURIComponent(pid)}`);
+  }
+  /** The plans or tasks whose `key` equals `value` (a multi-choice field: contains it), those the caller can read. */
+  searchCustomFields(
+    appliesTo: string,
+    key: string,
+    value: string,
+  ): Promise<CustomFieldSearch> {
+    const q = new URLSearchParams({ applies_to: appliesTo, key, value });
+    return this.http.get(`/api/custom-fields/search?${q}`);
   }
 
   /** Everyone's primary role (a resource manager or an administrator), else just the caller's own. */

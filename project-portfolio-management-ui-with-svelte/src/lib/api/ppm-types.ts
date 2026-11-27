@@ -5821,3 +5821,24 @@ export interface GoalList {
   /** `null` when the answer carried none (then a write is sent without `If-Match`). */
   etag: string | null;
 }
+
+/** A live custom field definition (`GET /api/custom-fields`, RM-1). */
+export interface CustomFieldDef {
+  pid: string;
+  key: string;
+  label: string;
+  field_type: string;
+  applies_to: string;
+  kinds: string[];
+  required: boolean;
+  options: string[];
+  created_at: string;
+}
+
+/** `GET /api/custom-fields/search`: the subjects whose value matches, those the caller can read. */
+export interface CustomFieldSearch {
+  count: number;
+  pids: string[];
+  /** More than 5,000 stored values: only the first were looked at. */
+  truncated: boolean;
+}

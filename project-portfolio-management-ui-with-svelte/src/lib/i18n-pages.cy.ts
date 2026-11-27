@@ -9619,4 +9619,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "Llinell gyllideb",
   "p.approvals.kind.scenario": "Senario",
   "p.approvals.kind.document_version": "Fersiwn dogfen",
+  "p.custom_fields.task_values_none":
+    "Nid oes maes personol wedi'i ddatgan ar gyfer tasgau eto. Caiff meysydd eu datgan ar y dudalen",
+  "p.custom_fields.task_values_could_not_load":
+    "Methu llwytho meysydd personol y dasg hon.",
 };

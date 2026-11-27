@@ -3507,7 +3507,7 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   first (`GET /api/custom-fields/values`). A save sends only what changed, a cleared value as `null`, after every
   problem is said with the field it is about (a required one left empty, a wrong number, an unreal day); nothing
   changed sends nothing (`PUT`, atomic in the service). A withdrawn field's value is listed read only.
-  `tests/e2e/plan-fields.spec.ts`. A task's values have no screen yet.
+  `tests/e2e/plan-fields.spec.ts`. The section is `CustomFieldValues.svelte`, which a task's page shares.
 - **`/onboarding-templates`** ("Checklist templates", a top-navigation section, 2026-11-27): the checklist each kind
   of onboarding case starts from (someone joins or leaves a plan, a plan taken in or closed out), each item with when it
   is due from the date (days before, on, or after), and whether the kind has its own or the built-in one, whose items
@@ -3546,4 +3546,8 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   meanwhile), 403 (not yours to decide or withdraw) and 404 have their own sentences, and the lists are read again.
   A plan subject links to its page; other subjects show their id. Rules in `src/lib/approvals-view.ts`;
   `tests/e2e/approvals.spec.ts`.
-- **Not built** in part n: a task's custom field values (the plan's are on `/plans/[pid]/fields`).
+- **A task's custom field values** (its page, `/plans/[pid]/tasks/[tpid]`, 2026-11-27): a "Custom fields" section, the
+  same `CustomFieldValues.svelte` as `/plans/[pid]/fields`, with the task fields (`applies_to=task`; a kind limit is a
+  plan's only), each typed, required ones said first, only changes sent. `tests/e2e/plan-task-edit.spec.ts`; specs whose
+  task page is about something else declare no fields (`stubNoCustomFields` in `tests/e2e/fixtures.ts`).
+- Part n is built.

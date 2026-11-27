@@ -9393,6 +9393,10 @@ export const PAGES_EN = {
   "p.approvals.kind.budget_line": "Budget line",
   "p.approvals.kind.scenario": "Scenario",
   "p.approvals.kind.document_version": "Document version",
+  "p.custom_fields.task_values_none":
+    "No custom field is declared for tasks yet. Fields are declared on the page",
+  "p.custom_fields.task_values_could_not_load":
+    "Could not load this task's custom fields.",
 } as const;
 
 /** A key in the page and component catalogue. */

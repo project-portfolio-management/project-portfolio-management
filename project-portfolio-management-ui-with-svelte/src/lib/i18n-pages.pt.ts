@@ -9712,4 +9712,8 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "Linha de orçamento",
   "p.approvals.kind.scenario": "Cenário",
   "p.approvals.kind.document_version": "Versão de documento",
+  "p.custom_fields.task_values_none":
+    "Ainda não há campos personalizados declarados para tarefas. Os campos são declarados na página",
+  "p.custom_fields.task_values_could_not_load":
+    "Não foi possível carregar os campos personalizados desta tarefa.",
 };

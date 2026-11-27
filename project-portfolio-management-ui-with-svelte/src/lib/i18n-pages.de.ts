@@ -9833,4 +9833,8 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "Budgetposten",
   "p.approvals.kind.scenario": "Szenario",
   "p.approvals.kind.document_version": "Dokumentfassung",
+  "p.custom_fields.task_values_none":
+    "Für Aufgaben ist noch kein benutzerdefiniertes Feld festgelegt. Felder werden festgelegt auf der Seite",
+  "p.custom_fields.task_values_could_not_load":
+    "Die benutzerdefinierten Felder dieser Aufgabe konnten nicht geladen werden.",
 };

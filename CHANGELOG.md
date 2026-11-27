@@ -16,6 +16,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a task's custom field values)
+
+- A task's page has a "Custom fields" section, the same as a plan's: each task field typed, the required ones said
+  first, only changes sent. That completes NC-1 slice 12 part n. 2 new strings in every locale, machine-written in 14,
+  none reviewed. Not verified: against a real service.
+
 ## 27 November (approvals outside a process)
 
 - A new `/approvals` ("Approvals") shows what waits on the reader (approved, or rejected with a reason) and what they

@@ -8,7 +8,7 @@
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
-import { PID, settle } from "./fixtures";
+import { PID, settle, stubNoCustomFields } from "./fixtures";
 
 const T1 = "aaaaaaaa-0000-4000-8000-000000000001";
 const ME = "0b9d7c1e-2f3a-4b5c-8d6e-7f8091a2b3c4";
@@ -258,10 +258,13 @@ async function stub(page: Page, opts: Options = {}) {
   return sent;
 }
 
-const open = (page: Page, locale = "en-001") =>
-  page.goto(`/${locale}/plans/${PID}/tasks/${T1}`, {
+const open = async (page: Page, locale = "en-001") => {
+  // The task page carries a custom fields section; none is declared here. Added last, so it wins over a catch-all.
+  await stubNoCustomFields(page);
+  return page.goto(`/${locale}/plans/${PID}/tasks/${T1}`, {
     waitUntil: "networkidle",
   });
+};
 
 const status = (page: Page, text: string) =>
   page.getByRole("status").filter({ hasText: text });

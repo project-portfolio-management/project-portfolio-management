@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a task's custom field values (RM-1, 2026-11-27)
+
+- `CustomFieldValues.svelte`, out of `/plans/[pid]/fields`, on a task's page too; `stubNoCustomFields` for the e2e
+  specs whose task page is about something else; 2 strings in every locale.
+
 ### Added — `/approvals` (PL-1, 2026-11-27)
 
 - Three client methods; `src/lib/approvals-view.ts`; a top-navigation section; 52 strings in every locale.

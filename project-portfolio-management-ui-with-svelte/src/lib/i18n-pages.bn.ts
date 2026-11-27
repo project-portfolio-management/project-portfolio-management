@@ -9258,4 +9258,8 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "বাজেট দফা",
   "p.approvals.kind.scenario": "পরিস্থিতি",
   "p.approvals.kind.document_version": "নথির সংস্করণ",
+  "p.custom_fields.task_values_none":
+    "কাজের জন্য এখনও কোনো কাস্টম ফিল্ড ঘোষিত হয়নি। ফিল্ড ঘোষণা করা হয় এই পাতায়",
+  "p.custom_fields.task_values_could_not_load":
+    "এই কাজের কাস্টম ফিল্ড লোড করা যায়নি।",
 };

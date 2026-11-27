@@ -8717,4 +8717,7 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "预算条目",
   "p.approvals.kind.scenario": "情景",
   "p.approvals.kind.document_version": "文档版本",
+  "p.custom_fields.task_values_none":
+    "尚未为任务声明任何自定义字段。字段在以下页面声明",
+  "p.custom_fields.task_values_could_not_load": "无法加载此任务的自定义字段。",
 };

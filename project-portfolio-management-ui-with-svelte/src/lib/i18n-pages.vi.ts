@@ -9532,4 +9532,8 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "Dòng ngân sách",
   "p.approvals.kind.scenario": "Kịch bản",
   "p.approvals.kind.document_version": "Phiên bản tài liệu",
+  "p.custom_fields.task_values_none":
+    "Chưa có trường tùy chỉnh nào được khai báo cho công việc. Các trường được khai báo trên trang",
+  "p.custom_fields.task_values_could_not_load":
+    "Không tải được các trường tùy chỉnh của công việc này.",
 };

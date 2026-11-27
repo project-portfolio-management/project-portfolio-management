@@ -9589,4 +9589,8 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "Статья бюджета",
   "p.approvals.kind.scenario": "Сценарий",
   "p.approvals.kind.document_version": "Версия документа",
+  "p.custom_fields.task_values_none":
+    "Для задач пока не объявлено ни одного настраиваемого поля. Поля объявляются на странице",
+  "p.custom_fields.task_values_could_not_load":
+    "Не удалось загрузить настраиваемые поля этой задачи.",
 };

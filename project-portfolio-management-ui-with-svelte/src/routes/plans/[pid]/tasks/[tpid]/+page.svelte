@@ -22,6 +22,7 @@
   import { PpmClient, type Issue, type Task, type TaskRelationKind, type TaskRelationList } from "#lib/api/ppm.js";
   import { issueRefusalKey, openIssueFromTask } from "#lib/issue-view.js";
   import LinksPanel from "#lib/components/LinksPanel.svelte";
+  import CustomFieldValues from "#lib/components/CustomFieldValues.svelte";
   import Discussion from "#lib/components/Discussion.svelte";
   import CrossPlanLinks from "#lib/components/CrossPlanLinks.svelte";
   import TaskRollup from "#lib/components/TaskRollup.svelte";
@@ -330,6 +331,10 @@
   </section>
 
   <p class="small muted">{t("p.task.links_intro")}</p>
+  <section aria-labelledby="task-fields-h">
+    <h2 id="task-fields-h">{t("p.custom_fields.link")}</h2>
+    {#key tpid}<CustomFieldValues appliesTo="task" subjectPid={tpid} level={3} />{/key}
+  </section>
   <LinksPanel {pid} taskPid={tpid} />
 
   <Discussion subjectKind="task" subjectPid={task.pid} />

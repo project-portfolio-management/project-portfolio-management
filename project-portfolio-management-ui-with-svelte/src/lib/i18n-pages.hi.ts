@@ -9145,4 +9145,8 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "बजट मद",
   "p.approvals.kind.scenario": "परिदृश्य",
   "p.approvals.kind.document_version": "दस्तावेज़ संस्करण",
+  "p.custom_fields.task_values_none":
+    "कार्यों के लिए अभी कोई कस्टम फ़ील्ड घोषित नहीं है। फ़ील्ड इस पेज पर घोषित होते हैं",
+  "p.custom_fields.task_values_could_not_load":
+    "इस कार्य के कस्टम फ़ील्ड लोड नहीं हो सके।",
 };

@@ -127,3 +127,23 @@ export async function settle(page: Page): Promise<void> {
     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
   });
 }
+
+/**
+ * No custom fields are declared (`GET /api/custom-fields` is empty), so a plan's or a task's values section has nothing
+ * to show and makes no other call. For specs whose pages carry that section but are about something else; a route a
+ * test adds afterwards still wins.
+ */
+export async function stubNoCustomFields(page: Page) {
+  await page.route(/\/api\/custom-fields(\/values)?(\?.*)?$/, (route) => {
+    const url = new URL(route.request().url());
+    return url.pathname.endsWith("/values")
+      ? route.fulfill({
+          json: {
+            subject_pid: url.searchParams.get("subject_pid"),
+            values: {},
+            missing_required: [],
+          },
+        })
+      : route.fulfill({ json: [] });
+  });
+}

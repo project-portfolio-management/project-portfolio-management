@@ -9643,4 +9643,8 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "Pos anggaran",
   "p.approvals.kind.scenario": "Skenario",
   "p.approvals.kind.document_version": "Versi dokumen",
+  "p.custom_fields.task_values_none":
+    "Belum ada bidang khusus yang dideklarasikan untuk tugas. Bidang dideklarasikan di halaman",
+  "p.custom_fields.task_values_could_not_load":
+    "Tidak dapat memuat bidang khusus tugas ini.",
 };

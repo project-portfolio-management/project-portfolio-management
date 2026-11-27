@@ -8,7 +8,7 @@
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
-import { PID, settle } from "./fixtures";
+import { PID, settle, stubNoCustomFields } from "./fixtures";
 
 const T1 = "aaaaaaaa-0000-4000-8000-000000000001";
 const ASSIGNEE = "person:0b9d7c1e-2f3a-4b5c-8d6e-7f8091a2b3c4";
@@ -182,10 +182,13 @@ async function stub(page: Page, refuse: Partial<Record<string, number>> = {}) {
   return sent;
 }
 
-const open = (page: Page, locale = "en-001") =>
-  page.goto(`/${locale}/plans/${PID}/tasks/${T1}`, {
+const open = async (page: Page, locale = "en-001") => {
+  // The task page carries a custom fields section; none is declared here. Added last, so it wins over a catch-all.
+  await stubNoCustomFields(page);
+  return page.goto(`/${locale}/plans/${PID}/tasks/${T1}`, {
     waitUntil: "networkidle",
   });
+};
 
 test("a board card links to its task's page", async ({ page }) => {
   await page.route(/\/api\/plans\/[^/]+\/tasks(\?.*)?$/, (r) =>
@@ -566,4 +569,77 @@ test("raising an issue from a task reads in Welsh", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Codi mater o'r dasg hon" }),
   ).toBeVisible();
+});
+
+test("a task's custom fields are set on its page, only what changed sent (RM-1)", async ({
+  page,
+}) => {
+  await stub(page);
+  const sent: unknown[] = [];
+  let values: Record<
+    string,
+    { value: unknown; label: string; definition: string }
+  > = {};
+  const def = (
+    key: string,
+    label: string,
+    applies_to: string,
+    over: Record<string, unknown> = {},
+  ) => ({
+    pid: `aaaaaaaa-0000-4000-8000-0000000000${key.length}${applies_to.length}`,
+    key,
+    label,
+    field_type: "text",
+    applies_to,
+    kinds: [],
+    required: false,
+    options: [],
+    created_at: "2026-11-01T00:00:00Z",
+    ...over,
+  });
+  await page.route(/\/api\/custom-fields(\/values)?(\?.*)?$/, async (route) => {
+    const r = route.request();
+    const url = new URL(r.url());
+    if (url.pathname.endsWith("/custom-fields"))
+      return route.fulfill({
+        json: [
+          def("size", "Size", "task", {
+            field_type: "list",
+            options: ["S", "M", "L"],
+          }),
+          def("cost_centre", "Cost centre", "plan"),
+        ],
+      });
+    if (r.method() === "PUT") {
+      const b = r.postDataJSON() as { values: Record<string, unknown> };
+      sent.push(b);
+      values = Object.fromEntries(
+        Object.entries(b.values).map(([k, v]) => [
+          k,
+          { value: v, label: k, definition: "live" },
+        ]),
+      );
+    }
+    return route.fulfill({
+      json: { subject_pid: T1, values, missing_required: [] },
+    });
+  });
+  await page.goto(`/en-001/plans/${PID}/tasks/${T1}`, {
+    waitUntil: "networkidle",
+  });
+  const section = page.getByRole("region", { name: "Custom fields" });
+  await expect(section.getByLabel("Size")).toBeVisible();
+  await expect(section.getByText("Cost centre")).toHaveCount(0);
+  await section.getByRole("button", { name: "Save the values" }).click();
+  await expect(section.getByTestId("fv-notice")).toHaveText(
+    "Nothing changed, so nothing was sent.",
+  );
+  await section.getByLabel("Size").selectOption("M");
+  await section.getByRole("button", { name: "Save the values" }).click();
+  await expect(section.getByTestId("fv-notice")).toHaveText(
+    "Saved the values.",
+  );
+  expect(sent).toEqual([
+    { applies_to: "task", subject_pid: T1, values: { size: "M" } },
+  ]);
 });

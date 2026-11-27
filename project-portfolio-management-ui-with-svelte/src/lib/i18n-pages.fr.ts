@@ -9789,4 +9789,8 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "Ligne budgétaire",
   "p.approvals.kind.scenario": "Scénario",
   "p.approvals.kind.document_version": "Version de document",
+  "p.custom_fields.task_values_none":
+    "Aucun champ personnalisé n'est encore déclaré pour les tâches. Les champs sont déclarés sur la page",
+  "p.custom_fields.task_values_could_not_load":
+    "Impossible de charger les champs personnalisés de cette tâche.",
 };

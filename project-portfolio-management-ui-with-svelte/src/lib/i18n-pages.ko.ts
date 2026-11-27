@@ -9298,4 +9298,8 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "예산 항목",
   "p.approvals.kind.scenario": "시나리오",
   "p.approvals.kind.document_version": "문서 버전",
+  "p.custom_fields.task_values_none":
+    "작업에 선언된 사용자 정의 필드가 아직 없습니다. 필드는 다음 페이지에서 선언합니다",
+  "p.custom_fields.task_values_could_not_load":
+    "이 작업의 사용자 정의 필드를 불러올 수 없습니다.",
 };

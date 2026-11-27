@@ -9457,4 +9457,8 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "予算項目",
   "p.approvals.kind.scenario": "シナリオ",
   "p.approvals.kind.document_version": "文書バージョン",
+  "p.custom_fields.task_values_none":
+    "タスクのカスタムフィールドはまだ宣言されていません。フィールドは次のページで宣言します",
+  "p.custom_fields.task_values_could_not_load":
+    "このタスクのカスタムフィールドを読み込めませんでした。",
 };

@@ -9093,4 +9093,8 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.approvals.kind.budget_line": "بند ميزانية",
   "p.approvals.kind.scenario": "سيناريو",
   "p.approvals.kind.document_version": "إصدار مستند",
+  "p.custom_fields.task_values_none":
+    "لم يُعلن أي حقل مخصّص للمهام بعد. تُعلن الحقول في صفحة",
+  "p.custom_fields.task_values_could_not_load":
+    "تعذّر تحميل الحقول المخصّصة لهذه المهمة.",
 };

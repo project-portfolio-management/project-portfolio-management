@@ -9577,6 +9577,38 @@ export const PAGES_EN = {
   "p.product_roadmap.f_category": "Category (optional)",
   "p.product_roadmap.no_category": "No category",
   "p.product_roadmap.manage_categories": "Change the categories",
+  "p.roadmap_family.title": "Product family",
+  "p.roadmap_family.title_ppm": "Product family — PPM",
+  "p.roadmap_family.intro":
+    "A plan that holds product plans. Its colour marks its products on the public roadmaps; any colour may be chosen, and how it reads is shown.",
+  "p.roadmap_family.loading": "Loading the family…",
+  "p.roadmap_family.could_not_load": "Could not load the family.",
+  "p.roadmap_family.products": "products in the family: {n}",
+  "p.roadmap_family.colour_is": "colour: {colour}",
+  "p.roadmap_family.with_white": "with white text: {ratio} to 1",
+  "p.roadmap_family.with_black": "with black text: {ratio} to 1",
+  "p.roadmap_family.meets_aa": "meets AA for body text (4.5 to 1)",
+  "p.roadmap_family.below_aa": "falls short of AA for body text (4.5 to 1)",
+  "p.roadmap_family.better_white": "White text reads better on it.",
+  "p.roadmap_family.better_black": "Black text reads better on it.",
+  "p.roadmap_family.no_colour": "No colour yet.",
+  "p.roadmap_family.set_h": "Its colour and names",
+  "p.roadmap_family.f_colour":
+    "Colour (# and six hexadecimal digits, such as #rrggbb)",
+  "p.roadmap_family.f_picker": "Or pick it",
+  "p.roadmap_family.f_translations":
+    "Its name in other languages, one to a line: a language code, a colon, the name (cy: Arian)",
+  "p.roadmap_family.save": "Save the colour",
+  "p.roadmap_family.remove": "Remove the colour",
+  "p.roadmap_family.remove_ask":
+    "Remove the colour? Its names in other languages go with it.",
+  "p.roadmap_family.removed": "Removed the colour and its translations.",
+  "p.roadmap_family.saved": "Saved the family.",
+  "p.roadmap_family.unchanged": "Nothing changed, so nothing was sent.",
+  "p.roadmap_family.colour_bad":
+    "The colour is # and six hexadecimal digits, such as #rrggbb.",
+  "p.roadmap_family.could_not_save": "Could not save the family.",
+  "p.roadmap_family.link": "Product family",
 } as const;
 
 /** A key in the page and component catalogue. */

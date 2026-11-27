@@ -9901,4 +9901,36 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.product_roadmap.f_category": "Categoria (opcional)",
   "p.product_roadmap.no_category": "Sem categoria",
   "p.product_roadmap.manage_categories": "Alterar as categorias",
+  "p.roadmap_family.title": "Família de produtos",
+  "p.roadmap_family.title_ppm": "Família de produtos — PPM",
+  "p.roadmap_family.intro":
+    "Um plano que contém planos de produto. A sua cor assinala os seus produtos nos roteiros públicos; pode escolher-se qualquer cor, e mostra-se como se lê.",
+  "p.roadmap_family.loading": "A carregar a família…",
+  "p.roadmap_family.could_not_load": "Não foi possível carregar a família.",
+  "p.roadmap_family.products": "produtos na família: {n}",
+  "p.roadmap_family.colour_is": "cor: {colour}",
+  "p.roadmap_family.with_white": "com texto branco: {ratio} para 1",
+  "p.roadmap_family.with_black": "com texto preto: {ratio} para 1",
+  "p.roadmap_family.meets_aa": "cumpre AA para texto (4,5 para 1)",
+  "p.roadmap_family.below_aa": "fica aquém de AA para texto (4,5 para 1)",
+  "p.roadmap_family.better_white": "O texto branco lê-se melhor sobre ela.",
+  "p.roadmap_family.better_black": "O texto preto lê-se melhor sobre ela.",
+  "p.roadmap_family.no_colour": "Ainda sem cor.",
+  "p.roadmap_family.set_h": "A sua cor e nomes",
+  "p.roadmap_family.f_colour":
+    "Cor (# e seis dígitos hexadecimais, como #rrggbb)",
+  "p.roadmap_family.f_picker": "Ou escolha-a",
+  "p.roadmap_family.f_translations":
+    "O seu nome noutras línguas, um por linha: um código de língua, dois pontos, o nome (cy: Arian)",
+  "p.roadmap_family.save": "Guardar a cor",
+  "p.roadmap_family.remove": "Remover a cor",
+  "p.roadmap_family.remove_ask":
+    "Remover a cor? Os seus nomes noutras línguas vão com ela.",
+  "p.roadmap_family.removed": "Cor e traduções removidas.",
+  "p.roadmap_family.saved": "Família guardada.",
+  "p.roadmap_family.unchanged": "Nada mudou, por isso nada foi enviado.",
+  "p.roadmap_family.colour_bad":
+    "A cor é # e seis dígitos hexadecimais, como #rrggbb.",
+  "p.roadmap_family.could_not_save": "Não foi possível guardar a família.",
+  "p.roadmap_family.link": "Família de produtos",
 };

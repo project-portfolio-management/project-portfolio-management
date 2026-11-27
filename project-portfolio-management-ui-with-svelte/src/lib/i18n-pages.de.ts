@@ -10031,4 +10031,37 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.product_roadmap.f_category": "Kategorie (optional)",
   "p.product_roadmap.no_category": "Keine Kategorie",
   "p.product_roadmap.manage_categories": "Die Kategorien ändern",
+  "p.roadmap_family.title": "Produktfamilie",
+  "p.roadmap_family.title_ppm": "Produktfamilie — PPM",
+  "p.roadmap_family.intro":
+    "Ein Plan, der Produktpläne enthält. Seine Farbe kennzeichnet seine Produkte auf den öffentlichen Roadmaps; jede Farbe ist erlaubt, und es wird gezeigt, wie sie sich liest.",
+  "p.roadmap_family.loading": "Familie wird geladen…",
+  "p.roadmap_family.could_not_load": "Die Familie konnte nicht geladen werden.",
+  "p.roadmap_family.products": "Produkte in der Familie: {n}",
+  "p.roadmap_family.colour_is": "Farbe: {colour}",
+  "p.roadmap_family.with_white": "mit weißer Schrift: {ratio} zu 1",
+  "p.roadmap_family.with_black": "mit schwarzer Schrift: {ratio} zu 1",
+  "p.roadmap_family.meets_aa": "erfüllt AA für Fließtext (4,5 zu 1)",
+  "p.roadmap_family.below_aa": "verfehlt AA für Fließtext (4,5 zu 1)",
+  "p.roadmap_family.better_white": "Weiße Schrift liest sich darauf besser.",
+  "p.roadmap_family.better_black": "Schwarze Schrift liest sich darauf besser.",
+  "p.roadmap_family.no_colour": "Noch keine Farbe.",
+  "p.roadmap_family.set_h": "Farbe und Namen",
+  "p.roadmap_family.f_colour":
+    "Farbe (# und sechs Hexadezimalziffern, etwa #rrggbb)",
+  "p.roadmap_family.f_picker": "Oder auswählen",
+  "p.roadmap_family.f_translations":
+    "Ihr Name in anderen Sprachen, einer pro Zeile: ein Sprachcode, ein Doppelpunkt, der Name (cy: Arian)",
+  "p.roadmap_family.save": "Farbe speichern",
+  "p.roadmap_family.remove": "Farbe entfernen",
+  "p.roadmap_family.remove_ask":
+    "Die Farbe entfernen? Die Namen in anderen Sprachen gehen mit.",
+  "p.roadmap_family.removed": "Farbe und Übersetzungen entfernt.",
+  "p.roadmap_family.saved": "Familie gespeichert.",
+  "p.roadmap_family.unchanged": "Nichts geändert, daher wurde nichts gesendet.",
+  "p.roadmap_family.colour_bad":
+    "Die Farbe ist # und sechs Hexadezimalziffern, etwa #rrggbb.",
+  "p.roadmap_family.could_not_save":
+    "Die Familie konnte nicht gespeichert werden.",
+  "p.roadmap_family.link": "Produktfamilie",
 };

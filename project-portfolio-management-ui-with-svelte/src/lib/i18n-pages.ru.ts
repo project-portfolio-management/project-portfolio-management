@@ -9778,4 +9778,39 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.product_roadmap.f_category": "Категория (необязательно)",
   "p.product_roadmap.no_category": "Без категории",
   "p.product_roadmap.manage_categories": "Изменить категории",
+  "p.roadmap_family.title": "Семейство продуктов",
+  "p.roadmap_family.title_ppm": "Семейство продуктов — PPM",
+  "p.roadmap_family.intro":
+    "План, в который входят планы продуктов. Его цвет отмечает продукты на публичных дорожных картах; можно выбрать любой цвет, и показано, как он читается.",
+  "p.roadmap_family.loading": "Загрузка семейства…",
+  "p.roadmap_family.could_not_load": "Не удалось загрузить семейство.",
+  "p.roadmap_family.products": "продуктов в семействе: {n}",
+  "p.roadmap_family.colour_is": "цвет: {colour}",
+  "p.roadmap_family.with_white": "с белым текстом: {ratio} к 1",
+  "p.roadmap_family.with_black": "с чёрным текстом: {ratio} к 1",
+  "p.roadmap_family.meets_aa":
+    "соответствует AA для основного текста (4,5 к 1)",
+  "p.roadmap_family.below_aa":
+    "не дотягивает до AA для основного текста (4,5 к 1)",
+  "p.roadmap_family.better_white": "Белый текст на нём читается лучше.",
+  "p.roadmap_family.better_black": "Чёрный текст на нём читается лучше.",
+  "p.roadmap_family.no_colour": "Цвета пока нет.",
+  "p.roadmap_family.set_h": "Цвет и названия",
+  "p.roadmap_family.f_colour":
+    "Цвет (# и шесть шестнадцатеричных цифр, например #rrggbb)",
+  "p.roadmap_family.f_picker": "Или выберите",
+  "p.roadmap_family.f_translations":
+    "Название на других языках, по одному в строке: код языка, двоеточие, название (cy: Arian)",
+  "p.roadmap_family.save": "Сохранить цвет",
+  "p.roadmap_family.remove": "Убрать цвет",
+  "p.roadmap_family.remove_ask":
+    "Убрать цвет? Названия на других языках уйдут вместе с ним.",
+  "p.roadmap_family.removed": "Цвет и переводы убраны.",
+  "p.roadmap_family.saved": "Семейство сохранено.",
+  "p.roadmap_family.unchanged":
+    "Ничего не изменилось, поэтому ничего не отправлено.",
+  "p.roadmap_family.colour_bad":
+    "Цвет — это # и шесть шестнадцатеричных цифр, например #rrggbb.",
+  "p.roadmap_family.could_not_save": "Не удалось сохранить семейство.",
+  "p.roadmap_family.link": "Семейство продуктов",
 };

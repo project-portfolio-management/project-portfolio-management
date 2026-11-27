@@ -3586,7 +3586,14 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   retired after a question (no longer chosen; a roadmap that has it keeps it) or restored. On `/plans/[pid]/roadmap` the
   roadmap's own form chooses its category from the active ones (a retired one shown only while it is the roadmap's),
   `null` clearing it. Rules in `src/lib/roadmap-category-view.ts`; `tests/e2e/roadmap-categories.spec.ts`.
+- **`/plans/[pid]/family`** ("Product family", a plan workspace link under the `roadmap` module, RE-5, RE-7,
+  2026-11-27): a plan that holds product plans, its name the plan's and its products counted. Its colour, any `#rrggbb`
+  typed or picked, is shown with how it reads under white and under black text (each ratio, whether it meets AA for body
+  text, and which reads better), never refused for its contrast; its name in other languages is written one
+  `code: text` to a line. A change sends only what changed (`PUT /api/plans/{pid}/roadmap-family`: the colour, and the
+  whole set of translations when they changed), every problem said first; removing the colour removes its translations
+  too, after a question (`colour: null`). Rules in `src/lib/family-view.ts`; `tests/e2e/product-family.spec.ts`.
 - **Not built** in part l: gathering several edits into one pending change set (each edit above is saved at once),
   translations, an item's details and
-  organizations, the roadmap's family, and organizations' short and
+  organizations,  and organizations' short and
   translated names.

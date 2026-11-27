@@ -65,6 +65,8 @@ export const PLAN_LINKS = [
   { key: "export", module: "tasks" },
   // The public product roadmap (RE-1) is the service's `roadmap` module; the page says when the plan is not a Product.
   { key: "roadmap", module: "roadmap" },
+  // A product family's colour and names (RE-5, RE-7) are the same module's `roadmap-family`.
+  { key: "family", module: "roadmap" },
   { key: "costs", module: "financials" },
   // `benefits` is owned by no module in the service (always on); it sits with the money, under financials.
   { key: "benefits", module: "financials" },

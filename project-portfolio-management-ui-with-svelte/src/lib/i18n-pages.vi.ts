@@ -9714,4 +9714,36 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.product_roadmap.f_category": "Danh mục (không bắt buộc)",
   "p.product_roadmap.no_category": "Không có danh mục",
   "p.product_roadmap.manage_categories": "Thay đổi các danh mục",
+  "p.roadmap_family.title": "Họ sản phẩm",
+  "p.roadmap_family.title_ppm": "Họ sản phẩm — PPM",
+  "p.roadmap_family.intro":
+    "Một kế hoạch chứa các kế hoạch sản phẩm. Màu của nó đánh dấu các sản phẩm trên lộ trình công khai; được chọn bất kỳ màu nào, và có hiển thị độ dễ đọc.",
+  "p.roadmap_family.loading": "Đang tải họ sản phẩm…",
+  "p.roadmap_family.could_not_load": "Không tải được họ sản phẩm.",
+  "p.roadmap_family.products": "số sản phẩm trong họ: {n}",
+  "p.roadmap_family.colour_is": "màu: {colour}",
+  "p.roadmap_family.with_white": "với chữ trắng: {ratio} trên 1",
+  "p.roadmap_family.with_black": "với chữ đen: {ratio} trên 1",
+  "p.roadmap_family.meets_aa": "đạt AA cho văn bản (4,5 trên 1)",
+  "p.roadmap_family.below_aa": "chưa đạt AA cho văn bản (4,5 trên 1)",
+  "p.roadmap_family.better_white": "Chữ trắng dễ đọc hơn trên màu này.",
+  "p.roadmap_family.better_black": "Chữ đen dễ đọc hơn trên màu này.",
+  "p.roadmap_family.no_colour": "Chưa có màu.",
+  "p.roadmap_family.set_h": "Màu và tên",
+  "p.roadmap_family.f_colour":
+    "Màu (# và sáu chữ số thập lục phân, như #rrggbb)",
+  "p.roadmap_family.f_picker": "Hoặc chọn màu",
+  "p.roadmap_family.f_translations":
+    "Tên trong các ngôn ngữ khác, mỗi dòng một: mã ngôn ngữ, dấu hai chấm, tên (cy: Arian)",
+  "p.roadmap_family.save": "Lưu màu",
+  "p.roadmap_family.remove": "Gỡ màu",
+  "p.roadmap_family.remove_ask":
+    "Gỡ màu? Các tên bằng ngôn ngữ khác cũng bị gỡ theo.",
+  "p.roadmap_family.removed": "Đã gỡ màu và các bản dịch.",
+  "p.roadmap_family.saved": "Đã lưu họ sản phẩm.",
+  "p.roadmap_family.unchanged": "Không có gì thay đổi nên chưa gửi gì.",
+  "p.roadmap_family.colour_bad":
+    "Màu là # và sáu chữ số thập lục phân, như #rrggbb.",
+  "p.roadmap_family.could_not_save": "Không lưu được họ sản phẩm.",
+  "p.roadmap_family.link": "Họ sản phẩm",
 };

@@ -22,6 +22,7 @@ import type { CapacityHeatmap } from "#lib/capacity-heatmap-view.js";
 import type { DefBody } from "#lib/custom-field-view.js";
 import type { ApprovalRequestBody } from "#lib/approvals-view.js";
 import type { RoadmapCategory } from "#lib/roadmap-category-view.js";
+import type { RoadmapFamilyView } from "#lib/family-view.js";
 import type {
   ChangeLine,
   ChangeSet,
@@ -2554,6 +2555,22 @@ export class PpmClient {
     return this.http.post(
       `/api/documents/${pid}/versions/${version}/make-effective`,
       { body: {} },
+    );
+  }
+  /** A plan as a product family: its colour (with how it reads), its translations and its products (RE-5, RE-7). */
+  roadmapFamily(pid: string): Promise<RoadmapFamilyView> {
+    return this.http.get(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap-family`,
+    );
+  }
+  /** Set a family's colour and, given, the whole set of its translations; `colour: null` removes both. */
+  setRoadmapFamily(
+    pid: string,
+    body: { colour: string | null; translations?: Record<string, string> },
+  ): Promise<RoadmapFamilyView> {
+    return this.http.put(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap-family`,
+      { body },
     );
   }
   /** Every roadmap category, active first, then by name (RE-7). */

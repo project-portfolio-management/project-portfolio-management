@@ -230,6 +230,7 @@ the Status note above).
 | A framework's versions (`FrameworkPanel.svelte`, CF-4) | `GET /api/{ways-of-working,governance-frameworks}/{pid}` (another's text) · `GET …/{pid}/versions` · `PUT /api/plans/{pid}/{ways-of-working,governance-framework}` (no `version`: move to the newest; with one: pin it) |
 | Checklist templates (`/onboarding-templates`) | `GET /api/onboarding/templates` · `PUT /api/onboarding/templates/{kind}` · `DELETE /api/onboarding/templates/{kind}` (after a question) |
 | Custom fields (`/custom-fields`) | `GET /api/custom-fields` · `POST /api/custom-fields` (409 said first) · `DELETE /api/custom-fields/{pid}` (after a question) · `GET /api/custom-fields/search` |
+| A product family (`/plans/[pid]/family`) | `GET`/`PUT /api/plans/{pid}/roadmap-family` (only what changed; `colour: null` after a question) |
 | Roadmap categories (`/roadmap-categories`; a roadmap's picker) | `GET`/`POST /api/roadmap-categories` · `PUT /api/roadmap-categories/{pid}` (rename, translations, retire after a question, restore) · `PUT /api/plans/{pid}/roadmap` with `category_pid` |
 | Product roadmaps (`/roadmaps`) | `GET /api/public-roadmaps` · `GET /api/public-roadmaps/stale` · `GET /api/roadmap-families` (every page) |
 | A product plan's public roadmap (`/plans/[pid]/roadmap`) | `POST …/roadmap/publish/preview` and `…/publish` (one change set; 409 named) · `GET`/`PUT /api/plans/{pid}/roadmap` · `PUT …/roadmap/reviewed` · `POST …/roadmap/items` · `PUT …/roadmap/items/{ipid}` · `POST …/items/{ipid}/move` · `POST …/items/{ipid}/delete` (after a question) |

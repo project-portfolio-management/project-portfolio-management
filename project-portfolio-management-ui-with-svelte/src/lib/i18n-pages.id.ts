@@ -9831,4 +9831,38 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.product_roadmap.f_category": "Kategori (opsional)",
   "p.product_roadmap.no_category": "Tanpa kategori",
   "p.product_roadmap.manage_categories": "Ubah kategori",
+  "p.roadmap_family.title": "Keluarga produk",
+  "p.roadmap_family.title_ppm": "Keluarga produk — PPM",
+  "p.roadmap_family.intro":
+    "Rencana yang memuat rencana produk. Warnanya menandai produknya di peta jalan publik; warna apa pun boleh dipilih, dan keterbacaannya ditunjukkan.",
+  "p.roadmap_family.loading": "Memuat keluarga…",
+  "p.roadmap_family.could_not_load": "Tidak dapat memuat keluarga.",
+  "p.roadmap_family.products": "produk dalam keluarga: {n}",
+  "p.roadmap_family.colour_is": "warna: {colour}",
+  "p.roadmap_family.with_white": "dengan teks putih: {ratio} banding 1",
+  "p.roadmap_family.with_black": "dengan teks hitam: {ratio} banding 1",
+  "p.roadmap_family.meets_aa": "memenuhi AA untuk teks isi (4,5 banding 1)",
+  "p.roadmap_family.below_aa":
+    "belum memenuhi AA untuk teks isi (4,5 banding 1)",
+  "p.roadmap_family.better_white": "Teks putih lebih terbaca di atasnya.",
+  "p.roadmap_family.better_black": "Teks hitam lebih terbaca di atasnya.",
+  "p.roadmap_family.no_colour": "Belum ada warna.",
+  "p.roadmap_family.set_h": "Warna dan namanya",
+  "p.roadmap_family.f_colour":
+    "Warna (# dan enam digit heksadesimal, misalnya #rrggbb)",
+  "p.roadmap_family.f_picker": "Atau pilih",
+  "p.roadmap_family.f_translations":
+    "Namanya dalam bahasa lain, satu per baris: kode bahasa, titik dua, nama (cy: Arian)",
+  "p.roadmap_family.save": "Simpan warna",
+  "p.roadmap_family.remove": "Hapus warna",
+  "p.roadmap_family.remove_ask":
+    "Hapus warna? Namanya dalam bahasa lain ikut terhapus.",
+  "p.roadmap_family.removed": "Warna dan terjemahannya dihapus.",
+  "p.roadmap_family.saved": "Keluarga disimpan.",
+  "p.roadmap_family.unchanged":
+    "Tidak ada yang berubah, jadi tidak ada yang dikirim.",
+  "p.roadmap_family.colour_bad":
+    "Warna adalah # dan enam digit heksadesimal, misalnya #rrggbb.",
+  "p.roadmap_family.could_not_save": "Tidak dapat menyimpan keluarga.",
+  "p.roadmap_family.link": "Keluarga produk",
 };

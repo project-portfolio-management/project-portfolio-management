@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/plans/[pid]/family` (RE-5, RE-7, 2026-11-27)
+
+- Two client methods; `src/lib/family-view.ts`; a plan workspace link (module `roadmap`); 27 strings in every locale.
+
 ### Added — `/roadmap-categories` and a roadmap's category (RE-7, 2026-11-27)
 
 - Three client methods; `src/lib/roadmap-category-view.ts`; the category picker on `/plans/[pid]/roadmap`

@@ -79,6 +79,7 @@
     get goals() { return t("p.goals.link"); },
     get fields() { return t("p.custom_fields.link"); },
     get roadmap() { return t("p.product_roadmap.title"); },
+    get family() { return t("p.roadmap_family.link"); },
     get benefits() { return t("p.benefits.title"); },
     get costs() { return t("p.plans.pid.work.costs"); },
   };

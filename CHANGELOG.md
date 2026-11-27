@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (checklist templates)
+
+- A new `/onboarding-templates` ("Checklist templates") shows the checklist each onboarding or offboarding case
+  starts from, changes one (every problem said first, items reordered) and goes back to the built-in one after a
+  question. The built-in items stay the service's English. 29 new strings in every locale, machine-written in 14, none
+  reviewed. Not verified: against a real service.
+
 ## 27 November (a page of plans is full while visible plans remain)
 
 - `axa-cursor-pagination` 0.1.2 → 0.1.4 (lockfile only; inside the two-day cooldown, by exception). The plan list and

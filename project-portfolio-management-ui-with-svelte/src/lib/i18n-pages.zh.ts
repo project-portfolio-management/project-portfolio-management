@@ -8585,4 +8585,38 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.custom_fields.v_choice": "{label}：请从该字段的选项中选择一个。",
   "p.custom_fields.v_too_long": "{label}：文本超过 1,000 个字符。",
   "p.custom_fields.v_required": "{label} 为必填项，不能留空。",
+  "p.onboarding_templates.title": "清单模板",
+  "p.onboarding_templates.title_ppm": "清单模板 — PPM",
+  "p.onboarding_templates.intro":
+    "每个入职或离职案例开始时使用的清单，以及每项自生效日期起的到期时间。已开始的案例保留其事项。",
+  "p.onboarding_templates.loading": "正在加载清单…",
+  "p.onboarding_templates.could_not_load": "无法加载清单。",
+  "p.onboarding_templates.is_custom": "此类型使用自己的清单。",
+  "p.onboarding_templates.is_builtin":
+    "此类型使用内置清单；其事项来自服务，为英文。",
+  "p.onboarding_templates.before": "日期前的天数：{n}",
+  "p.onboarding_templates.after": "日期后的天数：{n}",
+  "p.onboarding_templates.on_the_day": "当天",
+  "p.onboarding_templates.edit": "更改",
+  "p.onboarding_templates.reset": "恢复为内置清单",
+  "p.onboarding_templates.reset_ask":
+    "将“{kind}”恢复为内置清单？自定义清单将被删除；已开始的案例保留其事项。",
+  "p.onboarding_templates.reset_done": "“{kind}”重新使用内置清单。",
+  "p.onboarding_templates.could_not_reset": "无法恢复为内置清单。",
+  "p.onboarding_templates.item_title": "第 {n} 项：要做的事（最多 200 个字符）",
+  "p.onboarding_templates.item_offset":
+    "第 {n} 项：距日期的天数（−365 到 365；负数表示之前）",
+  "p.onboarding_templates.up": "上移第 {n} 项",
+  "p.onboarding_templates.down": "下移第 {n} 项",
+  "p.onboarding_templates.remove": "移除第 {n} 项",
+  "p.onboarding_templates.add": "添加一项",
+  "p.onboarding_templates.save": "保存清单",
+  "p.onboarding_templates.cancel": "取消",
+  "p.onboarding_templates.count_bad": "一个清单有 1 到 {max} 项。",
+  "p.onboarding_templates.title_bad": "第 {n} 项：需要标题，最多 200 个字符。",
+  "p.onboarding_templates.offset_bad":
+    "第 {n} 项：天数必须是 −365 到 365 之间的整数。",
+  "p.onboarding_templates.saved": "已保存“{kind}”的清单。",
+  "p.onboarding_templates.could_not_save": "无法保存清单。",
+  "p.onboarding_templates.forbidden": "更改清单需要管理人员的权限。",
 };

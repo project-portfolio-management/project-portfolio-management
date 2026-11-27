@@ -9635,4 +9635,43 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.custom_fields.v_too_long": "{label} : le texte dépasse 1 000 caractères.",
   "p.custom_fields.v_required":
     "{label} est obligatoire et ne peut pas rester vide.",
+  "p.onboarding_templates.title": "Modèles de listes de contrôle",
+  "p.onboarding_templates.title_ppm": "Modèles de listes de contrôle — PPM",
+  "p.onboarding_templates.intro":
+    "La liste de contrôle par laquelle commence chaque arrivée ou départ, avec l'échéance de chaque point à partir de la date d'effet. Un dossier déjà commencé garde ses points.",
+  "p.onboarding_templates.loading": "Chargement des listes…",
+  "p.onboarding_templates.could_not_load": "Impossible de charger les listes.",
+  "p.onboarding_templates.is_custom": "Ce type a sa propre liste.",
+  "p.onboarding_templates.is_builtin":
+    "Ce type utilise la liste intégrée ; ses points sont ceux du service, en anglais.",
+  "p.onboarding_templates.before": "jours avant la date : {n}",
+  "p.onboarding_templates.after": "jours après la date : {n}",
+  "p.onboarding_templates.on_the_day": "à la date",
+  "p.onboarding_templates.edit": "Modifier",
+  "p.onboarding_templates.reset": "Revenir à la liste intégrée",
+  "p.onboarding_templates.reset_ask":
+    "Revenir à la liste intégrée pour « {kind} » ? La liste propre est supprimée ; les dossiers déjà commencés gardent leurs points.",
+  "p.onboarding_templates.reset_done":
+    "« {kind} » utilise de nouveau la liste intégrée.",
+  "p.onboarding_templates.could_not_reset":
+    "Impossible de revenir à la liste intégrée.",
+  "p.onboarding_templates.item_title":
+    "Point {n} : ce qu'il faut faire (jusqu'à 200 caractères)",
+  "p.onboarding_templates.item_offset":
+    "Point {n} : jours à partir de la date (−365 à 365 ; négatif signifie avant)",
+  "p.onboarding_templates.up": "Monter le point {n}",
+  "p.onboarding_templates.down": "Descendre le point {n}",
+  "p.onboarding_templates.remove": "Retirer le point {n}",
+  "p.onboarding_templates.add": "Ajouter un point",
+  "p.onboarding_templates.save": "Enregistrer la liste",
+  "p.onboarding_templates.cancel": "Annuler",
+  "p.onboarding_templates.count_bad": "Une liste compte de 1 à {max} points.",
+  "p.onboarding_templates.title_bad":
+    "Point {n} : un titre est requis, jusqu'à 200 caractères.",
+  "p.onboarding_templates.offset_bad":
+    "Point {n} : les jours doivent être un nombre entier de −365 à 365.",
+  "p.onboarding_templates.saved": "Liste de « {kind} » enregistrée.",
+  "p.onboarding_templates.could_not_save": "Impossible d'enregistrer la liste.",
+  "p.onboarding_templates.forbidden":
+    "Modifier une liste demande l'autorisation de gérer les personnes.",
 };

@@ -82,6 +82,12 @@ export function buildNavItems(): NavEntry[] {
       },
     },
     {
+      href: "/onboarding-templates",
+      get label() {
+        return t("p.onboarding_templates.title");
+      },
+    },
+    {
       href: "/exceptions",
       get label() {
         return t("p.exceptions.title");

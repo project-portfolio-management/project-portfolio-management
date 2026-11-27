@@ -9307,4 +9307,46 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.custom_fields.v_too_long":
     "{label}: テキストが 1,000 文字を超えています。",
   "p.custom_fields.v_required": "{label} は必須のため、空にできません。",
+  "p.onboarding_templates.title": "チェックリストのテンプレート",
+  "p.onboarding_templates.title_ppm": "チェックリストのテンプレート — PPM",
+  "p.onboarding_templates.intro":
+    "参加・離任の各ケースが最初に使うチェックリストと、発効日から数えた各項目の期限です。開始済みのケースは自分の項目を保持します。",
+  "p.onboarding_templates.loading": "チェックリストを読み込んでいます…",
+  "p.onboarding_templates.could_not_load":
+    "チェックリストを読み込めませんでした。",
+  "p.onboarding_templates.is_custom":
+    "この種類は独自のチェックリストを使います。",
+  "p.onboarding_templates.is_builtin":
+    "この種類は組み込みのチェックリストを使います。項目はサービスのもので英語です。",
+  "p.onboarding_templates.before": "日付の何日前: {n}",
+  "p.onboarding_templates.after": "日付の何日後: {n}",
+  "p.onboarding_templates.on_the_day": "当日",
+  "p.onboarding_templates.edit": "変更",
+  "p.onboarding_templates.reset": "組み込みのチェックリストに戻す",
+  "p.onboarding_templates.reset_ask":
+    "「{kind}」を組み込みのチェックリストに戻しますか？ 独自のものは削除され、開始済みのケースは項目を保持します。",
+  "p.onboarding_templates.reset_done":
+    "「{kind}」は再び組み込みのチェックリストを使います。",
+  "p.onboarding_templates.could_not_reset":
+    "組み込みのチェックリストに戻せませんでした。",
+  "p.onboarding_templates.item_title": "項目 {n}: すること（200 文字まで）",
+  "p.onboarding_templates.item_offset":
+    "項目 {n}: 日付からの日数（−365〜365、負の値は前）",
+  "p.onboarding_templates.up": "項目 {n} を上へ",
+  "p.onboarding_templates.down": "項目 {n} を下へ",
+  "p.onboarding_templates.remove": "項目 {n} を削除",
+  "p.onboarding_templates.add": "項目を追加",
+  "p.onboarding_templates.save": "チェックリストを保存",
+  "p.onboarding_templates.cancel": "キャンセル",
+  "p.onboarding_templates.count_bad":
+    "チェックリストの項目は 1〜{max} 件です。",
+  "p.onboarding_templates.title_bad":
+    "項目 {n}: タイトルは必須で、200 文字までです。",
+  "p.onboarding_templates.offset_bad":
+    "項目 {n}: 日数は −365〜365 の整数にしてください。",
+  "p.onboarding_templates.saved": "「{kind}」のチェックリストを保存しました。",
+  "p.onboarding_templates.could_not_save":
+    "チェックリストを保存できませんでした。",
+  "p.onboarding_templates.forbidden":
+    "チェックリストの変更には人を管理する権限が必要です。",
 };

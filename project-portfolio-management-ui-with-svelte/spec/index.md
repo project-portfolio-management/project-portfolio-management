@@ -3508,5 +3508,13 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   problem is said with the field it is about (a required one left empty, a wrong number, an unreal day); nothing
   changed sends nothing (`PUT`, atomic in the service). A withdrawn field's value is listed read only.
   `tests/e2e/plan-fields.spec.ts`. A task's values have no screen yet.
-- **Not built** in part n: a task's custom field values, onboarding templates, a framework's and a way of
+- **`/onboarding-templates`** ("Checklist templates", a top-navigation section, 2026-11-27): the checklist each kind
+  of onboarding case starts from (someone joins or leaves a plan, a plan taken in or closed out), each item with when it
+  is due from the date (days before, on, or after), and whether the kind has its own or the built-in one, whose items
+  are the service's English, which the page says. Changing one edits, adds, removes and reorders items; every problem
+  is said first with its item (1 to 50 items, a title up to 200 characters, a whole number of days from -365 to 365),
+  and nothing is sent when nothing changed (`PUT /api/onboarding/templates/{kind}`). A custom one goes back to the
+  built-in after a question (`DELETE`); cases already started keep their items. 403 (no permission to manage
+  people) in its own sentence. Rules in `src/lib/onboarding-template-view.ts`; `tests/e2e/onboarding-templates.spec.ts`.
+- **Not built** in part n: a task's custom field values, a framework's and a way of
   working's text and versions, editing a process definition or an announcement, approval requests outside a process.

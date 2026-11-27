@@ -9439,4 +9439,43 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.custom_fields.v_too_long": "{label}: текст длиннее 1000 символов.",
   "p.custom_fields.v_required":
     "Поле «{label}» обязательно и не может быть пустым.",
+  "p.onboarding_templates.title": "Шаблоны контрольных списков",
+  "p.onboarding_templates.title_ppm": "Шаблоны контрольных списков — PPM",
+  "p.onboarding_templates.intro":
+    "Контрольный список, с которого начинается каждый случай прихода или ухода, со сроком каждого пункта от даты вступления в силу. Уже начатый случай сохраняет свои пункты.",
+  "p.onboarding_templates.loading": "Загрузка списков…",
+  "p.onboarding_templates.could_not_load": "Не удалось загрузить списки.",
+  "p.onboarding_templates.is_custom": "У этого вида свой список.",
+  "p.onboarding_templates.is_builtin":
+    "Этот вид использует встроенный список; его пункты — от сервиса, на английском.",
+  "p.onboarding_templates.before": "дней до даты: {n}",
+  "p.onboarding_templates.after": "дней после даты: {n}",
+  "p.onboarding_templates.on_the_day": "в эту дату",
+  "p.onboarding_templates.edit": "Изменить",
+  "p.onboarding_templates.reset": "Вернуть встроенный список",
+  "p.onboarding_templates.reset_ask":
+    "Вернуть встроенный список для «{kind}»? Собственный будет удалён; уже начатые случаи сохранят свои пункты.",
+  "p.onboarding_templates.reset_done":
+    "«{kind}» снова использует встроенный список.",
+  "p.onboarding_templates.could_not_reset":
+    "Не удалось вернуть встроенный список.",
+  "p.onboarding_templates.item_title":
+    "Пункт {n}: что сделать (до 200 символов)",
+  "p.onboarding_templates.item_offset":
+    "Пункт {n}: дней от даты (от −365 до 365; отрицательное — раньше)",
+  "p.onboarding_templates.up": "Поднять пункт {n}",
+  "p.onboarding_templates.down": "Опустить пункт {n}",
+  "p.onboarding_templates.remove": "Удалить пункт {n}",
+  "p.onboarding_templates.add": "Добавить пункт",
+  "p.onboarding_templates.save": "Сохранить список",
+  "p.onboarding_templates.cancel": "Отмена",
+  "p.onboarding_templates.count_bad": "В списке от 1 до {max} пунктов.",
+  "p.onboarding_templates.title_bad":
+    "Пункт {n}: нужно название, до 200 символов.",
+  "p.onboarding_templates.offset_bad":
+    "Пункт {n}: число дней должно быть целым от −365 до 365.",
+  "p.onboarding_templates.saved": "Список для «{kind}» сохранён.",
+  "p.onboarding_templates.could_not_save": "Не удалось сохранить список.",
+  "p.onboarding_templates.forbidden":
+    "Чтобы изменить список, нужно право управлять людьми.",
 };

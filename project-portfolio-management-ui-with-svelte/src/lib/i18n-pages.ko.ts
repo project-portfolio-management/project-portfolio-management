@@ -9155,4 +9155,43 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.custom_fields.v_choice": "{label}: 필드의 선택지 중 하나를 고르세요.",
   "p.custom_fields.v_too_long": "{label}: 텍스트가 1,000자를 넘습니다.",
   "p.custom_fields.v_required": "{label}은(는) 필수이므로 비워 둘 수 없습니다.",
+  "p.onboarding_templates.title": "체크리스트 템플릿",
+  "p.onboarding_templates.title_ppm": "체크리스트 템플릿 — PPM",
+  "p.onboarding_templates.intro":
+    "합류·이탈 사례마다 시작하는 체크리스트와, 효력 발생일부터 센 각 항목의 기한입니다. 이미 시작된 사례는 항목을 그대로 유지합니다.",
+  "p.onboarding_templates.loading": "체크리스트를 불러오는 중…",
+  "p.onboarding_templates.could_not_load": "체크리스트를 불러올 수 없습니다.",
+  "p.onboarding_templates.is_custom": "이 종류는 자체 체크리스트를 씁니다.",
+  "p.onboarding_templates.is_builtin":
+    "이 종류는 기본 체크리스트를 씁니다. 항목은 서비스의 것이며 영어입니다.",
+  "p.onboarding_templates.before": "날짜 며칠 전: {n}",
+  "p.onboarding_templates.after": "날짜 며칠 후: {n}",
+  "p.onboarding_templates.on_the_day": "당일",
+  "p.onboarding_templates.edit": "변경",
+  "p.onboarding_templates.reset": "기본 체크리스트로 되돌리기",
+  "p.onboarding_templates.reset_ask":
+    "“{kind}”을(를) 기본 체크리스트로 되돌릴까요? 자체 체크리스트는 삭제되며, 이미 시작된 사례는 항목을 유지합니다.",
+  "p.onboarding_templates.reset_done":
+    "“{kind}”이(가) 다시 기본 체크리스트를 씁니다.",
+  "p.onboarding_templates.could_not_reset":
+    "기본 체크리스트로 되돌릴 수 없습니다.",
+  "p.onboarding_templates.item_title": "항목 {n}: 할 일(최대 200자)",
+  "p.onboarding_templates.item_offset":
+    "항목 {n}: 날짜로부터의 일수(−365~365, 음수는 이전)",
+  "p.onboarding_templates.up": "항목 {n} 위로",
+  "p.onboarding_templates.down": "항목 {n} 아래로",
+  "p.onboarding_templates.remove": "항목 {n} 제거",
+  "p.onboarding_templates.add": "항목 추가",
+  "p.onboarding_templates.save": "체크리스트 저장",
+  "p.onboarding_templates.cancel": "취소",
+  "p.onboarding_templates.count_bad":
+    "체크리스트에는 1~{max}개의 항목이 있습니다.",
+  "p.onboarding_templates.title_bad":
+    "항목 {n}: 제목이 필요하며 최대 200자입니다.",
+  "p.onboarding_templates.offset_bad":
+    "항목 {n}: 일수는 −365~365 사이의 정수여야 합니다.",
+  "p.onboarding_templates.saved": "“{kind}”의 체크리스트를 저장했습니다.",
+  "p.onboarding_templates.could_not_save": "체크리스트를 저장할 수 없습니다.",
+  "p.onboarding_templates.forbidden":
+    "체크리스트를 바꾸려면 사람을 관리할 권한이 필요합니다.",
 };

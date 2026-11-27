@@ -9567,4 +9567,44 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.custom_fields.v_too_long": "{label}: el texto supera los 1000 caracteres.",
   "p.custom_fields.v_required":
     "{label} es obligatorio y no puede quedar vacío.",
+  "p.onboarding_templates.title": "Plantillas de listas de comprobación",
+  "p.onboarding_templates.title_ppm":
+    "Plantillas de listas de comprobación — PPM",
+  "p.onboarding_templates.intro":
+    "La lista de comprobación con la que empieza cada caso de incorporación o salida, con cuándo vence cada punto desde la fecha en que surte efecto. Un caso ya iniciado conserva sus puntos.",
+  "p.onboarding_templates.loading": "Cargando las listas…",
+  "p.onboarding_templates.could_not_load": "No se pudieron cargar las listas.",
+  "p.onboarding_templates.is_custom": "Este tipo usa su propia lista.",
+  "p.onboarding_templates.is_builtin":
+    "Este tipo usa la lista integrada; sus puntos son los del servicio, en inglés.",
+  "p.onboarding_templates.before": "días antes de la fecha: {n}",
+  "p.onboarding_templates.after": "días después de la fecha: {n}",
+  "p.onboarding_templates.on_the_day": "en la fecha",
+  "p.onboarding_templates.edit": "Cambiar",
+  "p.onboarding_templates.reset": "Volver a la lista integrada",
+  "p.onboarding_templates.reset_ask":
+    "¿Volver a la lista integrada para «{kind}»? La propia se elimina; los casos ya iniciados conservan sus puntos.",
+  "p.onboarding_templates.reset_done":
+    "«{kind}» vuelve a usar la lista integrada.",
+  "p.onboarding_templates.could_not_reset":
+    "No se pudo volver a la lista integrada.",
+  "p.onboarding_templates.item_title":
+    "Punto {n}: qué hacer (hasta 200 caracteres)",
+  "p.onboarding_templates.item_offset":
+    "Punto {n}: días desde la fecha (−365 a 365; negativo es antes)",
+  "p.onboarding_templates.up": "Subir el punto {n}",
+  "p.onboarding_templates.down": "Bajar el punto {n}",
+  "p.onboarding_templates.remove": "Quitar el punto {n}",
+  "p.onboarding_templates.add": "Añadir un punto",
+  "p.onboarding_templates.save": "Guardar la lista",
+  "p.onboarding_templates.cancel": "Cancelar",
+  "p.onboarding_templates.count_bad": "Una lista tiene de 1 a {max} puntos.",
+  "p.onboarding_templates.title_bad":
+    "Punto {n}: se necesita un título, de hasta 200 caracteres.",
+  "p.onboarding_templates.offset_bad":
+    "Punto {n}: los días deben ser un número entero de −365 a 365.",
+  "p.onboarding_templates.saved": "Se guardó la lista de «{kind}».",
+  "p.onboarding_templates.could_not_save": "No se pudo guardar la lista.",
+  "p.onboarding_templates.forbidden":
+    "Cambiar una lista requiere el permiso para gestionar personas.",
 };

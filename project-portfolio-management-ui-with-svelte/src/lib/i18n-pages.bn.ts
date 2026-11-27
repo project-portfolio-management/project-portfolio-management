@@ -9114,4 +9114,40 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.custom_fields.v_choice": "{label}: ফিল্ডের পছন্দগুলোর একটি বেছে নিন।",
   "p.custom_fields.v_too_long": "{label}: লেখাটি ১,০০০ অক্ষরের বেশি।",
   "p.custom_fields.v_required": "{label} আবশ্যক এবং খালি রাখা যাবে না।",
+  "p.onboarding_templates.title": "চেকলিস্ট টেমপ্লেট",
+  "p.onboarding_templates.title_ppm": "চেকলিস্ট টেমপ্লেট — PPM",
+  "p.onboarding_templates.intro":
+    "প্রতিটি যোগদান বা প্রস্থানের ঘটনা যে চেকলিস্ট দিয়ে শুরু হয়, কার্যকর হওয়ার তারিখ থেকে প্রতিটি দফার নির্ধারিত সময়সহ। আগে শুরু হওয়া ঘটনা তার দফাগুলো রাখে।",
+  "p.onboarding_templates.loading": "তালিকাগুলো লোড হচ্ছে…",
+  "p.onboarding_templates.could_not_load": "তালিকাগুলো লোড করা যায়নি।",
+  "p.onboarding_templates.is_custom": "এই ধরনের নিজস্ব তালিকা আছে।",
+  "p.onboarding_templates.is_builtin":
+    "এই ধরন অন্তর্নির্মিত তালিকা ব্যবহার করে; এর দফাগুলো পরিষেবার, ইংরেজিতে।",
+  "p.onboarding_templates.before": "তারিখের আগের দিন: {n}",
+  "p.onboarding_templates.after": "তারিখের পরের দিন: {n}",
+  "p.onboarding_templates.on_the_day": "তারিখেই",
+  "p.onboarding_templates.edit": "বদলান",
+  "p.onboarding_templates.reset": "অন্তর্নির্মিত তালিকায় ফিরে যান",
+  "p.onboarding_templates.reset_ask":
+    "“{kind}”-এর জন্য অন্তর্নির্মিত তালিকায় ফিরবেন? নিজস্ব তালিকাটি সরানো হবে; আগে শুরু হওয়া ঘটনা তাদের দফা রাখবে।",
+  "p.onboarding_templates.reset_done":
+    "“{kind}” আবার অন্তর্নির্মিত তালিকা ব্যবহার করে।",
+  "p.onboarding_templates.could_not_reset": "অন্তর্নির্মিত তালিকায় ফেরা যায়নি।",
+  "p.onboarding_templates.item_title": "দফা {n}: কী করতে হবে (২০০ অক্ষর পর্যন্ত)",
+  "p.onboarding_templates.item_offset":
+    "দফা {n}: তারিখ থেকে দিন (−৩৬৫ থেকে ৩৬৫; ঋণাত্মক মানে আগে)",
+  "p.onboarding_templates.up": "দফা {n} উপরে নিন",
+  "p.onboarding_templates.down": "দফা {n} নিচে নিন",
+  "p.onboarding_templates.remove": "দফা {n} সরান",
+  "p.onboarding_templates.add": "একটি দফা যোগ করুন",
+  "p.onboarding_templates.save": "তালিকা সংরক্ষণ করুন",
+  "p.onboarding_templates.cancel": "বাতিল",
+  "p.onboarding_templates.count_bad": "একটি তালিকায় ১ থেকে {max}টি দফা থাকে।",
+  "p.onboarding_templates.title_bad": "দফা {n}: শিরোনাম দরকার, ২০০ অক্ষর পর্যন্ত।",
+  "p.onboarding_templates.offset_bad":
+    "দফা {n}: দিন −৩৬৫ থেকে ৩৬৫-এর মধ্যে পূর্ণ সংখ্যা হতে হবে।",
+  "p.onboarding_templates.saved": "“{kind}”-এর তালিকা সংরক্ষিত হয়েছে।",
+  "p.onboarding_templates.could_not_save": "তালিকা সংরক্ষণ করা যায়নি।",
+  "p.onboarding_templates.forbidden":
+    "তালিকা বদলাতে মানুষ পরিচালনার অনুমতি লাগে।",
 };

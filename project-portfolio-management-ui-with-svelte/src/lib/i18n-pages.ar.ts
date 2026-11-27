@@ -8955,4 +8955,38 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.custom_fields.v_choice": "{label}: اختر أحد اختيارات الحقل.",
   "p.custom_fields.v_too_long": "{label}: النص أطول من 1000 حرف.",
   "p.custom_fields.v_required": "{label} إلزامي ولا يجوز تركه فارغًا.",
+  "p.onboarding_templates.title": "قوالب قوائم التحقق",
+  "p.onboarding_templates.title_ppm": "قوالب قوائم التحقق — PPM",
+  "p.onboarding_templates.intro":
+    "قائمة التحقق التي تبدأ بها كل حالة انضمام أو مغادرة، مع موعد استحقاق كل بند من تاريخ السريان. تحتفظ الحالة التي بدأت ببنودها.",
+  "p.onboarding_templates.loading": "جارٍ تحميل القوائم…",
+  "p.onboarding_templates.could_not_load": "تعذّر تحميل القوائم.",
+  "p.onboarding_templates.is_custom": "لهذا النوع قائمته الخاصة.",
+  "p.onboarding_templates.is_builtin":
+    "يستخدم هذا النوع القائمة المدمجة؛ بنودها من الخدمة، بالإنجليزية.",
+  "p.onboarding_templates.before": "أيام قبل التاريخ: {n}",
+  "p.onboarding_templates.after": "أيام بعد التاريخ: {n}",
+  "p.onboarding_templates.on_the_day": "في التاريخ",
+  "p.onboarding_templates.edit": "تغيير",
+  "p.onboarding_templates.reset": "العودة إلى القائمة المدمجة",
+  "p.onboarding_templates.reset_ask":
+    "العودة إلى القائمة المدمجة لـ«{kind}»؟ تُزال القائمة الخاصة؛ وتحتفظ الحالات التي بدأت ببنودها.",
+  "p.onboarding_templates.reset_done": "يستخدم «{kind}» القائمة المدمجة مجددًا.",
+  "p.onboarding_templates.could_not_reset": "تعذّرت العودة إلى القائمة المدمجة.",
+  "p.onboarding_templates.item_title": "البند {n}: ما يجب فعله (حتى 200 حرف)",
+  "p.onboarding_templates.item_offset":
+    "البند {n}: أيام من التاريخ (من −365 إلى 365؛ السالب يعني قبل)",
+  "p.onboarding_templates.up": "رفع البند {n}",
+  "p.onboarding_templates.down": "خفض البند {n}",
+  "p.onboarding_templates.remove": "إزالة البند {n}",
+  "p.onboarding_templates.add": "إضافة بند",
+  "p.onboarding_templates.save": "حفظ القائمة",
+  "p.onboarding_templates.cancel": "إلغاء",
+  "p.onboarding_templates.count_bad": "تضم القائمة من 1 إلى {max} بندًا.",
+  "p.onboarding_templates.title_bad": "البند {n}: العنوان مطلوب، حتى 200 حرف.",
+  "p.onboarding_templates.offset_bad":
+    "البند {n}: يجب أن تكون الأيام عددًا صحيحًا من −365 إلى 365.",
+  "p.onboarding_templates.saved": "حُفظت قائمة «{kind}».",
+  "p.onboarding_templates.could_not_save": "تعذّر حفظ القائمة.",
+  "p.onboarding_templates.forbidden": "يتطلّب تغيير القائمة إذن إدارة الأشخاص.",
 };

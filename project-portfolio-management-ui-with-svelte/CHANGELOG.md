@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/onboarding-templates` (2026-11-27)
+
+- Three client methods; `src/lib/onboarding-template-view.ts`; a top-navigation section; 29 strings in every locale.
+
 ### Added — `/plans/[pid]/fields` (RM-1, 2026-11-27)
 
 - Two client methods; value rules in `src/lib/custom-field-view.ts`; a plan workspace link; 20 strings in every locale.

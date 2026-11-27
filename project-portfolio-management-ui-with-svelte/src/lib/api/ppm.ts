@@ -362,6 +362,8 @@ import type {
   BulkJobStatus,
   ReviewQueueItem,
   CustomFieldDef,
+  OnboardingTemplate,
+  OnboardingTemplateBody,
   CustomFieldSearch,
   CustomFieldValues,
   CustomFieldValuesBody,
@@ -2355,6 +2357,30 @@ export class PpmClient {
       },
     );
     return { goals: goals ?? [], etag: next };
+  }
+
+  /** Each kind's checklist: its custom template, or the built-in one. */
+  async onboardingTemplates(): Promise<OnboardingTemplate[]> {
+    const r = await this.http.get<{ templates: OnboardingTemplate[] }>(
+      "/api/onboarding/templates",
+    );
+    return r?.templates ?? [];
+  }
+  /** Replace a kind's checklist (someone who may manage people; 403 otherwise). */
+  setOnboardingTemplate(
+    kind: OnboardingKind,
+    body: OnboardingTemplateBody,
+  ): Promise<OnboardingTemplate> {
+    return this.http.put(
+      `/api/onboarding/templates/${encodeURIComponent(kind)}`,
+      { body },
+    );
+  }
+  /** Go back to the built-in checklist for a kind. */
+  resetOnboardingTemplate(kind: OnboardingKind): Promise<void> {
+    return this.http.delete(
+      `/api/onboarding/templates/${encodeURIComponent(kind)}`,
+    );
   }
 
   /** Live custom field definitions, oldest first (RM-1). */

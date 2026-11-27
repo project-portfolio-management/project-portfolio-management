@@ -9558,4 +9558,44 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.custom_fields.v_choice": "{label}: escolha uma das opções do campo.",
   "p.custom_fields.v_too_long": "{label}: o texto tem mais de 1000 caracteres.",
   "p.custom_fields.v_required": "{label} é obrigatório e não pode ficar vazio.",
+  "p.onboarding_templates.title": "Modelos de listas de verificação",
+  "p.onboarding_templates.title_ppm": "Modelos de listas de verificação — PPM",
+  "p.onboarding_templates.intro":
+    "A lista de verificação com que começa cada caso de entrada ou saída, com o prazo de cada ponto a partir da data em que produz efeito. Um caso já iniciado mantém os seus pontos.",
+  "p.onboarding_templates.loading": "A carregar as listas…",
+  "p.onboarding_templates.could_not_load":
+    "Não foi possível carregar as listas.",
+  "p.onboarding_templates.is_custom": "Este tipo tem a sua própria lista.",
+  "p.onboarding_templates.is_builtin":
+    "Este tipo usa a lista integrada; os seus pontos são os do serviço, em inglês.",
+  "p.onboarding_templates.before": "dias antes da data: {n}",
+  "p.onboarding_templates.after": "dias depois da data: {n}",
+  "p.onboarding_templates.on_the_day": "na data",
+  "p.onboarding_templates.edit": "Alterar",
+  "p.onboarding_templates.reset": "Voltar à lista integrada",
+  "p.onboarding_templates.reset_ask":
+    "Voltar à lista integrada para «{kind}»? A lista própria é removida; os casos já iniciados mantêm os seus pontos.",
+  "p.onboarding_templates.reset_done":
+    "«{kind}» volta a usar a lista integrada.",
+  "p.onboarding_templates.could_not_reset":
+    "Não foi possível voltar à lista integrada.",
+  "p.onboarding_templates.item_title":
+    "Ponto {n}: o que fazer (até 200 caracteres)",
+  "p.onboarding_templates.item_offset":
+    "Ponto {n}: dias a partir da data (−365 a 365; negativo é antes)",
+  "p.onboarding_templates.up": "Subir o ponto {n}",
+  "p.onboarding_templates.down": "Descer o ponto {n}",
+  "p.onboarding_templates.remove": "Remover o ponto {n}",
+  "p.onboarding_templates.add": "Adicionar um ponto",
+  "p.onboarding_templates.save": "Guardar a lista",
+  "p.onboarding_templates.cancel": "Cancelar",
+  "p.onboarding_templates.count_bad": "Uma lista tem de 1 a {max} pontos.",
+  "p.onboarding_templates.title_bad":
+    "Ponto {n}: é necessário um título, até 200 caracteres.",
+  "p.onboarding_templates.offset_bad":
+    "Ponto {n}: os dias têm de ser um número inteiro de −365 a 365.",
+  "p.onboarding_templates.saved": "Lista de «{kind}» guardada.",
+  "p.onboarding_templates.could_not_save": "Não foi possível guardar a lista.",
+  "p.onboarding_templates.forbidden":
+    "Alterar uma lista requer a permissão para gerir pessoas.",
 };

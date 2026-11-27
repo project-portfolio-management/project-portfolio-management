@@ -9671,4 +9671,45 @@ export const PAGES_DE: Record<PageKey, string> = {
     "{label}: Der Text ist länger als 1.000 Zeichen.",
   "p.custom_fields.v_required":
     "{label} ist erforderlich und darf nicht leer bleiben.",
+  "p.onboarding_templates.title": "Checklisten-Vorlagen",
+  "p.onboarding_templates.title_ppm": "Checklisten-Vorlagen — PPM",
+  "p.onboarding_templates.intro":
+    "Die Checkliste, mit der jeder Ein- oder Austrittsfall beginnt, mit der Fälligkeit jedes Punkts ab dem Tag des Inkrafttretens. Ein bereits begonnener Fall behält seine Punkte.",
+  "p.onboarding_templates.loading": "Checklisten werden geladen…",
+  "p.onboarding_templates.could_not_load":
+    "Die Checklisten konnten nicht geladen werden.",
+  "p.onboarding_templates.is_custom": "Diese Art hat eine eigene Checkliste.",
+  "p.onboarding_templates.is_builtin":
+    "Diese Art nutzt die eingebaute Checkliste; ihre Punkte stammen vom Dienst, auf Englisch.",
+  "p.onboarding_templates.before": "Tage vor dem Datum: {n}",
+  "p.onboarding_templates.after": "Tage nach dem Datum: {n}",
+  "p.onboarding_templates.on_the_day": "am Datum",
+  "p.onboarding_templates.edit": "Ändern",
+  "p.onboarding_templates.reset": "Zur eingebauten Checkliste zurückkehren",
+  "p.onboarding_templates.reset_ask":
+    "Für „{kind}“ zur eingebauten Checkliste zurückkehren? Die eigene wird entfernt; bereits begonnene Fälle behalten ihre Punkte.",
+  "p.onboarding_templates.reset_done":
+    "„{kind}“ nutzt wieder die eingebaute Checkliste.",
+  "p.onboarding_templates.could_not_reset":
+    "Die Rückkehr zur eingebauten Checkliste ist fehlgeschlagen.",
+  "p.onboarding_templates.item_title":
+    "Punkt {n}: was zu tun ist (bis zu 200 Zeichen)",
+  "p.onboarding_templates.item_offset":
+    "Punkt {n}: Tage ab dem Datum (−365 bis 365; negativ heißt vorher)",
+  "p.onboarding_templates.up": "Punkt {n} nach oben",
+  "p.onboarding_templates.down": "Punkt {n} nach unten",
+  "p.onboarding_templates.remove": "Punkt {n} entfernen",
+  "p.onboarding_templates.add": "Punkt hinzufügen",
+  "p.onboarding_templates.save": "Checkliste speichern",
+  "p.onboarding_templates.cancel": "Abbrechen",
+  "p.onboarding_templates.count_bad": "Eine Checkliste hat 1 bis {max} Punkte.",
+  "p.onboarding_templates.title_bad":
+    "Punkt {n}: Ein Titel ist erforderlich, bis zu 200 Zeichen.",
+  "p.onboarding_templates.offset_bad":
+    "Punkt {n}: Die Tage müssen eine ganze Zahl von −365 bis 365 sein.",
+  "p.onboarding_templates.saved": "Checkliste für „{kind}“ gespeichert.",
+  "p.onboarding_templates.could_not_save":
+    "Die Checkliste konnte nicht gespeichert werden.",
+  "p.onboarding_templates.forbidden":
+    "Eine Checkliste zu ändern erfordert die Berechtigung, Personen zu verwalten.",
 };

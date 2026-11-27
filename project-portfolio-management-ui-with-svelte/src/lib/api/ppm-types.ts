@@ -5860,3 +5860,16 @@ export interface CustomFieldValuesBody {
   subject_pid: string;
   values: Record<string, unknown>;
 }
+
+/** One checklist template (`GET /api/onboarding/templates`): a kind's custom checklist, or the built-in one. */
+export interface OnboardingTemplate {
+  kind: OnboardingKind;
+  /** `false` for the built-in checklist, whose titles the service writes in English. */
+  custom: boolean;
+  items: { title: string; offset_days: number }[];
+}
+
+/** `PUT /api/onboarding/templates/{kind}` body. */
+export interface OnboardingTemplateBody {
+  items: { title: string; offset_days: number }[];
+}

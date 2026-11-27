@@ -9489,4 +9489,46 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.custom_fields.v_choice": "{label}: pilih salah satu pilihan bidang.",
   "p.custom_fields.v_too_long": "{label}: teks lebih dari 1.000 karakter.",
   "p.custom_fields.v_required": "{label} wajib diisi dan tidak boleh kosong.",
+  "p.onboarding_templates.title": "Templat daftar periksa",
+  "p.onboarding_templates.title_ppm": "Templat daftar periksa — PPM",
+  "p.onboarding_templates.intro":
+    "Daftar periksa awal setiap kasus orientasi atau keluar, dengan kapan tiap butir jatuh tempo dari tanggal berlakunya. Kasus yang sudah dimulai tetap memakai butirnya.",
+  "p.onboarding_templates.loading": "Memuat daftar periksa…",
+  "p.onboarding_templates.could_not_load": "Tidak dapat memuat daftar periksa.",
+  "p.onboarding_templates.is_custom":
+    "Jenis ini memakai daftar periksanya sendiri.",
+  "p.onboarding_templates.is_builtin":
+    "Jenis ini memakai daftar periksa bawaan; butirnya berasal dari layanan, dalam bahasa Inggris.",
+  "p.onboarding_templates.before": "hari sebelum tanggal: {n}",
+  "p.onboarding_templates.after": "hari sesudah tanggal: {n}",
+  "p.onboarding_templates.on_the_day": "pada tanggal",
+  "p.onboarding_templates.edit": "Ubah",
+  "p.onboarding_templates.reset": "Kembali ke daftar periksa bawaan",
+  "p.onboarding_templates.reset_ask":
+    "Kembali ke daftar periksa bawaan untuk “{kind}”? Daftar khusus dihapus; kasus yang sudah dimulai tetap memakai butirnya.",
+  "p.onboarding_templates.reset_done":
+    "“{kind}” kembali memakai daftar periksa bawaan.",
+  "p.onboarding_templates.could_not_reset":
+    "Tidak dapat kembali ke daftar periksa bawaan.",
+  "p.onboarding_templates.item_title":
+    "Butir {n}: yang harus dilakukan (hingga 200 karakter)",
+  "p.onboarding_templates.item_offset":
+    "Butir {n}: hari dari tanggal (−365 hingga 365; negatif berarti sebelum)",
+  "p.onboarding_templates.up": "Naikkan butir {n}",
+  "p.onboarding_templates.down": "Turunkan butir {n}",
+  "p.onboarding_templates.remove": "Hapus butir {n}",
+  "p.onboarding_templates.add": "Tambah butir",
+  "p.onboarding_templates.save": "Simpan daftar periksa",
+  "p.onboarding_templates.cancel": "Batal",
+  "p.onboarding_templates.count_bad":
+    "Daftar periksa memuat 1 hingga {max} butir.",
+  "p.onboarding_templates.title_bad":
+    "Butir {n}: judul wajib diisi, hingga 200 karakter.",
+  "p.onboarding_templates.offset_bad":
+    "Butir {n}: jumlah hari harus bilangan bulat dari −365 hingga 365.",
+  "p.onboarding_templates.saved": "Daftar periksa untuk “{kind}” disimpan.",
+  "p.onboarding_templates.could_not_save":
+    "Tidak dapat menyimpan daftar periksa.",
+  "p.onboarding_templates.forbidden":
+    "Mengubah daftar periksa memerlukan izin untuk mengelola orang.",
 };

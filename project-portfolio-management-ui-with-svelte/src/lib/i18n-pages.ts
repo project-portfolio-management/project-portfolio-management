@@ -9246,6 +9246,45 @@ export const PAGES_EN = {
   "p.custom_fields.v_choice": "{label}: choose one of the field's choices.",
   "p.custom_fields.v_too_long": "{label}: the text is over 1,000 characters.",
   "p.custom_fields.v_required": "{label} is required and cannot be left empty.",
+  "p.onboarding_templates.title": "Checklist templates",
+  "p.onboarding_templates.title_ppm": "Checklist templates — PPM",
+  "p.onboarding_templates.intro":
+    "The checklist each onboarding or offboarding case starts from, with when each item is due from the date it takes effect. A case already started keeps its items.",
+  "p.onboarding_templates.loading": "Loading the checklists…",
+  "p.onboarding_templates.could_not_load": "Could not load the checklists.",
+  "p.onboarding_templates.is_custom": "This kind uses its own checklist.",
+  "p.onboarding_templates.is_builtin":
+    "This kind uses the built-in checklist; its items are the service's, in English.",
+  "p.onboarding_templates.before": "days before the date: {n}",
+  "p.onboarding_templates.after": "days after the date: {n}",
+  "p.onboarding_templates.on_the_day": "on the date",
+  "p.onboarding_templates.edit": "Change",
+  "p.onboarding_templates.reset": "Go back to the built-in checklist",
+  "p.onboarding_templates.reset_ask":
+    "Go back to the built-in checklist for “{kind}”? The custom one is removed; cases already started keep their items.",
+  "p.onboarding_templates.reset_done":
+    "“{kind}” uses the built-in checklist again.",
+  "p.onboarding_templates.could_not_reset":
+    "Could not go back to the built-in checklist.",
+  "p.onboarding_templates.item_title":
+    "Item {n}: what to do (up to 200 characters)",
+  "p.onboarding_templates.item_offset":
+    "Item {n}: days from the date (−365 to 365; negative is before)",
+  "p.onboarding_templates.up": "Move item {n} up",
+  "p.onboarding_templates.down": "Move item {n} down",
+  "p.onboarding_templates.remove": "Remove item {n}",
+  "p.onboarding_templates.add": "Add an item",
+  "p.onboarding_templates.save": "Save the checklist",
+  "p.onboarding_templates.cancel": "Cancel",
+  "p.onboarding_templates.count_bad": "A checklist has 1 to {max} items.",
+  "p.onboarding_templates.title_bad":
+    "Item {n}: a title is required, up to 200 characters.",
+  "p.onboarding_templates.offset_bad":
+    "Item {n}: the days must be a whole number from −365 to 365.",
+  "p.onboarding_templates.saved": "Saved the checklist for “{kind}”.",
+  "p.onboarding_templates.could_not_save": "Could not save the checklist.",
+  "p.onboarding_templates.forbidden":
+    "Changing a checklist needs the permission to manage people.",
 } as const;
 
 /** A key in the page and component catalogue. */

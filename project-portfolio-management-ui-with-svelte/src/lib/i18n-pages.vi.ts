@@ -9385,4 +9385,42 @@ export const PAGES_VI: Record<PageKey, string> = {
     "{label}: hãy chọn một trong các lựa chọn của trường.",
   "p.custom_fields.v_too_long": "{label}: văn bản dài hơn 1.000 ký tự.",
   "p.custom_fields.v_required": "{label} là bắt buộc và không được để trống.",
+  "p.onboarding_templates.title": "Mẫu danh sách kiểm tra",
+  "p.onboarding_templates.title_ppm": "Mẫu danh sách kiểm tra — PPM",
+  "p.onboarding_templates.intro":
+    "Danh sách kiểm tra mà mỗi trường hợp gia nhập hoặc rời đi bắt đầu, kèm hạn của từng mục tính từ ngày có hiệu lực. Trường hợp đã bắt đầu giữ nguyên các mục của nó.",
+  "p.onboarding_templates.loading": "Đang tải các danh sách…",
+  "p.onboarding_templates.could_not_load": "Không tải được các danh sách.",
+  "p.onboarding_templates.is_custom": "Loại này có danh sách riêng.",
+  "p.onboarding_templates.is_builtin":
+    "Loại này dùng danh sách có sẵn; các mục là của dịch vụ, bằng tiếng Anh.",
+  "p.onboarding_templates.before": "số ngày trước ngày đó: {n}",
+  "p.onboarding_templates.after": "số ngày sau ngày đó: {n}",
+  "p.onboarding_templates.on_the_day": "đúng ngày đó",
+  "p.onboarding_templates.edit": "Thay đổi",
+  "p.onboarding_templates.reset": "Quay lại danh sách có sẵn",
+  "p.onboarding_templates.reset_ask":
+    "Quay lại danh sách có sẵn cho “{kind}”? Danh sách riêng sẽ bị xóa; các trường hợp đã bắt đầu giữ nguyên các mục.",
+  "p.onboarding_templates.reset_done": "“{kind}” lại dùng danh sách có sẵn.",
+  "p.onboarding_templates.could_not_reset":
+    "Không quay lại được danh sách có sẵn.",
+  "p.onboarding_templates.item_title":
+    "Mục {n}: việc cần làm (tối đa 200 ký tự)",
+  "p.onboarding_templates.item_offset":
+    "Mục {n}: số ngày tính từ ngày đó (−365 đến 365; âm là trước)",
+  "p.onboarding_templates.up": "Đưa mục {n} lên",
+  "p.onboarding_templates.down": "Đưa mục {n} xuống",
+  "p.onboarding_templates.remove": "Gỡ bỏ mục {n}",
+  "p.onboarding_templates.add": "Thêm một mục",
+  "p.onboarding_templates.save": "Lưu danh sách",
+  "p.onboarding_templates.cancel": "Hủy",
+  "p.onboarding_templates.count_bad": "Một danh sách có từ 1 đến {max} mục.",
+  "p.onboarding_templates.title_bad":
+    "Mục {n}: cần có tiêu đề, tối đa 200 ký tự.",
+  "p.onboarding_templates.offset_bad":
+    "Mục {n}: số ngày phải là số nguyên từ −365 đến 365.",
+  "p.onboarding_templates.saved": "Đã lưu danh sách cho “{kind}”.",
+  "p.onboarding_templates.could_not_save": "Không lưu được danh sách.",
+  "p.onboarding_templates.forbidden":
+    "Thay đổi danh sách cần quyền quản lý con người.",
 };

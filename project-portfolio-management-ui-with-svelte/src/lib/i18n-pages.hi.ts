@@ -9004,4 +9004,40 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.custom_fields.v_choice": "{label}: फ़ील्ड के विकल्पों में से एक चुनें।",
   "p.custom_fields.v_too_long": "{label}: पाठ 1,000 वर्णों से लंबा है।",
   "p.custom_fields.v_required": "{label} ज़रूरी है और खाली नहीं छोड़ा जा सकता।",
+  "p.onboarding_templates.title": "जाँच-सूची साँचे",
+  "p.onboarding_templates.title_ppm": "जाँच-सूची साँचे — PPM",
+  "p.onboarding_templates.intro":
+    "वह जाँच-सूची जिससे हर जुड़ने या छोड़ने का मामला शुरू होता है, साथ में हर मद की देय तिथि, लागू होने की तारीख से। पहले से शुरू मामला अपनी मदें रखता है।",
+  "p.onboarding_templates.loading": "सूचियाँ लोड हो रही हैं…",
+  "p.onboarding_templates.could_not_load": "सूचियाँ लोड नहीं हो सकीं।",
+  "p.onboarding_templates.is_custom": "इस प्रकार की अपनी सूची है।",
+  "p.onboarding_templates.is_builtin":
+    "यह प्रकार अंतर्निहित सूची इस्तेमाल करता है; इसकी मदें सेवा की हैं, अंग्रेज़ी में।",
+  "p.onboarding_templates.before": "तारीख से पहले के दिन: {n}",
+  "p.onboarding_templates.after": "तारीख के बाद के दिन: {n}",
+  "p.onboarding_templates.on_the_day": "उसी तारीख को",
+  "p.onboarding_templates.edit": "बदलें",
+  "p.onboarding_templates.reset": "अंतर्निहित सूची पर लौटें",
+  "p.onboarding_templates.reset_ask":
+    "“{kind}” के लिए अंतर्निहित सूची पर लौटें? अपनी सूची हटा दी जाएगी; पहले से शुरू मामले अपनी मदें रखेंगे।",
+  "p.onboarding_templates.reset_done":
+    "“{kind}” फिर से अंतर्निहित सूची इस्तेमाल करता है।",
+  "p.onboarding_templates.could_not_reset": "अंतर्निहित सूची पर नहीं लौटा जा सका।",
+  "p.onboarding_templates.item_title": "मद {n}: क्या करना है (200 वर्णों तक)",
+  "p.onboarding_templates.item_offset":
+    "मद {n}: तारीख से दिन (−365 से 365; ऋणात्मक यानी पहले)",
+  "p.onboarding_templates.up": "मद {n} ऊपर ले जाएँ",
+  "p.onboarding_templates.down": "मद {n} नीचे ले जाएँ",
+  "p.onboarding_templates.remove": "मद {n} हटाएँ",
+  "p.onboarding_templates.add": "मद जोड़ें",
+  "p.onboarding_templates.save": "सूची सहेजें",
+  "p.onboarding_templates.cancel": "रद्द करें",
+  "p.onboarding_templates.count_bad": "एक सूची में 1 से {max} मदें होती हैं।",
+  "p.onboarding_templates.title_bad": "मद {n}: शीर्षक ज़रूरी है, 200 वर्णों तक।",
+  "p.onboarding_templates.offset_bad":
+    "मद {n}: दिन −365 से 365 तक की पूर्ण संख्या होने चाहिए।",
+  "p.onboarding_templates.saved": "“{kind}” की सूची सहेजी गई।",
+  "p.onboarding_templates.could_not_save": "सूची सहेजी नहीं जा सकी।",
+  "p.onboarding_templates.forbidden":
+    "सूची बदलने के लिए लोगों को प्रबंधित करने की अनुमति चाहिए।",
 };

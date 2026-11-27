@@ -9469,4 +9469,45 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.custom_fields.v_too_long": "{label}: mae'r testun dros 1,000 nod.",
   "p.custom_fields.v_required":
     "Mae {label} yn ofynnol ac ni ellir ei adael yn wag.",
+  "p.onboarding_templates.title": "Templedi rhestrau gwirio",
+  "p.onboarding_templates.title_ppm": "Templedi rhestrau gwirio — PPM",
+  "p.onboarding_templates.intro":
+    "Y rhestr wirio y mae pob achos ymuno neu adael yn dechrau ohoni, gyda phryd mae pob eitem yn ddyledus o'r dyddiad y daw i rym. Mae achos sydd eisoes wedi dechrau yn cadw ei eitemau.",
+  "p.onboarding_templates.loading": "Wrthi'n llwytho'r rhestrau gwirio…",
+  "p.onboarding_templates.could_not_load": "Methu llwytho'r rhestrau gwirio.",
+  "p.onboarding_templates.is_custom":
+    "Mae gan y math hwn ei restr wirio ei hun.",
+  "p.onboarding_templates.is_builtin":
+    "Mae'r math hwn yn defnyddio'r rhestr wirio adeiledig; eitemau'r gwasanaeth yw ei heitemau, yn Saesneg.",
+  "p.onboarding_templates.before": "diwrnodau cyn y dyddiad: {n}",
+  "p.onboarding_templates.after": "diwrnodau ar ôl y dyddiad: {n}",
+  "p.onboarding_templates.on_the_day": "ar y dyddiad",
+  "p.onboarding_templates.edit": "Newid",
+  "p.onboarding_templates.reset": "Mynd yn ôl i'r rhestr wirio adeiledig",
+  "p.onboarding_templates.reset_ask":
+    "Mynd yn ôl i'r rhestr wirio adeiledig ar gyfer “{kind}”? Caiff yr un bersonol ei dileu; mae achosion sydd eisoes wedi dechrau yn cadw eu heitemau.",
+  "p.onboarding_templates.reset_done":
+    "Mae “{kind}” yn defnyddio'r rhestr wirio adeiledig eto.",
+  "p.onboarding_templates.could_not_reset":
+    "Methu mynd yn ôl i'r rhestr wirio adeiledig.",
+  "p.onboarding_templates.item_title":
+    "Eitem {n}: beth i'w wneud (hyd at 200 nod)",
+  "p.onboarding_templates.item_offset":
+    "Eitem {n}: diwrnodau o'r dyddiad (−365 i 365; mae negatif yn golygu cyn)",
+  "p.onboarding_templates.up": "Symud eitem {n} i fyny",
+  "p.onboarding_templates.down": "Symud eitem {n} i lawr",
+  "p.onboarding_templates.remove": "Tynnu eitem {n}",
+  "p.onboarding_templates.add": "Ychwanegu eitem",
+  "p.onboarding_templates.save": "Cadw'r rhestr wirio",
+  "p.onboarding_templates.cancel": "Canslo",
+  "p.onboarding_templates.count_bad":
+    "Mae gan restr wirio rhwng 1 a {max} eitem.",
+  "p.onboarding_templates.title_bad":
+    "Eitem {n}: mae angen teitl, hyd at 200 nod.",
+  "p.onboarding_templates.offset_bad":
+    "Eitem {n}: rhaid i'r diwrnodau fod yn rhif cyfan o −365 i 365.",
+  "p.onboarding_templates.saved": "Cadwyd y rhestr wirio ar gyfer “{kind}”.",
+  "p.onboarding_templates.could_not_save": "Methu cadw'r rhestr wirio.",
+  "p.onboarding_templates.forbidden":
+    "Mae newid rhestr wirio yn gofyn am y caniatâd i reoli pobl.",
 };

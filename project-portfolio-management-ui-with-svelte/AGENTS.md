@@ -224,6 +224,7 @@ the Status note above).
 | A plan's template changes (`/plans/[pid]/template`) | `GET /api/plans/{pid}/template-diff` (404: not made from a template) · `POST …/template-sync` (`{accept, overwrite_local?}`, after a question) |
 | Many MS Project files (`/mspdi-import`, linked from `/jobs`) | `POST /api/import/mspdi-batch?dry_run=` (`{projects: [{plan_pid? | name?, xml}], parent_pid?}`; preview first, then after a question) |
 | A plan's components (`/plans/[pid]/components`) | `GET /api/plans/{pid}/components` · `GET …/components/summary` · `POST …/components` · `PUT …/components/{c_pid}` · `DELETE …/components/{c_pid}` (after a question; only when no task belongs to it) |
+| Checklist templates (`/onboarding-templates`) | `GET /api/onboarding/templates` · `PUT /api/onboarding/templates/{kind}` · `DELETE /api/onboarding/templates/{kind}` (after a question) |
 | Custom fields (`/custom-fields`) | `GET /api/custom-fields` · `POST /api/custom-fields` (409 said first) · `DELETE /api/custom-fields/{pid}` (after a question) · `GET /api/custom-fields/search` |
 | A plan's custom field values (`/plans/[pid]/fields`) | `GET /api/custom-fields` · `GET /api/custom-fields/values?applies_to=plan` · `PUT /api/custom-fields/values` (only what changed) · `GET /api/plans/{pid}` (its kind) |
 | A plan's goals (`/plans/[pid]/goals`) | `GET /api/plans/{pid}/goals` (with its `ETag`) · `POST …/goals` · `PUT …/goals/{index}` · `DELETE …/goals/{index}` (both with `If-Match`; 412 read again) |

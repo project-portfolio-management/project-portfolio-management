@@ -9766,4 +9766,71 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.announcements.publish_at": "Veröffentlicht ab",
   "p.announcements.save": "Änderungen speichern",
   "p.announcements.cancel": "Abbrechen",
+  "p.approvals.title": "Freigaben",
+  "p.approvals.title_ppm": "Freigaben — PPM",
+  "p.approvals.intro":
+    "Eine Person wird gebeten, einen Plan, eine Aufgabe oder einen anderen Gegenstand freizugeben, außerhalb jedes Freigabeprozesses. Eine Entscheidung ist endgültig, und eine Ablehnung nennt den Grund.",
+  "p.approvals.loading": "Freigaben werden geladen…",
+  "p.approvals.could_not_load": "Die Freigaben konnten nicht geladen werden.",
+  "p.approvals.waiting_h": "Wartet auf Sie",
+  "p.approvals.waiting_none": "Nichts wartet auf Sie.",
+  "p.approvals.asked_by": "Angefragt von {who} am {at}",
+  "p.approvals.comment_field":
+    "Kommentar (für eine Ablehnung erforderlich; bis zu 2.000 Zeichen)",
+  "p.approvals.approve": "Freigeben",
+  "p.approvals.reject": "Ablehnen",
+  "p.approvals.approved_done": "Ihre Freigabe ist erfasst.",
+  "p.approvals.rejected_done": "Ihre Ablehnung ist erfasst.",
+  "p.approvals.asked_h": "Was Sie angefragt haben",
+  "p.approvals.asked_none": "Sie haben noch niemanden gefragt.",
+  "p.approvals.asked_of": "Angefragt bei {approver}",
+  "p.approvals.their_comment": "Deren Kommentar: {comment}",
+  "p.approvals.from_process":
+    "Von einem Freigabeprozess ausgelöst: brechen Sie dessen Durchlauf ab, um sie zu beenden.",
+  "p.approvals.withdraw": "Zurückziehen",
+  "p.approvals.withdraw_ask":
+    "Diese Anfrage zurückziehen? Die gefragte Person kann dann nicht mehr entscheiden.",
+  "p.approvals.withdrawn_done": "Anfrage zurückgezogen.",
+  "p.approvals.ask_h": "Um eine Freigabe bitten",
+  "p.approvals.subject_kind_field": "Worum es geht",
+  "p.approvals.subject_field": "Seine Kennung (eine UUID)",
+  "p.approvals.approver_field":
+    "Wer gefragt wird (person: oder worker: und eine UUID)",
+  "p.approvals.message_field": "Eine Notiz an sie (optional)",
+  "p.approvals.ask": "Um die Freigabe bitten",
+  "p.approvals.asked_done": "{approver} um Freigabe gebeten.",
+  "p.approvals.subject_bad": "Die Kennung des Gegenstands muss eine UUID sein.",
+  "p.approvals.approver_bad":
+    "Die gefragte Person muss person: oder worker: gefolgt von einer UUID sein.",
+  "p.approvals.text_long":
+    "Eine Notiz oder ein Kommentar hat höchstens 2.000 Zeichen.",
+  "p.approvals.why_required":
+    "Eine Ablehnung muss den Grund nennen: Schreiben Sie einen Kommentar.",
+  "p.approvals.already_settled":
+    "Diese Anfrage wurde bereits entschieden oder zurückgezogen, und eine Entscheidung ist endgültig. Die Listen wurden neu gelesen.",
+  "p.approvals.not_found":
+    "Dieser Gegenstand oder diese Anfrage ist nicht vorhanden, oder Sie dürfen ihn nicht lesen.",
+  "p.approvals.not_approver":
+    "Nur die gefragte Person darf über diese Anfrage entscheiden.",
+  "p.approvals.not_requester":
+    "Nur wer gefragt hat, darf diese Anfrage zurückziehen.",
+  "p.approvals.could_not_request":
+    "Die Freigabe konnte nicht angefragt werden.",
+  "p.approvals.could_not_decide":
+    "Die Entscheidung konnte nicht erfasst werden.",
+  "p.approvals.could_not_withdraw":
+    "Die Anfrage konnte nicht zurückgezogen werden.",
+  "p.approvals.status.pending": "Wartet",
+  "p.approvals.status.approved": "Freigegeben",
+  "p.approvals.status.rejected": "Abgelehnt",
+  "p.approvals.status.withdrawn": "Zurückgezogen",
+  "p.approvals.kind.plan": "Vorhaben (Plan)",
+  "p.approvals.kind.task": "Aufgabe",
+  "p.approvals.kind.risk": "Risiko",
+  "p.approvals.kind.proposal": "Vorschlag",
+  "p.approvals.kind.idea": "Idee",
+  "p.approvals.kind.canvas_item": "Canvas-Eintrag",
+  "p.approvals.kind.budget_line": "Budgetposten",
+  "p.approvals.kind.scenario": "Szenario",
+  "p.approvals.kind.document_version": "Dokumentfassung",
 };

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/approvals` (PL-1, 2026-11-27)
+
+- Three client methods; `src/lib/approvals-view.ts`; a top-navigation section; 52 strings in every locale.
+
 ### Added — changing an announcement (2026-11-27)
 
 - `/announcements`: a publisher's inline change; `updateAnnouncement`; `localInput`, `formOf` and `announcementEdit`

@@ -9660,4 +9660,67 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.announcements.publish_at": "Publicado desde",
   "p.announcements.save": "Guardar los cambios",
   "p.announcements.cancel": "Cancelar",
+  "p.approvals.title": "Aprobaciones",
+  "p.approvals.title_ppm": "Aprobaciones — PPM",
+  "p.approvals.intro":
+    "Se pide a una persona que apruebe un plan, una tarea u otro elemento, fuera de cualquier proceso de aprobación. Una decisión es definitiva, y un rechazo dice por qué.",
+  "p.approvals.loading": "Cargando las aprobaciones…",
+  "p.approvals.could_not_load": "No se pudieron cargar las aprobaciones.",
+  "p.approvals.waiting_h": "Esperando por usted",
+  "p.approvals.waiting_none": "No hay nada esperando por usted.",
+  "p.approvals.asked_by": "Pedido por {who} el {at}",
+  "p.approvals.comment_field":
+    "Comentario (obligatorio para rechazar; hasta 2000 caracteres)",
+  "p.approvals.approve": "Aprobar",
+  "p.approvals.reject": "Rechazar",
+  "p.approvals.approved_done": "Se registró su aprobación.",
+  "p.approvals.rejected_done": "Se registró su rechazo.",
+  "p.approvals.asked_h": "Lo que usted pidió",
+  "p.approvals.asked_none": "Aún no ha pedido nada a nadie.",
+  "p.approvals.asked_of": "Pedido a {approver}",
+  "p.approvals.their_comment": "Su comentario: {comment}",
+  "p.approvals.from_process":
+    "Creada por un proceso de aprobación: cancele su ejecución para detenerla.",
+  "p.approvals.withdraw": "Retirar",
+  "p.approvals.withdraw_ask":
+    "¿Retirar esta solicitud? La persona a quien se pidió ya no podrá decidirla.",
+  "p.approvals.withdrawn_done": "Se retiró la solicitud.",
+  "p.approvals.ask_h": "Pedir una aprobación",
+  "p.approvals.subject_kind_field": "De qué se trata",
+  "p.approvals.subject_field": "Su identificador (un UUID)",
+  "p.approvals.approver_field": "A quién se pide (person: o worker: y un UUID)",
+  "p.approvals.message_field": "Una nota para esa persona (opcional)",
+  "p.approvals.ask": "Pedir la aprobación",
+  "p.approvals.asked_done": "Se pidió a {approver} que apruebe.",
+  "p.approvals.subject_bad": "El identificador del elemento debe ser un UUID.",
+  "p.approvals.approver_bad":
+    "La persona a quien se pide debe ser person: o worker: seguido de un UUID.",
+  "p.approvals.text_long":
+    "Una nota o un comentario tiene como máximo 2000 caracteres.",
+  "p.approvals.why_required":
+    "Un rechazo debe decir por qué: escriba un comentario.",
+  "p.approvals.already_settled":
+    "Esta solicitud ya se decidió o se retiró, y una decisión es definitiva. Se han vuelto a leer las listas.",
+  "p.approvals.not_found":
+    "Ese elemento o esa solicitud no existe, o no puede leerlo.",
+  "p.approvals.not_approver":
+    "Solo la persona a quien se pidió puede decidir esta solicitud.",
+  "p.approvals.not_requester":
+    "Solo quien la pidió puede retirar esta solicitud.",
+  "p.approvals.could_not_request": "No se pudo pedir la aprobación.",
+  "p.approvals.could_not_decide": "No se pudo registrar la decisión.",
+  "p.approvals.could_not_withdraw": "No se pudo retirar la solicitud.",
+  "p.approvals.status.pending": "En espera",
+  "p.approvals.status.approved": "Aprobada",
+  "p.approvals.status.rejected": "Rechazada",
+  "p.approvals.status.withdrawn": "Retirada",
+  "p.approvals.kind.plan": "Plan de proyecto",
+  "p.approvals.kind.task": "Tarea",
+  "p.approvals.kind.risk": "Riesgo",
+  "p.approvals.kind.proposal": "Propuesta",
+  "p.approvals.kind.idea": "Idea propia",
+  "p.approvals.kind.canvas_item": "Elemento del lienzo",
+  "p.approvals.kind.budget_line": "Partida presupuestaria",
+  "p.approvals.kind.scenario": "Escenario",
+  "p.approvals.kind.document_version": "Versión de documento",
 };

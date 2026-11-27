@@ -3537,4 +3537,13 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   clears an expiry left out, so the expiry is always sent (the stored one, as it was, when unchanged); the publishing
   time only when it changed (`PUT /api/announcements/{pid}`). Rules in `announcement-view.ts`;
   `tests/e2e/announcements.spec.ts`.
-- **Not built** in part n: a task's custom field values, approval requests outside a process.
+- **`/approvals`** ("Approvals", a top-navigation section, PL-1, 2026-11-27): one person asked to approve a subject,
+  outside any approval process. What waits on the reader (`GET /api/approvals?mine=approver&status=pending`) is
+  approved, or rejected only with a comment (`POST …/decide`); what the reader asked for (`?mine=requester`) shows its
+  status, the decider's comment and when, and a pending one is withdrawn after a question (`POST …/withdraw`; one a
+  process raised is not offered, as cancelling its run stops it). A new request (subject kind and id, a `person:` or
+  `worker:` UUID approver, an optional note up to 2,000 characters) has every problem said first. 409 (settled
+  meanwhile), 403 (not yours to decide or withdraw) and 404 have their own sentences, and the lists are read again.
+  A plan subject links to its page; other subjects show their id. Rules in `src/lib/approvals-view.ts`;
+  `tests/e2e/approvals.spec.ts`.
+- **Not built** in part n: a task's custom field values (the plan's are on `/plans/[pid]/fields`).

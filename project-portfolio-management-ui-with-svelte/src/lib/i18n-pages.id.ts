@@ -9579,4 +9579,68 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.announcements.publish_at": "Terbit sejak",
   "p.announcements.save": "Simpan perubahan",
   "p.announcements.cancel": "Batal",
+  "p.approvals.title": "Persetujuan",
+  "p.approvals.title_ppm": "Persetujuan — PPM",
+  "p.approvals.intro":
+    "Satu orang diminta menyetujui rencana, tugas, atau subjek lain, di luar proses persetujuan mana pun. Keputusan bersifat final, dan penolakan menyebut alasannya.",
+  "p.approvals.loading": "Memuat persetujuan…",
+  "p.approvals.could_not_load": "Tidak dapat memuat persetujuan.",
+  "p.approvals.waiting_h": "Menunggu Anda",
+  "p.approvals.waiting_none": "Tidak ada yang menunggu Anda.",
+  "p.approvals.asked_by": "Diminta oleh {who} pada {at}",
+  "p.approvals.comment_field":
+    "Komentar (wajib untuk menolak; hingga 2.000 karakter)",
+  "p.approvals.approve": "Setujui",
+  "p.approvals.reject": "Tolak",
+  "p.approvals.approved_done": "Persetujuan Anda dicatat.",
+  "p.approvals.rejected_done": "Penolakan Anda dicatat.",
+  "p.approvals.asked_h": "Yang Anda minta",
+  "p.approvals.asked_none": "Anda belum meminta siapa pun.",
+  "p.approvals.asked_of": "Diminta kepada {approver}",
+  "p.approvals.their_comment": "Komentar mereka: {comment}",
+  "p.approvals.from_process":
+    "Dibuat oleh proses persetujuan: batalkan jalannya untuk menghentikannya.",
+  "p.approvals.withdraw": "Tarik",
+  "p.approvals.withdraw_ask":
+    "Tarik permintaan ini? Orang yang diminta tidak dapat lagi memutuskannya.",
+  "p.approvals.withdrawn_done": "Permintaan ditarik.",
+  "p.approvals.ask_h": "Minta persetujuan",
+  "p.approvals.subject_kind_field": "Tentang apa",
+  "p.approvals.subject_field": "ID-nya (UUID)",
+  "p.approvals.approver_field":
+    "Siapa yang diminta (person: atau worker: dan UUID)",
+  "p.approvals.message_field": "Catatan untuknya (opsional)",
+  "p.approvals.ask": "Minta persetujuan ini",
+  "p.approvals.asked_done": "{approver} diminta menyetujui.",
+  "p.approvals.subject_bad": "ID subjek harus berupa UUID.",
+  "p.approvals.approver_bad":
+    "Orang yang diminta harus person: atau worker: diikuti UUID.",
+  "p.approvals.text_long":
+    "Catatan atau komentar paling banyak 2.000 karakter.",
+  "p.approvals.why_required":
+    "Penolakan harus menyebut alasan: tulis komentar.",
+  "p.approvals.already_settled":
+    "Permintaan ini sudah diputuskan atau ditarik, dan keputusan bersifat final. Daftar telah dibaca ulang.",
+  "p.approvals.not_found":
+    "Subjek atau permintaan itu tidak ada, atau Anda tidak boleh membacanya.",
+  "p.approvals.not_approver":
+    "Hanya orang yang diminta yang dapat memutuskan permintaan ini.",
+  "p.approvals.not_requester":
+    "Hanya orang yang meminta yang dapat menarik permintaan ini.",
+  "p.approvals.could_not_request": "Tidak dapat meminta persetujuan.",
+  "p.approvals.could_not_decide": "Tidak dapat mencatat keputusan.",
+  "p.approvals.could_not_withdraw": "Tidak dapat menarik permintaan.",
+  "p.approvals.status.pending": "Menunggu",
+  "p.approvals.status.approved": "Disetujui",
+  "p.approvals.status.rejected": "Ditolak",
+  "p.approvals.status.withdrawn": "Ditarik",
+  "p.approvals.kind.plan": "Rencana",
+  "p.approvals.kind.task": "Tugas",
+  "p.approvals.kind.risk": "Risiko",
+  "p.approvals.kind.proposal": "Usulan",
+  "p.approvals.kind.idea": "Ide",
+  "p.approvals.kind.canvas_item": "Butir kanvas",
+  "p.approvals.kind.budget_line": "Pos anggaran",
+  "p.approvals.kind.scenario": "Skenario",
+  "p.approvals.kind.document_version": "Versi dokumen",
 };

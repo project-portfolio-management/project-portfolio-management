@@ -5923,3 +5923,20 @@ export interface ProcessDetail {
     created_at: string;
   }[];
 }
+
+/** One approval request (`/api/approvals`, PL-1). One a process raised carries its run and step. */
+export interface ApprovalRequest {
+  pid: string;
+  subject_kind: string;
+  subject_pid: string;
+  requested_by: string;
+  approver_ref: string;
+  message: string | null;
+  status: "pending" | "approved" | "rejected" | "withdrawn";
+  decision_comment: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  created_at: string;
+  process_execution_pid?: string | null;
+  process_step?: number | null;
+}

@@ -9725,4 +9725,68 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.announcements.publish_at": "Publié à partir de",
   "p.announcements.save": "Enregistrer les modifications",
   "p.announcements.cancel": "Annuler",
+  "p.approvals.title": "Approbations",
+  "p.approvals.title_ppm": "Approbations — PPM",
+  "p.approvals.intro":
+    "Une personne est sollicitée pour approuver un plan, une tâche ou un autre objet, hors de tout processus d'approbation. Une décision est définitive, et un refus dit pourquoi.",
+  "p.approvals.loading": "Chargement des approbations…",
+  "p.approvals.could_not_load": "Impossible de charger les approbations.",
+  "p.approvals.waiting_h": "En attente de votre part",
+  "p.approvals.waiting_none": "Rien n'attend votre décision.",
+  "p.approvals.asked_by": "Demandé par {who} le {at}",
+  "p.approvals.comment_field":
+    "Commentaire (obligatoire pour refuser ; jusqu'à 2 000 caractères)",
+  "p.approvals.approve": "Approuver",
+  "p.approvals.reject": "Refuser",
+  "p.approvals.approved_done": "Votre approbation est enregistrée.",
+  "p.approvals.rejected_done": "Votre refus est enregistré.",
+  "p.approvals.asked_h": "Ce que vous avez demandé",
+  "p.approvals.asked_none": "Vous n'avez encore rien demandé.",
+  "p.approvals.asked_of": "Demandé à {approver}",
+  "p.approvals.their_comment": "Son commentaire : {comment}",
+  "p.approvals.from_process":
+    "Créée par un processus d'approbation : annulez son exécution pour l'arrêter.",
+  "p.approvals.withdraw": "Retirer",
+  "p.approvals.withdraw_ask":
+    "Retirer cette demande ? La personne sollicitée ne pourra plus la trancher.",
+  "p.approvals.withdrawn_done": "Demande retirée.",
+  "p.approvals.ask_h": "Demander une approbation",
+  "p.approvals.subject_kind_field": "Ce qu'elle concerne",
+  "p.approvals.subject_field": "Son identifiant (un UUID)",
+  "p.approvals.approver_field":
+    "Personne sollicitée (person: ou worker: et un UUID)",
+  "p.approvals.message_field": "Un mot pour elle (facultatif)",
+  "p.approvals.ask": "Demander l'approbation",
+  "p.approvals.asked_done": "{approver} a été sollicité pour approuver.",
+  "p.approvals.subject_bad": "L'identifiant de l'objet doit être un UUID.",
+  "p.approvals.approver_bad":
+    "La personne sollicitée doit être person: ou worker: suivi d'un UUID.",
+  "p.approvals.text_long":
+    "Un mot ou un commentaire compte au plus 2 000 caractères.",
+  "p.approvals.why_required":
+    "Un refus doit dire pourquoi : écrivez un commentaire.",
+  "p.approvals.already_settled":
+    "Cette demande a déjà été tranchée ou retirée, et une décision est définitive. Les listes ont été relues.",
+  "p.approvals.not_found":
+    "Cet objet ou cette demande n'existe pas, ou vous ne pouvez pas le lire.",
+  "p.approvals.not_approver":
+    "Seule la personne sollicitée peut trancher cette demande.",
+  "p.approvals.not_requester":
+    "Seule la personne qui a demandé peut retirer cette demande.",
+  "p.approvals.could_not_request": "Impossible de demander l'approbation.",
+  "p.approvals.could_not_decide": "Impossible d'enregistrer la décision.",
+  "p.approvals.could_not_withdraw": "Impossible de retirer la demande.",
+  "p.approvals.status.pending": "En attente",
+  "p.approvals.status.approved": "Approuvée",
+  "p.approvals.status.rejected": "Refusée",
+  "p.approvals.status.withdrawn": "Retirée",
+  "p.approvals.kind.plan": "Un plan",
+  "p.approvals.kind.task": "Tâche",
+  "p.approvals.kind.risk": "Risque",
+  "p.approvals.kind.proposal": "Proposition",
+  "p.approvals.kind.idea": "Idée",
+  "p.approvals.kind.canvas_item": "Élément de canevas",
+  "p.approvals.kind.budget_line": "Ligne budgétaire",
+  "p.approvals.kind.scenario": "Scénario",
+  "p.approvals.kind.document_version": "Version de document",
 };

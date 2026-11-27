@@ -82,6 +82,12 @@ export function buildNavItems(): NavEntry[] {
       },
     },
     {
+      href: "/approvals",
+      get label() {
+        return t("p.approvals.title");
+      },
+    },
+    {
       href: "/onboarding-templates",
       get label() {
         return t("p.onboarding_templates.title");

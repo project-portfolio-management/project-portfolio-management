@@ -224,6 +224,7 @@ the Status note above).
 | A plan's template changes (`/plans/[pid]/template`) | `GET /api/plans/{pid}/template-diff` (404: not made from a template) · `POST …/template-sync` (`{accept, overwrite_local?}`, after a question) |
 | Many MS Project files (`/mspdi-import`, linked from `/jobs`) | `POST /api/import/mspdi-batch?dry_run=` (`{projects: [{plan_pid? | name?, xml}], parent_pid?}`; preview first, then after a question) |
 | A plan's components (`/plans/[pid]/components`) | `GET /api/plans/{pid}/components` · `GET …/components/summary` · `POST …/components` · `PUT …/components/{c_pid}` · `DELETE …/components/{c_pid}` (after a question; only when no task belongs to it) |
+| Approvals (`/approvals`) | `GET /api/approvals?mine=approver|requester` · `POST /api/approvals` · `POST /api/approvals/{pid}/decide` (a rejection with a comment) · `POST /api/approvals/{pid}/withdraw` (after a question) |
 | An announcement changed (`/announcements`) | `PUT /api/announcements/{pid}` (the expiry always sent; nothing sent unchanged) |
 | An approval process changed or retired (`/approval-processes`) | `GET /api/processes/{pid}` · `PUT /api/processes/{pid}` (a new version; nothing sent unchanged) · `DELETE /api/processes/{pid}` (after a question) |
 | A framework's versions (`FrameworkPanel.svelte`, CF-4) | `GET /api/{ways-of-working,governance-frameworks}/{pid}` (another's text) · `GET …/{pid}/versions` · `PUT /api/plans/{pid}/{ways-of-working,governance-framework}` (no `version`: move to the newest; with one: pin it) |

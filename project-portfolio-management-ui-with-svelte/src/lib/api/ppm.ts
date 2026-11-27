@@ -20,6 +20,7 @@ import type {
 } from "#lib/threshold-view.js";
 import type { CapacityHeatmap } from "#lib/capacity-heatmap-view.js";
 import type { DefBody } from "#lib/custom-field-view.js";
+import type { ApprovalRequestBody } from "#lib/approvals-view.js";
 import type {
   CapacityCommitment,
   CommitmentInput,
@@ -361,6 +362,7 @@ import type {
   BulkJobStarted,
   BulkJobStatus,
   ReviewQueueItem,
+  ApprovalRequest,
   CustomFieldDef,
   ProcessDetail,
   FrameworkVersions,
@@ -2539,6 +2541,23 @@ export class PpmClient {
       `/api/documents/${pid}/versions/${version}/make-effective`,
       { body: {} },
     );
+  }
+  /** Requests waiting on the caller (`approver`) or that the caller made (`requester`), newest first, at most 500. */
+  approvalRequests(
+    mine: "approver" | "requester",
+    status?: string,
+  ): Promise<ApprovalRequest[]> {
+    const q = new URLSearchParams({ mine });
+    if (status) q.set("status", status);
+    return this.http.get(`/api/approvals?${q}`);
+  }
+  /** Ask one person to approve a subject the caller can read. */
+  requestApproval(body: ApprovalRequestBody): Promise<ApprovalRequest> {
+    return this.http.post("/api/approvals", { body });
+  }
+  /** Withdraw a pending request (its requester only); a decision is final. */
+  withdrawApproval(pid: string): Promise<ApprovalRequest> {
+    return this.http.post(`/api/approvals/${encodeURIComponent(pid)}/withdraw`);
   }
   decideApproval(
     pid: string,

@@ -9526,4 +9526,67 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.announcements.publish_at": "Опубликовано с",
   "p.announcements.save": "Сохранить изменения",
   "p.announcements.cancel": "Отмена",
+  "p.approvals.title": "Согласования",
+  "p.approvals.title_ppm": "Согласования — PPM",
+  "p.approvals.intro":
+    "Одного человека просят согласовать план, задачу или другой объект вне какого-либо процесса согласования. Решение окончательно, а отказ объясняет причину.",
+  "p.approvals.loading": "Загрузка согласований…",
+  "p.approvals.could_not_load": "Не удалось загрузить согласования.",
+  "p.approvals.waiting_h": "Ждёт вашего решения",
+  "p.approvals.waiting_none": "Ничто не ждёт вашего решения.",
+  "p.approvals.asked_by": "Запросил {who}, {at}",
+  "p.approvals.comment_field":
+    "Комментарий (обязателен для отказа; до 2000 символов)",
+  "p.approvals.approve": "Согласовать",
+  "p.approvals.reject": "Отклонить",
+  "p.approvals.approved_done": "Ваше согласие записано.",
+  "p.approvals.rejected_done": "Ваш отказ записан.",
+  "p.approvals.asked_h": "Что вы запросили",
+  "p.approvals.asked_none": "Вы пока никого не просили.",
+  "p.approvals.asked_of": "Запрошено у {approver}",
+  "p.approvals.their_comment": "Их комментарий: {comment}",
+  "p.approvals.from_process":
+    "Создано процессом согласования: отмените его запуск, чтобы остановить.",
+  "p.approvals.withdraw": "Отозвать",
+  "p.approvals.withdraw_ask":
+    "Отозвать этот запрос? Тот, кого спросили, больше не сможет его решить.",
+  "p.approvals.withdrawn_done": "Запрос отозван.",
+  "p.approvals.ask_h": "Запросить согласование",
+  "p.approvals.subject_kind_field": "О чём он",
+  "p.approvals.subject_field": "Его идентификатор (UUID)",
+  "p.approvals.approver_field": "Кого спрашивают (person: или worker: и UUID)",
+  "p.approvals.message_field": "Записка для него (необязательно)",
+  "p.approvals.ask": "Запросить согласование сейчас",
+  "p.approvals.asked_done": "У {approver} запрошено согласование.",
+  "p.approvals.subject_bad": "Идентификатор объекта должен быть UUID.",
+  "p.approvals.approver_bad":
+    "Тот, кого спрашивают, должен быть person: или worker: и затем UUID.",
+  "p.approvals.text_long":
+    "Записка или комментарий — не длиннее 2000 символов.",
+  "p.approvals.why_required":
+    "Отказ должен объяснять причину: напишите комментарий.",
+  "p.approvals.already_settled":
+    "Этот запрос уже решён или отозван, а решение окончательно. Списки прочитаны заново.",
+  "p.approvals.not_found":
+    "Такого объекта или запроса нет, или вам нельзя его читать.",
+  "p.approvals.not_approver":
+    "Решить этот запрос может только тот, кого спросили.",
+  "p.approvals.not_requester":
+    "Отозвать этот запрос может только тот, кто его сделал.",
+  "p.approvals.could_not_request": "Не удалось запросить согласование.",
+  "p.approvals.could_not_decide": "Не удалось записать решение.",
+  "p.approvals.could_not_withdraw": "Не удалось отозвать запрос.",
+  "p.approvals.status.pending": "Ожидает",
+  "p.approvals.status.approved": "Согласовано",
+  "p.approvals.status.rejected": "Отклонено",
+  "p.approvals.status.withdrawn": "Отозвано",
+  "p.approvals.kind.plan": "План",
+  "p.approvals.kind.task": "Задача",
+  "p.approvals.kind.risk": "Риск",
+  "p.approvals.kind.proposal": "Предложение",
+  "p.approvals.kind.idea": "Идея",
+  "p.approvals.kind.canvas_item": "Элемент холста",
+  "p.approvals.kind.budget_line": "Статья бюджета",
+  "p.approvals.kind.scenario": "Сценарий",
+  "p.approvals.kind.document_version": "Версия документа",
 };

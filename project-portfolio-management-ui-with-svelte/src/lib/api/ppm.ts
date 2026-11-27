@@ -363,6 +363,8 @@ import type {
   ReviewQueueItem,
   CustomFieldDef,
   CustomFieldSearch,
+  CustomFieldValues,
+  CustomFieldValuesBody,
   GoalList,
   IndexedGoal,
   ResourceRole,
@@ -2366,6 +2368,23 @@ export class PpmClient {
   /** Withdraw a definition; values already stored stay readable, marked withdrawn. */
   withdrawCustomField(pid: string): Promise<void> {
     return this.http.delete(`/api/custom-fields/${encodeURIComponent(pid)}`);
+  }
+  /** One plan's or task's values (withdrawn definitions marked) and the required fields still unset. */
+  customFieldValues(
+    appliesTo: "plan" | "task",
+    subjectPid: string,
+  ): Promise<CustomFieldValues> {
+    const q = new URLSearchParams({
+      applies_to: appliesTo,
+      subject_pid: subjectPid,
+    });
+    return this.http.get(`/api/custom-fields/values?${q}`);
+  }
+  /** Set (or, with `null`, clear) values; atomic, so one invalid value refuses the whole call. */
+  setCustomFieldValues(
+    body: CustomFieldValuesBody,
+  ): Promise<CustomFieldValues> {
+    return this.http.put("/api/custom-fields/values", { body });
   }
   /** The plans or tasks whose `key` equals `value` (a multi-choice field: contains it), those the caller can read. */
   searchCustomFields(

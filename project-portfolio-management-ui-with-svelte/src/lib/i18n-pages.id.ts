@@ -9463,4 +9463,30 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "Nilai harus bilangan bulat.",
   "p.custom_fields.value_date": "Nilai harus hari yang nyata.",
   "p.custom_fields.could_not_search": "Tidak dapat mencari pada bidang.",
+  "p.custom_fields.link": "Bidang khusus",
+  "p.custom_fields.values_title": "Bidang khusus rencana ini",
+  "p.custom_fields.values_title_ppm": "Bidang khusus rencana — PPM",
+  "p.custom_fields.values_intro":
+    "Nilai bidang yang dideklarasikan administrator untuk rencana berjenis ini. Penyimpanan hanya mengirim yang berubah; jika satu nilai salah, tidak ada yang disimpan.",
+  "p.custom_fields.values_could_not_load":
+    "Tidak dapat memuat bidang khusus rencana ini.",
+  "p.custom_fields.values_missing":
+    "Bidang wajib yang belum bernilai: {fields}",
+  "p.custom_fields.values_none":
+    "Belum ada bidang khusus untuk jenis rencana ini. Bidang dideklarasikan di halaman",
+  "p.custom_fields.values_h": "Nilai-nilai",
+  "p.custom_fields.values_required_label": "{label} (wajib)",
+  "p.custom_fields.values_unset": "Tanpa nilai",
+  "p.custom_fields.values_save": "Simpan nilai",
+  "p.custom_fields.values_unchanged":
+    "Tidak ada yang berubah, jadi tidak ada yang dikirim.",
+  "p.custom_fields.values_saved": "Nilai disimpan.",
+  "p.custom_fields.values_could_not_save": "Tidak dapat menyimpan nilai.",
+  "p.custom_fields.values_withdrawn_h":
+    "Nilai bidang yang ditarik (hanya baca)",
+  "p.custom_fields.v_integer": "{label}: nilai harus bilangan bulat.",
+  "p.custom_fields.v_date": "{label}: nilai harus hari yang nyata.",
+  "p.custom_fields.v_choice": "{label}: pilih salah satu pilihan bidang.",
+  "p.custom_fields.v_too_long": "{label}: teks lebih dari 1.000 karakter.",
+  "p.custom_fields.v_required": "{label} wajib diisi dan tidak boleh kosong.",
 };

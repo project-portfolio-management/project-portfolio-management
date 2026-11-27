@@ -5842,3 +5842,21 @@ export interface CustomFieldSearch {
   /** More than 5,000 stored values: only the first were looked at. */
   truncated: boolean;
 }
+
+/** `GET` / `PUT /api/custom-fields/values`: one plan's or task's values, withdrawn definitions included and marked. */
+export interface CustomFieldValues {
+  subject_pid: string;
+  values: Record<
+    string,
+    { value: unknown; label: string | null; definition: "live" | "withdrawn" }
+  >;
+  /** Required fields that apply and have no value yet. */
+  missing_required: string[];
+}
+
+/** `PUT /api/custom-fields/values` body: a `null` clears that key. */
+export interface CustomFieldValuesBody {
+  applies_to: "plan" | "task";
+  subject_pid: string;
+  values: Record<string, unknown>;
+}

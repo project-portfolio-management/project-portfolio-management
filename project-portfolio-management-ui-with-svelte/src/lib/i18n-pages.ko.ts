@@ -9131,4 +9131,28 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "값은 정수여야 합니다.",
   "p.custom_fields.value_date": "값은 실제 날짜여야 합니다.",
   "p.custom_fields.could_not_search": "필드를 검색할 수 없습니다.",
+  "p.custom_fields.link": "사용자 정의 필드",
+  "p.custom_fields.values_title": "이 계획의 사용자 정의 필드",
+  "p.custom_fields.values_title_ppm": "계획의 사용자 정의 필드 — PPM",
+  "p.custom_fields.values_intro":
+    "관리자가 이 종류의 계획에 선언한 필드의 값입니다. 저장하면 바뀐 값만 보내며, 값 하나라도 틀리면 아무것도 저장하지 않습니다.",
+  "p.custom_fields.values_could_not_load":
+    "이 계획의 사용자 정의 필드를 불러올 수 없습니다.",
+  "p.custom_fields.values_missing": "아직 값이 없는 필수 필드: {fields}",
+  "p.custom_fields.values_none":
+    "이 계획의 종류에 적용되는 사용자 정의 필드가 아직 없습니다. 필드는 다음 페이지에서 선언합니다",
+  "p.custom_fields.values_h": "값 목록",
+  "p.custom_fields.values_required_label": "{label}(필수)",
+  "p.custom_fields.values_unset": "값 없음",
+  "p.custom_fields.values_save": "값 저장",
+  "p.custom_fields.values_unchanged":
+    "바뀐 것이 없어 아무것도 보내지 않았습니다.",
+  "p.custom_fields.values_saved": "값을 저장했습니다.",
+  "p.custom_fields.values_could_not_save": "값을 저장할 수 없습니다.",
+  "p.custom_fields.values_withdrawn_h": "철회된 필드의 값(읽기 전용)",
+  "p.custom_fields.v_integer": "{label}: 값은 정수여야 합니다.",
+  "p.custom_fields.v_date": "{label}: 값은 실제 날짜여야 합니다.",
+  "p.custom_fields.v_choice": "{label}: 필드의 선택지 중 하나를 고르세요.",
+  "p.custom_fields.v_too_long": "{label}: 텍스트가 1,000자를 넘습니다.",
+  "p.custom_fields.v_required": "{label}은(는) 필수이므로 비워 둘 수 없습니다.",
 };

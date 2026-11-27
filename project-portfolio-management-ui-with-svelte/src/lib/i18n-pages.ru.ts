@@ -9413,4 +9413,30 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "Значение должно быть целым числом.",
   "p.custom_fields.value_date": "Значение должно быть настоящим днём.",
   "p.custom_fields.could_not_search": "Не удалось выполнить поиск по полю.",
+  "p.custom_fields.link": "Настраиваемые поля",
+  "p.custom_fields.values_title": "Настраиваемые поля этого плана",
+  "p.custom_fields.values_title_ppm": "Настраиваемые поля плана — PPM",
+  "p.custom_fields.values_intro":
+    "Значения полей, которые администратор объявил для планов этого вида. Сохраняется только изменённое; если одно значение неверно, ничего не сохраняется.",
+  "p.custom_fields.values_could_not_load":
+    "Не удалось загрузить настраиваемые поля этого плана.",
+  "p.custom_fields.values_missing": "Обязательные поля без значения: {fields}",
+  "p.custom_fields.values_none":
+    "К виду этого плана пока не относится ни одно настраиваемое поле. Поля объявляются на странице",
+  "p.custom_fields.values_h": "Значения",
+  "p.custom_fields.values_required_label": "{label} (обязательное)",
+  "p.custom_fields.values_unset": "Нет значения",
+  "p.custom_fields.values_save": "Сохранить значения",
+  "p.custom_fields.values_unchanged":
+    "Ничего не изменилось, поэтому ничего не отправлено.",
+  "p.custom_fields.values_saved": "Значения сохранены.",
+  "p.custom_fields.values_could_not_save": "Не удалось сохранить значения.",
+  "p.custom_fields.values_withdrawn_h":
+    "Значения отозванных полей (только чтение)",
+  "p.custom_fields.v_integer": "{label}: значение должно быть целым числом.",
+  "p.custom_fields.v_date": "{label}: значение должно быть настоящим днём.",
+  "p.custom_fields.v_choice": "{label}: выберите один из вариантов поля.",
+  "p.custom_fields.v_too_long": "{label}: текст длиннее 1000 символов.",
+  "p.custom_fields.v_required":
+    "Поле «{label}» обязательно и не может быть пустым.",
 };

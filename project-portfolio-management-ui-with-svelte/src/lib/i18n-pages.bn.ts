@@ -9091,4 +9091,27 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "মানটি পূর্ণ সংখ্যা হতে হবে।",
   "p.custom_fields.value_date": "মানটি একটি সত্যিকারের দিন হতে হবে।",
   "p.custom_fields.could_not_search": "ফিল্ডে খোঁজা যায়নি।",
+  "p.custom_fields.link": "কাস্টম ফিল্ড",
+  "p.custom_fields.values_title": "এই পরিকল্পনার কাস্টম ফিল্ড",
+  "p.custom_fields.values_title_ppm": "পরিকল্পনার কাস্টম ফিল্ড — PPM",
+  "p.custom_fields.values_intro":
+    "প্রশাসক এই ধরনের পরিকল্পনার জন্য যে ফিল্ডগুলো ঘোষণা করেছেন তাদের মান। সংরক্ষণে কেবল যা বদলেছে তা পাঠানো হয়; একটি মান ভুল হলে কিছুই সংরক্ষিত হয় না।",
+  "p.custom_fields.values_could_not_load":
+    "এই পরিকল্পনার কাস্টম ফিল্ড লোড করা যায়নি।",
+  "p.custom_fields.values_missing": "যে আবশ্যক ফিল্ডে এখনও মান নেই: {fields}",
+  "p.custom_fields.values_none":
+    "এই পরিকল্পনার ধরনে এখনও কোনো কাস্টম ফিল্ড প্রযোজ্য নয়। ফিল্ড ঘোষণা করা হয় এই পাতায়",
+  "p.custom_fields.values_h": "মানসমূহ",
+  "p.custom_fields.values_required_label": "{label} (আবশ্যক)",
+  "p.custom_fields.values_unset": "কোনো মান নেই",
+  "p.custom_fields.values_save": "মানগুলো সংরক্ষণ করুন",
+  "p.custom_fields.values_unchanged": "কিছু বদলায়নি, তাই কিছু পাঠানো হয়নি।",
+  "p.custom_fields.values_saved": "মানগুলো সংরক্ষিত হয়েছে।",
+  "p.custom_fields.values_could_not_save": "মানগুলো সংরক্ষণ করা যায়নি।",
+  "p.custom_fields.values_withdrawn_h": "প্রত্যাহৃত ফিল্ডের মান (কেবল পড়ার জন্য)",
+  "p.custom_fields.v_integer": "{label}: মানটি পূর্ণ সংখ্যা হতে হবে।",
+  "p.custom_fields.v_date": "{label}: মানটি একটি সত্যিকারের দিন হতে হবে।",
+  "p.custom_fields.v_choice": "{label}: ফিল্ডের পছন্দগুলোর একটি বেছে নিন।",
+  "p.custom_fields.v_too_long": "{label}: লেখাটি ১,০০০ অক্ষরের বেশি।",
+  "p.custom_fields.v_required": "{label} আবশ্যক এবং খালি রাখা যাবে না।",
 };

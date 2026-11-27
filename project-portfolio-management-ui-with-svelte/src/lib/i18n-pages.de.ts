@@ -9641,4 +9641,34 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.custom_fields.value_date": "Der Wert muss ein echter Tag sein.",
   "p.custom_fields.could_not_search":
     "Das Feld konnte nicht durchsucht werden.",
+  "p.custom_fields.link": "Benutzerdefinierte Felder",
+  "p.custom_fields.values_title": "Benutzerdefinierte Felder dieses Plans",
+  "p.custom_fields.values_title_ppm":
+    "Benutzerdefinierte Felder des Plans — PPM",
+  "p.custom_fields.values_intro":
+    "Die Werte der Felder, die eine Administratorin oder ein Administrator für Pläne dieser Art festgelegt hat. Beim Speichern wird nur Geändertes gesendet; ist ein Wert falsch, wird nichts gespeichert.",
+  "p.custom_fields.values_could_not_load":
+    "Die benutzerdefinierten Felder dieses Plans konnten nicht geladen werden.",
+  "p.custom_fields.values_missing": "Erforderliche Felder ohne Wert: {fields}",
+  "p.custom_fields.values_none":
+    "Für die Art dieses Plans gilt noch kein benutzerdefiniertes Feld. Felder werden festgelegt auf der Seite",
+  "p.custom_fields.values_h": "Werte",
+  "p.custom_fields.values_required_label": "{label} (erforderlich)",
+  "p.custom_fields.values_unset": "Kein Wert",
+  "p.custom_fields.values_save": "Werte speichern",
+  "p.custom_fields.values_unchanged":
+    "Nichts geändert, daher wurde nichts gesendet.",
+  "p.custom_fields.values_saved": "Werte gespeichert.",
+  "p.custom_fields.values_could_not_save":
+    "Die Werte konnten nicht gespeichert werden.",
+  "p.custom_fields.values_withdrawn_h":
+    "Werte zurückgezogener Felder (nur lesbar)",
+  "p.custom_fields.v_integer": "{label}: Der Wert muss eine ganze Zahl sein.",
+  "p.custom_fields.v_date": "{label}: Der Wert muss ein echter Tag sein.",
+  "p.custom_fields.v_choice":
+    "{label}: Wählen Sie eine der Auswahlen des Felds.",
+  "p.custom_fields.v_too_long":
+    "{label}: Der Text ist länger als 1.000 Zeichen.",
+  "p.custom_fields.v_required":
+    "{label} ist erforderlich und darf nicht leer bleiben.",
 };

@@ -9221,6 +9221,31 @@ export const PAGES_EN = {
   "p.custom_fields.value_integer": "The value must be a whole number.",
   "p.custom_fields.value_date": "The value must be a real day.",
   "p.custom_fields.could_not_search": "Could not search the field.",
+  "p.custom_fields.link": "Custom fields",
+  "p.custom_fields.values_title": "This plan's custom fields",
+  "p.custom_fields.values_title_ppm": "Plan custom fields — PPM",
+  "p.custom_fields.values_intro":
+    "The values of the fields an administrator declared for plans of this kind. A save sends only what changed; if one value is wrong, nothing is saved.",
+  "p.custom_fields.values_could_not_load":
+    "Could not load this plan's custom fields.",
+  "p.custom_fields.values_missing":
+    "Required fields with no value yet: {fields}",
+  "p.custom_fields.values_none":
+    "No custom field applies to this plan's kind yet. Fields are declared on the page",
+  "p.custom_fields.values_h": "Values",
+  "p.custom_fields.values_required_label": "{label} (required)",
+  "p.custom_fields.values_unset": "No value",
+  "p.custom_fields.values_save": "Save the values",
+  "p.custom_fields.values_unchanged": "Nothing changed, so nothing was sent.",
+  "p.custom_fields.values_saved": "Saved the values.",
+  "p.custom_fields.values_could_not_save": "Could not save the values.",
+  "p.custom_fields.values_withdrawn_h":
+    "Values of withdrawn fields (read only)",
+  "p.custom_fields.v_integer": "{label}: the value must be a whole number.",
+  "p.custom_fields.v_date": "{label}: the value must be a real day.",
+  "p.custom_fields.v_choice": "{label}: choose one of the field's choices.",
+  "p.custom_fields.v_too_long": "{label}: the text is over 1,000 characters.",
+  "p.custom_fields.v_required": "{label} is required and cannot be left empty.",
 } as const;
 
 /** A key in the page and component catalogue. */

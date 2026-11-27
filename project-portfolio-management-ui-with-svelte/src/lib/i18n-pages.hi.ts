@@ -8980,4 +8980,28 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "मान एक पूर्ण संख्या होना चाहिए।",
   "p.custom_fields.value_date": "मान एक असली दिन होना चाहिए।",
   "p.custom_fields.could_not_search": "फ़ील्ड में खोज नहीं हो सकी।",
+  "p.custom_fields.link": "कस्टम फ़ील्ड",
+  "p.custom_fields.values_title": "इस योजना के कस्टम फ़ील्ड",
+  "p.custom_fields.values_title_ppm": "योजना के कस्टम फ़ील्ड — PPM",
+  "p.custom_fields.values_intro":
+    "उन फ़ील्ड के मान जिन्हें व्यवस्थापक ने इस प्रकार की योजनाओं के लिए घोषित किया है। सहेजने पर केवल बदला हुआ भेजा जाता है; अगर एक भी मान गलत हो तो कुछ नहीं सहेजा जाता।",
+  "p.custom_fields.values_could_not_load":
+    "इस योजना के कस्टम फ़ील्ड लोड नहीं हो सके।",
+  "p.custom_fields.values_missing": "ज़रूरी फ़ील्ड जिनका अभी कोई मान नहीं: {fields}",
+  "p.custom_fields.values_none":
+    "इस योजना के प्रकार पर अभी कोई कस्टम फ़ील्ड लागू नहीं है। फ़ील्ड इस पेज पर घोषित होते हैं",
+  "p.custom_fields.values_h": "मान",
+  "p.custom_fields.values_required_label": "{label} (ज़रूरी)",
+  "p.custom_fields.values_unset": "कोई मान नहीं",
+  "p.custom_fields.values_save": "मान सहेजें",
+  "p.custom_fields.values_unchanged": "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.custom_fields.values_saved": "मान सहेजे गए।",
+  "p.custom_fields.values_could_not_save": "मान सहेजे नहीं जा सके।",
+  "p.custom_fields.values_withdrawn_h":
+    "वापस लिए गए फ़ील्ड के मान (केवल पढ़ने के लिए)",
+  "p.custom_fields.v_integer": "{label}: मान एक पूर्ण संख्या होना चाहिए।",
+  "p.custom_fields.v_date": "{label}: मान एक असली दिन होना चाहिए।",
+  "p.custom_fields.v_choice": "{label}: फ़ील्ड के विकल्पों में से एक चुनें।",
+  "p.custom_fields.v_too_long": "{label}: पाठ 1,000 वर्णों से लंबा है।",
+  "p.custom_fields.v_required": "{label} ज़रूरी है और खाली नहीं छोड़ा जा सकता।",
 };

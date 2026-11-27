@@ -9532,4 +9532,30 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "O valor tem de ser um número inteiro.",
   "p.custom_fields.value_date": "O valor tem de ser um dia real.",
   "p.custom_fields.could_not_search": "Não foi possível procurar no campo.",
+  "p.custom_fields.link": "Campos personalizados",
+  "p.custom_fields.values_title": "Campos personalizados deste plano",
+  "p.custom_fields.values_title_ppm": "Campos personalizados do plano — PPM",
+  "p.custom_fields.values_intro":
+    "Os valores dos campos que um administrador declarou para planos deste tipo. Guardar envia só o que mudou; se um valor estiver errado, nada é guardado.",
+  "p.custom_fields.values_could_not_load":
+    "Não foi possível carregar os campos personalizados deste plano.",
+  "p.custom_fields.values_missing":
+    "Campos obrigatórios ainda sem valor: {fields}",
+  "p.custom_fields.values_none":
+    "Ainda nenhum campo personalizado se aplica ao tipo deste plano. Os campos são declarados na página",
+  "p.custom_fields.values_h": "Valores",
+  "p.custom_fields.values_required_label": "{label} (obrigatório)",
+  "p.custom_fields.values_unset": "Sem valor",
+  "p.custom_fields.values_save": "Guardar os valores",
+  "p.custom_fields.values_unchanged": "Nada mudou, por isso nada foi enviado.",
+  "p.custom_fields.values_saved": "Valores guardados.",
+  "p.custom_fields.values_could_not_save":
+    "Não foi possível guardar os valores.",
+  "p.custom_fields.values_withdrawn_h":
+    "Valores de campos retirados (só leitura)",
+  "p.custom_fields.v_integer": "{label}: o valor tem de ser um número inteiro.",
+  "p.custom_fields.v_date": "{label}: o valor tem de ser um dia real.",
+  "p.custom_fields.v_choice": "{label}: escolha uma das opções do campo.",
+  "p.custom_fields.v_too_long": "{label}: o texto tem mais de 1000 caracteres.",
+  "p.custom_fields.v_required": "{label} é obrigatório e não pode ficar vazio.",
 };

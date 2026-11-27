@@ -9281,4 +9281,30 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "値は整数にしてください。",
   "p.custom_fields.value_date": "値は実在する日にしてください。",
   "p.custom_fields.could_not_search": "フィールドを検索できませんでした。",
+  "p.custom_fields.link": "カスタムフィールド",
+  "p.custom_fields.values_title": "この計画のカスタムフィールド",
+  "p.custom_fields.values_title_ppm": "計画のカスタムフィールド — PPM",
+  "p.custom_fields.values_intro":
+    "管理者がこの種類の計画に宣言したフィールドの値です。保存では変更した値だけを送ります。1 つでも値が誤っていれば何も保存されません。",
+  "p.custom_fields.values_could_not_load":
+    "この計画のカスタムフィールドを読み込めませんでした。",
+  "p.custom_fields.values_missing": "値がまだない必須フィールド: {fields}",
+  "p.custom_fields.values_none":
+    "この計画の種類に適用されるカスタムフィールドはまだありません。フィールドは次のページで宣言します",
+  "p.custom_fields.values_h": "値の一覧",
+  "p.custom_fields.values_required_label": "{label}（必須）",
+  "p.custom_fields.values_unset": "値なし",
+  "p.custom_fields.values_save": "値を保存",
+  "p.custom_fields.values_unchanged":
+    "変更がないため、何も送信しませんでした。",
+  "p.custom_fields.values_saved": "値を保存しました。",
+  "p.custom_fields.values_could_not_save": "値を保存できませんでした。",
+  "p.custom_fields.values_withdrawn_h":
+    "取り下げられたフィールドの値（読み取り専用）",
+  "p.custom_fields.v_integer": "{label}: 値は整数にしてください。",
+  "p.custom_fields.v_date": "{label}: 値は実在する日にしてください。",
+  "p.custom_fields.v_choice": "{label}: フィールドの選択肢から選んでください。",
+  "p.custom_fields.v_too_long":
+    "{label}: テキストが 1,000 文字を超えています。",
+  "p.custom_fields.v_required": "{label} は必須のため、空にできません。",
 };

@@ -3500,7 +3500,13 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   for a plan field and choices only for a list one. A definition is withdrawn after a question (values stay readable,
   marked withdrawn). A search finds the plans (linked) or tasks whose value equals one given in the field's own terms
   (yes or no, a choice, a real day, a whole number), only those the reader may see, and says when the service looked
-  at only the first 5,000 values. Rules in `src/lib/custom-field-view.ts`; `tests/e2e/custom-fields.spec.ts`. The
-  values of one plan or task (`GET`/`PUT /api/custom-fields/values`) have no screen yet.
-- **Not built** in part n: a plan's or a task's custom field values, onboarding templates, a framework's and a way of
+  at only the first 5,000 values. Rules in `src/lib/custom-field-view.ts`; `tests/e2e/custom-fields.spec.ts`.
+- **`/plans/[pid]/fields`** ("Custom fields", a plan workspace link beside goals, 2026-11-27): every live plan field that
+  applies to this plan's kind (none listed: every kind; case ignored), each with an input of its type (text up to
+  1,000 characters, a day, yes or no, a whole number, one choice, several), and the required fields still unset said
+  first (`GET /api/custom-fields/values`). A save sends only what changed, a cleared value as `null`, after every
+  problem is said with the field it is about (a required one left empty, a wrong number, an unreal day); nothing
+  changed sends nothing (`PUT`, atomic in the service). A withdrawn field's value is listed read only.
+  `tests/e2e/plan-fields.spec.ts`. A task's values have no screen yet.
+- **Not built** in part n: a task's custom field values, onboarding templates, a framework's and a way of
   working's text and versions, editing a process definition or an announcement, approval requests outside a process.

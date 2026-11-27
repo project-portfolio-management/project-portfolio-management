@@ -8932,4 +8932,27 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "يجب أن تكون القيمة عددًا صحيحًا.",
   "p.custom_fields.value_date": "يجب أن تكون القيمة يومًا حقيقيًا.",
   "p.custom_fields.could_not_search": "تعذّر البحث في الحقل.",
+  "p.custom_fields.link": "الحقول المخصّصة",
+  "p.custom_fields.values_title": "الحقول المخصّصة لهذه الخطة",
+  "p.custom_fields.values_title_ppm": "الحقول المخصّصة للخطة — PPM",
+  "p.custom_fields.values_intro":
+    "قيم الحقول التي أعلنها المسؤول للخطط من هذا النوع. يرسل الحفظ ما تغيّر فقط؛ وإذا كانت قيمة واحدة خاطئة فلا يُحفظ شيء.",
+  "p.custom_fields.values_could_not_load":
+    "تعذّر تحميل الحقول المخصّصة لهذه الخطة.",
+  "p.custom_fields.values_missing": "حقول إلزامية بلا قيمة بعد: {fields}",
+  "p.custom_fields.values_none":
+    "لا ينطبق أي حقل مخصّص على نوع هذه الخطة بعد. تُعلن الحقول في صفحة",
+  "p.custom_fields.values_h": "القيم",
+  "p.custom_fields.values_required_label": "{label} (إلزامي)",
+  "p.custom_fields.values_unset": "بلا قيمة",
+  "p.custom_fields.values_save": "حفظ القيم",
+  "p.custom_fields.values_unchanged": "لم يتغيّر شيء، لذا لم يُرسل شيء.",
+  "p.custom_fields.values_saved": "حُفظت القيم.",
+  "p.custom_fields.values_could_not_save": "تعذّر حفظ القيم.",
+  "p.custom_fields.values_withdrawn_h": "قيم الحقول المسحوبة (للقراءة فقط)",
+  "p.custom_fields.v_integer": "{label}: يجب أن تكون القيمة عددًا صحيحًا.",
+  "p.custom_fields.v_date": "{label}: يجب أن تكون القيمة يومًا حقيقيًا.",
+  "p.custom_fields.v_choice": "{label}: اختر أحد اختيارات الحقل.",
+  "p.custom_fields.v_too_long": "{label}: النص أطول من 1000 حرف.",
+  "p.custom_fields.v_required": "{label} إلزامي ولا يجوز تركه فارغًا.",
 };

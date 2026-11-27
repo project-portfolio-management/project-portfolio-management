@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/plans/[pid]/fields` (RM-1, 2026-11-27)
+
+- Two client methods; value rules in `src/lib/custom-field-view.ts`; a plan workspace link; 20 strings in every locale.
+
 ### Added — `/custom-fields` (RM-1, 2026-11-27)
 
 - Four client methods; `src/lib/custom-field-view.ts`; a top-navigation section; 55 strings in every locale.

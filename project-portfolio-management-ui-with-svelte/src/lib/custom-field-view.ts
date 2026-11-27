@@ -151,3 +151,125 @@ export function declareRefusalKey(status: number): string {
     ? "p.custom_fields.key_taken"
     : "p.custom_fields.could_not_declare";
 }
+
+// ---- one plan's values (`/plans/[pid]/fields`) ----
+
+/** The service's cap on a text value, in characters (`custom_fields::MAX_TEXT`). */
+export const MAX_TEXT = 1000;
+
+/** What the definition says about a value; the page's own subset of `CustomFieldDef`. */
+export interface ValueDef {
+  key: string;
+  label: string;
+  field_type: string;
+  required: boolean;
+  options: string[];
+  kinds: string[];
+}
+
+/** A stored value as `GET /api/custom-fields/values` answers it. */
+export interface StoredValue {
+  value: unknown;
+  label: string | null;
+  definition: "live" | "withdrawn";
+}
+
+/** A value as its input holds it: a string for every type, a list for a multi-choice one. */
+export interface ValueInput {
+  text: string;
+  many: string[];
+}
+
+/** Whether a definition limited to `kinds` applies to a plan of this kind (none: every kind; case ignored). */
+export function kindApplies(
+  kinds: readonly string[],
+  planKind: string | null | undefined,
+): boolean {
+  if (kinds.length === 0) return true;
+  const k = (planKind ?? "").toLowerCase();
+  return k !== "" && kinds.some((x) => x.toLowerCase() === k);
+}
+
+/** The input for a stored value (or none). */
+export function inputOf(def: ValueDef, stored: unknown): ValueInput {
+  if (stored === null || stored === undefined) return { text: "", many: [] };
+  if (def.field_type === "multi_list")
+    return { text: "", many: Array.isArray(stored) ? stored.map(String) : [] };
+  return { text: String(stored), many: [] };
+}
+
+/** The JSON value an input sends (`null` clears), or the key of the problem with it. */
+export function valueOf(
+  def: ValueDef,
+  input: ValueInput,
+): { value: unknown } | { problem: string } {
+  const v = input.text.trim();
+  let value: unknown;
+  switch (def.field_type) {
+    case "multi_list":
+      value =
+        input.many.length === 0
+          ? null
+          : def.options.filter((o) => input.many.includes(o));
+      break;
+    case "bool":
+      value = v === "" ? null : v === "true";
+      break;
+    case "integer":
+      if (v !== "" && (!/^-?\d+$/.test(v) || !Number.isSafeInteger(Number(v))))
+        return { problem: "p.custom_fields.v_integer" };
+      value = v === "" ? null : Number(v);
+      break;
+    case "date":
+      if (v !== "" && !realDay(v)) return { problem: "p.custom_fields.v_date" };
+      value = v === "" ? null : v;
+      break;
+    case "list":
+      if (v !== "" && !def.options.includes(v))
+        return { problem: "p.custom_fields.v_choice" };
+      value = v === "" ? null : v;
+      break;
+    default:
+      // Text keeps its own spacing; only a value of nothing but spaces is none.
+      if ([...input.text].length > MAX_TEXT)
+        return { problem: "p.custom_fields.v_too_long" };
+      value = v === "" ? null : input.text;
+  }
+  if (value === null && def.required)
+    return { problem: "p.custom_fields.v_required" };
+  return { value };
+}
+
+const same = (a: unknown, b: unknown) =>
+  JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+
+/**
+ * What a save sends: only the values that changed (a cleared one as `null`), or every problem, each with the label
+ * of the field it is about. A required field never set and still empty is a problem too, so the page says it first.
+ */
+export function valueChanges(
+  defs: readonly ValueDef[],
+  inputs: Readonly<Record<string, ValueInput>>,
+  stored: Readonly<Record<string, StoredValue>>,
+):
+  | { values: Record<string, unknown> }
+  | { problems: { key: string; label: string }[] } {
+  const values: Record<string, unknown> = {};
+  const problems: { key: string; label: string }[] = [];
+  for (const d of defs) {
+    const r = valueOf(d, inputs[d.key] ?? { text: "", many: [] });
+    if ("problem" in r) {
+      problems.push({ key: r.problem, label: d.label });
+      continue;
+    }
+    if (!same(r.value, stored[d.key]?.value)) values[d.key] = r.value;
+  }
+  return problems.length > 0 ? { problems } : { values };
+}
+
+/** How a stored value reads: yes or no for a flag, choices joined, anything else as written. */
+export function shownValue(value: unknown, yes: string, no: string): string {
+  if (typeof value === "boolean") return value ? yes : no;
+  if (Array.isArray(value)) return value.join(", ");
+  return String(value ?? "");
+}

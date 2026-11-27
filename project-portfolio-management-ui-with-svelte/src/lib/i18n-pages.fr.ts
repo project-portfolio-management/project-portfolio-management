@@ -9607,4 +9607,32 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "La valeur doit être un nombre entier.",
   "p.custom_fields.value_date": "La valeur doit être un vrai jour.",
   "p.custom_fields.could_not_search": "Impossible de chercher dans le champ.",
+  "p.custom_fields.link": "Champs personnalisés",
+  "p.custom_fields.values_title": "Champs personnalisés de ce plan",
+  "p.custom_fields.values_title_ppm": "Champs personnalisés du plan — PPM",
+  "p.custom_fields.values_intro":
+    "Les valeurs des champs qu'un administrateur a déclarés pour les plans de ce type. L'enregistrement n'envoie que ce qui a changé ; si une valeur est fausse, rien n'est enregistré.",
+  "p.custom_fields.values_could_not_load":
+    "Impossible de charger les champs personnalisés de ce plan.",
+  "p.custom_fields.values_missing":
+    "Champs obligatoires encore sans valeur : {fields}",
+  "p.custom_fields.values_none":
+    "Aucun champ personnalisé ne s'applique encore au type de ce plan. Les champs sont déclarés sur la page",
+  "p.custom_fields.values_h": "Valeurs",
+  "p.custom_fields.values_required_label": "{label} (obligatoire)",
+  "p.custom_fields.values_unset": "Aucune valeur",
+  "p.custom_fields.values_save": "Enregistrer les valeurs",
+  "p.custom_fields.values_unchanged": "Rien n'a changé : rien n'a été envoyé.",
+  "p.custom_fields.values_saved": "Valeurs enregistrées.",
+  "p.custom_fields.values_could_not_save":
+    "Impossible d'enregistrer les valeurs.",
+  "p.custom_fields.values_withdrawn_h":
+    "Valeurs des champs retirés (lecture seule)",
+  "p.custom_fields.v_integer":
+    "{label} : la valeur doit être un nombre entier.",
+  "p.custom_fields.v_date": "{label} : la valeur doit être un vrai jour.",
+  "p.custom_fields.v_choice": "{label} : choisissez l'un des choix du champ.",
+  "p.custom_fields.v_too_long": "{label} : le texte dépasse 1 000 caractères.",
+  "p.custom_fields.v_required":
+    "{label} est obligatoire et ne peut pas rester vide.",
 };

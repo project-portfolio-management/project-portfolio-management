@@ -77,6 +77,7 @@
     get template() { return t("p.template_sync.link"); },
     get components() { return t("p.components.link"); },
     get goals() { return t("p.goals.link"); },
+    get fields() { return t("p.custom_fields.link"); },
     get benefits() { return t("p.benefits.title"); },
     get costs() { return t("p.plans.pid.work.costs"); },
   };

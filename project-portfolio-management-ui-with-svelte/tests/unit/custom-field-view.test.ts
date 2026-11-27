@@ -7,8 +7,15 @@ import {
   declareRefusalKey,
   defBody,
   keyTaken,
+  inputOf,
+  kindApplies,
+  MAX_TEXT,
   searchValue,
+  shownValue,
   validKey,
+  valueChanges,
+  valueOf,
+  type ValueDef,
 } from "../../src/lib/custom-field-view";
 
 describe("validKey", () => {
@@ -140,5 +147,105 @@ describe("keyTaken, searchValue and declareRefusalKey", () => {
   it("says a key taken meanwhile in its own words", () => {
     expect(declareRefusalKey(409)).toBe("p.custom_fields.key_taken");
     expect(declareRefusalKey(422)).toBe("p.custom_fields.could_not_declare");
+  });
+});
+
+const vd = (over: Partial<ValueDef> = {}): ValueDef => ({
+  key: "f",
+  label: "F",
+  field_type: "text",
+  required: false,
+  options: [],
+  kinds: [],
+  ...over,
+});
+const none = { text: "", many: [] };
+
+describe("one plan's values", () => {
+  it("a field limited to kinds applies to those kinds only, ignoring case", () => {
+    expect(kindApplies([], null)).toBe(true);
+    expect(kindApplies(["Project"], "project")).toBe(true);
+    expect(kindApplies(["Project"], "Program")).toBe(false);
+    expect(kindApplies(["Project"], null)).toBe(false);
+  });
+  it("reads each type from its input and refuses a wrong one", () => {
+    expect(
+      valueOf(vd({ field_type: "integer" }), { ...none, text: " 7 " }),
+    ).toEqual({ value: 7 });
+    expect(
+      valueOf(vd({ field_type: "integer" }), { ...none, text: "7.5" }),
+    ).toEqual({ problem: "p.custom_fields.v_integer" });
+    expect(
+      valueOf(vd({ field_type: "bool" }), { ...none, text: "false" }),
+    ).toEqual({ value: false });
+    expect(
+      valueOf(vd({ field_type: "date" }), { ...none, text: "2027-02-30" }),
+    ).toEqual({ problem: "p.custom_fields.v_date" });
+    expect(
+      valueOf(vd({ field_type: "list", options: ["S"] }), {
+        ...none,
+        text: "M",
+      }),
+    ).toEqual({ problem: "p.custom_fields.v_choice" });
+    expect(
+      valueOf(vd({ field_type: "multi_list", options: ["A", "B", "C"] }), {
+        text: "",
+        many: ["C", "A"],
+      }),
+    ).toEqual({ value: ["A", "C"] });
+    expect(valueOf(vd(), { ...none, text: "x".repeat(MAX_TEXT + 1) })).toEqual({
+      problem: "p.custom_fields.v_too_long",
+    });
+    expect(valueOf(vd(), { ...none, text: " keep spacing " })).toEqual({
+      value: " keep spacing ",
+    });
+    expect(valueOf(vd(), { ...none, text: "  " })).toEqual({ value: null });
+    expect(valueOf(vd({ required: true }), none)).toEqual({
+      problem: "p.custom_fields.v_required",
+    });
+  });
+  it("round-trips a stored value through its input", () => {
+    const multi = vd({ field_type: "multi_list", options: ["A", "B"] });
+    expect(valueOf(multi, inputOf(multi, ["B"]))).toEqual({ value: ["B"] });
+    const flag = vd({ field_type: "bool" });
+    expect(valueOf(flag, inputOf(flag, true))).toEqual({ value: true });
+    expect(inputOf(vd(), null)).toEqual(none);
+  });
+  it("sends only what changed, a cleared value as null, and names the field of each problem", () => {
+    const defs = [
+      vd({ key: "a", label: "A" }),
+      vd({ key: "b", label: "B", field_type: "integer" }),
+      vd({ key: "c", label: "C" }),
+    ];
+    const stored = {
+      a: { value: "same", label: "A", definition: "live" as const },
+      c: { value: "old", label: "C", definition: "live" as const },
+    };
+    expect(
+      valueChanges(
+        defs,
+        { a: { ...none, text: "same" }, b: { ...none, text: "3" }, c: none },
+        stored,
+      ),
+    ).toEqual({
+      values: { b: 3, c: null },
+    });
+    expect(
+      valueChanges(
+        [...defs, vd({ key: "d", label: "D", required: true })],
+        { b: { ...none, text: "x" } },
+        stored,
+      ),
+    ).toEqual({
+      problems: [
+        { key: "p.custom_fields.v_integer", label: "B" },
+        { key: "p.custom_fields.v_required", label: "D" },
+      ],
+    });
+  });
+  it("shows a stored value in words", () => {
+    expect(shownValue(true, "Yes", "No")).toBe("Yes");
+    expect(shownValue(["A", "B"], "Yes", "No")).toBe("A, B");
+    expect(shownValue(4, "Yes", "No")).toBe("4");
   });
 });

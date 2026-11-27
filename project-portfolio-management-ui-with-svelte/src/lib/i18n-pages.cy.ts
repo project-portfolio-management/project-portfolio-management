@@ -9442,4 +9442,31 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "Rhaid i'r gwerth fod yn rhif cyfan.",
   "p.custom_fields.value_date": "Rhaid i'r gwerth fod yn ddiwrnod go iawn.",
   "p.custom_fields.could_not_search": "Methu chwilio'r maes.",
+  "p.custom_fields.link": "Meysydd personol",
+  "p.custom_fields.values_title": "Meysydd personol y cynllun hwn",
+  "p.custom_fields.values_title_ppm": "Meysydd personol y cynllun — PPM",
+  "p.custom_fields.values_intro":
+    "Gwerthoedd y meysydd a ddatganodd gweinyddwr ar gyfer cynlluniau o'r math hwn. Mae cadw'n anfon dim ond yr hyn a newidiodd; os yw un gwerth yn anghywir, ni chedwir dim.",
+  "p.custom_fields.values_could_not_load":
+    "Methu llwytho meysydd personol y cynllun hwn.",
+  "p.custom_fields.values_missing": "Meysydd gofynnol heb werth eto: {fields}",
+  "p.custom_fields.values_none":
+    "Nid oes maes personol yn berthnasol i fath y cynllun hwn eto. Caiff meysydd eu datgan ar y dudalen",
+  "p.custom_fields.values_h": "Gwerthoedd",
+  "p.custom_fields.values_required_label": "{label} (gofynnol)",
+  "p.custom_fields.values_unset": "Dim gwerth",
+  "p.custom_fields.values_save": "Cadw'r gwerthoedd",
+  "p.custom_fields.values_unchanged":
+    "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.custom_fields.values_saved": "Cadwyd y gwerthoedd.",
+  "p.custom_fields.values_could_not_save": "Methu cadw'r gwerthoedd.",
+  "p.custom_fields.values_withdrawn_h":
+    "Gwerthoedd meysydd a dynnwyd yn ôl (darllen yn unig)",
+  "p.custom_fields.v_integer": "{label}: rhaid i'r gwerth fod yn rhif cyfan.",
+  "p.custom_fields.v_date":
+    "{label}: rhaid i'r gwerth fod yn ddiwrnod go iawn.",
+  "p.custom_fields.v_choice": "{label}: dewiswch un o ddewisiadau'r maes.",
+  "p.custom_fields.v_too_long": "{label}: mae'r testun dros 1,000 nod.",
+  "p.custom_fields.v_required":
+    "Mae {label} yn ofynnol ac ni ellir ei adael yn wag.",
 };

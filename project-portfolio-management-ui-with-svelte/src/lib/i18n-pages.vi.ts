@@ -9359,4 +9359,30 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.custom_fields.value_integer": "Giá trị phải là số nguyên.",
   "p.custom_fields.value_date": "Giá trị phải là một ngày có thật.",
   "p.custom_fields.could_not_search": "Không tìm được trong trường.",
+  "p.custom_fields.link": "Trường tùy chỉnh",
+  "p.custom_fields.values_title": "Trường tùy chỉnh của kế hoạch này",
+  "p.custom_fields.values_title_ppm": "Trường tùy chỉnh của kế hoạch — PPM",
+  "p.custom_fields.values_intro":
+    "Giá trị của các trường mà quản trị viên đã khai báo cho kế hoạch thuộc loại này. Khi lưu chỉ gửi những gì đã thay đổi; nếu một giá trị sai thì không lưu gì.",
+  "p.custom_fields.values_could_not_load":
+    "Không tải được các trường tùy chỉnh của kế hoạch này.",
+  "p.custom_fields.values_missing":
+    "Các trường bắt buộc chưa có giá trị: {fields}",
+  "p.custom_fields.values_none":
+    "Chưa có trường tùy chỉnh nào áp dụng cho loại kế hoạch này. Các trường được khai báo trên trang",
+  "p.custom_fields.values_h": "Các giá trị",
+  "p.custom_fields.values_required_label": "{label} (bắt buộc)",
+  "p.custom_fields.values_unset": "Không có giá trị",
+  "p.custom_fields.values_save": "Lưu các giá trị",
+  "p.custom_fields.values_unchanged": "Không có gì thay đổi nên chưa gửi gì.",
+  "p.custom_fields.values_saved": "Đã lưu các giá trị.",
+  "p.custom_fields.values_could_not_save": "Không lưu được các giá trị.",
+  "p.custom_fields.values_withdrawn_h":
+    "Giá trị của các trường đã rút lại (chỉ đọc)",
+  "p.custom_fields.v_integer": "{label}: giá trị phải là số nguyên.",
+  "p.custom_fields.v_date": "{label}: giá trị phải là một ngày có thật.",
+  "p.custom_fields.v_choice":
+    "{label}: hãy chọn một trong các lựa chọn của trường.",
+  "p.custom_fields.v_too_long": "{label}: văn bản dài hơn 1.000 ký tự.",
+  "p.custom_fields.v_required": "{label} là bắt buộc và không được để trống.",
 };

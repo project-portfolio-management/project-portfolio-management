@@ -33,6 +33,7 @@ describe("visiblePlanLinks (RM-7)", () => {
     expect(visiblePlanLinks(["governance"])).toEqual([
       "governance",
       "goals",
+      "fields",
       "confidence",
       "programme",
       "status",

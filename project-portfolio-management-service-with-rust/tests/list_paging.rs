@@ -248,6 +248,10 @@ const UNREACHED: &[(&str, &str)] = &[
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test --test main list_paging:: -- --ignored`"]
 async fn every_list_pages_the_same_way() {
     own_process!();
+    // A search index of this process's own, so a "Census" plan an earlier run left in the shared one is not a hit here.
+    // Hits no live plan answers are read and not shown, so twenty of them would spend a `limit=1` page's read budget
+    // and leave it short with a next link, as `Page::fill` says such a page may be.
+    crate::requests::isolate_search_index();
     let (keys, kid) = keys_and_kid();
     // SAFETY: `own_process!` runs this test alone in its process, so nothing races the process-wide verifier.
     unsafe {

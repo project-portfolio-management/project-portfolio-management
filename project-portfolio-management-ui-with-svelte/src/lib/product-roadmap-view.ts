@@ -137,6 +137,8 @@ export interface RoadmapItem {
   tags: string[];
   placement: Placement | null;
   position: number;
+  /** RE-6: by language, each translated field's value and whether its source changed since. */
+  translations?: ShownTranslations;
 }
 
 /** An item as its form holds it; the tags as one comma-separated line. */
@@ -305,3 +307,103 @@ export function valueWords(
 /** The catalogue key naming a field of the roadmap or of an item. */
 export const fieldKey = (field: string | null | undefined) =>
   `p.product_roadmap.field.${field ?? "item"}`;
+
+// ---- translations (`PUT …/roadmap/translations/{lang}` and `…/items/{ipid}/translations/{lang}`, RE-6) ----
+
+/** A record's translations as the service shows them: language, then field, then its value and whether its source moved. */
+export type ShownTranslations = Record<
+  string,
+  Record<string, { value: unknown; needs_review: boolean }>
+>;
+
+/** The roadmap's translatable fields, and an item's (details are not offered here). */
+export const ROADMAP_TRANSLATABLE = [
+  "title",
+  "vision",
+  "service_description",
+] as const;
+export const ITEM_TRANSLATABLE = [
+  "title",
+  "description",
+  "expected_outcome",
+  "phase",
+  "tags",
+] as const;
+
+const MAXES: Record<string, number> = { title: TITLE_MAX, phase: PHASE_MAX };
+
+/** The text a field's translation input holds: tags as one comma-separated line. */
+export function translationInput(value: unknown): string {
+  if (Array.isArray(value)) return value.map(String).join(", ");
+  return value === null || value === undefined ? "" : String(value);
+}
+
+/** A record's fields by name, for reading its translatable sources without a cast. */
+export function fieldsOf(record: object): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(record));
+}
+
+/**
+ * What a translation into one language sends: each changed field (a field with no source text is never sent), an
+ * emptied one as `""`, which removes that translation; tags as a list as long as the source's. Every problem first as
+ * catalogue keys (with the field); `null` when nothing changed.
+ */
+export function translationChange(
+  fields: readonly string[],
+  sources: Record<string, unknown>,
+  shown: Record<string, { value: unknown }> | undefined,
+  inputs: Record<string, string>,
+):
+  | { body: Record<string, unknown> }
+  | { problems: { key: string; field: string }[] }
+  | null {
+  const body: Record<string, unknown> = {};
+  const problems: { key: string; field: string }[] = [];
+  for (const f of fields) {
+    const source = sources[f];
+    if (
+      source === null ||
+      source === undefined ||
+      (Array.isArray(source) && source.length === 0)
+    )
+      continue;
+    const typed = (inputs[f] ?? "").trim();
+    const before = translationInput(shown?.[f]?.value).trim();
+    if (typed === before) continue;
+    if (typed === "") {
+      body[f] = "";
+      continue;
+    }
+    if (f === "tags") {
+      const tags = tagsOf(typed);
+      if (tags.length !== (source as unknown[]).length)
+        problems.push({ key: "p.product_roadmap.tr_tags_count", field: f });
+      else if (tags.some((t) => [...t].length > TAG_MAX))
+        problems.push({ key: "p.product_roadmap.tr_tag_long", field: f });
+      else body[f] = tags;
+      continue;
+    }
+    if ([...typed].length > (MAXES[f] ?? TEXT_MAX))
+      problems.push({ key: "p.product_roadmap.tr_too_long", field: f });
+    else body[f] = typed;
+  }
+  if (problems.length > 0) return { problems };
+  return Object.keys(body).length === 0 ? null : { body };
+}
+
+/** Every language a record and its items are translated into, sorted, and how many of their fields need review. */
+export function translationSummary(
+  records: readonly (ShownTranslations | undefined)[],
+): { lang: string; review: number }[] {
+  const out = new Map<string, number>();
+  for (const r of records)
+    for (const [lang, fields] of Object.entries(r ?? {}))
+      out.set(
+        lang,
+        (out.get(lang) ?? 0) +
+          Object.values(fields).filter((f) => f.needs_review).length,
+      );
+  return [...out.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([lang, review]) => ({ lang, review }));
+}

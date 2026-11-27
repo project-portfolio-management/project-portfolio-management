@@ -9837,4 +9837,21 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae'r lliw yn # a chwe digid hecsadegol, fel #rrggbb.",
   "p.roadmap_family.could_not_save": "Methu cadw'r teulu.",
   "p.roadmap_family.link": "Teulu cynhyrchion",
+  "p.product_roadmap.tr_h": "Cyfieithiadau",
+  "p.product_roadmap.tr_intro":
+    "Y map ffordd a'i eitemau mewn ieithoedd eraill, maes wrth faes. Caiff cyfieithiad ei nodi pan fo'i ffynhonnell wedi newid ers ei wneud.",
+  "p.product_roadmap.tr_lang": "Cod iaith (fel cy neu zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (angen adolygu: {n})",
+  "p.product_roadmap.tr_roadmap_h": "Meysydd y map ffordd ei hun",
+  "p.product_roadmap.tr_item": "Eitem: {title}",
+  "p.product_roadmap.tr_source": "ffynhonnell: {text}",
+  "p.product_roadmap.tr_needs_review":
+    "newidiodd ei ffynhonnell ers hynny: gwiriwch ef",
+  "p.product_roadmap.tr_save": "Cadw'r cyfieithiad",
+  "p.product_roadmap.tr_saved": "Cadwyd y cyfieithiad i {lang}.",
+  "p.product_roadmap.tr_lang_bad": "Rhowch god iaith fel cy neu zh-cn.",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: rhowch gymaint o dagiau ag sydd gan y ffynhonnell, wedi'u gwahanu gan atalnodau.",
+  "p.product_roadmap.tr_too_long": "{field}: mae'r cyfieithiad yn rhy hir.",
+  "p.product_roadmap.tr_tag_long": "{field}: mae tag yn 50 nod ar y mwyaf.",
 };

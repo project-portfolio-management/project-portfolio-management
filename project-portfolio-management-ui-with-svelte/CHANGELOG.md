@@ -9,6 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — translating a product roadmap (RE-6, 2026-11-27)
+
+- A Translations section on `/plans/[pid]/roadmap`; two client methods; `translationChange`, `translationSummary`
+  and `fieldsOf` in `src/lib/product-roadmap-view.ts`; 14 strings in every locale, machine-written. Not built: an
+  item's details translated; not verified against a real service.
+
 ### Added — `/plans/[pid]/family` (RE-5, RE-7, 2026-11-27)
 
 - Two client methods; `src/lib/family-view.ts`; a plan workspace link (module `roadmap`); 27 strings in every locale.

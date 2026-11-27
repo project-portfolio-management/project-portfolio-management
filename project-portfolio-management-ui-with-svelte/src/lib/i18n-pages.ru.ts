@@ -9813,4 +9813,21 @@ export const PAGES_RU: Record<PageKey, string> = {
     "Цвет — это # и шесть шестнадцатеричных цифр, например #rrggbb.",
   "p.roadmap_family.could_not_save": "Не удалось сохранить семейство.",
   "p.roadmap_family.link": "Семейство продуктов",
+  "p.product_roadmap.tr_h": "Переводы",
+  "p.product_roadmap.tr_intro":
+    "Дорожная карта и её пункты на других языках, поле за полем. Перевод помечается, когда его источник изменился после перевода.",
+  "p.product_roadmap.tr_lang": "Код языка (например, cy или zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (нужно проверить: {n})",
+  "p.product_roadmap.tr_roadmap_h": "Собственные поля дорожной карты",
+  "p.product_roadmap.tr_item": "Пункт: {title}",
+  "p.product_roadmap.tr_source": "источник: {text}",
+  "p.product_roadmap.tr_needs_review":
+    "источник с тех пор изменился: проверьте",
+  "p.product_roadmap.tr_save": "Сохранить перевод",
+  "p.product_roadmap.tr_saved": "Перевод на {lang} сохранён.",
+  "p.product_roadmap.tr_lang_bad": "Укажите код языка, например cy или zh-cn.",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: укажите столько меток, сколько в источнике, через запятую.",
+  "p.product_roadmap.tr_too_long": "{field}: перевод слишком длинный.",
+  "p.product_roadmap.tr_tag_long": "{field}: метка — не длиннее 50 символов.",
 };

@@ -9865,4 +9865,20 @@ export const PAGES_ID: Record<PageKey, string> = {
     "Warna adalah # dan enam digit heksadesimal, misalnya #rrggbb.",
   "p.roadmap_family.could_not_save": "Tidak dapat menyimpan keluarga.",
   "p.roadmap_family.link": "Keluarga produk",
+  "p.product_roadmap.tr_h": "Terjemahan",
+  "p.product_roadmap.tr_intro":
+    "Peta jalan dan butirnya dalam bahasa lain, bidang demi bidang. Terjemahan ditandai jika sumbernya berubah sejak dibuat.",
+  "p.product_roadmap.tr_lang": "Kode bahasa (misalnya cy atau zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (perlu ditinjau: {n})",
+  "p.product_roadmap.tr_roadmap_h": "Bidang milik peta jalan sendiri",
+  "p.product_roadmap.tr_item": "Butir: {title}",
+  "p.product_roadmap.tr_source": "sumber: {text}",
+  "p.product_roadmap.tr_needs_review": "sumbernya berubah sejak itu: periksa",
+  "p.product_roadmap.tr_save": "Simpan terjemahan",
+  "p.product_roadmap.tr_saved": "Terjemahan ke {lang} disimpan.",
+  "p.product_roadmap.tr_lang_bad": "Berikan kode bahasa seperti cy atau zh-cn.",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: berikan tag sebanyak yang ada di sumber, dipisahkan koma.",
+  "p.product_roadmap.tr_too_long": "{field}: terjemahan terlalu panjang.",
+  "p.product_roadmap.tr_tag_long": "{field}: tag paling banyak 50 karakter.",
 };

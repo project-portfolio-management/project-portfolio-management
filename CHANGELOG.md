@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (translating a product roadmap)
+
+- `/plans/[pid]/roadmap` gains a Translations section: the roadmap's own fields and each item's, in a language typed,
+  beside their source, a field whose source changed since marked to be checked; only what changed is sent, and tags
+  keep the source's count. 14 new strings in every locale, machine-written in 14, none reviewed. Not built: an item's
+  details translated. Not verified: against a real service.
+
 ## 27 November (a product family's colour)
 
 - A new `/plans/[pid]/family` ("Product family") shows a family's products and its colour with how it reads under white

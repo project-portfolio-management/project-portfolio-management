@@ -9506,4 +9506,20 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.roadmap_family.colour_bad": "색은 #과 16진수 6자리입니다(예: #rrggbb).",
   "p.roadmap_family.could_not_save": "제품군을 저장할 수 없습니다.",
   "p.roadmap_family.link": "제품군",
+  "p.product_roadmap.tr_h": "번역",
+  "p.product_roadmap.tr_intro":
+    "로드맵과 항목을 필드별로 다른 언어로 나타냅니다. 번역한 뒤 원문이 바뀌면 그 번역에 표시가 붙습니다.",
+  "p.product_roadmap.tr_lang": "언어 코드(예: cy, zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang}(검토 필요: {n})",
+  "p.product_roadmap.tr_roadmap_h": "로드맵 자체의 필드",
+  "p.product_roadmap.tr_item": "항목: {title}",
+  "p.product_roadmap.tr_source": "원문: {text}",
+  "p.product_roadmap.tr_needs_review": "그 뒤 원문이 바뀌었습니다. 확인하세요",
+  "p.product_roadmap.tr_save": "번역 저장",
+  "p.product_roadmap.tr_saved": "{lang}(으)로의 번역을 저장했습니다.",
+  "p.product_roadmap.tr_lang_bad": "cy나 zh-cn 같은 언어 코드를 입력하세요.",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: 원문과 같은 수의 태그를 쉼표로 구분해 입력하세요.",
+  "p.product_roadmap.tr_too_long": "{field}: 번역이 너무 깁니다.",
+  "p.product_roadmap.tr_tag_long": "{field}: 태그는 최대 50자입니다.",
 };

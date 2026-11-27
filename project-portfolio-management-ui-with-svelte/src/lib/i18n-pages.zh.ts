@@ -8920,4 +8920,20 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.roadmap_family.colour_bad": "颜色为 # 加六位十六进制数，如 #rrggbb。",
   "p.roadmap_family.could_not_save": "无法保存产品族。",
   "p.roadmap_family.link": "产品族",
+  "p.product_roadmap.tr_h": "翻译",
+  "p.product_roadmap.tr_intro":
+    "路线图及其条目的其他语言版本，逐个字段。原文在翻译之后发生变化时，该翻译会被标记。",
+  "p.product_roadmap.tr_lang": "语言代码（如 cy 或 zh-cn）",
+  "p.product_roadmap.tr_lang_review": "{lang}（待复审：{n}）",
+  "p.product_roadmap.tr_roadmap_h": "路线图本身的字段",
+  "p.product_roadmap.tr_item": "条目：{title}",
+  "p.product_roadmap.tr_source": "原文：{text}",
+  "p.product_roadmap.tr_needs_review": "原文此后已更改：请检查",
+  "p.product_roadmap.tr_save": "保存翻译",
+  "p.product_roadmap.tr_saved": "已保存 {lang} 翻译。",
+  "p.product_roadmap.tr_lang_bad": "请输入语言代码，如 cy 或 zh-cn。",
+  "p.product_roadmap.tr_tags_count":
+    "{field}：请给出与原文数量相同的标签，用逗号分隔。",
+  "p.product_roadmap.tr_too_long": "{field}：翻译太长。",
+  "p.product_roadmap.tr_tag_long": "{field}：标签最多 50 个字符。",
 };

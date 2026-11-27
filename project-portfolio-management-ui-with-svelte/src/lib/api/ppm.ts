@@ -2694,6 +2694,29 @@ export class PpmClient {
       { body: set },
     );
   }
+  /** Translate the roadmap's own fields into `lang` (RE-6): field to text; `""` removes that field's translation. */
+  translateRoadmap(
+    pid: string,
+    lang: string,
+    body: Record<string, unknown>,
+  ): Promise<ProductRoadmap> {
+    return this.http.put(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap/translations/${encodeURIComponent(lang)}`,
+      { body },
+    );
+  }
+  /** Translate an item's fields into `lang`; tags as a list as long as the source's; `""` removes a translation. */
+  translateRoadmapItem(
+    pid: string,
+    ipid: string,
+    lang: string,
+    body: Record<string, unknown>,
+  ): Promise<RoadmapItem> {
+    return this.http.put(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap/items/${encodeURIComponent(ipid)}/translations/${encodeURIComponent(lang)}`,
+      { body },
+    );
+  }
   /** Remove an item; its public id is never given to another. */
   removeRoadmapItem(pid: string, ipid: string): Promise<unknown> {
     return this.http.post(

@@ -9746,4 +9746,21 @@ export const PAGES_VI: Record<PageKey, string> = {
     "Màu là # và sáu chữ số thập lục phân, như #rrggbb.",
   "p.roadmap_family.could_not_save": "Không lưu được họ sản phẩm.",
   "p.roadmap_family.link": "Họ sản phẩm",
+  "p.product_roadmap.tr_h": "Bản dịch",
+  "p.product_roadmap.tr_intro":
+    "Lộ trình và các mục của nó bằng ngôn ngữ khác, từng trường một. Bản dịch được đánh dấu khi bản gốc đã thay đổi kể từ khi dịch.",
+  "p.product_roadmap.tr_lang": "Mã ngôn ngữ (như cy hoặc zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (cần xem lại: {n})",
+  "p.product_roadmap.tr_roadmap_h": "Các trường của chính lộ trình",
+  "p.product_roadmap.tr_item": "Mục: {title}",
+  "p.product_roadmap.tr_source": "bản gốc: {text}",
+  "p.product_roadmap.tr_needs_review":
+    "bản gốc đã thay đổi từ đó: hãy kiểm tra",
+  "p.product_roadmap.tr_save": "Lưu bản dịch",
+  "p.product_roadmap.tr_saved": "Đã lưu bản dịch sang {lang}.",
+  "p.product_roadmap.tr_lang_bad": "Hãy nhập mã ngôn ngữ như cy hoặc zh-cn.",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: hãy nhập số thẻ bằng bản gốc, cách nhau bằng dấu phẩy.",
+  "p.product_roadmap.tr_too_long": "{field}: bản dịch quá dài.",
+  "p.product_roadmap.tr_tag_long": "{field}: một thẻ tối đa 50 ký tự.",
 };

@@ -6,6 +6,9 @@ import {
   TITLE_MAX,
   groups,
   isSlug,
+  translationChange,
+  translationInput,
+  translationSummary,
   fieldKey,
   publishSet,
   valueWords,
@@ -217,5 +220,86 @@ describe("a roadmap's category (RE-7)", () => {
     ).toEqual({
       body: { title: "New", category_pid: "c1" },
     });
+  });
+});
+
+describe("translations (RE-6)", () => {
+  const sources = {
+    title: "Tap to pay",
+    description: null,
+    phase: "Beta",
+    tags: ["cards", "mobile"],
+  };
+  const fields = ["title", "description", "phase", "tags"];
+  const shown = {
+    title: { value: "Talu â thap" },
+    tags: { value: ["cardiau", "symudol"] },
+  };
+  it("sends only what changed, an emptied one as empty, never a field with no source", () => {
+    const inputs = {
+      title: "Talu â thap",
+      description: "Disgrifiad",
+      phase: "Beta",
+      tags: "cardiau, symudol",
+    };
+    expect(translationChange(fields, sources, shown, inputs)).toEqual({
+      body: { phase: "Beta" },
+    });
+    expect(
+      translationChange(fields, sources, shown, {
+        ...inputs,
+        phase: "",
+        title: "",
+      }),
+    ).toEqual({ body: { title: "" } });
+    expect(
+      translationChange(fields, sources, shown, {
+        title: "Talu â thap",
+        tags: "cardiau, symudol",
+      }),
+    ).toBeNull();
+  });
+  it("sends tags as a list as long as the source's, and says a wrong count or a long text first", () => {
+    expect(
+      translationChange(fields, sources, shown, {
+        title: "Talu â thap",
+        tags: "un, dau",
+      }),
+    ).toEqual({
+      body: { tags: ["un", "dau"] },
+    });
+    expect(
+      translationChange(fields, sources, shown, {
+        title: "Talu â thap",
+        tags: "un",
+      }),
+    ).toEqual({
+      problems: [{ key: "p.product_roadmap.tr_tags_count", field: "tags" }],
+    });
+    expect(
+      translationChange(fields, sources, shown, {
+        title: "x".repeat(201),
+        tags: "cardiau, symudol",
+      }),
+    ).toEqual({
+      problems: [{ key: "p.product_roadmap.tr_too_long", field: "title" }],
+    });
+  });
+  it("reads a translation into its input, and sums what needs review by language", () => {
+    expect(translationInput(["a", "b"])).toBe("a, b");
+    expect(translationInput(null)).toBe("");
+    expect(
+      translationSummary([
+        { cy: { title: { value: "a", needs_review: true } } },
+        {
+          cy: { phase: { value: "b", needs_review: false } },
+          fr: { title: { value: "c", needs_review: true } },
+        },
+        undefined,
+      ]),
+    ).toEqual([
+      { lang: "cy", review: 1 },
+      { lang: "fr", review: 1 },
+    ]);
   });
 });

@@ -9301,4 +9301,20 @@ export const PAGES_AR: Record<PageKey, string> = {
     "اللون هو # وستة أرقام سداسية عشرية، مثل #rrggbb.",
   "p.roadmap_family.could_not_save": "تعذّر حفظ العائلة.",
   "p.roadmap_family.link": "عائلة المنتجات",
+  "p.product_roadmap.tr_h": "الترجمات",
+  "p.product_roadmap.tr_intro":
+    "خارطة الطريق وبنودها بلغات أخرى، حقلًا حقلًا. تُوسم الترجمة عندما يتغيّر مصدرها منذ إعدادها.",
+  "p.product_roadmap.tr_lang": "رمز اللغة (مثل cy أو zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (تحتاج إلى مراجعة: {n})",
+  "p.product_roadmap.tr_roadmap_h": "حقول خارطة الطريق نفسها",
+  "p.product_roadmap.tr_item": "البند: {title}",
+  "p.product_roadmap.tr_source": "المصدر: {text}",
+  "p.product_roadmap.tr_needs_review": "تغيّر مصدرها منذئذ: راجعها",
+  "p.product_roadmap.tr_save": "حفظ الترجمة",
+  "p.product_roadmap.tr_saved": "حُفظت الترجمة إلى {lang}.",
+  "p.product_roadmap.tr_lang_bad": "أدخل رمز لغة مثل cy أو zh-cn.",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: أعطِ عدد الوسوم نفسه الذي في المصدر، مفصولة بفواصل.",
+  "p.product_roadmap.tr_too_long": "{field}: الترجمة طويلة جدًا.",
+  "p.product_roadmap.tr_tag_long": "{field}: الوسم 50 حرفًا على الأكثر.",
 };

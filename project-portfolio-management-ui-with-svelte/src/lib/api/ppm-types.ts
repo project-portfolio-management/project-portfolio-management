@@ -2,7 +2,10 @@
 // `ppm.ts` re-exports everything here, so `#lib/api/ppm.js` imports are unchanged.
 
 import type { Collection, Goal } from "./types";
-import type { RoadmapItem } from "#lib/product-roadmap-view.js";
+import type {
+  RoadmapItem,
+  ShownTranslations,
+} from "#lib/product-roadmap-view.js";
 import { t } from "../i18n.svelte.js";
 
 // ---- wire shapes (mirroring the service responses) ----
@@ -5960,6 +5963,8 @@ export interface ProductRoadmap {
     stale_from: string | null;
     today: string;
   };
+  /** RE-6: by language, each translated field's value and whether its source changed since. */
+  translations?: ShownTranslations;
   items: RoadmapItem[];
 }
 

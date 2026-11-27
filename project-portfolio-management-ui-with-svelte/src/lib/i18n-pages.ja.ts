@@ -9666,4 +9666,22 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.roadmap_family.colour_bad": "色は # と 16 進数 6 桁です（例: #rrggbb）。",
   "p.roadmap_family.could_not_save": "ファミリーを保存できませんでした。",
   "p.roadmap_family.link": "製品ファミリー",
+  "p.product_roadmap.tr_h": "翻訳",
+  "p.product_roadmap.tr_intro":
+    "ロードマップとその項目を、フィールドごとに他の言語で示します。翻訳後に原文が変わると、その翻訳に印が付きます。",
+  "p.product_roadmap.tr_lang": "言語コード（例: cy、zh-cn）",
+  "p.product_roadmap.tr_lang_review": "{lang}（要確認: {n}）",
+  "p.product_roadmap.tr_roadmap_h": "ロードマップ自体のフィールド",
+  "p.product_roadmap.tr_item": "項目: {title}",
+  "p.product_roadmap.tr_source": "原文: {text}",
+  "p.product_roadmap.tr_needs_review":
+    "その後原文が変わりました。確認してください",
+  "p.product_roadmap.tr_save": "翻訳を保存",
+  "p.product_roadmap.tr_saved": "{lang} への翻訳を保存しました。",
+  "p.product_roadmap.tr_lang_bad":
+    "cy や zh-cn などの言語コードを入力してください。",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: 原文と同じ数のタグをカンマ区切りで入力してください。",
+  "p.product_roadmap.tr_too_long": "{field}: 翻訳が長すぎます。",
+  "p.product_roadmap.tr_tag_long": "{field}: タグは 50 文字までです。",
 };

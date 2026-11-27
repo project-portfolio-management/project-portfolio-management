@@ -9466,4 +9466,20 @@ export const PAGES_BN: Record<PageKey, string> = {
     "রং হলো # ও ছয়টি হেক্সাডেসিমাল অঙ্ক, যেমন #rrggbb।",
   "p.roadmap_family.could_not_save": "পরিবার সংরক্ষণ করা যায়নি।",
   "p.roadmap_family.link": "পণ্য পরিবার",
+  "p.product_roadmap.tr_h": "অনুবাদ",
+  "p.product_roadmap.tr_intro":
+    "রোডম্যাপ ও এর দফাগুলো অন্য ভাষায়, ফিল্ড ধরে ধরে। অনুবাদের পরে উৎস বদলালে সেটি চিহ্নিত হয়।",
+  "p.product_roadmap.tr_lang": "ভাষার কোড (যেমন cy বা zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (পর্যালোচনা বাকি: {n})",
+  "p.product_roadmap.tr_roadmap_h": "রোডম্যাপের নিজস্ব ফিল্ড",
+  "p.product_roadmap.tr_item": "দফা: {title}",
+  "p.product_roadmap.tr_source": "উৎস: {text}",
+  "p.product_roadmap.tr_needs_review": "এর উৎস তারপর বদলেছে: দেখে নিন",
+  "p.product_roadmap.tr_save": "অনুবাদ সংরক্ষণ করুন",
+  "p.product_roadmap.tr_saved": "{lang}-এ অনুবাদ সংরক্ষিত হয়েছে।",
+  "p.product_roadmap.tr_lang_bad": "cy বা zh-cn-এর মতো একটি ভাষার কোড দিন।",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: উৎসে যতগুলো ট্যাগ ততগুলো দিন, কমা দিয়ে আলাদা করে।",
+  "p.product_roadmap.tr_too_long": "{field}: অনুবাদটি খুব লম্বা।",
+  "p.product_roadmap.tr_tag_long": "{field}: একটি ট্যাগ সর্বোচ্চ ৫০ অক্ষর।",
 };

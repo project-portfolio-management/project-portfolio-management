@@ -10018,4 +10018,23 @@ export const PAGES_FR: Record<PageKey, string> = {
     "La couleur est # et six chiffres hexadécimaux, comme #rrggbb.",
   "p.roadmap_family.could_not_save": "Impossible d'enregistrer la famille.",
   "p.roadmap_family.link": "Famille de produits",
+  "p.product_roadmap.tr_h": "Traductions",
+  "p.product_roadmap.tr_intro":
+    "La feuille de route et ses éléments dans d'autres langues, champ par champ. Une traduction est signalée quand sa source a changé depuis.",
+  "p.product_roadmap.tr_lang": "Code de langue (comme cy ou zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (à revoir : {n})",
+  "p.product_roadmap.tr_roadmap_h": "Les champs propres de la feuille de route",
+  "p.product_roadmap.tr_item": "Élément : {title}",
+  "p.product_roadmap.tr_source": "source : {text}",
+  "p.product_roadmap.tr_needs_review":
+    "sa source a changé depuis : vérifiez-la",
+  "p.product_roadmap.tr_save": "Enregistrer la traduction",
+  "p.product_roadmap.tr_saved": "Traduction en {lang} enregistrée.",
+  "p.product_roadmap.tr_lang_bad":
+    "Indiquez un code de langue comme cy ou zh-cn.",
+  "p.product_roadmap.tr_tags_count":
+    "{field} : donnez autant d'étiquettes que la source, séparées par des virgules.",
+  "p.product_roadmap.tr_too_long": "{field} : la traduction est trop longue.",
+  "p.product_roadmap.tr_tag_long":
+    "{field} : une étiquette compte au plus 50 caractères.",
 };

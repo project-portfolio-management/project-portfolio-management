@@ -3593,5 +3593,13 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   `code: text` to a line. A change sends only what changed (`PUT /api/plans/{pid}/roadmap-family`: the colour, and the
   whole set of translations when they changed), every problem said first; removing the colour removes its translations
   too, after a question (`colour: null`). Rules in `src/lib/family-view.ts`; `tests/e2e/product-family.spec.ts`.
+- **Translations** (on `/plans/[pid]/roadmap`, RE-6, 2026-11-27): the languages the roadmap and its items are
+  translated into, each with how many fields need review. For a language code typed (Welsh first), the roadmap's own
+  fields (title, vision, what the product is) and each item's (title, description, expected outcome, phase, tags) are
+  shown beside their source, a field whose source changed since marked to be checked. Only a field with a source is
+  offered; a save sends only what changed (`PUT …/roadmap/translations/{lang}`,
+  `PUT …/roadmap/items/{ipid}/translations/{lang}`), an emptied field as `""` (which removes it), tags as one
+  comma-separated line as many as the source's; a bad code, a text too long and a tag over 50 characters are said
+  first. Rules in `src/lib/product-roadmap-view.ts`.
 - **Not built** in part l: gathering several edits into one pending change set (each edit above is saved at once),
-  translations, an item's details and organizations, and organizations' short and translated names.
+  an item's details (and their translations) and organizations, and organizations' short and translated names.

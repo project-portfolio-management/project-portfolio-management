@@ -9933,4 +9933,23 @@ export const PAGES_PT: Record<PageKey, string> = {
     "A cor é # e seis dígitos hexadecimais, como #rrggbb.",
   "p.roadmap_family.could_not_save": "Não foi possível guardar a família.",
   "p.roadmap_family.link": "Família de produtos",
+  "p.product_roadmap.tr_h": "Traduções",
+  "p.product_roadmap.tr_intro":
+    "O roteiro e os seus elementos noutras línguas, campo a campo. Uma tradução é assinalada quando o original mudou desde que foi feita.",
+  "p.product_roadmap.tr_lang": "Código de língua (como cy ou zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (a rever: {n})",
+  "p.product_roadmap.tr_roadmap_h": "Os campos do próprio roteiro",
+  "p.product_roadmap.tr_item": "Elemento: {title}",
+  "p.product_roadmap.tr_source": "original: {text}",
+  "p.product_roadmap.tr_needs_review":
+    "o original mudou desde então: verifique",
+  "p.product_roadmap.tr_save": "Guardar a tradução",
+  "p.product_roadmap.tr_saved": "Tradução para {lang} guardada.",
+  "p.product_roadmap.tr_lang_bad":
+    "Indique um código de língua como cy ou zh-cn.",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: dê tantas etiquetas como o original, separadas por vírgulas.",
+  "p.product_roadmap.tr_too_long": "{field}: a tradução é demasiado longa.",
+  "p.product_roadmap.tr_tag_long":
+    "{field}: uma etiqueta tem no máximo 50 caracteres.",
 };

@@ -9609,6 +9609,22 @@ export const PAGES_EN = {
     "The colour is # and six hexadecimal digits, such as #rrggbb.",
   "p.roadmap_family.could_not_save": "Could not save the family.",
   "p.roadmap_family.link": "Product family",
+  "p.product_roadmap.tr_h": "Translations",
+  "p.product_roadmap.tr_intro":
+    "The roadmap and its items in other languages, field by field. A translation is marked when its source has changed since it was made.",
+  "p.product_roadmap.tr_lang": "Language code (such as cy or zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (needing review: {n})",
+  "p.product_roadmap.tr_roadmap_h": "The roadmap's own fields",
+  "p.product_roadmap.tr_item": "Item: {title}",
+  "p.product_roadmap.tr_source": "source: {text}",
+  "p.product_roadmap.tr_needs_review": "its source changed since: check it",
+  "p.product_roadmap.tr_save": "Save the translation",
+  "p.product_roadmap.tr_saved": "Saved the translation into {lang}.",
+  "p.product_roadmap.tr_lang_bad": "Give a language code such as cy or zh-cn.",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: give as many tags as the source has, separated by commas.",
+  "p.product_roadmap.tr_too_long": "{field}: the translation is too long.",
+  "p.product_roadmap.tr_tag_long": "{field}: a tag is at most 50 characters.",
 } as const;
 
 /** A key in the page and component catalogue. */

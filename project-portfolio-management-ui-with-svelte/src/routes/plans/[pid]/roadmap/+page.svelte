@@ -19,7 +19,7 @@
   import { ApiError } from "#lib/api/client.js";
   import { PlanRepository } from "#lib/api/plans.js";
   import { PpmClient, type ProductRoadmap } from "#lib/api/ppm.js";
-  import { shownName, type RoadmapCategory } from "#lib/roadmap-category-view.js";
+  import { isLanguageCode, shownName, type RoadmapCategory } from "#lib/roadmap-category-view.js";
   import {
     PHASE_MAX,
     PLACEMENTS,
@@ -31,6 +31,12 @@
     itemChange,
     publishSet,
     valueWords,
+    ITEM_TRANSLATABLE,
+    ROADMAP_TRANSLATABLE,
+    translationChange,
+    fieldsOf,
+    translationInput,
+    translationSummary,
     type ChangeLine,
     type ChangeSet,
     type ConflictLine,
@@ -64,6 +70,21 @@
   let edit = $state<ItemForm>(itemFormOf(null));
   let moveTo = $state<Record<string, Placement | "">>({});
   let pendingSet = $state<ChangeSet | null>(null);
+  let lang = $state("cy");
+  /** Each record's translation inputs for `lang`: "roadmap", or an item's id, then field to text. */
+  let trInputs = $state<Record<string, Record<string, string>>>({});
+  let trProblems = $state<{ key: string; field: string }[]>([]);
+
+  /** Fill the translation inputs from what is stored for `lang`. */
+  function fillTranslations() {
+    if (!roadmap) return;
+    const of = (shown: Record<string, { value: unknown }> | undefined, fields: readonly string[]) =>
+      Object.fromEntries(fields.map((f) => [f, translationInput(shown?.[f]?.value)]));
+    trInputs = {
+      roadmap: of(roadmap.translations?.[lang], ROADMAP_TRANSLATABLE),
+      ...Object.fromEntries(roadmap.items.map((i) => [i.pid, of(i.translations?.[lang], ITEM_TRANSLATABLE)])),
+    };
+  }
   let preview = $state<{ changes: ChangeLine[]; conflicts: ConflictLine[]; problems: string[]; would_publish: boolean } | null>(null);
 
   async function load() {
@@ -76,6 +97,7 @@
       ]);
       roadmap = r;
       categories = cats;
+      fillTranslations();
       isProduct = plan.kind === "Product";
       form = roadmapFormOf(r);
       loaded = true;
@@ -237,6 +259,37 @@
     }
   }
 
+  /** Save one record's translation into `lang`: only what changed; an emptied field removes its translation. */
+  async function saveTranslation(e: SubmitEvent, key: string) {
+    e.preventDefault();
+    if (!roadmap) return;
+    error = notice = null;
+    if (!isLanguageCode(lang.trim().toLowerCase())) {
+      trProblems = [];
+      error = t("p.product_roadmap.tr_lang_bad");
+      return;
+    }
+    const code = lang.trim().toLowerCase();
+    const item = roadmap.items.find((i) => i.pid === key);
+    const r = item
+      ? translationChange(ITEM_TRANSLATABLE, fieldsOf(item), item.translations?.[code], trInputs[key] ?? {})
+      : translationChange(ROADMAP_TRANSLATABLE, fieldsOf(roadmap), roadmap.translations?.[code], trInputs.roadmap ?? {});
+    if (r === null) return void (notice = t("p.product_roadmap.unchanged"));
+    if ("problems" in r) return void (trProblems = r.problems);
+    trProblems = [];
+    const body = r.body;
+    await run(
+      () => (item ? ppm.translateRoadmapItem(pid, item.pid, code, body) : ppm.translateRoadmap(pid, code, body)),
+      t("p.product_roadmap.tr_saved", { lang: code }),
+      "p.product_roadmap.could_not_save",
+    );
+  }
+
+  const sourceOf = (record: Record<string, unknown>, f: string) => {
+    const v = record[f];
+    return Array.isArray(v) ? v.join(", ") : (v as string | null | undefined);
+  };
+
   async function remove(i: RoadmapItem) {
     if (!(await askConfirm(t("p.product_roadmap.remove_ask", { title: i.title, id: i.public_id })))) return;
     await run(() => ppm.removeRoadmapItem(pid, i.pid), t("p.product_roadmap.item_removed", { title: i.title }), "p.product_roadmap.could_not_change_item");
@@ -377,6 +430,59 @@
             {/each}
           </ol>
         </section>
+      {/each}
+    </section>
+
+
+    <section class="surface stack" aria-labelledby="tr-h" data-testid="translations">
+      <h2 id="tr-h">{t("p.product_roadmap.tr_h")}</h2>
+      <p class="small muted">{t("p.product_roadmap.tr_intro")}</p>
+      {#each [translationSummary([roadmap.translations, ...roadmap.items.map((i) => i.translations)])] as summary (summary.length)}
+        {#if summary.length > 0}
+          <p class="small" data-testid="tr-summary">
+            {summary.map((s) => (s.review > 0 ? t("p.product_roadmap.tr_lang_review", { lang: s.lang, n: formatInteger(s.review) }) : s.lang)).join(" · ")}
+          </p>
+        {/if}
+      {/each}
+      <label>{t("p.product_roadmap.tr_lang")} <input bind:value={lang} onchange={fillTranslations} maxlength="35" autocomplete="off" /></label>
+      {#if trProblems.length > 0}
+        <ul class="banner error" role="alert" data-testid="tr-problems">
+          {#each trProblems as p, n (n)}<li>{tDynamic(p.key, { field: tDynamic(fieldKey(p.field)) })}</li>{/each}
+        </ul>
+      {/if}
+      {#snippet trFields(record: Record<string, unknown>, key: string, fields: readonly string[], shown: Record<string, { needs_review: boolean }> | undefined)}
+        {#each fields as f (f)}
+          {#if sourceOf(record, f)}
+            <label
+              >{tDynamic(fieldKey(f))}
+              <span class="small muted">{t("p.product_roadmap.tr_source", { text: sourceOf(record, f) ?? "" })}</span>
+              {#if shown?.[f]?.needs_review}<span class="small"> · {t("p.product_roadmap.tr_needs_review")}</span>{/if}
+              {#if f === "vision" || f === "service_description" || f === "description" || f === "expected_outcome"}
+                <textarea rows="2" bind:value={trInputs[key]![f]}></textarea>
+              {:else}
+                <input bind:value={trInputs[key]![f]} />
+              {/if}
+            </label>
+          {/if}
+        {/each}
+      {/snippet}
+      {#if trInputs.roadmap}
+        <form class="stack" onsubmit={(e) => saveTranslation(e, "roadmap")} novalidate aria-label={t("p.product_roadmap.tr_roadmap_h")}>
+          <h3>{t("p.product_roadmap.tr_roadmap_h")}</h3>
+          {@render trFields(fieldsOf(roadmap), "roadmap", ROADMAP_TRANSLATABLE, roadmap.translations?.[lang])}
+          <div><button class="button" type="submit" disabled={busy}>{t("p.product_roadmap.tr_save")}</button></div>
+        </form>
+      {/if}
+      {#each roadmap.items as i (i.pid)}
+        {#if trInputs[i.pid]}
+          <details>
+            <summary>{t("p.product_roadmap.tr_item", { title: i.title })}</summary>
+            <form class="stack" onsubmit={(e) => saveTranslation(e, i.pid)} novalidate aria-label={t("p.product_roadmap.tr_item", { title: i.title })}>
+              {@render trFields(fieldsOf(i), i.pid, ITEM_TRANSLATABLE, i.translations?.[lang])}
+              <div><button class="button" type="submit" disabled={busy}>{t("p.product_roadmap.tr_save")}</button></div>
+            </form>
+          </details>
+        {/if}
       {/each}
     </section>
 

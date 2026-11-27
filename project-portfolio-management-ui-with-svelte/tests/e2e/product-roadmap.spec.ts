@@ -1,6 +1,6 @@
 // RE-1 and RE-3 (NC-1 slice 12 part l) in a real browser: `/plans/[pid]/roadmap` makes a Product plan's roadmap,
 // changes its own fields with only what changed sent, marks it reviewed, and adds, changes, moves and removes items;
-// a plan of another kind is told it has none; a slug another roadmap holds is said in the page's words. Welsh; axe.
+// translates the roadmap and its items field by field (RE-6); a plan of another kind is told it has none; a slug another roadmap holds is said in the page's words. Welsh; axe.
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
@@ -52,7 +52,9 @@ async function stub(
             stale_from: "2026-10-14",
             today: "2026-11-27",
           },
-          translations: {},
+          translations: {
+            cy: { title: { value: "Taliadau", needs_review: true } },
+          },
           items: [
             item("a", "Tap to pay", "now", 0, { tags: ["cards"] }),
             item("b", "Wallets", "now", 1),
@@ -197,6 +199,26 @@ async function stub(
     } else if (path.endsWith("/delete")) {
       const id = path.split("/").at(-2)!;
       roadmap = { ...roadmap, items: items.filter((i) => i.pid !== id) };
+    } else if (path.includes("/translations/")) {
+      // A translation is stored as given, needing no review.
+      const lang = path.split("/").at(-1)!;
+      const id = path.split("/").at(-3)!;
+      const put = (t: unknown) => {
+        const all = (t ?? {}) as Record<string, Record<string, unknown>>;
+        const now = { ...(all[lang] ?? {}) };
+        for (const [f, v] of Object.entries(body as object))
+          now[f] = { value: v, needs_review: false };
+        return { ...all, [lang]: now };
+      };
+      roadmap =
+        id === "roadmap"
+          ? { ...roadmap, translations: put(roadmap?.translations) }
+          : {
+              ...roadmap,
+              items: items.map((i) =>
+                i.pid === id ? { ...i, translations: put(i.translations) } : i,
+              ),
+            };
     } else if (method === "PUT") {
       const id = path.split("/").at(-1)!;
       roadmap = {
@@ -245,7 +267,7 @@ test("a roadmap's state and items by placement; marked reviewed; its own fields 
     body: { today: true },
   });
 
-  const own = page.getByRole("form", { name: "The roadmap" });
+  const own = page.getByRole("form", { name: "The roadmap", exact: true });
   await own.getByRole("button", { name: "Save the roadmap" }).click();
   await expect(page.getByTestId("roadmap-notice")).toHaveText(
     "Nothing changed, so nothing was sent.",
@@ -465,7 +487,7 @@ test("a roadmap is filed under a category, a retired one shown only while it is 
   );
   await page.goto(`/en-001/plans/${PID}/roadmap`);
   await settle(page);
-  const own = page.getByRole("form", { name: "The roadmap" });
+  const own = page.getByRole("form", { name: "The roadmap", exact: true });
   const picker = own.getByRole("combobox", { name: "Category (optional)" });
   await expect(picker.getByRole("option")).toHaveText([
     "No category",
@@ -481,4 +503,57 @@ test("a roadmap is filed under a category, a retired one shown only while it is 
     path: `/api/plans/${PID}/roadmap`,
     body: { category_pid: "c1" },
   });
+});
+
+test("the roadmap and an item are translated field by field; a moved source is marked; tags keep their count (RE-6)", async ({
+  page,
+}) => {
+  const sent = await stub(page);
+  await page.goto(`/en-001/plans/${PID}/roadmap`);
+  await settle(page);
+  const tr = page.getByTestId("translations");
+  await expect(tr.getByTestId("tr-summary")).toHaveText(
+    "cy (needing review: 1)",
+  );
+  const own = tr.getByRole("form", { name: "The roadmap's own fields" });
+  await expect(own.getByLabel(/^Title/)).toHaveValue("Taliadau");
+  await expect(own).toContainText("its source changed since: check it");
+  await own.getByRole("button", { name: "Save the translation" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Nothing changed, so nothing was sent.",
+  );
+  await own.getByLabel(/^Vision/).fill(" Talu mewn tap ");
+  await own.getByRole("button", { name: "Save the translation" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Saved the translation into cy.",
+  );
+  expect(sent.at(-1)).toEqual({
+    method: "PUT",
+    path: `/api/plans/${PID}/roadmap/translations/cy`,
+    body: { vision: "Talu mewn tap" },
+  });
+
+  await tr.getByText("Item: Tap to pay").click();
+  const it = tr.getByRole("form", { name: "Item: Tap to pay" });
+  await it.getByLabel(/^Tags/).fill("cardiau, arian");
+  await it.getByRole("button", { name: "Save the translation" }).click();
+  await expect(tr.getByTestId("tr-problems")).toHaveText(
+    /give as many tags as the source has/,
+  );
+  await it.getByLabel(/^Tags/).fill("cardiau");
+  await it.getByRole("button", { name: "Save the translation" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Saved the translation into cy.",
+  );
+  expect(sent.at(-1)).toEqual({
+    method: "PUT",
+    path: `/api/plans/${PID}/roadmap/items/a/translations/cy`,
+    body: { tags: ["cardiau"] },
+  });
+
+  await tr.getByLabel(/^Language code/).fill("not a code");
+  await own.getByRole("button", { name: "Save the translation" }).click();
+  await expect(page.getByTestId("roadmap-error")).toHaveText(
+    "Give a language code such as cy or zh-cn.",
+  );
 });

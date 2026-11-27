@@ -10064,4 +10064,22 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.roadmap_family.could_not_save":
     "Die Familie konnte nicht gespeichert werden.",
   "p.roadmap_family.link": "Produktfamilie",
+  "p.product_roadmap.tr_h": "Übersetzungen",
+  "p.product_roadmap.tr_intro":
+    "Die Roadmap und ihre Einträge in anderen Sprachen, Feld für Feld. Eine Übersetzung wird markiert, wenn sich ihre Quelle seither geändert hat.",
+  "p.product_roadmap.tr_lang": "Sprachcode (etwa cy oder zh-cn)",
+  "p.product_roadmap.tr_lang_review": "{lang} (zu überprüfen: {n})",
+  "p.product_roadmap.tr_roadmap_h": "Die eigenen Felder der Roadmap",
+  "p.product_roadmap.tr_item": "Eintrag: {title}",
+  "p.product_roadmap.tr_source": "Quelle: {text}",
+  "p.product_roadmap.tr_needs_review": "Quelle seither geändert: bitte prüfen",
+  "p.product_roadmap.tr_save": "Übersetzung speichern",
+  "p.product_roadmap.tr_saved": "Übersetzung nach {lang} gespeichert.",
+  "p.product_roadmap.tr_lang_bad":
+    "Geben Sie einen Sprachcode wie cy oder zh-cn an.",
+  "p.product_roadmap.tr_tags_count":
+    "{field}: Geben Sie so viele Schlagwörter an wie die Quelle, durch Kommas getrennt.",
+  "p.product_roadmap.tr_too_long": "{field}: Die Übersetzung ist zu lang.",
+  "p.product_roadmap.tr_tag_long":
+    "{field}: Ein Schlagwort hat höchstens 50 Zeichen.",
 };

@@ -16,6 +16,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (the product roadmaps list)
+
+- A new `/roadmaps` ("Product roadmaps") lists the roadmaps due a review, every roadmap the reader may read with its
+  state and counts (each linking to its editor), and the product families. Read only. 14 new strings in every locale,
+  machine-written in 14, none reviewed. Not verified: against a real service.
+
 ## 27 November (publishing a product roadmap)
 
 - `/plans/[pid]/roadmap` publishes a roadmap, or takes it off the public reader, as one change set: previewed first

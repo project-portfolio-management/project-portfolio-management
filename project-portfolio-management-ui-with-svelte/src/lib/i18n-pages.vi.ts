@@ -9658,4 +9658,20 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.product_roadmap.field.placement": "Vị trí",
   "p.product_roadmap.field.item": "Mục này",
   "p.product_roadmap.could_not_publish": "Không công bố được tập thay đổi.",
+  "p.product_roadmaps.title": "Lộ trình sản phẩm",
+  "p.product_roadmaps.title_ppm": "Lộ trình sản phẩm — PPM",
+  "p.product_roadmaps.intro":
+    "Mọi lộ trình sản phẩm bạn được đọc, đã công bố hay chưa, và những lộ trình cần xem lại. Mở một lộ trình để thay đổi.",
+  "p.product_roadmaps.loading": "Đang tải các lộ trình…",
+  "p.product_roadmaps.could_not_load": "Không tải được các lộ trình.",
+  "p.product_roadmaps.due_h": "Cần xem lại",
+  "p.product_roadmaps.due_none": "Mọi lộ trình đều còn mới.",
+  "p.product_roadmaps.all_h": "Mọi lộ trình",
+  "p.product_roadmaps.all_none":
+    "Chưa có lộ trình nào. Kế hoạch Product tạo lộ trình trên trang lộ trình của chính nó.",
+  "p.product_roadmaps.counts": "mục đã xếp chỗ: {placed}; chưa xếp: {unplaced}",
+  "p.product_roadmaps.in_family": "họ sản phẩm: {family}",
+  "p.product_roadmaps.families_h": "Các họ sản phẩm",
+  "p.product_roadmaps.families_none": "Chưa có họ sản phẩm nào.",
+  "p.product_roadmaps.products": "sản phẩm: {n}",
 };

@@ -9841,4 +9841,21 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.product_roadmap.field.item": "O elemento",
   "p.product_roadmap.could_not_publish":
     "Não foi possível publicar o conjunto de alterações.",
+  "p.product_roadmaps.title": "Roteiros de produto",
+  "p.product_roadmaps.title_ppm": "Roteiros de produto — PPM",
+  "p.product_roadmaps.intro":
+    "Todos os roteiros de produto que pode ler, publicados ou não, e quais precisam de revisão. Abra um para o alterar.",
+  "p.product_roadmaps.loading": "A carregar os roteiros…",
+  "p.product_roadmaps.could_not_load": "Não foi possível carregar os roteiros.",
+  "p.product_roadmaps.due_h": "Precisam de revisão",
+  "p.product_roadmaps.due_none": "Todos os roteiros estão atualizados.",
+  "p.product_roadmaps.all_h": "Todos os roteiros",
+  "p.product_roadmaps.all_none":
+    "Ainda sem roteiros. Um plano Product cria o seu na própria página de roteiro.",
+  "p.product_roadmaps.counts":
+    "elementos colocados: {placed}; sem lugar: {unplaced}",
+  "p.product_roadmaps.in_family": "família: {family}",
+  "p.product_roadmaps.families_h": "Famílias de produtos",
+  "p.product_roadmaps.families_none": "Ainda sem famílias de produtos.",
+  "p.product_roadmaps.products": "produtos: {n}",
 };

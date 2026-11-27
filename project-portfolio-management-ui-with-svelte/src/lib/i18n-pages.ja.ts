@@ -9581,4 +9581,20 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.product_roadmap.field.placement": "配置",
   "p.product_roadmap.field.item": "項目",
   "p.product_roadmap.could_not_publish": "変更セットを公開できませんでした。",
+  "p.product_roadmaps.title": "製品ロードマップ一覧",
+  "p.product_roadmaps.title_ppm": "製品ロードマップ一覧 — PPM",
+  "p.product_roadmaps.intro":
+    "閲覧できるすべての製品ロードマップ（公開・非公開を問わず）と、見直しが必要なもの。変更するには開いてください。",
+  "p.product_roadmaps.loading": "ロードマップを読み込んでいます…",
+  "p.product_roadmaps.could_not_load": "ロードマップを読み込めませんでした。",
+  "p.product_roadmaps.due_h": "見直しが必要",
+  "p.product_roadmaps.due_none": "すべてのロードマップが最新です。",
+  "p.product_roadmaps.all_h": "すべてのロードマップ",
+  "p.product_roadmaps.all_none":
+    "まだロードマップはありません。Product の計画は自分のロードマップページで作成します。",
+  "p.product_roadmaps.counts": "配置済みの項目: {placed}、未配置: {unplaced}",
+  "p.product_roadmaps.in_family": "ファミリー: {family}",
+  "p.product_roadmaps.families_h": "製品ファミリー",
+  "p.product_roadmaps.families_none": "まだ製品ファミリーはありません。",
+  "p.product_roadmaps.products": "製品数: {n}",
 };

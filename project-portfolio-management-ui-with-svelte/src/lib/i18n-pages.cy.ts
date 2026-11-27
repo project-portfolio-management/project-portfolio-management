@@ -9746,4 +9746,21 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.product_roadmap.field.placement": "Lleoliad",
   "p.product_roadmap.field.item": "Yr eitem",
   "p.product_roadmap.could_not_publish": "Methu cyhoeddi'r set newidiadau.",
+  "p.product_roadmaps.title": "Mapiau ffordd cynnyrch",
+  "p.product_roadmaps.title_ppm": "Mapiau ffordd cynnyrch — PPM",
+  "p.product_roadmaps.intro":
+    "Pob map ffordd cynnyrch y cewch ei ddarllen, wedi'i gyhoeddi neu beidio, a pha rai sydd angen adolygiad. Agorwch un i'w newid.",
+  "p.product_roadmaps.loading": "Wrthi'n llwytho'r mapiau ffordd…",
+  "p.product_roadmaps.could_not_load": "Methu llwytho'r mapiau ffordd.",
+  "p.product_roadmaps.due_h": "Angen adolygiad",
+  "p.product_roadmaps.due_none": "Mae pob map ffordd yn ffres.",
+  "p.product_roadmaps.all_h": "Pob map ffordd",
+  "p.product_roadmaps.all_none":
+    "Dim map ffordd eto. Mae cynllun Product yn gwneud un ar ei dudalen map ffordd ei hun.",
+  "p.product_roadmaps.counts":
+    "eitemau wedi'u lleoli: {placed}; heb eu lleoli: {unplaced}",
+  "p.product_roadmaps.in_family": "teulu: {family}",
+  "p.product_roadmaps.families_h": "Teuluoedd cynnyrch",
+  "p.product_roadmaps.families_none": "Dim teulu cynnyrch eto.",
+  "p.product_roadmaps.products": "cynhyrchion: {n}",
 };

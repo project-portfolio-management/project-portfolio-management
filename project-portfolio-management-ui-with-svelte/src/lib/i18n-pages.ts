@@ -9520,6 +9520,22 @@ export const PAGES_EN = {
   "p.product_roadmap.field.placement": "Placement",
   "p.product_roadmap.field.item": "The item",
   "p.product_roadmap.could_not_publish": "Could not publish the change set.",
+  "p.product_roadmaps.title": "Product roadmaps",
+  "p.product_roadmaps.title_ppm": "Product roadmaps — PPM",
+  "p.product_roadmaps.intro":
+    "Every product roadmap you may read, published or not, and which are due a review. Open one to change it.",
+  "p.product_roadmaps.loading": "Loading the roadmaps…",
+  "p.product_roadmaps.could_not_load": "Could not load the roadmaps.",
+  "p.product_roadmaps.due_h": "Due a review",
+  "p.product_roadmaps.due_none": "Every roadmap is fresh.",
+  "p.product_roadmaps.all_h": "Every roadmap",
+  "p.product_roadmaps.all_none":
+    "No roadmap yet. A Product plan makes one on its own roadmap page.",
+  "p.product_roadmaps.counts": "items placed: {placed}; not placed: {unplaced}",
+  "p.product_roadmaps.in_family": "family: {family}",
+  "p.product_roadmaps.families_h": "Product families",
+  "p.product_roadmaps.families_none": "No product family yet.",
+  "p.product_roadmaps.products": "products: {n}",
 } as const;
 
 /** A key in the page and component catalogue. */

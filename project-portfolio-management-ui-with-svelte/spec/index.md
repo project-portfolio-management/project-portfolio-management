@@ -3571,7 +3571,13 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   previews it (`POST …/publish/preview`: each change in words, every conflict, every problem), and publishes it with
   one more press (`POST …/publish`). A conflict meanwhile (409) is said in the page's words, the conflicts named, and
   nothing is published; the page is read again.
+- **`/roadmaps`** ("Product roadmaps", a top-navigation section, RE-3, RE-5, 2026-11-27): the list an editor opens
+  first. The roadmaps due a review (`GET /api/public-roadmaps/stale`, never reviewed first, with the rule's days),
+  every roadmap of a live plan the reader may read, published or not (`GET /api/public-roadmaps`, every page: its title
+  linking to its editor, its address, published or not, how fresh, items placed and not, its family), and the product
+  families with how many products each has (`GET /api/roadmap-families`, every page). Read only.
+  `tests/e2e/roadmaps.spec.ts`.
 - **Not built** in part l: gathering several edits into one pending change set (each edit above is saved at once),
   translations, an item's details and
-  organizations, the roadmap's category and family, `/roadmaps`, `/roadmap-categories`, and organizations' short and
+  organizations, the roadmap's category and family (setting them), `/roadmap-categories`, and organizations' short and
   translated names.

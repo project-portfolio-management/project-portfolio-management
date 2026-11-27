@@ -9772,4 +9772,21 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.product_roadmap.field.item": "Butir ini",
   "p.product_roadmap.could_not_publish":
     "Tidak dapat menerbitkan kumpulan perubahan.",
+  "p.product_roadmaps.title": "Peta jalan produk",
+  "p.product_roadmaps.title_ppm": "Peta jalan produk — PPM",
+  "p.product_roadmaps.intro":
+    "Setiap peta jalan produk yang boleh Anda baca, diterbitkan atau tidak, dan mana yang perlu ditinjau. Buka salah satu untuk mengubahnya.",
+  "p.product_roadmaps.loading": "Memuat peta jalan…",
+  "p.product_roadmaps.could_not_load": "Tidak dapat memuat peta jalan.",
+  "p.product_roadmaps.due_h": "Perlu ditinjau",
+  "p.product_roadmaps.due_none": "Semua peta jalan terkini.",
+  "p.product_roadmaps.all_h": "Semua peta jalan",
+  "p.product_roadmaps.all_none":
+    "Belum ada peta jalan. Rencana Product membuatnya di halaman peta jalannya sendiri.",
+  "p.product_roadmaps.counts":
+    "butir ditempatkan: {placed}; belum ditempatkan: {unplaced}",
+  "p.product_roadmaps.in_family": "keluarga: {family}",
+  "p.product_roadmaps.families_h": "Keluarga produk",
+  "p.product_roadmaps.families_none": "Belum ada keluarga produk.",
+  "p.product_roadmaps.products": "produk: {n}",
 };

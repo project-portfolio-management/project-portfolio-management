@@ -373,6 +373,9 @@ import type {
   ReviewQueueItem,
   ApprovalRequest,
   CustomFieldDef,
+  ListedRoadmap,
+  RoadmapFamily,
+  StaleRoadmaps,
   ProductRoadmap,
   ProcessDetail,
   FrameworkVersions,
@@ -2551,6 +2554,24 @@ export class PpmClient {
       `/api/documents/${pid}/versions/${version}/make-effective`,
       { body: {} },
     );
+  }
+  /** Every roadmap of a live plan the caller may read, published or not, by title, every page (RE-5). */
+  async publicRoadmaps(): Promise<ListedRoadmap[]> {
+    const first = await this.http.getPage<ListedRoadmap>(
+      "/api/public-roadmaps",
+    );
+    return this.http.followPages(first);
+  }
+  /** The roadmaps due a review (RE-3), never reviewed first. */
+  staleRoadmaps(): Promise<StaleRoadmaps> {
+    return this.http.get("/api/public-roadmaps/stale");
+  }
+  /** Every product family the caller may read, every page. */
+  async roadmapFamilies(): Promise<RoadmapFamily[]> {
+    const first = await this.http.getPage<RoadmapFamily>(
+      "/api/roadmap-families",
+    );
+    return this.http.followPages(first);
   }
   /** A product plan's roadmap, or `null` before it is made (404). */
   async productRoadmap(pid: string): Promise<ProductRoadmap | null> {

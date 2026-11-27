@@ -9967,4 +9967,22 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.product_roadmap.field.item": "Der Eintrag",
   "p.product_roadmap.could_not_publish":
     "Der Änderungssatz konnte nicht veröffentlicht werden.",
+  "p.product_roadmaps.title": "Produkt-Roadmaps",
+  "p.product_roadmaps.title_ppm": "Produkt-Roadmaps — PPM",
+  "p.product_roadmaps.intro":
+    "Jede Produkt-Roadmap, die Sie lesen dürfen, veröffentlicht oder nicht, und welche eine Überprüfung brauchen. Öffnen Sie eine, um sie zu ändern.",
+  "p.product_roadmaps.loading": "Roadmaps werden geladen…",
+  "p.product_roadmaps.could_not_load":
+    "Die Roadmaps konnten nicht geladen werden.",
+  "p.product_roadmaps.due_h": "Überprüfung fällig",
+  "p.product_roadmaps.due_none": "Jede Roadmap ist aktuell.",
+  "p.product_roadmaps.all_h": "Jede Roadmap",
+  "p.product_roadmaps.all_none":
+    "Noch keine Roadmap. Ein Product-Plan legt eine auf seiner eigenen Roadmap-Seite an.",
+  "p.product_roadmaps.counts":
+    "eingeordnete Einträge: {placed}; nicht eingeordnet: {unplaced}",
+  "p.product_roadmaps.in_family": "Familie: {family}",
+  "p.product_roadmaps.families_h": "Produktfamilien",
+  "p.product_roadmaps.families_none": "Noch keine Produktfamilie.",
+  "p.product_roadmaps.products": "Produkte: {n}",
 };

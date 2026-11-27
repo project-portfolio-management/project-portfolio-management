@@ -46,6 +46,7 @@ export const KNOWN_NAV_HREFS = [
   "/jobs",
   "/custom-fields",
   "/approvals",
+  "/roadmaps",
   "/onboarding-templates",
   "/exceptions",
   "/deescalation",

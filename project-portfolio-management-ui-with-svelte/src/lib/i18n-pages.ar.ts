@@ -9216,4 +9216,20 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.product_roadmap.field.placement": "الموضع",
   "p.product_roadmap.field.item": "البند",
   "p.product_roadmap.could_not_publish": "تعذّر نشر مجموعة التغييرات.",
+  "p.product_roadmaps.title": "خرائط طريق المنتجات",
+  "p.product_roadmaps.title_ppm": "خرائط طريق المنتجات — PPM",
+  "p.product_roadmaps.intro":
+    "كل خارطة طريق منتج يحق لك قراءتها، منشورة أو لا، وأيّها تحتاج إلى مراجعة. افتح واحدة لتغييرها.",
+  "p.product_roadmaps.loading": "جارٍ تحميل خرائط الطريق…",
+  "p.product_roadmaps.could_not_load": "تعذّر تحميل خرائط الطريق.",
+  "p.product_roadmaps.due_h": "تحتاج إلى مراجعة",
+  "p.product_roadmaps.due_none": "كل خرائط الطريق حديثة.",
+  "p.product_roadmaps.all_h": "كل خرائط الطريق",
+  "p.product_roadmaps.all_none":
+    "لا خارطة طريق بعد. تنشئ خطة Product خارطتها في صفحة خارطة الطريق الخاصة بها.",
+  "p.product_roadmaps.counts": "بنود مُدرجة: {placed}؛ غير مُدرجة: {unplaced}",
+  "p.product_roadmaps.in_family": "العائلة: {family}",
+  "p.product_roadmaps.families_h": "عائلات المنتجات",
+  "p.product_roadmaps.families_none": "لا عائلة منتجات بعد.",
+  "p.product_roadmaps.products": "المنتجات: {n}",
 };

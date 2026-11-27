@@ -5962,3 +5962,44 @@ export interface ProductRoadmap {
   };
   items: RoadmapItem[];
 }
+
+/** One roadmap in `GET /api/public-roadmaps` (RE-5): every roadmap of a live plan the caller may read. */
+export interface ListedRoadmap {
+  pid: string;
+  plan_pid: string;
+  slug: string;
+  title: string;
+  category_pid: string | null;
+  published: boolean;
+  reviewed_on: string | null;
+  freshness: "fresh" | "stale" | "unknown" | null;
+  items: { placed: number; unplaced: number };
+  family: {
+    plan_pid: string;
+    name: string | null;
+    colour: string | null;
+  } | null;
+}
+
+/** `GET /api/public-roadmaps/stale` (RE-3): the roadmaps due a review, never reviewed first. */
+export interface StaleRoadmaps {
+  stale_after_days: number;
+  today: string;
+  count: number;
+  roadmaps: {
+    plan_pid: string;
+    title: string;
+    slug: string;
+    published: boolean;
+    reviewed_on: string | null;
+    state: "stale" | "unknown";
+  }[];
+}
+
+/** One product family in `GET /api/roadmap-families`. */
+export interface RoadmapFamily {
+  plan_pid: string;
+  name: string;
+  colour: string | null;
+  products: number;
+}

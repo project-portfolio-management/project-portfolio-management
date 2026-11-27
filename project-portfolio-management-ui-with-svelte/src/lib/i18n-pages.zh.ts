@@ -8836,4 +8836,20 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.product_roadmap.field.placement": "位置",
   "p.product_roadmap.field.item": "该条目",
   "p.product_roadmap.could_not_publish": "无法发布更改集。",
+  "p.product_roadmaps.title": "产品路线图列表",
+  "p.product_roadmaps.title_ppm": "产品路线图列表 — PPM",
+  "p.product_roadmaps.intro":
+    "您可阅读的所有产品路线图（无论是否已发布），以及需要复审的路线图。打开其中一个即可更改。",
+  "p.product_roadmaps.loading": "正在加载路线图…",
+  "p.product_roadmaps.could_not_load": "无法加载路线图。",
+  "p.product_roadmaps.due_h": "需要复审",
+  "p.product_roadmaps.due_none": "所有路线图都是最新的。",
+  "p.product_roadmaps.all_h": "所有路线图",
+  "p.product_roadmaps.all_none":
+    "还没有路线图。Product 计划在其自己的路线图页面上创建。",
+  "p.product_roadmaps.counts": "已放置条目：{placed}；未放置：{unplaced}",
+  "p.product_roadmaps.in_family": "产品族：{family}",
+  "p.product_roadmaps.families_h": "产品族",
+  "p.product_roadmaps.families_none": "还没有产品族。",
+  "p.product_roadmaps.products": "产品数：{n}",
 };

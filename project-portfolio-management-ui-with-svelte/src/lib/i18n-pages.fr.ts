@@ -9922,4 +9922,23 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.product_roadmap.field.item": "L'élément",
   "p.product_roadmap.could_not_publish":
     "Impossible de publier l'ensemble de changements.",
+  "p.product_roadmaps.title": "Feuilles de route des produits",
+  "p.product_roadmaps.title_ppm": "Feuilles de route des produits — PPM",
+  "p.product_roadmaps.intro":
+    "Toutes les feuilles de route que vous pouvez lire, publiées ou non, et celles qui doivent être revues. Ouvrez-en une pour la modifier.",
+  "p.product_roadmaps.loading": "Chargement des feuilles de route…",
+  "p.product_roadmaps.could_not_load":
+    "Impossible de charger les feuilles de route.",
+  "p.product_roadmaps.due_h": "À revoir",
+  "p.product_roadmaps.due_none": "Toutes les feuilles de route sont à jour.",
+  "p.product_roadmaps.all_h": "Toutes les feuilles de route",
+  "p.product_roadmaps.all_none":
+    "Aucune feuille de route pour l'instant. Un plan Product en crée une sur sa propre page.",
+  "p.product_roadmaps.counts":
+    "éléments placés : {placed} ; non placés : {unplaced}",
+  "p.product_roadmaps.in_family": "famille : {family}",
+  "p.product_roadmaps.families_h": "Familles de produits",
+  "p.product_roadmaps.families_none":
+    "Aucune famille de produits pour l'instant.",
+  "p.product_roadmaps.products": "produits : {n}",
 };

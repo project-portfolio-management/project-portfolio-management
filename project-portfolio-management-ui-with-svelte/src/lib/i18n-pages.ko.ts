@@ -9421,4 +9421,20 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.product_roadmap.field.placement": "배치",
   "p.product_roadmap.field.item": "항목",
   "p.product_roadmap.could_not_publish": "변경 세트를 게시할 수 없습니다.",
+  "p.product_roadmaps.title": "제품 로드맵 목록",
+  "p.product_roadmaps.title_ppm": "제품 로드맵 목록 — PPM",
+  "p.product_roadmaps.intro":
+    "볼 수 있는 모든 제품 로드맵(게시 여부와 관계없이)과 검토가 필요한 로드맵입니다. 바꾸려면 하나를 여세요.",
+  "p.product_roadmaps.loading": "로드맵을 불러오는 중…",
+  "p.product_roadmaps.could_not_load": "로드맵을 불러올 수 없습니다.",
+  "p.product_roadmaps.due_h": "검토 필요",
+  "p.product_roadmaps.due_none": "모든 로드맵이 최신입니다.",
+  "p.product_roadmaps.all_h": "모든 로드맵",
+  "p.product_roadmaps.all_none":
+    "아직 로드맵이 없습니다. Product 계획은 자기 로드맵 페이지에서 만듭니다.",
+  "p.product_roadmaps.counts": "배치된 항목: {placed}, 배치 안 됨: {unplaced}",
+  "p.product_roadmaps.in_family": "제품군: {family}",
+  "p.product_roadmaps.families_h": "제품군",
+  "p.product_roadmaps.families_none": "아직 제품군이 없습니다.",
+  "p.product_roadmaps.products": "제품: {n}",
 };

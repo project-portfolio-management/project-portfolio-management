@@ -9265,4 +9265,20 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.product_roadmap.field.placement": "स्थान",
   "p.product_roadmap.field.item": "मद",
   "p.product_roadmap.could_not_publish": "परिवर्तन समूह प्रकाशित नहीं हो सका।",
+  "p.product_roadmaps.title": "उत्पाद रोडमैप",
+  "p.product_roadmaps.title_ppm": "उत्पाद रोडमैप — PPM",
+  "p.product_roadmaps.intro":
+    "हर उत्पाद रोडमैप जिसे आप पढ़ सकते हैं, प्रकाशित हो या नहीं, और किनकी समीक्षा बाकी है। बदलने के लिए एक खोलें।",
+  "p.product_roadmaps.loading": "रोडमैप लोड हो रहे हैं…",
+  "p.product_roadmaps.could_not_load": "रोडमैप लोड नहीं हो सके।",
+  "p.product_roadmaps.due_h": "समीक्षा बाकी",
+  "p.product_roadmaps.due_none": "हर रोडमैप ताज़ा है।",
+  "p.product_roadmaps.all_h": "हर रोडमैप",
+  "p.product_roadmaps.all_none":
+    "अभी कोई रोडमैप नहीं। Product योजना अपने रोडमैप पेज पर एक बनाती है।",
+  "p.product_roadmaps.counts": "स्थान दी गई मदें: {placed}; बिना स्थान: {unplaced}",
+  "p.product_roadmaps.in_family": "परिवार: {family}",
+  "p.product_roadmaps.families_h": "उत्पाद परिवार",
+  "p.product_roadmaps.families_none": "अभी कोई उत्पाद परिवार नहीं।",
+  "p.product_roadmaps.products": "उत्पाद: {n}",
 };

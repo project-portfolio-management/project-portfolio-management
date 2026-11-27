@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/roadmaps` (RE-3, RE-5, 2026-11-27)
+
+- Three client methods (the lists read every page); a top-navigation section; 14 strings in every locale.
+
 ### Added — publishing a product roadmap as one change set (RE-2, 2026-11-27)
 
 - Preview, then publish, on `/plans/[pid]/roadmap`; two client methods; `publishSet`, `valueWords` and `fieldKey` in

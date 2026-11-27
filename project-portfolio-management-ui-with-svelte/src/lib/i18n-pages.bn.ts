@@ -9381,4 +9381,20 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.product_roadmap.field.placement": "স্থান",
   "p.product_roadmap.field.item": "দফাটি",
   "p.product_roadmap.could_not_publish": "পরিবর্তন-সেট প্রকাশ করা যায়নি।",
+  "p.product_roadmaps.title": "পণ্যের রোডম্যাপসমূহ",
+  "p.product_roadmaps.title_ppm": "পণ্যের রোডম্যাপসমূহ — PPM",
+  "p.product_roadmaps.intro":
+    "আপনি পড়তে পারেন এমন প্রতিটি পণ্যের রোডম্যাপ, প্রকাশিত হোক বা না হোক, এবং কোনগুলোর পর্যালোচনা বাকি। বদলাতে একটি খুলুন।",
+  "p.product_roadmaps.loading": "রোডম্যাপগুলো লোড হচ্ছে…",
+  "p.product_roadmaps.could_not_load": "রোডম্যাপগুলো লোড করা যায়নি।",
+  "p.product_roadmaps.due_h": "পর্যালোচনা বাকি",
+  "p.product_roadmaps.due_none": "প্রতিটি রোডম্যাপ হালনাগাদ।",
+  "p.product_roadmaps.all_h": "প্রতিটি রোডম্যাপ",
+  "p.product_roadmaps.all_none":
+    "এখনও কোনো রোডম্যাপ নেই। Product পরিকল্পনা নিজের রোডম্যাপ পাতায় একটি তৈরি করে।",
+  "p.product_roadmaps.counts": "স্থান পাওয়া দফা: {placed}; স্থান নেই: {unplaced}",
+  "p.product_roadmaps.in_family": "পরিবার: {family}",
+  "p.product_roadmaps.families_h": "পণ্য পরিবার",
+  "p.product_roadmaps.families_none": "এখনও কোনো পণ্য পরিবার নেই।",
+  "p.product_roadmaps.products": "পণ্য: {n}",
 };

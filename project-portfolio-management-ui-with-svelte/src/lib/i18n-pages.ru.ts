@@ -9719,4 +9719,21 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.product_roadmap.field.item": "Пункт",
   "p.product_roadmap.could_not_publish":
     "Не удалось опубликовать набор изменений.",
+  "p.product_roadmaps.title": "Дорожные карты продуктов",
+  "p.product_roadmaps.title_ppm": "Дорожные карты продуктов — PPM",
+  "p.product_roadmaps.intro":
+    "Все дорожные карты продуктов, которые вам можно читать, опубликованные или нет, и те, что пора пересмотреть. Откройте карту, чтобы её изменить.",
+  "p.product_roadmaps.loading": "Загрузка дорожных карт…",
+  "p.product_roadmaps.could_not_load": "Не удалось загрузить дорожные карты.",
+  "p.product_roadmaps.due_h": "Пора пересмотреть",
+  "p.product_roadmaps.due_none": "Все дорожные карты актуальны.",
+  "p.product_roadmaps.all_h": "Все дорожные карты",
+  "p.product_roadmaps.all_none":
+    "Дорожных карт пока нет. План вида Product создаёт её на своей странице дорожной карты.",
+  "p.product_roadmaps.counts":
+    "пунктов на местах: {placed}; без места: {unplaced}",
+  "p.product_roadmaps.in_family": "семейство: {family}",
+  "p.product_roadmaps.families_h": "Семейства продуктов",
+  "p.product_roadmaps.families_none": "Семейств продуктов пока нет.",
+  "p.product_roadmaps.products": "продуктов: {n}",
 };

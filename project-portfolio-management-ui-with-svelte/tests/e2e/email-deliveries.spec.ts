@@ -103,6 +103,8 @@ test.describe("email deliveries", () => {
       await page.goto(`/${locale}/email-deliveries`, {
         waitUntil: "networkidle",
       });
+      // The title is set when the page has rendered; axe read too early on a CI runner once (document-title).
+      await expect(page).toHaveTitle(/\S/);
       const { default: AxeBuilder } = await import("@axe-core/playwright");
       const r = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])

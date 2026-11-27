@@ -16,6 +16,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a flaky accessibility test made to wait)
+
+- `tests/e2e/email-deliveries.spec.ts`'s axe test now waits for the page's title before running axe; on a CI runner axe
+  once read the page before it had one (`document-title`, run 45923580960). The page itself is unchanged. Not shown:
+  that the flake is gone on CI (35 local repeats passed; it had passed locally before too).
+
 ## 27 November (the import review queue on `/jobs`)
 
 - `/jobs` lists the rows an import held because they looked like a plan already here, with the plans each looks like

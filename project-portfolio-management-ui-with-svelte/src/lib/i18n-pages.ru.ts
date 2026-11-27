@@ -9868,4 +9868,15 @@ export const PAGES_RU: Record<PageKey, string> = {
     "Краткое название на каждом языке — не длиннее 50 символов.",
   "p.organizations.tr_code_twice":
     "Каждый язык может встречаться только один раз.",
+  "p.product_roadmap.f_details":
+    "Подробности (необязательно: по строке на пункт, на два пробела глубже на уровень, не более двух уровней)",
+  "p.product_roadmap.f_orgs": "Для кого (необязательно)",
+  "p.product_roadmap.orgs_are": "Для: {orgs}",
+  "p.product_roadmap.org_retired": "{name} (выведена)",
+  "p.product_roadmap.detail_long":
+    "Строка подробностей — не длиннее 300 символов.",
+  "p.product_roadmap.detail_deep":
+    "Первая строка подробностей — верхнего уровня, каждая следующая не более чем на уровень глубже предыдущей, не глубже двух уровней.",
+  "p.product_roadmap.details_many": "Не более 50 строк подробностей.",
+  "p.product_roadmap.orgs_many": "Не более 50 организаций.",
 };

@@ -8967,4 +8967,14 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.organizations.tr_name_bad": "每种语言的名称须为 1 至 200 个字符。",
   "p.organizations.tr_short_bad": "每种语言的简称最多 50 个字符。",
   "p.organizations.tr_code_twice": "每种语言只能出现一次。",
+  "p.product_roadmap.f_details":
+    "详情（可选：每项一行，每深一级多缩进两个空格，最多两级）",
+  "p.product_roadmap.f_orgs": "面向谁（可选）",
+  "p.product_roadmap.orgs_are": "面向：{orgs}",
+  "p.product_roadmap.org_retired": "{name}（已停用）",
+  "p.product_roadmap.detail_long": "每行详情最多 300 个字符。",
+  "p.product_roadmap.detail_deep":
+    "第一行详情位于顶层，每行最多比上一行深一级，最多两级。",
+  "p.product_roadmap.details_many": "最多 50 行详情。",
+  "p.product_roadmap.orgs_many": "最多 50 个组织。",
 };

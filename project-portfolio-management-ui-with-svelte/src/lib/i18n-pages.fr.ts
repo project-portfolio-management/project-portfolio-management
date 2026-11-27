@@ -10073,4 +10073,15 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.organizations.tr_short_bad":
     "Le nom court de chaque langue compte au plus 50 caractères.",
   "p.organizations.tr_code_twice": "Chaque langue ne peut figurer qu'une fois.",
+  "p.product_roadmap.f_details":
+    "Détails (facultatif : une ligne chacun, deux espaces de plus par niveau, deux niveaux au plus)",
+  "p.product_roadmap.f_orgs": "Pour qui (facultatif)",
+  "p.product_roadmap.orgs_are": "Pour : {orgs}",
+  "p.product_roadmap.org_retired": "{name} (retirée)",
+  "p.product_roadmap.detail_long":
+    "Une ligne de détail compte au plus 300 caractères.",
+  "p.product_roadmap.detail_deep":
+    "La première ligne de détail est en haut, et chaque ligne au plus un niveau plus bas que la précédente, deux niveaux au plus.",
+  "p.product_roadmap.details_many": "50 lignes de détail au plus.",
+  "p.product_roadmap.orgs_many": "50 organisations au plus.",
 };

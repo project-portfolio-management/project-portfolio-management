@@ -6,8 +6,10 @@
   placement, and removed after a question. Every limit is said before sending; a slug another roadmap has or had (409)
   has its own sentence. Publishing or taking it off the public reader goes as one change set (RE-2): previewed first
   (`POST …/publish/preview`: what would change, what conflicts), then published (`POST …/publish`), a conflict meanwhile
-  (409) said in the page's words. Gathering several edits into one change set, translations, an item's details and
-  organizations, the family and the category are not on this page yet. Rules in `src/lib/roadmap-view.ts`.
+  (409) said in the page's words. An item's details (indented lines) and the organizations it is for are set with its
+  other fields; the roadmap and its items are translated field by field (RE-6), its category chosen (RE-7). Gathering
+  several edits into one change set and translating details are not on this page yet. Rules in
+  `src/lib/product-roadmap-view.ts`.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -20,6 +22,8 @@
   import { PlanRepository } from "#lib/api/plans.js";
   import { PpmClient, type ProductRoadmap } from "#lib/api/ppm.js";
   import { isLanguageCode, shownName, type RoadmapCategory } from "#lib/roadmap-category-view.js";
+  import { shownOrgName } from "#lib/organization-view.js";
+  import type { Organization } from "#lib/api/ppm.js";
   import {
     PHASE_MAX,
     PLACEMENTS,
@@ -56,6 +60,7 @@
 
   let roadmap = $state<ProductRoadmap | null>(null);
   let categories = $state<RoadmapCategory[]>([]);
+  let organizations = $state<Organization[]>([]);
   let isProduct = $state<boolean | null>(null);
   let loaded = $state(false);
   let loadError = $state<string | null>(null);
@@ -89,14 +94,17 @@
 
   async function load() {
     try {
-      const [r, plan, cats] = await Promise.all([
+      const [r, plan, cats, orgs] = await Promise.all([
         ppm.productRoadmap(pid),
         repo.get(pid),
         // The categories only fill the picker; without them the roadmap still reads.
         ppm.roadmapCategories().catch(() => [] as RoadmapCategory[]),
+        // The organizations only fill the picker and name an item's; without them the roadmap still reads.
+        ppm.organizations().then((r) => r.organizations, () => [] as Organization[]),
       ]);
       roadmap = r;
       categories = cats;
+      organizations = orgs;
       fillTranslations();
       isProduct = plan.kind === "Product";
       form = roadmapFormOf(r);
@@ -285,6 +293,16 @@
     );
   }
 
+  /** An organization's name in the reader's language, a retired one marked; an unknown id as itself. */
+  const orgName = (opid: string) => {
+    const o = organizations.find((x) => x.pid === opid);
+    if (!o) return opid;
+    const n = shownOrgName(o, i18n.locale);
+    return o.active ? n : t("p.product_roadmap.org_retired", { name: n });
+  };
+  /** The organizations an item's form offers: the active ones, and any retired one the item already has. */
+  const orgChoices = (f: ItemForm) => organizations.filter((o) => o.active || f.organizations.includes(o.pid));
+
   const sourceOf = (record: Record<string, unknown>, f: string) => {
     const v = record[f];
     return Array.isArray(v) ? v.join(", ") : (v as string | null | undefined);
@@ -302,6 +320,19 @@
   <label>{t("p.product_roadmap.f_outcome")} <textarea rows="2" maxlength={TEXT_MAX} bind:value={f.expected_outcome}></textarea></label>
   <label>{t("p.product_roadmap.f_phase")} <input bind:value={f.phase} maxlength={PHASE_MAX} /></label>
   <label>{t("p.product_roadmap.f_tags")} <input bind:value={f.tags} /></label>
+  <label>{t("p.product_roadmap.f_details")} <textarea rows="4" bind:value={f.details}></textarea></label>
+  {#if orgChoices(f).length > 0}
+    <fieldset class="orgs">
+      <legend>{t("p.product_roadmap.f_orgs")}</legend>
+      {#each orgChoices(f) as o (o.pid)}
+        <label class="inline"><input
+            type="checkbox"
+            checked={f.organizations.includes(o.pid)}
+            onchange={(e) => (f.organizations = e.currentTarget.checked ? [...f.organizations, o.pid] : f.organizations.filter((x) => x !== o.pid))}
+          /> {orgName(o.pid)}</label>
+      {/each}
+    </fieldset>
+  {/if}
 {/snippet}
 
 <svelte:head><title>{t("p.product_roadmap.title_ppm")}</title></svelte:head>
@@ -396,6 +427,14 @@
                 {#if i.tags.length > 0}<p class="small muted">{t("p.product_roadmap.tags_are", { tags: i.tags.join(", ") })}</p>{/if}
                 {#if i.description}<p>{i.description}</p>{/if}
                 {#if i.expected_outcome}<p class="small">{t("p.product_roadmap.outcome_is", { outcome: i.expected_outcome })}</p>{/if}
+                {#if (i.details ?? []).length > 0}
+                  <ul class="details" data-testid={`details-${i.pid}`}>
+                    {#each i.details ?? [] as d, n (n)}<li style:margin-inline-start={`${d.level * 1.25}rem`}>{d.text}</li>{/each}
+                  </ul>
+                {/if}
+                {#if (i.organization_pids ?? []).length > 0}
+                  <p class="small">{t("p.product_roadmap.orgs_are", { orgs: (i.organization_pids ?? []).map(orgName).join(", ") })}</p>
+                {/if}
                 {#if editing === i.pid}
                   <form class="stack" onsubmit={(e) => saveItem(e, i)} novalidate aria-label={t("p.product_roadmap.change_item", { title: i.title })}>
                     {@render itemFields(edit)}
@@ -502,6 +541,15 @@
 {/if}
 
 <style>
+  .details {
+    list-style: disc;
+    padding-inline-start: 1.25rem;
+  }
+  fieldset.orgs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+  }
   .items {
     padding-inline-start: 1.25rem;
     display: grid;

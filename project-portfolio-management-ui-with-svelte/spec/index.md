@@ -3609,6 +3609,10 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   (`PUT /api/organizations/{pid}`: an emptied short name or code clears it, the names replace the set); every problem
   is said first, a name, code or national scope another organization holds among them, and a 409 meanwhile has its
   own sentence. Rules in `src/lib/organization-view.ts`; `tests/e2e/organizations.spec.ts`.
+- **An item's details and organizations** (on `/plans/[pid]/roadmap`, RE-1, RE-7, 2026-11-27): an item's details are
+  written a line each, two spaces deeper for each level (the first at the top, each at most one deeper than the one
+  above, at most two in; at most 50 lines of up to 300 characters), and shown as an indented list. The organizations
+  it is for are picked from the active ones (a retired one the item has stays offered, marked), each named in the
+  reader's language, and shown under it; at most 50. Both go with the item's other fields, only when changed.
 - **Not built** in part l: gathering several edits into one pending change set (each edit above is saved at once),
-  an item's details (and their translations) and organizations, and organization names shown on any page but
-  `/organizations`.
+  translating an item's details, and organization names on pages other than `/organizations` and this one.

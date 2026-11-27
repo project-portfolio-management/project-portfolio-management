@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a roadmap item's details and organizations)
+
+- An item on a product roadmap now takes its details, written as indented lines and shown as a list, and the
+  organizations it is for, picked from the active ones; both are sent only when changed, every limit said first. 8 new
+  strings in every locale, machine-written in 14, none reviewed. Not built: translating details. Not verified: against
+  a real service.
+
 ## 27 November (an organization's names)
 
 - `/organizations` shows each organization's short name and code, its name in the reader's language, and which one is

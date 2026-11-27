@@ -9718,4 +9718,14 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.organizations.tr_name_bad": "各言語の名称は 1〜200 文字にしてください。",
   "p.organizations.tr_short_bad": "各言語の略称は 50 文字までです。",
   "p.organizations.tr_code_twice": "各言語は 1 回だけ指定できます。",
+  "p.product_roadmap.f_details":
+    "詳細（任意: 1 行に 1 項目、階層ごとに空白 2 つ下げる、2 階層まで）",
+  "p.product_roadmap.f_orgs": "対象の組織（任意）",
+  "p.product_roadmap.orgs_are": "対象: {orgs}",
+  "p.product_roadmap.org_retired": "{name}（廃止）",
+  "p.product_roadmap.detail_long": "詳細の 1 行は 300 文字までです。",
+  "p.product_roadmap.detail_deep":
+    "詳細の最初の行は最上位で、各行は上の行より最大 1 階層深く、2 階層までです。",
+  "p.product_roadmap.details_many": "詳細は 50 行までです。",
+  "p.product_roadmap.orgs_many": "組織は 50 までです。",
 };

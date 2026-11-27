@@ -1,7 +1,8 @@
 // The rules of a product plan's public roadmap page (`/plans/[pid]/roadmap`, RE-1, RE-3; NC-1 slice 12 part l), kept out of
 // the component so they are unit-tested: the service's limits (a title 1 to 200 characters, a vision, a description
 // or an outcome up to 2,000, a phase up to 100, at most 20 tags of 1 to 50 characters with no comma and no repeat,
-// a slug of lower-case letters, digits and single hyphens up to 64), what a change sends (only what changed), how
+// a slug of lower-case letters, digits and single hyphens up to 64, at most 50 detail lines of up to 300 characters at
+// levels 0 to 2, at most 50 organizations), what a change sends (only what changed), how
 // the items fall into their placements, and where a move puts one.
 
 /** Every placement, in page order (`public_roadmap::PLACEMENTS`); an item with none is unplaced, shown last. */
@@ -21,6 +22,48 @@ export const PHASE_MAX = 100;
 export const TAGS_MAX = 20;
 export const TAG_MAX = 50;
 export const SLUG_MAX = 64;
+export const DETAILS_MAX = 50;
+export const DETAIL_MAX = 300;
+export const DETAIL_LEVEL_MAX = 2;
+export const ORGANIZATIONS_MAX = 50;
+
+/** One line of an item's details; level 0 is the top, at most one deeper than the line above, at most 2. */
+export interface Detail {
+  text: string;
+  level: number;
+}
+
+/** The details as their text area holds them: a line each, indented two spaces a level. */
+export const detailsText = (details: readonly Detail[]): string =>
+  details.map((d) => `${"  ".repeat(d.level)}${d.text}`).join("\n");
+
+/**
+ * The details a text area says (a tab is two spaces; two spaces make a level; blank lines dropped), with every
+ * problem as catalogue keys: too many lines, a line too long, a line more than one level deeper than the one above or
+ * deeper than 2.
+ */
+export function parseDetails(text: string): {
+  details: Detail[];
+  problems: string[];
+} {
+  const problems = new Set<string>();
+  const details: Detail[] = [];
+  let above: number | null = null;
+  for (const raw of text.replaceAll("\t", "  ").split("\n")) {
+    const t = raw.trim();
+    if (t === "") continue;
+    const level = Math.floor((raw.length - raw.trimStart().length) / 2);
+    const deepest = above === null ? 0 : Math.min(above + 1, DETAIL_LEVEL_MAX);
+    if ([...t].length > DETAIL_MAX)
+      problems.add("p.product_roadmap.detail_long");
+    if (level > deepest) problems.add("p.product_roadmap.detail_deep");
+    details.push({ text: t, level });
+    above = level;
+  }
+  if (details.length > DETAILS_MAX)
+    problems.add("p.product_roadmap.details_many");
+  return { details, problems: [...problems] };
+}
 
 const chars = (s: string) => [...s.trim()].length;
 
@@ -135,6 +178,9 @@ export interface RoadmapItem {
   expected_outcome: string | null;
   phase: string | null;
   tags: string[];
+  /** RE-7: the organizations it is for, by id. */
+  organization_pids?: string[];
+  details?: Detail[];
   placement: Placement | null;
   position: number;
   /** RE-6: by language, each translated field's value and whether its source changed since. */
@@ -148,6 +194,10 @@ export interface ItemForm {
   expected_outcome: string;
   phase: string;
   tags: string;
+  /** The details, a line each, indented two spaces a level. */
+  details: string;
+  /** The organizations it is for, by id. */
+  organizations: string[];
 }
 
 export const itemFormOf = (i: RoadmapItem | null): ItemForm => ({
@@ -156,6 +206,8 @@ export const itemFormOf = (i: RoadmapItem | null): ItemForm => ({
   expected_outcome: i?.expected_outcome ?? "",
   phase: i?.phase ?? "",
   tags: (i?.tags ?? []).join(", "),
+  details: detailsText(i?.details ?? []),
+  organizations: [...(i?.organization_pids ?? [])],
 });
 
 export interface ItemBody {
@@ -164,6 +216,8 @@ export interface ItemBody {
   expected_outcome?: string;
   phase?: string;
   tags?: string[];
+  details?: Detail[];
+  organization_pids?: string[];
   placement?: Placement;
 }
 
@@ -186,6 +240,11 @@ export function itemChange(
   if (chars(f.phase) > PHASE_MAX) problems.push("p.product_roadmap.phase_long");
   const tags = tagsOf(f.tags);
   tagProblems(tags, problems);
+  const d = parseDetails(f.details ?? "");
+  problems.push(...d.problems);
+  const orgs = [...new Set(f.organizations ?? [])];
+  if (orgs.length > ORGANIZATIONS_MAX)
+    problems.push("p.product_roadmap.orgs_many");
   if (problems.length > 0) return { problems: [...new Set(problems)] };
   const body: ItemBody = {};
   const texts = ["description", "expected_outcome", "phase"] as const;
@@ -193,6 +252,8 @@ export function itemChange(
     body.title = title;
     for (const k of texts) if (f[k].trim() !== "") body[k] = f[k].trim();
     if (tags.length > 0) body.tags = tags;
+    if (d.details.length > 0) body.details = d.details;
+    if (orgs.length > 0) body.organization_pids = orgs;
     if (placement) body.placement = placement;
     return { body };
   }
@@ -200,6 +261,11 @@ export function itemChange(
   for (const k of texts)
     if (f[k].trim() !== (i[k] ?? "")) body[k] = f[k].trim();
   if (JSON.stringify(tags) !== JSON.stringify(i.tags)) body.tags = tags;
+  if (JSON.stringify(d.details) !== JSON.stringify(i.details ?? []))
+    body.details = d.details;
+  const had = [...(i.organization_pids ?? [])].sort();
+  if (JSON.stringify([...orgs].sort()) !== JSON.stringify(had))
+    body.organization_pids = orgs;
   return Object.keys(body).length === 0 ? null : { body };
 }
 
@@ -316,7 +382,7 @@ export type ShownTranslations = Record<
   Record<string, { value: unknown; needs_review: boolean }>
 >;
 
-/** The roadmap's translatable fields, and an item's (details are not offered here). */
+/** The roadmap's translatable fields, and an item's (its details are not offered here). */
 export const ROADMAP_TRANSLATABLE = [
   "title",
   "vision",

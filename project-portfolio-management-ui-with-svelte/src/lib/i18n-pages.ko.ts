@@ -9556,4 +9556,14 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.organizations.tr_name_bad": "각 언어의 이름은 1~200자여야 합니다.",
   "p.organizations.tr_short_bad": "각 언어의 약칭은 최대 50자입니다.",
   "p.organizations.tr_code_twice": "각 언어는 한 번만 쓸 수 있습니다.",
+  "p.product_roadmap.f_details":
+    "세부 사항(선택: 한 줄에 하나씩, 수준마다 공백 두 칸 더 들여쓰기, 최대 두 수준)",
+  "p.product_roadmap.f_orgs": "대상 조직(선택)",
+  "p.product_roadmap.orgs_are": "대상: {orgs}",
+  "p.product_roadmap.org_retired": "{name}(폐지됨)",
+  "p.product_roadmap.detail_long": "세부 사항 한 줄은 최대 300자입니다.",
+  "p.product_roadmap.detail_deep":
+    "세부 사항의 첫 줄은 최상위이며, 각 줄은 윗줄보다 최대 한 수준 깊고 최대 두 수준까지입니다.",
+  "p.product_roadmap.details_many": "세부 사항은 최대 50줄입니다.",
+  "p.product_roadmap.orgs_many": "조직은 최대 50개입니다.",
 };

@@ -10118,4 +10118,15 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.organizations.tr_short_bad":
     "Der Kurzname jeder Sprache hat höchstens 50 Zeichen.",
   "p.organizations.tr_code_twice": "Jede Sprache darf nur einmal vorkommen.",
+  "p.product_roadmap.f_details":
+    "Details (optional: eine Zeile je Punkt, zwei Leerzeichen tiefer je Ebene, höchstens zwei Ebenen)",
+  "p.product_roadmap.f_orgs": "Für wen (optional)",
+  "p.product_roadmap.orgs_are": "Für: {orgs}",
+  "p.product_roadmap.org_retired": "{name} (stillgelegt)",
+  "p.product_roadmap.detail_long":
+    "Eine Detailzeile hat höchstens 300 Zeichen.",
+  "p.product_roadmap.detail_deep":
+    "Die erste Detailzeile steht oben, jede Zeile höchstens eine Ebene tiefer als die darüber, höchstens zwei Ebenen.",
+  "p.product_roadmap.details_many": "Höchstens 50 Detailzeilen.",
+  "p.product_roadmap.orgs_many": "Höchstens 50 Organisationen.",
 };

@@ -19,6 +19,8 @@ import {
   step,
   tagsOf,
   type RoadmapItem,
+  detailsText,
+  parseDetails,
 } from "../../src/lib/product-roadmap-view";
 
 const r = {
@@ -301,5 +303,84 @@ describe("translations (RE-6)", () => {
       { lang: "cy", review: 1 },
       { lang: "fr", review: 1 },
     ]);
+  });
+});
+
+describe("an item's details and organizations (RE-1, RE-7)", () => {
+  const base = {
+    pid: "a",
+    public_id: "RA",
+    title: "Tap to pay",
+    description: null,
+    expected_outcome: null,
+    phase: null,
+    tags: [],
+    placement: null,
+    position: 0,
+    details: [
+      { text: "Cards", level: 0 },
+      { text: "Debit", level: 1 },
+    ],
+    organization_pids: ["o1", "o2"],
+  };
+
+  it("writes and reads the details a line each, two spaces a level", () => {
+    expect(detailsText(base.details)).toBe("Cards\n  Debit");
+    expect(parseDetails("Cards\n\t Debit \n\n    Visa\nPhones")).toEqual({
+      details: [
+        { text: "Cards", level: 0 },
+        { text: "Debit", level: 1 },
+        { text: "Visa", level: 2 },
+        { text: "Phones", level: 0 },
+      ],
+      problems: [],
+    });
+  });
+
+  it("says a line too deep, too long, or too many lines", () => {
+    expect(parseDetails("  Cards").problems).toEqual([
+      "p.product_roadmap.detail_deep",
+    ]);
+    expect(parseDetails("A\n  B\n      C").problems).toEqual([
+      "p.product_roadmap.detail_deep",
+    ]);
+    expect(parseDetails("x".repeat(301)).problems).toEqual([
+      "p.product_roadmap.detail_long",
+    ]);
+    expect(
+      parseDetails(Array.from({ length: 51 }, () => "x").join("\n")).problems,
+    ).toEqual(["p.product_roadmap.details_many"]);
+  });
+
+  it("sends the details and organizations only when they changed, the organizations in any order", () => {
+    const f = itemFormOf(base);
+    expect(f.details).toBe("Cards\n  Debit");
+    expect(itemChange({ ...f, organizations: ["o2", "o1"] }, base)).toBeNull();
+    expect(
+      itemChange({ ...f, details: "", organizations: ["o1"] }, base),
+    ).toEqual({ body: { details: [], organization_pids: ["o1"] } });
+    expect(
+      itemChange(
+        {
+          ...itemFormOf(null),
+          title: "New",
+          details: "A",
+          organizations: ["o3"],
+        },
+        null,
+      ),
+    ).toEqual({
+      body: {
+        title: "New",
+        details: [{ text: "A", level: 0 }],
+        organization_pids: ["o3"],
+      },
+    });
+    expect(
+      itemChange(
+        { ...f, organizations: Array.from({ length: 51 }, (_, n) => `o${n}`) },
+        base,
+      ),
+    ).toEqual({ problems: ["p.product_roadmap.orgs_many"] });
   });
 });

@@ -9516,4 +9516,14 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.organizations.tr_name_bad": "প্রতিটি ভাষার নাম ১ থেকে ২০০ অক্ষরের হতে হবে।",
   "p.organizations.tr_short_bad": "প্রতিটি ভাষার সংক্ষিপ্ত নাম সর্বোচ্চ ৫০ অক্ষর।",
   "p.organizations.tr_code_twice": "প্রতিটি ভাষা কেবল একবার থাকতে পারে।",
+  "p.product_roadmap.f_details":
+    "বিস্তারিত (ঐচ্ছিক: প্রতিটির জন্য একটি লাইন, প্রতি স্তরে দুই স্পেস ভেতরে, সর্বোচ্চ দুই স্তর)",
+  "p.product_roadmap.f_orgs": "এটি কাদের জন্য (ঐচ্ছিক)",
+  "p.product_roadmap.orgs_are": "যাদের জন্য: {orgs}",
+  "p.product_roadmap.org_retired": "{name} (অবসরপ্রাপ্ত)",
+  "p.product_roadmap.detail_long": "বিস্তারিতের একটি লাইন সর্বোচ্চ ৩০০ অক্ষর।",
+  "p.product_roadmap.detail_deep":
+    "বিস্তারিতের প্রথম লাইন শীর্ষে থাকে, এবং প্রতিটি লাইন উপরের লাইনের চেয়ে সর্বোচ্চ এক স্তর ভেতরে, সর্বোচ্চ দুই স্তর।",
+  "p.product_roadmap.details_many": "সর্বোচ্চ ৫০টি বিস্তারিত লাইন।",
+  "p.product_roadmap.orgs_many": "সর্বোচ্চ ৫০টি সংস্থা।",
 };

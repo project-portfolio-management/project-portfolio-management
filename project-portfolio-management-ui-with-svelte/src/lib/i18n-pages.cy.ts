@@ -9888,4 +9888,15 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.organizations.tr_name_bad": "Rhaid i enw pob iaith fod yn 1 i 200 nod.",
   "p.organizations.tr_short_bad": "Mae enw byr pob iaith yn 50 nod ar y mwyaf.",
   "p.organizations.tr_code_twice": "Gall pob iaith ymddangos unwaith yn unig.",
+  "p.product_roadmap.f_details":
+    "Manylion (dewisol: llinell yr un, dau fwlch yn ddyfnach ar gyfer pob lefel, dwy lefel ar y mwyaf)",
+  "p.product_roadmap.f_orgs": "Ar gyfer pwy (dewisol)",
+  "p.product_roadmap.orgs_are": "Ar gyfer: {orgs}",
+  "p.product_roadmap.org_retired": "{name} (wedi'i ymddeol)",
+  "p.product_roadmap.detail_long":
+    "Mae llinell fanylion yn 300 nod ar y mwyaf.",
+  "p.product_roadmap.detail_deep":
+    "Mae'r llinell fanylion gyntaf ar y brig, a phob llinell un lefel yn ddyfnach na'r un uwch ei phen ar y mwyaf, dwy lefel i mewn ar y mwyaf.",
+  "p.product_roadmap.details_many": "50 llinell fanylion ar y mwyaf.",
+  "p.product_roadmap.orgs_many": "50 sefydliad ar y mwyaf.",
 };

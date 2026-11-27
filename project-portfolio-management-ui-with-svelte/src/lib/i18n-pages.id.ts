@@ -9918,4 +9918,14 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.organizations.tr_short_bad":
     "Nama singkat setiap bahasa paling banyak 50 karakter.",
   "p.organizations.tr_code_twice": "Setiap bahasa hanya boleh muncul sekali.",
+  "p.product_roadmap.f_details":
+    "Detail (opsional: satu baris masing-masing, dua spasi lebih dalam per tingkat, paling banyak dua tingkat)",
+  "p.product_roadmap.f_orgs": "Untuk siapa (opsional)",
+  "p.product_roadmap.orgs_are": "Untuk: {orgs}",
+  "p.product_roadmap.org_retired": "{name} (dihentikan)",
+  "p.product_roadmap.detail_long": "Baris detail paling banyak 300 karakter.",
+  "p.product_roadmap.detail_deep":
+    "Baris detail pertama ada di atas, dan setiap baris paling banyak satu tingkat lebih dalam dari baris di atasnya, paling dalam dua tingkat.",
+  "p.product_roadmap.details_many": "Paling banyak 50 baris detail.",
+  "p.product_roadmap.orgs_many": "Paling banyak 50 organisasi.",
 };

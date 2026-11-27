@@ -9398,4 +9398,14 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.organizations.tr_name_bad": "हर भाषा का नाम 1 से 200 वर्ण का होना चाहिए।",
   "p.organizations.tr_short_bad": "हर भाषा का संक्षिप्त नाम अधिकतम 50 वर्ण का है।",
   "p.organizations.tr_code_twice": "हर भाषा केवल एक बार आ सकती है।",
+  "p.product_roadmap.f_details":
+    "विवरण (वैकल्पिक: हर एक की पंक्ति, हर स्तर के लिए दो स्पेस गहरा, अधिकतम दो स्तर)",
+  "p.product_roadmap.f_orgs": "यह किसके लिए है (वैकल्पिक)",
+  "p.product_roadmap.orgs_are": "इनके लिए: {orgs}",
+  "p.product_roadmap.org_retired": "{name} (सेवानिवृत्त)",
+  "p.product_roadmap.detail_long": "विवरण की पंक्ति अधिकतम 300 वर्ण की है।",
+  "p.product_roadmap.detail_deep":
+    "विवरण की पहली पंक्ति सबसे ऊपर होती है, और हर पंक्ति ऊपर वाली से अधिकतम एक स्तर गहरी, अधिकतम दो स्तर तक।",
+  "p.product_roadmap.details_many": "अधिकतम 50 विवरण पंक्तियाँ।",
+  "p.product_roadmap.orgs_many": "अधिकतम 50 संगठन।",
 };

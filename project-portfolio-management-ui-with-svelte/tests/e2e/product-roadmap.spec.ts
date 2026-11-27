@@ -1,6 +1,6 @@
 // RE-1 and RE-3 (NC-1 slice 12 part l) in a real browser: `/plans/[pid]/roadmap` makes a Product plan's roadmap,
 // changes its own fields with only what changed sent, marks it reviewed, and adds, changes, moves and removes items;
-// translates the roadmap and its items field by field (RE-6); a plan of another kind is told it has none; a slug another roadmap holds is said in the page's words. Welsh; axe.
+// translates the roadmap and its items field by field (RE-6); sets an item's details and organizations; a plan of another kind is told it has none; a slug another roadmap holds is said in the page's words. Welsh; axe.
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
@@ -556,4 +556,95 @@ test("the roadmap and an item are translated field by field; a moved source is m
   await expect(page.getByTestId("roadmap-error")).toHaveText(
     "Give a language code such as cy or zh-cn.",
   );
+});
+
+test("an item's details are indented lines and its organizations are picked from the active ones; only what changed is sent", async ({
+  page,
+}) => {
+  const sent = await stub(page);
+  await page.route("**/api/organizations", (r) =>
+    r.fulfill({
+      json: {
+        organizations: [
+          {
+            pid: "o1",
+            name: "Swansea Bay University Health Board",
+            kind: "delivery",
+            active: true,
+            audience: "org:o1",
+            short_name: "Swansea Bay",
+            translations: {},
+          },
+          {
+            pid: "o2",
+            name: "Old Partner",
+            kind: "partner",
+            active: false,
+            audience: "org:o2",
+            translations: {},
+          },
+          {
+            pid: "o3",
+            name: "Digital Health and Care Wales",
+            kind: "delivery",
+            active: true,
+            audience: "org:o3",
+            national: true,
+            translations: {},
+          },
+        ],
+      },
+    }),
+  );
+  await page.goto(`/en-001/plans/${PID}/roadmap`);
+  await settle(page);
+  const tap = page
+    .getByTestId("placement-now")
+    .getByRole("listitem")
+    .filter({ hasText: "Tap to pay" })
+    .first();
+  await tap.getByRole("button", { name: "Change" }).click();
+  const form = page.getByRole("form", { name: "Change “Tap to pay”" });
+  const who = form.getByRole("group", { name: "Who it is for (optional)" });
+  await expect(who.getByRole("checkbox")).toHaveCount(2);
+  await expect(who.getByText("Old Partner")).toHaveCount(0);
+  await form.getByLabel(/^Details/).fill("  Cards");
+  await form.getByRole("button", { name: "Save the item" }).click();
+  await expect(page.getByTestId("roadmap-problems")).toHaveText(
+    /^The first detail line is at the top/,
+  );
+  await form.getByLabel(/^Details/).fill("Cards\n  Debit\n  Credit");
+  await who
+    .getByRole("checkbox", { name: "Swansea Bay University Health Board" })
+    .check();
+  await form.getByRole("button", { name: "Save the item" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Saved “Tap to pay”.",
+  );
+  expect(sent.at(-1)).toEqual({
+    method: "PUT",
+    path: `/api/plans/${PID}/roadmap/items/a`,
+    body: {
+      details: [
+        { text: "Cards", level: 0 },
+        { text: "Debit", level: 1 },
+        { text: "Credit", level: 1 },
+      ],
+      organization_pids: ["o1"],
+    },
+  });
+  await expect(tap.getByTestId("details-a").getByRole("listitem")).toHaveText([
+    "Cards",
+    "Debit",
+    "Credit",
+  ]);
+  await expect(tap).toContainText("For: Swansea Bay University Health Board");
+  const a = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(
+    a.violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => v.id),
+  ).toEqual([]);
 });

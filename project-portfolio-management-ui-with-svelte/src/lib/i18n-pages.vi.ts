@@ -9798,4 +9798,14 @@ export const PAGES_VI: Record<PageKey, string> = {
     "Tên của mỗi ngôn ngữ phải từ 1 đến 200 ký tự.",
   "p.organizations.tr_short_bad": "Tên ngắn của mỗi ngôn ngữ tối đa 50 ký tự.",
   "p.organizations.tr_code_twice": "Mỗi ngôn ngữ chỉ được xuất hiện một lần.",
+  "p.product_roadmap.f_details":
+    "Chi tiết (không bắt buộc: mỗi dòng một ý, thụt thêm hai dấu cách cho mỗi cấp, tối đa hai cấp)",
+  "p.product_roadmap.f_orgs": "Dành cho ai (không bắt buộc)",
+  "p.product_roadmap.orgs_are": "Dành cho: {orgs}",
+  "p.product_roadmap.org_retired": "{name} (đã ngừng)",
+  "p.product_roadmap.detail_long": "Một dòng chi tiết tối đa 300 ký tự.",
+  "p.product_roadmap.detail_deep":
+    "Dòng chi tiết đầu tiên ở cấp trên cùng, mỗi dòng sâu hơn dòng trên tối đa một cấp, tối đa hai cấp.",
+  "p.product_roadmap.details_many": "Tối đa 50 dòng chi tiết.",
+  "p.product_roadmap.orgs_many": "Tối đa 50 tổ chức.",
 };

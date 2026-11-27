@@ -9661,6 +9661,16 @@ export const PAGES_EN = {
   "p.organizations.tr_short_bad":
     "Each language's short name is at most 50 characters.",
   "p.organizations.tr_code_twice": "Each language may appear only once.",
+  "p.product_roadmap.f_details":
+    "Details (optional: a line each, two spaces deeper for each level, at most two levels)",
+  "p.product_roadmap.f_orgs": "Who it is for (optional)",
+  "p.product_roadmap.orgs_are": "For: {orgs}",
+  "p.product_roadmap.org_retired": "{name} (retired)",
+  "p.product_roadmap.detail_long": "A detail line is at most 300 characters.",
+  "p.product_roadmap.detail_deep":
+    "The first detail line is at the top, and each line is at most one level deeper than the one above, at most two levels in.",
+  "p.product_roadmap.details_many": "At most 50 detail lines.",
+  "p.product_roadmap.orgs_many": "At most 50 organizations.",
 } as const;
 
 /** A key in the page and component catalogue. */

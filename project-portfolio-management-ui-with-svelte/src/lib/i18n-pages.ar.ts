@@ -9350,4 +9350,14 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.organizations.tr_name_bad": "يجب أن يكون اسم كل لغة من 1 إلى 200 حرف.",
   "p.organizations.tr_short_bad": "الاسم المختصر لكل لغة 50 حرفًا على الأكثر.",
   "p.organizations.tr_code_twice": "لا يجوز أن تظهر كل لغة إلا مرة واحدة.",
+  "p.product_roadmap.f_details":
+    "التفاصيل (اختياري: سطر لكل منها، بمسافتين أعمق لكل مستوى، مستويان على الأكثر)",
+  "p.product_roadmap.f_orgs": "لمن هو (اختياري)",
+  "p.product_roadmap.orgs_are": "لـ: {orgs}",
+  "p.product_roadmap.org_retired": "{name} (متوقفة)",
+  "p.product_roadmap.detail_long": "سطر التفاصيل 300 حرف على الأكثر.",
+  "p.product_roadmap.detail_deep":
+    "يكون أول سطر تفاصيل في الأعلى، وكل سطر أعمق من السطر الذي فوقه بمستوى واحد على الأكثر، بمستويين على الأكثر.",
+  "p.product_roadmap.details_many": "50 سطر تفاصيل على الأكثر.",
+  "p.product_roadmap.orgs_many": "50 منظمة على الأكثر.",
 };

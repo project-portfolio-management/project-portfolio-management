@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — an item's details and organizations on `/plans/[pid]/roadmap` (RE-1, RE-7, 2026-11-27)
+
+- `parseDetails` and `detailsText` in `src/lib/product-roadmap-view.ts`; the item form's details and organizations;
+  8 strings in every locale, machine-written. Not built: translating details; not verified against a real service.
+
 ### Added — an organization's names on `/organizations` (RE-7, 2026-11-27)
 
 - A names form (name, short name, code, national, names in other languages); short name and code columns; a name

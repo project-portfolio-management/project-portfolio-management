@@ -5730,3 +5730,46 @@ export interface TemplateSynced {
   refused: { id: string; reason: string }[];
   remaining: number;
 }
+
+// ---- MS Project batch import (NC-13; NC-1 slice 12 part k) ----
+
+/** One file of a batch import: into an existing plan, or a new one (named, else the project's name in the file). */
+export interface MspdiBatchProject {
+  plan_pid?: string;
+  name?: string;
+  xml: string;
+}
+
+/** `POST /api/import/mspdi-batch` body, as far as this UI sends it. */
+export interface MspdiBatchBody {
+  projects: MspdiBatchProject[];
+  parent_pid?: string;
+}
+
+/** One project's outcome in a batch answer. */
+export interface MspdiBatchResult {
+  project: string;
+  outcome: "would_import" | "imported" | "failed" | "not_attempted" | string;
+  plan_pid?: string | null;
+  plan_created?: boolean;
+  plan_would_be_created?: boolean;
+  /** The single-file importer's report, read with `mspdiReport`. */
+  report?: Record<string, unknown>;
+  /** English; not shown. */
+  error?: string;
+}
+
+/** `POST /api/import/mspdi-batch` answer, the parts this UI reads. */
+export interface MspdiBatchAnswer {
+  dry_run: boolean;
+  projects: MspdiBatchResult[];
+  failed_at: number | null;
+  resource_pool: { name: string; projects: string[]; assignments: number }[];
+  cross_project_links: {
+    would_create?: number;
+    created?: number;
+    already_present?: number;
+    unresolved?: unknown[];
+    reason?: string;
+  };
+}

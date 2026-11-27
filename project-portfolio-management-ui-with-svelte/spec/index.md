@@ -3455,3 +3455,18 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   read again. A plan not made from a saved template (404) says so. The service's English reasons are never shown.
 - Rules in `src/lib/template-sync-view.ts` (`tests/unit/template-sync-view.test.ts`); `tests/e2e/template-sync.spec.ts`
   and `tests/e2e/plan-templates.spec.ts` (stubbed service, axe, Welsh).
+
+## Many MS Project files at once (NC-1 slice 12 part k, NC-13)
+
+- **`/mspdi-import`** (linked from `/jobs`) takes up to ten MS Project (MSPDI XML) files, each into a new plan (named,
+  else the project's name in the file) or an existing plan chosen from the plan list, new plans under an optional
+  parent. More than ten files, no file, or a file whose plan is not chosen is said before anything is sent. The first
+  step is always a preview (`dry_run=true`) that writes nothing; the same button then imports after a question that
+  says it is not one transaction (a project that fails stops the rest, and plans already created stay).
+- Each project's outcome is a word (would be imported, imported, failed, not attempted), whether a new plan would be
+  or was made, and the single-file importer's report drawn as `/plans/[pid]/import` draws it. Links between the files
+  are counted (would be made, made and already there, or none because a project failed), and those pointing outside
+  the files are counted apart. The resources of all the files are listed once with their assignments, said never to be
+  matched to people. A failed project's English error is not shown; the page says what to do.
+- **Not offered** (said on the page): the custom-field map (`field_map`, `create_fields`), the resource map and rates
+  (`resource_map`, `rates_effective_from`). `tests/e2e/mspdi-import.spec.ts` (stubbed service, axe, Welsh).

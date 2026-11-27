@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/mspdi-import`, many MS Project files at once (NC-13, 2026-11-27)
+
+- Preview, then import after a question; one client method; 42 strings in every locale. Not offered: the field and
+  resource maps.
+
 ### Added — template revisions and a plan's template changes (NC-12, 2026-11-27)
 
 - `/plan-templates/[pid]` gains the plans made from it and "Revise it from a plan"; new `/plans/[pid]/template`. Four

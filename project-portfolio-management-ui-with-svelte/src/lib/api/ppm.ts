@@ -360,6 +360,8 @@ import type {
   BulkJobStarted,
   BulkJobStatus,
   ReviewQueueItem,
+  MspdiBatchAnswer,
+  MspdiBatchBody,
   StartExportBody,
   TemplateDiff,
   TemplatePlan,
@@ -2243,6 +2245,16 @@ export class PpmClient {
       `/api/plans/${encodeURIComponent(planPid)}/template-sync`,
       { body },
     );
+  }
+
+  /** Import up to ten MS Project files at once; a dry run (the default) writes nothing. */
+  importMspdiBatch(
+    body: MspdiBatchBody,
+    dryRun: boolean,
+  ): Promise<MspdiBatchAnswer> {
+    return this.http.post(`/api/import/mspdi-batch?dry_run=${dryRun}`, {
+      body,
+    });
   }
 
   // ---- tracker import (T-28n) ----

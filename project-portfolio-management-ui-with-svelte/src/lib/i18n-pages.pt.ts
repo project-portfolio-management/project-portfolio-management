@@ -9316,4 +9316,56 @@ export const PAGES_PT: Record<PageKey, string> = {
     "A árvore de planos já não tem a forma do modelo: uma revisão pode alterar tarefas e adicionar planos no fim, não mover nem mudar o nome a planos.",
   "p.template_sync.could_not_revise": "Não foi possível rever o modelo.",
   "p.template_sync.revise_pick": "Escolha primeiro a árvore de planos.",
+  "p.mspdi_batch.title": "Importar vários ficheiros do MS Project",
+  "p.mspdi_batch.title_ppm": "Importar vários ficheiros do MS Project — PPM",
+  "p.mspdi_batch.intro":
+    "Traga até dez ficheiros do MS Project (MSPDI XML) de uma vez. Cada um vai para um plano que escolher ou para um plano novo. O primeiro passo é sempre uma pré-visualização que não escreve nada; o mesmo botão depois importa.",
+  "p.mspdi_batch.files": "Ficheiros (XML do MS Project, no máximo dez)",
+  "p.mspdi_batch.too_many": "Escolha no máximo dez ficheiros.",
+  "p.mspdi_batch.none_chosen": "Escolha primeiro pelo menos um ficheiro.",
+  "p.mspdi_batch.target": "Para",
+  "p.mspdi_batch.target_new": "um plano novo",
+  "p.mspdi_batch.target_existing": "um plano existente",
+  "p.mspdi_batch.new_name":
+    "Nome do plano novo (opcional: o nome do projeto no ficheiro)",
+  "p.mspdi_batch.existing_plan": "Plano",
+  "p.mspdi_batch.choose_plan": "Escolha um plano",
+  "p.mspdi_batch.choose_plan_first": "Escolha primeiro o plano para «{file}».",
+  "p.mspdi_batch.parent": "Colocar os planos novos sob (opcional)",
+  "p.mspdi_batch.no_parent": "nenhum plano",
+  "p.mspdi_batch.preview": "Pré-visualizar a importação",
+  "p.mspdi_batch.import": "Importar",
+  "p.mspdi_batch.import_ask":
+    "Importar os ficheiros agora? Os planos são criados e as tarefas escritas como pré-visualizado. Não é uma única transação: um projeto que falhe para os restantes, e os planos já criados ficam.",
+  "p.mspdi_batch.start_over": "Escolher outros ficheiros",
+  "p.mspdi_batch.result_preview_h": "Pré-visualização",
+  "p.mspdi_batch.result_done_h": "Importado",
+  "p.mspdi_batch.outcome_would_import": "seria importado",
+  "p.mspdi_batch.outcome_imported": "importado",
+  "p.mspdi_batch.outcome_failed": "falhou",
+  "p.mspdi_batch.outcome_not_attempted": "não tentado",
+  "p.mspdi_batch.outcome_unknown": "resultado desconhecido",
+  "p.mspdi_batch.new_plan_note": "seria criado um plano novo",
+  "p.mspdi_batch.plan_created": "foi criado um plano novo",
+  "p.mspdi_batch.failed_note":
+    "Este projeto falhou, por isso os seguintes não foram tentados. Corrija o ficheiro e importe de novo: os planos que existem são atualizados, não duplicados.",
+  "p.mspdi_batch.pool_h": "Pessoas e recursos nos ficheiros",
+  "p.mspdi_batch.pool_note":
+    "Os recursos são listados uma vez em todos os ficheiros, com quantas atribuições tem cada um. Não são associados a pessoas: um nome não é uma identidade.",
+  "p.mspdi_batch.pool_row": "{name} — atribuições: {assignments}",
+  "p.mspdi_batch.links_h": "Ligações entre os ficheiros",
+  "p.mspdi_batch.links_would":
+    "Ligações entre os ficheiros que seriam criadas: {n}.",
+  "p.mspdi_batch.links_made": "Ligações criadas: {n}; já existentes: {m}.",
+  "p.mspdi_batch.links_unresolved":
+    "Ligações para fora dos ficheiros ou para uma tarefa em falta, não criadas: {n}.",
+  "p.mspdi_batch.links_after_failure":
+    "Não foi criada nenhuma ligação entre os ficheiros, porque um projeto falhou.",
+  "p.mspdi_batch.not_offered":
+    "Não oferecido aqui: associar os campos personalizados dos ficheiros, associar recursos a pessoas e importar as suas taxas.",
+  "p.mspdi_batch.could_not": "A importação não funcionou.",
+  "p.mspdi_batch.refused":
+    "O serviço recusou os ficheiros: um não é XML do MS Project, é demasiado grande ou nomeia um plano que não pode ver.",
+  "p.mspdi_batch.link_from_jobs": "Importar vários ficheiros do MS Project",
+  "p.mspdi_batch.read_failed": "Não foi possível ler «{file}».",
 };

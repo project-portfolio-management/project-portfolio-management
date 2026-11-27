@@ -9386,4 +9386,57 @@ export const PAGES_FR: Record<PageKey, string> = {
     "L'arbre de plans n'a plus la forme du modèle : une révision peut modifier des tâches et ajouter des plans à la fin, pas déplacer ni renommer des plans.",
   "p.template_sync.could_not_revise": "Impossible de réviser le modèle.",
   "p.template_sync.revise_pick": "Choisissez d'abord l'arbre de plans.",
+  "p.mspdi_batch.title": "Importer plusieurs fichiers MS Project",
+  "p.mspdi_batch.title_ppm": "Importer plusieurs fichiers MS Project — PPM",
+  "p.mspdi_batch.intro":
+    "Faites entrer jusqu'à dix fichiers MS Project (MSPDI XML) d'un coup. Chacun va dans un plan que vous choisissez ou dans un nouveau plan. La première étape est toujours un aperçu qui n'écrit rien ; le même bouton importe ensuite.",
+  "p.mspdi_batch.files": "Fichiers (XML MS Project, dix au plus)",
+  "p.mspdi_batch.too_many": "Choisissez dix fichiers au plus.",
+  "p.mspdi_batch.none_chosen": "Choisissez d'abord au moins un fichier.",
+  "p.mspdi_batch.target": "Dans",
+  "p.mspdi_batch.target_new": "un nouveau plan",
+  "p.mspdi_batch.target_existing": "un plan existant",
+  "p.mspdi_batch.new_name":
+    "Nom du nouveau plan (facultatif : le nom du projet dans le fichier)",
+  "p.mspdi_batch.existing_plan": "Plan",
+  "p.mspdi_batch.choose_plan": "Choisissez un plan",
+  "p.mspdi_batch.choose_plan_first":
+    "Choisissez d'abord le plan de « {file} ».",
+  "p.mspdi_batch.parent": "Placer les nouveaux plans sous (facultatif)",
+  "p.mspdi_batch.no_parent": "aucun plan",
+  "p.mspdi_batch.preview": "Prévisualiser l'import",
+  "p.mspdi_batch.import": "Importer",
+  "p.mspdi_batch.import_ask":
+    "Importer les fichiers maintenant ? Les plans sont créés et les tâches écrites comme dans l'aperçu. Ce n'est pas une seule transaction : un projet en échec arrête les autres, et les plans déjà créés restent.",
+  "p.mspdi_batch.start_over": "Choisir d'autres fichiers",
+  "p.mspdi_batch.result_preview_h": "Aperçu",
+  "p.mspdi_batch.result_done_h": "Importé",
+  "p.mspdi_batch.outcome_would_import": "serait importé",
+  "p.mspdi_batch.outcome_imported": "importé",
+  "p.mspdi_batch.outcome_failed": "échec",
+  "p.mspdi_batch.outcome_not_attempted": "pas tenté",
+  "p.mspdi_batch.outcome_unknown": "résultat inconnu",
+  "p.mspdi_batch.new_plan_note": "un nouveau plan serait créé",
+  "p.mspdi_batch.plan_created": "un nouveau plan a été créé",
+  "p.mspdi_batch.failed_note":
+    "Ce projet a échoué, les suivants n'ont donc pas été tentés. Corrigez le fichier et importez à nouveau : les plans existants sont mis à jour, pas dupliqués.",
+  "p.mspdi_batch.pool_h": "Personnes et ressources dans les fichiers",
+  "p.mspdi_batch.pool_note":
+    "Les ressources sont listées une fois pour l'ensemble des fichiers, avec le nombre d'affectations de chacune. Elles ne sont pas associées à des personnes : un nom n'est pas une identité.",
+  "p.mspdi_batch.pool_row": "{name} — affectations : {assignments}",
+  "p.mspdi_batch.links_h": "Liens entre les fichiers",
+  "p.mspdi_batch.links_would":
+    "Liens entre les fichiers qui seraient créés : {n}.",
+  "p.mspdi_batch.links_made": "Liens créés : {n} ; déjà présents : {m}.",
+  "p.mspdi_batch.links_unresolved":
+    "Liens vers l'extérieur des fichiers ou vers une tâche absente, non créés : {n}.",
+  "p.mspdi_batch.links_after_failure":
+    "Aucun lien entre les fichiers n'a été créé, car un projet a échoué.",
+  "p.mspdi_batch.not_offered":
+    "Non proposé ici : faire correspondre les champs personnalisés des fichiers, associer les ressources à des personnes et importer leurs taux.",
+  "p.mspdi_batch.could_not": "L'import n'a pas fonctionné.",
+  "p.mspdi_batch.refused":
+    "Le service a refusé les fichiers : l'un n'est pas du XML MS Project, est trop gros ou désigne un plan que vous ne pouvez pas voir.",
+  "p.mspdi_batch.link_from_jobs": "Importer plusieurs fichiers MS Project",
+  "p.mspdi_batch.read_failed": "Impossible de lire « {file} ».",
 };

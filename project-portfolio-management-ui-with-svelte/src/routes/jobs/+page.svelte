@@ -248,6 +248,7 @@
 
 <form class="surface stack" onsubmit={startImport} aria-labelledby="import-h">
   <h2 id="import-h">{t("p.jobs.import_h")}</h2>
+  <p class="small"><a href={localeHref("/mspdi-import")}>{t("p.mspdi_batch.link_from_jobs")}</a></p>
   <p class="small muted">{t("p.jobs.import_rules")}</p>
   <label>{t("p.jobs.file")} <input type="file" accept=".jsonl,.ndjson,.json,.csv,text/csv,application/x-ndjson" onchange={choose} /></label>
   <label>

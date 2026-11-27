@@ -9068,4 +9068,55 @@ export const PAGES_JA: Record<PageKey, string> = {
     "計画ツリーがテンプレートの形ではなくなっています：改訂ではタスクの変更と末尾への計画の追加はできますが、計画の移動や名前の変更はできません。",
   "p.template_sync.could_not_revise": "テンプレートを改訂できませんでした。",
   "p.template_sync.revise_pick": "先に計画ツリーを選んでください。",
+  "p.mspdi_batch.title": "複数の MS Project ファイルをインポート",
+  "p.mspdi_batch.title_ppm": "複数の MS Project ファイルをインポート — PPM",
+  "p.mspdi_batch.intro":
+    "最大 10 個の MS Project（MSPDI XML）ファイルを一度に取り込みます。各ファイルは選んだ計画か新しい計画に入ります。最初の手順は常に何も書き込まないプレビューで、同じボタンでその後インポートします。",
+  "p.mspdi_batch.files": "ファイル（MS Project XML、最大 10 個）",
+  "p.mspdi_batch.too_many": "ファイルは 10 個までにしてください。",
+  "p.mspdi_batch.none_chosen": "先にファイルを 1 つ以上選んでください。",
+  "p.mspdi_batch.target": "取り込み先",
+  "p.mspdi_batch.target_new": "新しい計画",
+  "p.mspdi_batch.target_existing": "既存の計画",
+  "p.mspdi_batch.new_name":
+    "新しい計画の名前（任意：ファイル内のプロジェクト名）",
+  "p.mspdi_batch.existing_plan": "計画",
+  "p.mspdi_batch.choose_plan": "計画を選ぶ",
+  "p.mspdi_batch.choose_plan_first": "先に「{file}」の計画を選んでください。",
+  "p.mspdi_batch.parent": "新しい計画を入れる親計画（任意）",
+  "p.mspdi_batch.no_parent": "なし",
+  "p.mspdi_batch.preview": "インポートをプレビュー",
+  "p.mspdi_batch.import": "インポート",
+  "p.mspdi_batch.import_ask":
+    "ファイルを今インポートしますか？プレビューのとおりに計画が作成され、タスクが書き込まれます。これは 1 つのトランザクションではありません：失敗したプロジェクトで残りは止まり、作成済みの計画は残ります。",
+  "p.mspdi_batch.start_over": "別のファイルを選ぶ",
+  "p.mspdi_batch.result_preview_h": "プレビュー",
+  "p.mspdi_batch.result_done_h": "インポート済み",
+  "p.mspdi_batch.outcome_would_import": "インポートされる",
+  "p.mspdi_batch.outcome_imported": "インポート済み",
+  "p.mspdi_batch.outcome_failed": "失敗",
+  "p.mspdi_batch.outcome_not_attempted": "未実行",
+  "p.mspdi_batch.outcome_unknown": "不明な結果",
+  "p.mspdi_batch.new_plan_note": "新しい計画が作成される",
+  "p.mspdi_batch.plan_created": "新しい計画を作成した",
+  "p.mspdi_batch.failed_note":
+    "このプロジェクトが失敗したため、以降は実行されませんでした。ファイルを直して再度インポートしてください：既存の計画は更新され、重複しません。",
+  "p.mspdi_batch.pool_h": "ファイル内の人とリソース",
+  "p.mspdi_batch.pool_note":
+    "リソースはすべてのファイルを通して 1 回ずつ、割り当て数とともに一覧になります。人とは照合されません：名前は本人を示すものではありません。",
+  "p.mspdi_batch.pool_row": "{name}：割り当て {assignments} 件",
+  "p.mspdi_batch.links_h": "ファイル間のリンク",
+  "p.mspdi_batch.links_would": "作成されるファイル間のリンク：{n}。",
+  "p.mspdi_batch.links_made": "作成したリンク：{n}、既存：{m}。",
+  "p.mspdi_batch.links_unresolved":
+    "ファイルの外や存在しないタスクを指すため作成されないリンク：{n}。",
+  "p.mspdi_batch.links_after_failure":
+    "プロジェクトが失敗したため、ファイル間のリンクは作成されませんでした。",
+  "p.mspdi_batch.not_offered":
+    "ここでは提供していません：ファイルのカスタムフィールドの対応付け、リソースと人の照合、その単価のインポート。",
+  "p.mspdi_batch.could_not": "インポートできませんでした。",
+  "p.mspdi_batch.refused":
+    "サービスがファイルを拒否しました：MS Project XML でないもの、大きすぎるもの、または表示できない計画を指定したものがあります。",
+  "p.mspdi_batch.link_from_jobs": "複数の MS Project ファイルをインポート",
+  "p.mspdi_batch.read_failed": "「{file}」を読み込めませんでした。",
 };

@@ -9008,6 +9008,58 @@ export const PAGES_EN = {
     "The plan tree no longer has the template's shape: a revision may change tasks and add plans at the end, not move or rename plans.",
   "p.template_sync.could_not_revise": "Could not revise the template.",
   "p.template_sync.revise_pick": "Choose the plan tree first.",
+  "p.mspdi_batch.title": "Import several MS Project files",
+  "p.mspdi_batch.title_ppm": "Import several MS Project files — PPM",
+  "p.mspdi_batch.intro":
+    "Bring up to ten MS Project (MSPDI XML) files in at once. Each goes into a plan you choose or into a new plan. The first step is always a preview that writes nothing; the same button then imports.",
+  "p.mspdi_batch.files": "Files (MS Project XML, at most ten)",
+  "p.mspdi_batch.too_many": "Choose at most ten files.",
+  "p.mspdi_batch.none_chosen": "Choose at least one file first.",
+  "p.mspdi_batch.target": "Into",
+  "p.mspdi_batch.target_new": "a new plan",
+  "p.mspdi_batch.target_existing": "an existing plan",
+  "p.mspdi_batch.new_name":
+    "New plan's name (optional: the project's name in the file)",
+  "p.mspdi_batch.existing_plan": "Plan",
+  "p.mspdi_batch.choose_plan": "Choose a plan",
+  "p.mspdi_batch.choose_plan_first": "Choose the plan for “{file}” first.",
+  "p.mspdi_batch.parent": "Put new plans under (optional)",
+  "p.mspdi_batch.no_parent": "no plan",
+  "p.mspdi_batch.preview": "Preview the import",
+  "p.mspdi_batch.import": "Import",
+  "p.mspdi_batch.import_ask":
+    "Import the files now? Plans are created and tasks written as previewed. This is not one transaction: a project that fails stops the rest, and plans already created stay.",
+  "p.mspdi_batch.start_over": "Choose other files",
+  "p.mspdi_batch.result_preview_h": "Preview",
+  "p.mspdi_batch.result_done_h": "Imported",
+  "p.mspdi_batch.outcome_would_import": "would be imported",
+  "p.mspdi_batch.outcome_imported": "imported",
+  "p.mspdi_batch.outcome_failed": "failed",
+  "p.mspdi_batch.outcome_not_attempted": "not attempted",
+  "p.mspdi_batch.outcome_unknown": "unknown outcome",
+  "p.mspdi_batch.new_plan_note": "a new plan would be made",
+  "p.mspdi_batch.plan_created": "a new plan was made",
+  "p.mspdi_batch.failed_note":
+    "This project failed, so the ones after it were not attempted. Fix the file and import again: plans that exist are updated, not duplicated.",
+  "p.mspdi_batch.pool_h": "People and resources in the files",
+  "p.mspdi_batch.pool_note":
+    "Resources are listed once across all the files, with how many assignments each has. They are not matched to people: a name is not an identity.",
+  "p.mspdi_batch.pool_row": "{name} — assignments: {assignments}",
+  "p.mspdi_batch.links_h": "Links between the files",
+  "p.mspdi_batch.links_would":
+    "Links between the files that would be made: {n}.",
+  "p.mspdi_batch.links_made": "Links made: {n}; already there: {m}.",
+  "p.mspdi_batch.links_unresolved":
+    "Links that point outside the files or to a missing task, not made: {n}.",
+  "p.mspdi_batch.links_after_failure":
+    "No links between the files were made, because a project failed.",
+  "p.mspdi_batch.not_offered":
+    "Not offered here: mapping the files' custom fields, matching resources to people and importing their rates.",
+  "p.mspdi_batch.could_not": "The import did not work.",
+  "p.mspdi_batch.refused":
+    "The service refused the files: one is not MS Project XML, is too large, or names a plan you cannot see.",
+  "p.mspdi_batch.link_from_jobs": "Import several MS Project files",
+  "p.mspdi_batch.read_failed": "Could not read “{file}”.",
 } as const;
 
 /** A key in the page and component catalogue. */

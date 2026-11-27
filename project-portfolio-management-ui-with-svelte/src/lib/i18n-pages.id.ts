@@ -9249,4 +9249,55 @@ export const PAGES_ID: Record<PageKey, string> = {
     "Pohon rencana tidak lagi berbentuk seperti templat: revisi dapat mengubah tugas dan menambah rencana di akhir, bukan memindahkan atau mengganti nama rencana.",
   "p.template_sync.could_not_revise": "Tidak dapat merevisi templat.",
   "p.template_sync.revise_pick": "Pilih pohon rencana lebih dulu.",
+  "p.mspdi_batch.title": "Impor beberapa berkas MS Project",
+  "p.mspdi_batch.title_ppm": "Impor beberapa berkas MS Project — PPM",
+  "p.mspdi_batch.intro":
+    "Masukkan hingga sepuluh berkas MS Project (MSPDI XML) sekaligus. Masing-masing masuk ke rencana yang Anda pilih atau ke rencana baru. Langkah pertama selalu pratinjau yang tidak menulis apa pun; tombol yang sama lalu mengimpor.",
+  "p.mspdi_batch.files": "Berkas (XML MS Project, paling banyak sepuluh)",
+  "p.mspdi_batch.too_many": "Pilih paling banyak sepuluh berkas.",
+  "p.mspdi_batch.none_chosen": "Pilih setidaknya satu berkas lebih dulu.",
+  "p.mspdi_batch.target": "Ke",
+  "p.mspdi_batch.target_new": "rencana baru",
+  "p.mspdi_batch.target_existing": "rencana yang sudah ada",
+  "p.mspdi_batch.new_name":
+    "Nama rencana baru (opsional: nama proyek dalam berkas)",
+  "p.mspdi_batch.existing_plan": "Rencana",
+  "p.mspdi_batch.choose_plan": "Pilih rencana",
+  "p.mspdi_batch.choose_plan_first": "Pilih rencana untuk “{file}” lebih dulu.",
+  "p.mspdi_batch.parent": "Letakkan rencana baru di bawah (opsional)",
+  "p.mspdi_batch.no_parent": "tidak ada rencana",
+  "p.mspdi_batch.preview": "Pratinjau impor",
+  "p.mspdi_batch.import": "Impor",
+  "p.mspdi_batch.import_ask":
+    "Impor berkas sekarang? Rencana dibuat dan tugas ditulis seperti pratinjau. Ini bukan satu transaksi: proyek yang gagal menghentikan sisanya, dan rencana yang sudah dibuat tetap ada.",
+  "p.mspdi_batch.start_over": "Pilih berkas lain",
+  "p.mspdi_batch.result_preview_h": "Pratinjau",
+  "p.mspdi_batch.result_done_h": "Diimpor",
+  "p.mspdi_batch.outcome_would_import": "akan diimpor",
+  "p.mspdi_batch.outcome_imported": "diimpor",
+  "p.mspdi_batch.outcome_failed": "gagal",
+  "p.mspdi_batch.outcome_not_attempted": "tidak dicoba",
+  "p.mspdi_batch.outcome_unknown": "hasil tidak diketahui",
+  "p.mspdi_batch.new_plan_note": "rencana baru akan dibuat",
+  "p.mspdi_batch.plan_created": "rencana baru dibuat",
+  "p.mspdi_batch.failed_note":
+    "Proyek ini gagal, jadi yang sesudahnya tidak dicoba. Perbaiki berkas dan impor lagi: rencana yang ada diperbarui, tidak diduplikasi.",
+  "p.mspdi_batch.pool_h": "Orang dan sumber daya dalam berkas",
+  "p.mspdi_batch.pool_note":
+    "Sumber daya dicantumkan sekali untuk semua berkas, dengan jumlah penugasan masing-masing. Mereka tidak dicocokkan dengan orang: nama bukan identitas.",
+  "p.mspdi_batch.pool_row": "{name} — penugasan: {assignments}",
+  "p.mspdi_batch.links_h": "Tautan antarberkas",
+  "p.mspdi_batch.links_would": "Tautan antarberkas yang akan dibuat: {n}.",
+  "p.mspdi_batch.links_made": "Tautan dibuat: {n}; sudah ada: {m}.",
+  "p.mspdi_batch.links_unresolved":
+    "Tautan yang menunjuk ke luar berkas atau ke tugas yang tidak ada, tidak dibuat: {n}.",
+  "p.mspdi_batch.links_after_failure":
+    "Tidak ada tautan antarberkas yang dibuat, karena sebuah proyek gagal.",
+  "p.mspdi_batch.not_offered":
+    "Tidak ditawarkan di sini: memetakan bidang khusus berkas, mencocokkan sumber daya dengan orang, dan mengimpor tarif mereka.",
+  "p.mspdi_batch.could_not": "Impor tidak berhasil.",
+  "p.mspdi_batch.refused":
+    "Layanan menolak berkas: salah satunya bukan XML MS Project, terlalu besar, atau menyebut rencana yang tidak dapat Anda lihat.",
+  "p.mspdi_batch.link_from_jobs": "Impor beberapa berkas MS Project",
+  "p.mspdi_batch.read_failed": "Tidak dapat membaca “{file}”.",
 };

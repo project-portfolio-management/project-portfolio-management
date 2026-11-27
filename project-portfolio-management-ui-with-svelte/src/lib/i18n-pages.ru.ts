@@ -9198,4 +9198,56 @@ export const PAGES_RU: Record<PageKey, string> = {
     "Дерево планов больше не повторяет форму шаблона: обновление может менять задачи и добавлять планы в конец, но не перемещать и не переименовывать планы.",
   "p.template_sync.could_not_revise": "Не удалось обновить шаблон.",
   "p.template_sync.revise_pick": "Сначала выберите дерево планов.",
+  "p.mspdi_batch.title": "Импорт нескольких файлов MS Project",
+  "p.mspdi_batch.title_ppm": "Импорт нескольких файлов MS Project — PPM",
+  "p.mspdi_batch.intro":
+    "Загрузите до десяти файлов MS Project (MSPDI XML) сразу. Каждый попадает в выбранный вами план или в новый план. Первый шаг — всегда предпросмотр, который ничего не записывает; та же кнопка затем выполняет импорт.",
+  "p.mspdi_batch.files": "Файлы (XML MS Project, не более десяти)",
+  "p.mspdi_batch.too_many": "Выберите не более десяти файлов.",
+  "p.mspdi_batch.none_chosen": "Сначала выберите хотя бы один файл.",
+  "p.mspdi_batch.target": "Куда",
+  "p.mspdi_batch.target_new": "новый план",
+  "p.mspdi_batch.target_existing": "существующий план",
+  "p.mspdi_batch.new_name":
+    "Название нового плана (необязательно: название проекта в файле)",
+  "p.mspdi_batch.existing_plan": "План",
+  "p.mspdi_batch.choose_plan": "Выберите план",
+  "p.mspdi_batch.choose_plan_first": "Сначала выберите план для «{file}».",
+  "p.mspdi_batch.parent": "Поместить новые планы в (необязательно)",
+  "p.mspdi_batch.no_parent": "без плана",
+  "p.mspdi_batch.preview": "Предпросмотр импорта",
+  "p.mspdi_batch.import": "Импортировать",
+  "p.mspdi_batch.import_ask":
+    "Импортировать файлы сейчас? Планы создаются, а задачи записываются, как в предпросмотре. Это не одна транзакция: неудачный проект останавливает остальные, а уже созданные планы остаются.",
+  "p.mspdi_batch.start_over": "Выбрать другие файлы",
+  "p.mspdi_batch.result_preview_h": "Предпросмотр",
+  "p.mspdi_batch.result_done_h": "Импортировано",
+  "p.mspdi_batch.outcome_would_import": "будет импортирован",
+  "p.mspdi_batch.outcome_imported": "импортирован",
+  "p.mspdi_batch.outcome_failed": "не удалось",
+  "p.mspdi_batch.outcome_not_attempted": "не выполнялся",
+  "p.mspdi_batch.outcome_unknown": "неизвестный результат",
+  "p.mspdi_batch.new_plan_note": "будет создан новый план",
+  "p.mspdi_batch.plan_created": "создан новый план",
+  "p.mspdi_batch.failed_note":
+    "Этот проект не удался, поэтому следующие не выполнялись. Исправьте файл и импортируйте снова: существующие планы обновляются, а не дублируются.",
+  "p.mspdi_batch.pool_h": "Люди и ресурсы в файлах",
+  "p.mspdi_batch.pool_note":
+    "Ресурсы перечислены один раз по всем файлам, с числом назначений у каждого. Они не сопоставлены с людьми: имя не является идентичностью.",
+  "p.mspdi_batch.pool_row": "{name}: назначений {assignments}",
+  "p.mspdi_batch.links_h": "Связи между файлами",
+  "p.mspdi_batch.links_would":
+    "Связи между файлами, которые будут созданы: {n}.",
+  "p.mspdi_batch.links_made": "Создано связей: {n}; уже были: {m}.",
+  "p.mspdi_batch.links_unresolved":
+    "Связи, ведущие за пределы файлов или к отсутствующей задаче, не созданы: {n}.",
+  "p.mspdi_batch.links_after_failure":
+    "Связи между файлами не созданы, потому что проект не удался.",
+  "p.mspdi_batch.not_offered":
+    "Здесь не предлагается: сопоставление настраиваемых полей файлов, сопоставление ресурсов с людьми и импорт их ставок.",
+  "p.mspdi_batch.could_not": "Импорт не удался.",
+  "p.mspdi_batch.refused":
+    "Сервис отклонил файлы: один не является XML MS Project, слишком велик или указывает план, который вам не виден.",
+  "p.mspdi_batch.link_from_jobs": "Импорт нескольких файлов MS Project",
+  "p.mspdi_batch.read_failed": "Не удалось прочитать «{file}».",
 };

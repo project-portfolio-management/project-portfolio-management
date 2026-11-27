@@ -9225,4 +9225,57 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Nid oes gan y goeden gynlluniau siâp y templed mwyach: gall diwygiad newid tasgau ac ychwanegu cynlluniau ar y diwedd, nid symud nac ailenwi cynlluniau.",
   "p.template_sync.could_not_revise": "Methu diwygio'r templed.",
   "p.template_sync.revise_pick": "Dewiswch y goeden gynlluniau yn gyntaf.",
+  "p.mspdi_batch.title": "Mewnforio sawl ffeil MS Project",
+  "p.mspdi_batch.title_ppm": "Mewnforio sawl ffeil MS Project — PPM",
+  "p.mspdi_batch.intro":
+    "Dewch â hyd at ddeg ffeil MS Project (MSPDI XML) i mewn ar unwaith. Mae pob un yn mynd i gynllun a ddewiswch neu i gynllun newydd. Rhagolwg nad yw'n ysgrifennu dim yw'r cam cyntaf bob amser; mae'r un botwm wedyn yn mewnforio.",
+  "p.mspdi_batch.files": "Ffeiliau (MS Project XML, hyd at ddeg)",
+  "p.mspdi_batch.too_many": "Dewiswch ddim mwy na deg ffeil.",
+  "p.mspdi_batch.none_chosen": "Dewiswch o leiaf un ffeil yn gyntaf.",
+  "p.mspdi_batch.target": "I mewn i",
+  "p.mspdi_batch.target_new": "gynllun newydd",
+  "p.mspdi_batch.target_existing": "gynllun sy'n bodoli",
+  "p.mspdi_batch.new_name":
+    "Enw'r cynllun newydd (dewisol: enw'r prosiect yn y ffeil)",
+  "p.mspdi_batch.existing_plan": "Cynllun",
+  "p.mspdi_batch.choose_plan": "Dewiswch gynllun",
+  "p.mspdi_batch.choose_plan_first":
+    "Dewiswch y cynllun ar gyfer “{file}” yn gyntaf.",
+  "p.mspdi_batch.parent": "Rhoi cynlluniau newydd o dan (dewisol)",
+  "p.mspdi_batch.no_parent": "dim cynllun",
+  "p.mspdi_batch.preview": "Rhagweld y mewnforio",
+  "p.mspdi_batch.import": "Mewnforio",
+  "p.mspdi_batch.import_ask":
+    "Mewnforio'r ffeiliau nawr? Mae cynlluniau'n cael eu creu a thasgau'n cael eu hysgrifennu fel y'u rhagwelwyd. Nid un trafodiad yw hwn: mae prosiect sy'n methu yn atal y gweddill, ac mae cynlluniau a grëwyd eisoes yn aros.",
+  "p.mspdi_batch.start_over": "Dewis ffeiliau eraill",
+  "p.mspdi_batch.result_preview_h": "Rhagolwg",
+  "p.mspdi_batch.result_done_h": "Wedi'u mewnforio",
+  "p.mspdi_batch.outcome_would_import": "byddai'n cael ei fewnforio",
+  "p.mspdi_batch.outcome_imported": "wedi'i fewnforio",
+  "p.mspdi_batch.outcome_failed": "wedi methu",
+  "p.mspdi_batch.outcome_not_attempted": "heb ei geisio",
+  "p.mspdi_batch.outcome_unknown": "canlyniad anhysbys",
+  "p.mspdi_batch.new_plan_note": "byddai cynllun newydd yn cael ei wneud",
+  "p.mspdi_batch.plan_created": "gwnaed cynllun newydd",
+  "p.mspdi_batch.failed_note":
+    "Methodd y prosiect hwn, felly ni roddwyd cynnig ar y rhai ar ei ôl. Trwsiwch y ffeil a mewnforiwch eto: mae cynlluniau sy'n bodoli yn cael eu diweddaru, nid eu dyblygu.",
+  "p.mspdi_batch.pool_h": "Pobl ac adnoddau yn y ffeiliau",
+  "p.mspdi_batch.pool_note":
+    "Rhestrir adnoddau unwaith ar draws yr holl ffeiliau, gyda faint o aseiniadau sydd gan bob un. Nid ydynt yn cael eu paru â phobl: nid yw enw'n hunaniaeth.",
+  "p.mspdi_batch.pool_row": "{name} — aseiniadau: {assignments}",
+  "p.mspdi_batch.links_h": "Cysylltiadau rhwng y ffeiliau",
+  "p.mspdi_batch.links_would":
+    "Cysylltiadau rhwng y ffeiliau a fyddai'n cael eu gwneud: {n}.",
+  "p.mspdi_batch.links_made": "Cysylltiadau a wnaed: {n}; eisoes yno: {m}.",
+  "p.mspdi_batch.links_unresolved":
+    "Cysylltiadau sy'n pwyntio y tu allan i'r ffeiliau neu at dasg goll, heb eu gwneud: {n}.",
+  "p.mspdi_batch.links_after_failure":
+    "Ni wnaed cysylltiadau rhwng y ffeiliau, oherwydd methodd prosiect.",
+  "p.mspdi_batch.not_offered":
+    "Nas cynigir yma: mapio meysydd personol y ffeiliau, paru adnoddau â phobl a mewnforio eu cyfraddau.",
+  "p.mspdi_batch.could_not": "Ni weithiodd y mewnforio.",
+  "p.mspdi_batch.refused":
+    "Gwrthododd y gwasanaeth y ffeiliau: nid yw un yn MS Project XML, mae'n rhy fawr, neu mae'n enwi cynllun na allwch ei weld.",
+  "p.mspdi_batch.link_from_jobs": "Mewnforio sawl ffeil MS Project",
+  "p.mspdi_batch.read_failed": "Methu darllen “{file}”.",
 };

@@ -9414,4 +9414,57 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.template_sync.could_not_revise":
     "Die Vorlage konnte nicht überarbeitet werden.",
   "p.template_sync.revise_pick": "Wählen Sie zuerst den Planbaum.",
+  "p.mspdi_batch.title": "Mehrere MS-Project-Dateien importieren",
+  "p.mspdi_batch.title_ppm": "Mehrere MS-Project-Dateien importieren — PPM",
+  "p.mspdi_batch.intro":
+    "Bis zu zehn MS-Project-Dateien (MSPDI-XML) auf einmal übernehmen. Jede kommt in einen Plan Ihrer Wahl oder in einen neuen Plan. Der erste Schritt ist immer eine Vorschau, die nichts schreibt; dieselbe Schaltfläche importiert dann.",
+  "p.mspdi_batch.files": "Dateien (MS-Project-XML, höchstens zehn)",
+  "p.mspdi_batch.too_many": "Wählen Sie höchstens zehn Dateien.",
+  "p.mspdi_batch.none_chosen": "Wählen Sie zuerst mindestens eine Datei.",
+  "p.mspdi_batch.target": "In",
+  "p.mspdi_batch.target_new": "einen neuen Plan",
+  "p.mspdi_batch.target_existing": "einen vorhandenen Plan",
+  "p.mspdi_batch.new_name":
+    "Name des neuen Plans (optional: der Projektname in der Datei)",
+  "p.mspdi_batch.existing_plan": "Zielplan",
+  "p.mspdi_batch.choose_plan": "Plan wählen",
+  "p.mspdi_batch.choose_plan_first": "Wählen Sie zuerst den Plan für „{file}“.",
+  "p.mspdi_batch.parent": "Neue Pläne einordnen unter (optional)",
+  "p.mspdi_batch.no_parent": "kein Plan",
+  "p.mspdi_batch.preview": "Import in der Vorschau ansehen",
+  "p.mspdi_batch.import": "Importieren",
+  "p.mspdi_batch.import_ask":
+    "Die Dateien jetzt importieren? Pläne werden angelegt und Aufgaben wie in der Vorschau geschrieben. Das ist keine einzelne Transaktion: Ein fehlschlagendes Projekt stoppt den Rest, und bereits angelegte Pläne bleiben.",
+  "p.mspdi_batch.start_over": "Andere Dateien wählen",
+  "p.mspdi_batch.result_preview_h": "Vorschau",
+  "p.mspdi_batch.result_done_h": "Importiert",
+  "p.mspdi_batch.outcome_would_import": "würde importiert",
+  "p.mspdi_batch.outcome_imported": "importiert",
+  "p.mspdi_batch.outcome_failed": "fehlgeschlagen",
+  "p.mspdi_batch.outcome_not_attempted": "nicht versucht",
+  "p.mspdi_batch.outcome_unknown": "unbekanntes Ergebnis",
+  "p.mspdi_batch.new_plan_note": "ein neuer Plan würde angelegt",
+  "p.mspdi_batch.plan_created": "ein neuer Plan wurde angelegt",
+  "p.mspdi_batch.failed_note":
+    "Dieses Projekt ist fehlgeschlagen, daher wurden die folgenden nicht versucht. Korrigieren Sie die Datei und importieren Sie erneut: Vorhandene Pläne werden aktualisiert, nicht verdoppelt.",
+  "p.mspdi_batch.pool_h": "Personen und Ressourcen in den Dateien",
+  "p.mspdi_batch.pool_note":
+    "Ressourcen werden über alle Dateien einmal aufgeführt, mit der Zahl ihrer Zuordnungen. Sie werden keinen Personen zugeordnet: Ein Name ist keine Identität.",
+  "p.mspdi_batch.pool_row": "{name} — Zuordnungen: {assignments}",
+  "p.mspdi_batch.links_h": "Verknüpfungen zwischen den Dateien",
+  "p.mspdi_batch.links_would":
+    "Verknüpfungen zwischen den Dateien, die angelegt würden: {n}.",
+  "p.mspdi_batch.links_made":
+    "Angelegte Verknüpfungen: {n}; schon vorhanden: {m}.",
+  "p.mspdi_batch.links_unresolved":
+    "Verknüpfungen nach außerhalb der Dateien oder zu einer fehlenden Aufgabe, nicht angelegt: {n}.",
+  "p.mspdi_batch.links_after_failure":
+    "Es wurden keine Verknüpfungen zwischen den Dateien angelegt, weil ein Projekt fehlgeschlagen ist.",
+  "p.mspdi_batch.not_offered":
+    "Hier nicht angeboten: die benutzerdefinierten Felder der Dateien zuordnen, Ressourcen Personen zuordnen und ihre Sätze importieren.",
+  "p.mspdi_batch.could_not": "Der Import hat nicht funktioniert.",
+  "p.mspdi_batch.refused":
+    "Der Dienst hat die Dateien abgelehnt: Eine ist kein MS-Project-XML, ist zu groß oder nennt einen Plan, den Sie nicht sehen können.",
+  "p.mspdi_batch.link_from_jobs": "Mehrere MS-Project-Dateien importieren",
+  "p.mspdi_batch.read_failed": "„{file}“ konnte nicht gelesen werden.",
 };

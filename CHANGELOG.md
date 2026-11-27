@@ -16,6 +16,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (many MS Project files at once)
+
+- A new `/mspdi-import` (linked from `/jobs`) imports up to ten MS Project files at once, each into a new plan or a
+  chosen one: a preview that writes nothing first, then the import after a question that says it is not one
+  transaction. Each project's outcome and report are shown, links between the files counted, and the files' resources
+  listed once, never matched to people. 42 new strings in every locale, machine-written in 14, none reviewed. Not
+  offered: the custom-field map, the resource map and rates. Not verified: against a real service.
+
 ## 27 November (a template's revisions reaching its plans)
 
 - `/plan-templates/[pid]` lists the plans made from a template, each with how many of its changes it has waiting, and

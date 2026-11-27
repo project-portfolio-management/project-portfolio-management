@@ -9059,4 +9059,21 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "इस योजना से “{name}” के संस्करण {n} का पालन करवाएँ? बदले जाने तक यह वही संस्करण रखेगी।",
   "p.frameworks.pinned": "यह योजना अब संस्करण {n} का पालन करती है।",
+  "p.processes.not_yours":
+    "इस प्रक्रिया को केवल उसे परिभाषित करने वाला व्यक्ति, या कोई व्यवस्थापक, बदल या सेवानिवृत्त कर सकता है।",
+  "p.processes.unchanged": "कुछ नहीं बदला, इसलिए कोई संस्करण नहीं बना।",
+  "p.processes.changed":
+    "“{name}” संस्करण {v} के रूप में सहेजा गया; चल रहे रन अपना संस्करण रखते हैं।",
+  "p.processes.retire_ask":
+    "“{name}” सेवानिवृत्त करें? इसका कोई नया रन शुरू नहीं हो सकेगा; चल रहे रन चलते रहेंगे।",
+  "p.processes.retired": "“{name}” सेवानिवृत्त किया गया।",
+  "p.processes.edit": "“{name}” बदलें",
+  "p.processes.retire": "“{name}” सेवानिवृत्त करें",
+  "p.processes.edit_heading": "“{name}” बदलें (अभी संस्करण {v})",
+  "p.processes.edit_note":
+    "सहेजने से नया संस्करण बनता है; चल रहे रन वही संस्करण रखते हैं जिससे वे शुरू हुए।",
+  "p.processes.save_version": "नए संस्करण के रूप में सहेजें",
+  "p.processes.cancel_edit": "रद्द करें",
+  "p.processes.versions": "संस्करण, नवीनतम पहले",
+  "p.processes.current": "वर्तमान",
 };

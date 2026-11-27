@@ -9628,4 +9628,22 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "¿Hacer que este plan siga la versión {n} de «{name}»? La conserva hasta que se cambie.",
   "p.frameworks.pinned": "Este plan sigue ahora la versión {n}.",
+  "p.processes.not_yours":
+    "Solo quien definió este proceso, o una persona administradora, puede cambiarlo o retirarlo.",
+  "p.processes.unchanged":
+    "No cambió nada, así que no se creó ninguna versión.",
+  "p.processes.changed":
+    "Se guardó «{name}» como versión {v}; las ejecuciones en curso conservan su versión.",
+  "p.processes.retire_ask":
+    "¿Retirar «{name}»? No podrá empezar ninguna ejecución nueva; las que están en curso siguen.",
+  "p.processes.retired": "Se retiró «{name}».",
+  "p.processes.edit": "Cambiar «{name}»",
+  "p.processes.retire": "Retirar «{name}»",
+  "p.processes.edit_heading": "Cambiar «{name}» (ahora versión {v})",
+  "p.processes.edit_note":
+    "Guardar crea una versión nueva; las ejecuciones en curso conservan la versión con la que empezaron.",
+  "p.processes.save_version": "Guardar como versión nueva",
+  "p.processes.cancel_edit": "Cancelar",
+  "p.processes.versions": "Versiones, la más reciente primero",
+  "p.processes.current": "actual",
 };

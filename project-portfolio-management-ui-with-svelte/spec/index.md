@@ -3524,4 +3524,10 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   plan's marked, each with its text; this plan can follow an earlier one after a question (`PUT` with `version`).
   Choosing another framework to follow shows its text first (`GET /api/<family>/{pid}`).
   `tests/e2e/frameworks-and-links.spec.ts`.
-- **Not built** in part n: a task's custom field values, editing a process definition or an announcement, approval requests outside a process.
+- **An approval process changed or retired** (`/approval-processes`, PL-2, 2026-11-27): each definition can be changed
+  (`GET /api/processes/{pid}` for its current steps, then `PUT`, which makes a new version; runs already going keep
+  theirs), every problem said first as for a new one, and nothing sent (no version made) when nothing changed; the
+  name is sent only when it changed. The form lists every version newest first with when and by whom and its steps.
+  A definition is retired after a question (`DELETE`; runs already going go on). A refusal for not being its definer
+  or an administrator (403) is said in the page's words. `tests/e2e/approval-processes.spec.ts`.
+- **Not built** in part n: a task's custom field values, editing an announcement, approval requests outside a process.

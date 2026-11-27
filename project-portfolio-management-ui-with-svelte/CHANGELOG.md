@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — changing and retiring an approval process (PL-2, 2026-11-27)
+
+- `/approval-processes`: change (a new version), its versions, retire; three client methods; `draftsOf` and `editBody`
+  in `src/lib/processes-view.ts`; 13 strings in every locale.
+
 ### Added — a framework's versions on its plan pages (CF-4, 2026-11-27)
 
 - `FrameworkPanel.svelte`: the version followed, behind and the move to the newest, every version, a pin, another's text;

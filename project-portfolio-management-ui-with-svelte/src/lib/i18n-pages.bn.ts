@@ -9169,4 +9169,21 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "এই পরিকল্পনাকে “{name}”-এর সংস্করণ {n} অনুসরণ করাবেন? বদলানো পর্যন্ত এটি সেই সংস্করণ রাখবে।",
   "p.frameworks.pinned": "এই পরিকল্পনা এখন সংস্করণ {n} অনুসরণ করে।",
+  "p.processes.not_yours":
+    "কেবল যিনি এই প্রক্রিয়াটি সংজ্ঞায়িত করেছেন, বা একজন প্রশাসক, এটি বদলাতে বা অবসরে পাঠাতে পারেন।",
+  "p.processes.unchanged": "কিছু বদলায়নি, তাই কোনো সংস্করণ তৈরি হয়নি।",
+  "p.processes.changed":
+    "“{name}” সংস্করণ {v} হিসেবে সংরক্ষিত হয়েছে; চলমান রানগুলো তাদের সংস্করণ রাখে।",
+  "p.processes.retire_ask":
+    "“{name}” অবসরে পাঠাবেন? এর কোনো নতুন রান শুরু হতে পারবে না; চলমান রানগুলো চলতে থাকবে।",
+  "p.processes.retired": "“{name}” অবসরে পাঠানো হয়েছে।",
+  "p.processes.edit": "“{name}” বদলান",
+  "p.processes.retire": "“{name}” অবসরে পাঠান",
+  "p.processes.edit_heading": "“{name}” বদলান (এখন সংস্করণ {v})",
+  "p.processes.edit_note":
+    "সংরক্ষণ করলে নতুন সংস্করণ তৈরি হয়; চলমান রানগুলো যে সংস্করণে শুরু হয়েছিল তা রাখে।",
+  "p.processes.save_version": "নতুন সংস্করণ হিসেবে সংরক্ষণ করুন",
+  "p.processes.cancel_edit": "বাতিল",
+  "p.processes.versions": "সংস্করণ, সর্বশেষটি আগে",
+  "p.processes.current": "বর্তমান",
 };

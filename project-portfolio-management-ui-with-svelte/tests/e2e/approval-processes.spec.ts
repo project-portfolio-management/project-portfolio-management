@@ -167,3 +167,167 @@ test("a refusal from the service is shown as a message", async ({ page }) => {
   await page.getByRole("button", { name: "Start the run" }).click();
   await expect(page.getByRole("status")).toContainText("That did not work");
 });
+
+test("a process is changed as a new version, nothing is sent unchanged, its versions read, and it is retired after a question", async ({
+  page,
+}) => {
+  const sent: Array<{ method: string; body: unknown }> = [];
+  let retired = false;
+  let version = 1;
+  let detail = {
+    pid: "p1",
+    name: "Release sign-off",
+    current_version: 1,
+    created_by: "u",
+    steps: [{ kind: "approve", person_ref: "person:a", title: "Sign off" }],
+    versions: [
+      {
+        version: 1,
+        steps: [{ kind: "approve", person_ref: "person:a", title: "Sign off" }],
+        created_by: "u",
+        created_at: "2026-11-01T09:00:00Z",
+      },
+    ],
+  };
+  await page.route("**/api/processes", (r) =>
+    r.fulfill({
+      json: retired
+        ? []
+        : [{ pid: "p1", name: detail.name, current_version: version }],
+    }),
+  );
+  await page.route("**/api/process-executions", (r) => r.fulfill({ json: [] }));
+  await page.route("**/api/processes/p1", (r) => {
+    const method = r.request().method();
+    if (method === "GET") return r.fulfill({ json: detail });
+    sent.push({ method, body: r.request().postDataJSON() ?? null });
+    if (method === "DELETE") {
+      retired = true;
+      return r.fulfill({ json: {} });
+    }
+    const b = r.request().postDataJSON() as {
+      name?: string;
+      steps: typeof detail.steps;
+    };
+    version += 1;
+    detail = {
+      ...detail,
+      name: b.name ?? detail.name,
+      current_version: version,
+      steps: b.steps,
+      versions: [
+        ...detail.versions,
+        {
+          version,
+          steps: b.steps,
+          created_by: "u",
+          created_at: "2026-11-02T09:00:00Z",
+        },
+      ],
+    };
+    return r.fulfill({ json: detail });
+  });
+  await page.goto("/en-001/approval-processes");
+  await settle(page);
+  await page.getByRole("button", { name: "Change “Release sign-off”" }).click();
+  const edit = page.getByRole("form", {
+    name: "Change “Release sign-off” (now version 1)",
+  });
+  await edit.getByRole("button", { name: "Save as a new version" }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "Nothing changed, so no version was made.",
+  );
+  expect(sent).toEqual([]);
+  await page.getByRole("button", { name: "Change “Release sign-off”" }).click();
+  await edit.getByRole("button", { name: "Add a step" }).click();
+  await edit.getByRole("button", { name: "Save as a new version" }).click();
+  await expect(edit.getByRole("alert")).toBeVisible();
+  expect(sent).toEqual([]);
+  await edit
+    .getByRole("group", { name: "Step 2" })
+    .getByLabel(/^Person/)
+    .fill("person:b");
+  await edit
+    .getByRole("group", { name: "Step 2" })
+    .getByLabel("What it says")
+    .fill("Tag the release");
+  await edit.getByRole("button", { name: "Save as a new version" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "Saved “Release sign-off” as version 2",
+  );
+  expect(sent).toEqual([
+    {
+      method: "PUT",
+      body: {
+        steps: [
+          { kind: "approve", person_ref: "person:a", title: "Sign off" },
+          { kind: "approve", person_ref: "person:b", title: "Tag the release" },
+        ],
+      },
+    },
+  ]);
+  await page.getByRole("button", { name: "Change “Release sign-off”" }).click();
+  const versions = page
+    .getByTestId("process-versions")
+    .getByRole("listitem")
+    .filter({ has: page.locator("summary") });
+  await expect(versions).toHaveCount(2);
+  await expect(versions.nth(0)).toContainText("current");
+  const r = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(
+    r.violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => v.id),
+  ).toEqual([]);
+
+  const ask = page.getByRole("alertdialog");
+  await page.getByRole("button", { name: "Retire “Release sign-off”" }).click();
+  await expect(ask).toContainText("runs already going go on");
+  await ask.getByRole("button", { name: "OK" }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "Retired “Release sign-off”.",
+  );
+  expect(sent.at(-1)).toEqual({ method: "DELETE", body: null });
+});
+
+test("a change refused for want of the right is said in the page's words", async ({
+  page,
+}) => {
+  await page.route("**/api/processes", (r) =>
+    r.fulfill({
+      json: [{ pid: "p1", name: "Release sign-off", current_version: 1 }],
+    }),
+  );
+  await page.route("**/api/process-executions", (r) => r.fulfill({ json: [] }));
+  await page.route("**/api/processes/p1", (r) =>
+    r.request().method() === "GET"
+      ? r.fulfill({
+          json: {
+            pid: "p1",
+            name: "Release sign-off",
+            current_version: 1,
+            created_by: "someone-else",
+            steps: [
+              { kind: "approve", person_ref: "person:a", title: "Sign off" },
+            ],
+            versions: [],
+          },
+        })
+      : r.fulfill({
+          status: 403,
+          json: { code: "forbidden", detail: "service text" },
+        }),
+  );
+  await page.goto("/en-001/approval-processes");
+  await settle(page);
+  await page.getByRole("button", { name: "Retire “Release sign-off”" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "OK" })
+    .click();
+  await expect(page.getByRole("status")).toHaveText(
+    "Only the person who defined this process, or an administrator, may change or retire it.",
+  );
+});

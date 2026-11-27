@@ -362,6 +362,7 @@ import type {
   BulkJobStatus,
   ReviewQueueItem,
   CustomFieldDef,
+  ProcessDetail,
   FrameworkVersions,
   OnboardingTemplate,
   OnboardingTemplateBody,
@@ -1946,6 +1947,24 @@ export class PpmClient {
     steps: { kind: string; person_ref: string; title: string }[];
   }): Promise<ProcessDefinition> {
     return this.http.post("/api/processes", { body });
+  }
+  /** A definition with its current steps and every version. */
+  processDetail(pid: string): Promise<ProcessDetail> {
+    return this.http.get(`/api/processes/${encodeURIComponent(pid)}`);
+  }
+  /** Edit a definition: a new version; runs already going keep theirs. Only its definer or an administrator (403). */
+  updateProcess(
+    pid: string,
+    body: {
+      name?: string;
+      steps: { kind: string; person_ref: string; title: string }[];
+    },
+  ): Promise<ProcessDetail> {
+    return this.http.put(`/api/processes/${encodeURIComponent(pid)}`, { body });
+  }
+  /** Retire a definition: no new run can start; runs already going go on. Only its definer or an administrator. */
+  retireProcess(pid: string): Promise<void> {
+    return this.http.delete(`/api/processes/${encodeURIComponent(pid)}`);
   }
   startProcess(
     pid: string,

@@ -91,3 +91,49 @@ export function runStatusLabel(status: string): string {
 
 /** Whether a run can still be cancelled or resumed. */
 export const isRunning = (status: string): boolean => status === "running";
+
+/** A stored step list as the form's drafts. */
+export function draftsOf(
+  steps:
+    | readonly { kind: StepKind; person_ref: string; title: string }[]
+    | null
+    | undefined,
+): StepDraft[] {
+  const drafts = (steps ?? []).map((s) => ({
+    kind: s.kind,
+    person_ref: s.person_ref,
+    title: s.title,
+  }));
+  return drafts.length > 0 ? drafts : [blankStep()];
+}
+
+/**
+ * The body an edit sends, or `null` when it changes nothing (then nothing is sent, since every edit makes a version).
+ * The name is sent only when it changed; the steps are sent trimmed, always, as the service needs them.
+ */
+export function editBody(
+  name: string,
+  steps: readonly StepDraft[],
+  stored: {
+    name: string;
+    steps:
+      readonly { kind: string; person_ref: string; title: string }[] | null;
+  },
+): {
+  name?: string;
+  steps: { kind: string; person_ref: string; title: string }[];
+} | null {
+  const clean = steps.map((s) => ({
+    kind: s.kind,
+    person_ref: s.person_ref.trim(),
+    title: s.title.trim(),
+  }));
+  const before = (stored.steps ?? []).map((s) => ({
+    kind: s.kind,
+    person_ref: s.person_ref,
+    title: s.title,
+  }));
+  const renamed = name.trim() !== stored.name;
+  if (!renamed && JSON.stringify(clean) === JSON.stringify(before)) return null;
+  return renamed ? { name: name.trim(), steps: clean } : { steps: clean };
+}

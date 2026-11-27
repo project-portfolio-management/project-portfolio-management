@@ -9529,4 +9529,21 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "Gwneud i'r cynllun hwn ddilyn fersiwn {n} o “{name}”? Mae'n cadw'r fersiwn honno nes ei symud.",
   "p.frameworks.pinned": "Mae'r cynllun hwn bellach yn dilyn fersiwn {n}.",
+  "p.processes.not_yours":
+    "Dim ond y person a ddiffiniodd y broses hon, neu weinyddwr, all ei newid neu ei hymddeol.",
+  "p.processes.unchanged": "Ni newidiodd dim, felly ni wnaed fersiwn.",
+  "p.processes.changed":
+    "Cadwyd “{name}” fel fersiwn {v}; mae rhediadau sydd eisoes ar waith yn cadw eu fersiwn.",
+  "p.processes.retire_ask":
+    "Ymddeol “{name}”? Ni all rhediad newydd ohoni ddechrau; mae rhediadau sydd eisoes ar waith yn parhau.",
+  "p.processes.retired": "Ymddeolwyd “{name}”.",
+  "p.processes.edit": "Newid “{name}”",
+  "p.processes.retire": "Ymddeol “{name}”",
+  "p.processes.edit_heading": "Newid “{name}” (fersiwn {v} nawr)",
+  "p.processes.edit_note":
+    "Mae cadw yn gwneud fersiwn newydd; mae rhediadau sydd eisoes ar waith yn cadw'r fersiwn y dechreuon nhw â hi.",
+  "p.processes.save_version": "Cadw fel fersiwn newydd",
+  "p.processes.cancel_edit": "Canslo",
+  "p.processes.versions": "Fersiynau, y diweddaraf yn gyntaf",
+  "p.processes.current": "cyfredol",
 };

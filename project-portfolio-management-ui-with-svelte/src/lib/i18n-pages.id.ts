@@ -9550,4 +9550,22 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "Jadikan rencana ini mengikuti versi {n} dari “{name}”? Versi itu dipertahankan sampai dipindahkan.",
   "p.frameworks.pinned": "Rencana ini kini mengikuti versi {n}.",
+  "p.processes.not_yours":
+    "Hanya orang yang mendefinisikan proses ini, atau administrator, yang dapat mengubah atau mempensiunkannya.",
+  "p.processes.unchanged":
+    "Tidak ada yang berubah, jadi tidak ada versi yang dibuat.",
+  "p.processes.changed":
+    "“{name}” disimpan sebagai versi {v}; jalannya yang sedang berlangsung tetap memakai versinya.",
+  "p.processes.retire_ask":
+    "Pensiunkan “{name}”? Tidak ada jalannya baru yang dapat dimulai; yang sedang berlangsung tetap berlanjut.",
+  "p.processes.retired": "“{name}” dipensiunkan.",
+  "p.processes.edit": "Ubah “{name}”",
+  "p.processes.retire": "Pensiunkan “{name}”",
+  "p.processes.edit_heading": "Ubah “{name}” (kini versi {v})",
+  "p.processes.edit_note":
+    "Menyimpan membuat versi baru; jalannya yang sedang berlangsung tetap memakai versi awalnya.",
+  "p.processes.save_version": "Simpan sebagai versi baru",
+  "p.processes.cancel_edit": "Batal",
+  "p.processes.versions": "Versi, yang terbaru dulu",
+  "p.processes.current": "saat ini",
 };

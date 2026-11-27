@@ -9304,6 +9304,23 @@ export const PAGES_EN = {
   "p.frameworks.pin_ask":
     "Make this plan follow version {n} of “{name}”? It keeps that version until it is moved.",
   "p.frameworks.pinned": "This plan now follows version {n}.",
+  "p.processes.not_yours":
+    "Only the person who defined this process, or an administrator, may change or retire it.",
+  "p.processes.unchanged": "Nothing changed, so no version was made.",
+  "p.processes.changed":
+    "Saved “{name}” as version {v}; runs already going keep their version.",
+  "p.processes.retire_ask":
+    "Retire “{name}”? No new run of it can start; runs already going go on.",
+  "p.processes.retired": "Retired “{name}”.",
+  "p.processes.edit": "Change “{name}”",
+  "p.processes.retire": "Retire “{name}”",
+  "p.processes.edit_heading": "Change “{name}” (now version {v})",
+  "p.processes.edit_note":
+    "Saving makes a new version; runs already going keep the version they started with.",
+  "p.processes.save_version": "Save as a new version",
+  "p.processes.cancel_edit": "Cancel",
+  "p.processes.versions": "Versions, newest first",
+  "p.processes.current": "current",
 } as const;
 
 /** A key in the page and component catalogue. */

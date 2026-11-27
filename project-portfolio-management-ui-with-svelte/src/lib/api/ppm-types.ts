@@ -5898,3 +5898,28 @@ export interface OnboardingTemplate {
 export interface OnboardingTemplateBody {
   items: { title: string; offset_days: number }[];
 }
+
+/** `GET /api/processes/{pid}`: a definition with its current steps and every version (PL-2). */
+export interface ProcessDetail {
+  pid: string;
+  name: string;
+  current_version: number;
+  created_by: string | null;
+  steps:
+    | {
+        kind: "approve" | "todo" | "notify";
+        person_ref: string;
+        title: string;
+      }[]
+    | null;
+  versions: {
+    version: number;
+    steps: {
+      kind: "approve" | "todo" | "notify";
+      person_ref: string;
+      title: string;
+    }[];
+    created_by: string | null;
+    created_at: string;
+  }[];
+}

@@ -3,6 +3,8 @@ import {
   MAX_STEPS,
   blankStep,
   definitionProblems,
+  draftsOf,
+  editBody,
   isPersonRef,
   isRunning,
   kindLabel,
@@ -63,5 +65,42 @@ describe("approval process words", () => {
     expect(isRunning("running")).toBe(true);
     for (const s of ["completed", "rejected", "cancelled", "failed"])
       expect(isRunning(s)).toBe(false);
+  });
+});
+
+describe("draftsOf and editBody (PL-2)", () => {
+  const stored = {
+    name: "Release sign-off",
+    steps: [
+      { kind: "approve" as const, person_ref: "person:a", title: "Sign off" },
+    ],
+  };
+  it("gives the stored steps as drafts, or one blank step for none", () => {
+    expect(draftsOf(stored.steps)).toEqual(stored.steps);
+    expect(draftsOf(null)).toEqual([blankStep()]);
+  });
+  it("sends nothing for an edit that changes nothing, trims, and sends the name only when it changed", () => {
+    expect(
+      editBody(
+        " Release sign-off ",
+        [{ kind: "approve", person_ref: " person:a ", title: "Sign off " }],
+        stored,
+      ),
+    ).toBeNull();
+    expect(
+      editBody(
+        "Release sign-off",
+        [{ kind: "todo", person_ref: "person:a", title: "Sign off" }],
+        stored,
+      ),
+    ).toEqual({
+      steps: [{ kind: "todo", person_ref: "person:a", title: "Sign off" }],
+    });
+    expect(
+      editBody("Go-live sign-off", draftsOf(stored.steps), stored),
+    ).toEqual({
+      name: "Go-live sign-off",
+      steps: stored.steps,
+    });
   });
 });

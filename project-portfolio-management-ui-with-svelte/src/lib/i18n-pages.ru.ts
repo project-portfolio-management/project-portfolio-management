@@ -9497,4 +9497,21 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "Пусть этот план следует версии {n} «{name}»? Он сохранит её, пока его не переведут.",
   "p.frameworks.pinned": "Теперь этот план следует версии {n}.",
+  "p.processes.not_yours":
+    "Изменить или вывести этот процесс из работы может только тот, кто его определил, или администратор.",
+  "p.processes.unchanged": "Ничего не изменилось, поэтому версия не создана.",
+  "p.processes.changed":
+    "«{name}» сохранён как версия {v}; уже идущие запуски сохраняют свою версию.",
+  "p.processes.retire_ask":
+    "Вывести «{name}» из работы? Новые запуски начать нельзя; уже идущие продолжаются.",
+  "p.processes.retired": "«{name}» выведен из работы.",
+  "p.processes.edit": "Изменить «{name}»",
+  "p.processes.retire": "Вывести «{name}» из работы",
+  "p.processes.edit_heading": "Изменить «{name}» (сейчас версия {v})",
+  "p.processes.edit_note":
+    "Сохранение создаёт новую версию; уже идущие запуски сохраняют версию, с которой начались.",
+  "p.processes.save_version": "Сохранить как новую версию",
+  "p.processes.cancel_edit": "Отмена",
+  "p.processes.versions": "Версии, новейшая первой",
+  "p.processes.current": "текущая",
 };

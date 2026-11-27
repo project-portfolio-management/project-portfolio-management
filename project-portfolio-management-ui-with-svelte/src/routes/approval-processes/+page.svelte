@@ -1,6 +1,7 @@
 <!--
   Approval processes (`/approval-processes`, PL-2; `/processes` is the plan-kind collection): define a process (an ordered list of approve, to-do and notify
-  steps), start a run of one on a plan, task or other subject, and follow your own runs: which step each is
+  steps), change one (a new version; runs already going keep theirs; nothing is sent when nothing changed), read its
+  versions, retire one after a question, start a run of one on a plan, task or other subject, and follow your own runs: which step each is
   on, what happened, and the buttons for the step that is yours (mark a to-do done), cancelling, and checking
   an approval again. The service decides who may do what; a refusal is shown as a message.
 -->
@@ -8,12 +9,17 @@
   import { errorReason, errorText } from "#lib/error-text.js";
   import { t } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
-  import { PpmClient, type ProcessDefinition, type ProcessRun } from "#lib/api/ppm.js";
+  import { askConfirm } from "#lib/confirm.svelte.js";
+  import { formatDateTime } from "#lib/locale-format.js";
+  import { ApiError } from "#lib/api/client.js";
+  import { PpmClient, type ProcessDefinition, type ProcessDetail, type ProcessRun } from "#lib/api/ppm.js";
   import {
     MAX_STEPS,
     STEP_KINDS,
     blankStep,
     definitionProblems,
+    draftsOf,
+    editBody,
     isRunning,
     kindLabel,
     runStatusLabel,
@@ -39,6 +45,64 @@
   let subjectPid = $state("");
 
   let shown = $state<Record<string, ProcessRun>>({});
+
+  let editing = $state<ProcessDetail | null>(null);
+  let editName = $state("");
+  let editSteps = $state<StepDraft[]>([]);
+  let editProblems = $state<string[]>([]);
+
+  /** A refusal for want of the right says so in the page's words; any other gives the service's reason. */
+  const refusal = (err: unknown) =>
+    err instanceof ApiError && err.status === 403
+      ? t("p.processes.not_yours")
+      : t("p.processes.could_not", { reason: errorReason(err) });
+
+  async function startEdit(p: ProcessDefinition) {
+    try {
+      editing = await ppm.processDetail(p.pid);
+      editName = editing.name;
+      editSteps = draftsOf(editing.steps);
+      editProblems = [];
+      startFor = null;
+    } catch (err) {
+      notice = t("p.processes.could_not", { reason: errorReason(err) });
+    }
+  }
+
+  async function saveEdit(e: SubmitEvent) {
+    e.preventDefault();
+    const was = editing;
+    if (!was) return;
+    editProblems = definitionProblems(editName, editSteps);
+    if (editProblems.length > 0) return;
+    const body = editBody(editName, editSteps, was);
+    if (!body) {
+      editing = null; // nothing changed: nothing sent, and no version made
+      notice = t("p.processes.unchanged");
+      return;
+    }
+    try {
+      await ppm.updateProcess(was.pid, body);
+      notice = t("p.processes.changed", { name: body.name ?? was.name, v: was.current_version + 1 });
+      editing = null;
+    } catch (err) {
+      notice = refusal(err);
+    }
+    await load();
+  }
+
+  async function retire(p: ProcessDefinition) {
+    if (!(await askConfirm(t("p.processes.retire_ask", { name: p.name })))) return;
+    try {
+      await ppm.retireProcess(p.pid);
+      notice = t("p.processes.retired", { name: p.name });
+      if (editing?.pid === p.pid) editing = null;
+      if (startFor?.pid === p.pid) startFor = null;
+    } catch (err) {
+      notice = refusal(err);
+    }
+    await load();
+  }
 
   async function load() {
     try {
@@ -124,6 +188,8 @@
           <strong>{p.name}</strong>
           <span class="small muted">({t("p.processes.version", { v: p.current_version })})</span>
           <button type="button" onclick={() => (startFor = p)}>{t("p.processes.start_heading", { name: p.name })}</button>
+          <button type="button" onclick={() => startEdit(p)}>{t("p.processes.edit", { name: p.name })}</button>
+          <button type="button" class="danger" onclick={() => retire(p)}>{t("p.processes.retire", { name: p.name })}</button>
         </li>
       {/each}
     </ul>
@@ -139,6 +205,53 @@
     </form>
   {/if}
 </section>
+
+{#if editing}
+  <section aria-labelledby="edit-h">
+    <h2 id="edit-h">{t("p.processes.edit_heading", { name: editing.name, v: editing.current_version })}</h2>
+    <p class="small muted">{t("p.processes.edit_note")}</p>
+    <form onsubmit={saveEdit} aria-labelledby="edit-h">
+      <label>{t("p.processes.name")} <input bind:value={editName} maxlength="120" /></label>
+      {#each editSteps as s, i (i)}
+        <fieldset>
+          <legend>{t("p.processes.step_n", { n: i + 1 })}</legend>
+          <label>{t("p.processes.kind")}
+            <select bind:value={s.kind}>{#each STEP_KINDS as k (k)}<option value={k}>{kindLabel(k)}</option>{/each}</select>
+          </label>
+          <label>{t("p.processes.person")} <input bind:value={s.person_ref} /></label>
+          <label>{t("p.processes.step_title")} <input bind:value={s.title} maxlength="200" /></label>
+          {#if editSteps.length > 1}
+            <button type="button" onclick={() => (editSteps = editSteps.filter((_, j) => j !== i))}>{t("p.processes.remove_step", { n: i + 1 })}</button>
+          {/if}
+        </fieldset>
+      {/each}
+      {#if editSteps.length < MAX_STEPS}
+        <button type="button" onclick={() => (editSteps = [...editSteps, blankStep()])}>{t("p.processes.add_step")}</button>
+      {/if}
+      {#if editProblems.length > 0}
+        <ul class="banner" role="alert">{#each editProblems as m (m)}<li>{m}</li>{/each}</ul>
+      {/if}
+      <span class="actions">
+        <button type="submit">{t("p.processes.save_version")}</button>
+        <button type="button" onclick={() => (editing = null)}>{t("p.processes.cancel_edit")}</button>
+      </span>
+    </form>
+    <h3>{t("p.processes.versions")}</h3>
+    <ol class="versions" data-testid="process-versions">
+      {#each [...editing.versions].reverse() as v (v.version)}
+        <li>
+          <details>
+            <summary>
+              {t("p.processes.version", { v: v.version })} · {formatDateTime(v.created_at)}{#if v.created_by} · {v.created_by}{/if}
+              {#if v.version === editing.current_version} · <strong>{t("p.processes.current")}</strong>{/if}
+            </summary>
+            <ol>{#each v.steps as s, i (i)}<li>{kindLabel(s.kind)}: {s.title} ({s.person_ref})</li>{/each}</ol>
+          </details>
+        </li>
+      {/each}
+    </ol>
+  </section>
+{/if}
 
 <section aria-labelledby="new-h">
   <h2 id="new-h">{t("p.processes.new_process")}</h2>

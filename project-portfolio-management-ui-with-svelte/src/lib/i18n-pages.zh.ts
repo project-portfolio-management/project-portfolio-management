@@ -8636,4 +8636,20 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "让此计划遵循“{name}”的版本 {n}？在更改之前它会保留该版本。",
   "p.frameworks.pinned": "此计划现在遵循版本 {n}。",
+  "p.processes.not_yours": "只有定义此流程的人或管理员才能更改或停用它。",
+  "p.processes.unchanged": "没有更改，因此未创建版本。",
+  "p.processes.changed":
+    "已将“{name}”保存为版本 {v}；正在进行的运行保留其版本。",
+  "p.processes.retire_ask":
+    "停用“{name}”？将无法开始新的运行；正在进行的运行会继续。",
+  "p.processes.retired": "已停用“{name}”。",
+  "p.processes.edit": "更改“{name}”",
+  "p.processes.retire": "停用“{name}”",
+  "p.processes.edit_heading": "更改“{name}”（当前为版本 {v}）",
+  "p.processes.edit_note":
+    "保存会创建新版本；正在进行的运行保留其开始时的版本。",
+  "p.processes.save_version": "另存为新版本",
+  "p.processes.cancel_edit": "取消",
+  "p.processes.versions": "版本，最新的在前",
+  "p.processes.current": "当前",
 };

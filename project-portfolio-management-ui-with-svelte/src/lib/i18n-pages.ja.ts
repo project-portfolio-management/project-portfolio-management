@@ -9368,4 +9368,21 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "この計画を「{name}」のバージョン {n} に従わせますか？ 移行するまでそのバージョンを保持します。",
   "p.frameworks.pinned": "この計画はバージョン {n} に従うようになりました。",
+  "p.processes.not_yours":
+    "このプロセスを変更・廃止できるのは、定義した人か管理者だけです。",
+  "p.processes.unchanged": "変更がないため、バージョンは作成されませんでした。",
+  "p.processes.changed":
+    "「{name}」をバージョン {v} として保存しました。進行中の実行は自分のバージョンを保持します。",
+  "p.processes.retire_ask":
+    "「{name}」を廃止しますか？ 新しい実行は開始できなくなりますが、進行中の実行は続きます。",
+  "p.processes.retired": "「{name}」を廃止しました。",
+  "p.processes.edit": "「{name}」を変更",
+  "p.processes.retire": "「{name}」を廃止",
+  "p.processes.edit_heading": "「{name}」を変更（現在はバージョン {v}）",
+  "p.processes.edit_note":
+    "保存すると新しいバージョンが作成されます。進行中の実行は開始時のバージョンを保持します。",
+  "p.processes.save_version": "新しいバージョンとして保存",
+  "p.processes.cancel_edit": "キャンセル",
+  "p.processes.versions": "バージョン（新しい順）",
+  "p.processes.current": "現行",
 };

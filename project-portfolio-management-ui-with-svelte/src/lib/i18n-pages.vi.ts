@@ -9442,4 +9442,21 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "Cho kế hoạch này theo phiên bản {n} của “{name}”? Nó giữ phiên bản đó cho đến khi được chuyển.",
   "p.frameworks.pinned": "Kế hoạch này giờ theo phiên bản {n}.",
+  "p.processes.not_yours":
+    "Chỉ người đã định nghĩa quy trình này, hoặc quản trị viên, mới được thay đổi hoặc ngừng dùng nó.",
+  "p.processes.unchanged": "Không có gì thay đổi nên chưa tạo phiên bản nào.",
+  "p.processes.changed":
+    "Đã lưu “{name}” thành phiên bản {v}; các lượt chạy đang diễn ra giữ phiên bản của chúng.",
+  "p.processes.retire_ask":
+    "Ngừng dùng “{name}”? Không thể bắt đầu lượt chạy mới; các lượt đang chạy vẫn tiếp tục.",
+  "p.processes.retired": "Đã ngừng dùng “{name}”.",
+  "p.processes.edit": "Thay đổi “{name}”",
+  "p.processes.retire": "Ngừng dùng “{name}”",
+  "p.processes.edit_heading": "Thay đổi “{name}” (hiện là phiên bản {v})",
+  "p.processes.edit_note":
+    "Lưu sẽ tạo một phiên bản mới; các lượt chạy đang diễn ra giữ phiên bản lúc bắt đầu.",
+  "p.processes.save_version": "Lưu thành phiên bản mới",
+  "p.processes.cancel_edit": "Hủy",
+  "p.processes.versions": "Các phiên bản, mới nhất trước",
+  "p.processes.current": "hiện tại",
 };

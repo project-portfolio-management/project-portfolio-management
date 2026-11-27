@@ -9008,4 +9008,21 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "جعل هذه الخطة تتبع الإصدار {n} من «{name}»؟ تحتفظ به حتى تُنقل.",
   "p.frameworks.pinned": "تتبع هذه الخطة الآن الإصدار {n}.",
+  "p.processes.not_yours":
+    "لا يغيّر هذه العملية أو يوقفها إلا من عرّفها أو مسؤول.",
+  "p.processes.unchanged": "لم يتغيّر شيء، لذا لم يُنشأ إصدار.",
+  "p.processes.changed":
+    "حُفظت «{name}» بوصفها الإصدار {v}؛ وتحتفظ عمليات التشغيل الجارية بإصدارها.",
+  "p.processes.retire_ask":
+    "إيقاف «{name}»؟ لا يمكن بدء تشغيل جديد لها؛ وتستمر عمليات التشغيل الجارية.",
+  "p.processes.retired": "أُوقفت «{name}».",
+  "p.processes.edit": "تغيير «{name}»",
+  "p.processes.retire": "إيقاف «{name}»",
+  "p.processes.edit_heading": "تغيير «{name}» (الإصدار {v} الآن)",
+  "p.processes.edit_note":
+    "يُنشئ الحفظ إصدارًا جديدًا؛ وتحتفظ عمليات التشغيل الجارية بالإصدار الذي بدأت به.",
+  "p.processes.save_version": "الحفظ بوصفه إصدارًا جديدًا",
+  "p.processes.cancel_edit": "إلغاء",
+  "p.processes.versions": "الإصدارات، الأحدث أولًا",
+  "p.processes.current": "الحالي",
 };

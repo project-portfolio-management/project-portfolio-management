@@ -9732,4 +9732,22 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "Diesen Plan Fassung {n} von „{name}“ folgen lassen? Er behält diese Fassung, bis er umgestellt wird.",
   "p.frameworks.pinned": "Dieser Plan folgt jetzt Fassung {n}.",
+  "p.processes.not_yours":
+    "Nur wer diesen Prozess festgelegt hat oder eine Administratorin bzw. ein Administrator darf ihn ändern oder außer Dienst stellen.",
+  "p.processes.unchanged":
+    "Nichts geändert, daher wurde keine Fassung angelegt.",
+  "p.processes.changed":
+    "„{name}“ als Fassung {v} gespeichert; laufende Durchläufe behalten ihre Fassung.",
+  "p.processes.retire_ask":
+    "„{name}“ außer Dienst stellen? Kein neuer Durchlauf kann starten; laufende Durchläufe gehen weiter.",
+  "p.processes.retired": "„{name}“ außer Dienst gestellt.",
+  "p.processes.edit": "„{name}“ ändern",
+  "p.processes.retire": "„{name}“ außer Dienst stellen",
+  "p.processes.edit_heading": "„{name}“ ändern (jetzt Fassung {v})",
+  "p.processes.edit_note":
+    "Speichern legt eine neue Fassung an; laufende Durchläufe behalten die Fassung, mit der sie begonnen haben.",
+  "p.processes.save_version": "Als neue Fassung speichern",
+  "p.processes.cancel_edit": "Abbrechen",
+  "p.processes.versions": "Fassungen, neueste zuerst",
+  "p.processes.current": "aktuell",
 };

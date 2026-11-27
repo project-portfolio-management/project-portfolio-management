@@ -9213,4 +9213,21 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.frameworks.pin_ask":
     "이 계획이 “{name}”의 버전 {n}을(를) 따르게 할까요? 옮길 때까지 그 버전을 유지합니다.",
   "p.frameworks.pinned": "이 계획은 이제 버전 {n}을(를) 따릅니다.",
+  "p.processes.not_yours":
+    "이 프로세스는 정의한 사람이나 관리자만 바꾸거나 폐기할 수 있습니다.",
+  "p.processes.unchanged": "바뀐 것이 없어 버전을 만들지 않았습니다.",
+  "p.processes.changed":
+    "“{name}”을(를) 버전 {v}(으)로 저장했습니다. 진행 중인 실행은 자기 버전을 유지합니다.",
+  "p.processes.retire_ask":
+    "“{name}”을(를) 폐기할까요? 새 실행은 시작할 수 없고, 진행 중인 실행은 계속됩니다.",
+  "p.processes.retired": "“{name}”을(를) 폐기했습니다.",
+  "p.processes.edit": "“{name}” 변경",
+  "p.processes.retire": "“{name}” 폐기",
+  "p.processes.edit_heading": "“{name}” 변경(현재 버전 {v})",
+  "p.processes.edit_note":
+    "저장하면 새 버전이 만들어지며, 진행 중인 실행은 시작할 때의 버전을 유지합니다.",
+  "p.processes.save_version": "새 버전으로 저장",
+  "p.processes.cancel_edit": "취소",
+  "p.processes.versions": "버전(최신순)",
+  "p.processes.current": "현재",
 };

@@ -16,6 +16,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a page of plans is full while visible plans remain)
+
+- `axa-cursor-pagination` 0.1.2 → 0.1.4 (lockfile only; inside the two-day cooldown, by exception). The plan list and
+  plan search use its new `fill`: a page reads on past the plans the caller may not see, up to ten pages' worth, so it
+  is no longer short because plans were hidden, and the list no longer ends early when the row that showed more was
+  hidden. Tested by a new database test that fails on the old code. Not changed: the other paged lists, which filter
+  in SQL. Not verified: the timing of a page that reads past many hidden plans.
+
 ## 27 November (a plan's custom field values)
 
 - A new `/plans/[pid]/fields` ("Custom fields") shows and sets a plan's custom field values, each with an input of

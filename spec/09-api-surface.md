@@ -302,7 +302,16 @@ contract); export `masking_profile` is `masked` or `full` (else `422`).
   offsets fails instead of reading page one for ever. Handlers that page
   in the database (plans, search, reviews, the inbox, automations, runs,
   the deadline queue, processes, executions, documents) mark their
-  response and are left alone. Two objects page their task arrays the same
+  response and are left alone. The others leave out hidden rows in SQL;
+  the plan list and plan search, whose rows the record policy, private
+  plans and handling marks hide one by one, fill their page instead
+  (`Page::fill`, axa-cursor-pagination 0.1.4): they read on in batches
+  until the page is full, the list ends, or ten pages' worth
+  (`FILL_SCAN_PAGES`) has been read, and the next link starts right after
+  the last row returned, so a page is not short because plans were hidden
+  and the list does not end early. A page that spent that budget can be
+  short, with a next link from where the reading stopped; a page that read
+  past many hidden plans takes longer to answer. Two objects page their task arrays the same
   way and keep their whole-plan counts: the board (`limit` 1 to 2 000,
   2 000 when absent, `truncated` when more follow) and the CCPM estimates
   (1 to 1 000, 200). Objects, streams and files otherwise pass through

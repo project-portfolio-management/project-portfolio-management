@@ -405,7 +405,7 @@ pub fn conditional_json<T: serde::Serialize>(
 pub mod pagination {
     use std::sync::Arc;
 
-    use axa::cursor_pagination::{CursorKey, CursorLimits, CursorPage};
+    use axa::cursor_pagination::{CursorKey, CursorLimits, CursorPage, Filled};
     use axum::extract::{FromRequestParts, OriginalUri};
     use axum::http::{HeaderValue, Uri, header::LINK, request::Parts};
     use axum::response::Response;
@@ -419,6 +419,10 @@ pub mod pagination {
     /// Furthest position a cursor may reach; past it a request is a `400` (SEC-G7) rather than a query that makes the
     /// database materialize arbitrarily many rows just to discard them. A list that long needs a narrower query.
     pub const MAX_OFFSET: u64 = 10_000;
+
+    /// How far a page that hides rows row by row may read, in pages: [`Page::fill`] reads at most this many times
+    /// [`Page::fetch`] rows, so a caller who may see almost nothing cannot make one request read the whole list.
+    pub const FILL_SCAN_PAGES: u64 = 10;
 
     /// On a response its handler paged, so the paging layer leaves it alone.
     #[derive(Debug, Clone, Copy)]
@@ -553,6 +557,36 @@ pub mod pagination {
         #[must_use]
         pub fn respond<T: serde::Serialize>(&self, rows: Vec<T>) -> Response {
             let mut response = self.0.respond(rows);
+            response.extensions_mut().insert(Paged);
+            response
+        }
+
+        /// Fill this page from `fetch(limit, offset)`, keeping the rows `keep` accepts, for a list whose rows a record
+        /// policy hides one by one, where the policy cannot be said in SQL (FR-46). It reads on, in batches, until the
+        /// page is full, the list ends, or [`FILL_SCAN_PAGES`] pages have been read, so a page is not short because
+        /// rows were hidden (a short page would say how many), and the next page starts right after the last row
+        /// returned, so nothing is skipped or repeated. A page that spent its budget can still be short, with a next link
+        /// from where the reading stopped. `fetch` must return one entry per row it read, kept or not, in the list's
+        /// order: fewer than it was asked for means the list has ended.
+        ///
+        /// # Errors
+        ///
+        /// The first error `fetch` returns.
+        pub async fn fill<T, F, Fut, K>(&self, fetch: F, keep: K) -> axa::Result<Filled<T>>
+        where
+            F: FnMut(i64, i64) -> Fut,
+            Fut: Future<Output = axa::Result<Vec<T>>>,
+            K: FnMut(&T) -> bool,
+        {
+            self.0
+                .fill(self.fetch().saturating_mul(FILL_SCAN_PAGES), fetch, keep)
+                .await
+        }
+
+        /// A page [`Page::fill`] filled, as a bare JSON array with `Link: rel="next"` when there is one.
+        #[must_use]
+        pub fn respond_filled<T: serde::Serialize>(filled: Filled<T>) -> Response {
+            let mut response = filled.respond();
             response.extensions_mut().insert(Paged);
             response
         }

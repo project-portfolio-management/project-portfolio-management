@@ -175,8 +175,10 @@ impl PlanRef {
     }
 }
 
-/// Filter `rows` down to the ones `caller`'s record-level ABAC policy
-/// allows to read, projecting each survivor to a [`PlanRef`].
+/// Each of `rows` as `caller` may read it, projected to a [`PlanRef`], or `None` for a row that is not there (a
+/// search hit no live plan answers), is hidden from the caller (`hidden`: a private plan they are not a member of, or
+/// a handling mark), or that the caller's record-level ABAC policy does not allow them to read. One entry per row, in
+/// order, so a page [`super::pagination::Page::fill`] fills counts every row it read (FR-46).
 ///
 /// `get_one`/`get_export` already run [`crate::auth::authorize_record`]
 /// per plan (keyed on `resource.stage`, PPM-3); `list` and `search` did
@@ -194,25 +196,47 @@ impl PlanRef {
 /// left for that obligation to redact on this projection.
 ///
 /// With `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH` off (the default)
-/// or no configured deny rule, `authorize_record` never denies, so this
-/// is a no-op and every row passes through unchanged.
+/// or no configured deny rule, `authorize_record` never denies, so only
+/// `hidden` and missing rows are `None`.
 fn readable_refs(
-    rows: &[PlanModel],
+    rows: &[Option<PlanModel>],
     caller: &MaybeAuthUser,
     hidden: &std::collections::HashSet<uuid::Uuid>,
-) -> Vec<PlanRef> {
+) -> Vec<Option<PlanRef>> {
     rows.iter()
-        .filter(|row| !hidden.contains(&row.pid))
-        .filter(|row| {
-            crate::auth::authorize_record(
-                caller,
-                authentication_verifier::Action::Read,
-                &crate::auth::plan_resource_attrs(row.stage.as_deref()),
-            )
-            .is_ok()
+        .map(|row| {
+            row.as_ref()
+                .filter(|row| !hidden.contains(&row.pid))
+                .filter(|row| {
+                    crate::auth::authorize_record(
+                        caller,
+                        authentication_verifier::Action::Read,
+                        &crate::auth::plan_resource_attrs(row.stage.as_deref()),
+                    )
+                    .is_ok()
+                })
+                .map(PlanRef::of)
         })
-        .map(PlanRef::of)
         .collect()
+}
+
+/// [`readable_refs`] for rows just read: which of them are private plans hidden from the caller is looked up first.
+async fn visible_refs(
+    ctx: &AppContext,
+    rows: &[Option<PlanModel>],
+    caller: &MaybeAuthUser,
+) -> Vec<Option<PlanRef>> {
+    let pids: Vec<uuid::Uuid> = rows.iter().flatten().map(|r| r.pid).collect();
+    let hidden = super::plan_access::hidden_plans(ctx, &pids, caller).await;
+    readable_refs(rows, caller, &hidden)
+}
+
+/// A filled page of refs, the hidden rows dropped.
+fn respond_refs(filled: axa::cursor_pagination::Filled<Option<PlanRef>>) -> Response {
+    super::pagination::Page::respond_filled(axa::cursor_pagination::Filled {
+        rows: filled.rows.into_iter().flatten().collect::<Vec<_>>(),
+        next: filled.next,
+    })
 }
 
 /// Body of `POST /{collection}/match`: a query plus the explicit
@@ -604,8 +628,9 @@ async fn remove(
     format::empty_json()
 }
 
-/// List active plans (cap 100). Accepts `?parent=<pid>` to roll up one
-/// plan's direct children. `GET /api/plans`.
+/// List active plans, newest first, 100 a page by default. Accepts `?parent=<pid>` to roll up one
+/// plan's direct children. A page reads on past the plans the caller may not see, so it is full while visible
+/// plans remain (FR-46). `GET /api/plans`.
 ///
 /// # Errors
 ///
@@ -618,21 +643,30 @@ async fn list(
     caller: MaybeAuthUser,
 ) -> Result<Response> {
     let page = cursor.page(LIST_DEFAULT_LIMIT)?;
-    let (limit, offset) = (page.fetch(), page.offset());
     let parent = params
         .parent
         .as_deref()
         .map(str::trim)
         .filter(|p| !p.is_empty());
-    let rows = PlanModel::list_paged(&ctx, parent, limit, offset).await?;
-    let hidden = super::plan_access::hidden_plans(
-        &ctx,
-        &rows.iter().map(|r| r.pid).collect::<Vec<_>>(),
-        &caller,
-    )
-    .await;
-    let refs = readable_refs(&rows, &caller, &hidden);
-    Ok(page.respond(refs))
+    let (ctx, caller) = (&ctx, &caller);
+    // Read past the plans the caller may not see, so the page is full and its next link true (FR-46).
+    let filled = page
+        .fill(
+            move |limit, offset| async move {
+                let rows = PlanModel::list_paged(
+                    ctx,
+                    parent,
+                    u64::try_from(limit).unwrap_or(0),
+                    u64::try_from(offset).unwrap_or(0),
+                )
+                .await?;
+                let rows: Vec<Option<PlanModel>> = rows.into_iter().map(Some).collect();
+                Ok(visible_refs(ctx, &rows, caller).await)
+            },
+            Option::is_some,
+        )
+        .await?;
+    Ok(respond_refs(filled))
 }
 
 /// Full-text plan search: `GET /api/plans/search?q=`.
@@ -658,7 +692,6 @@ async fn search(
         return bad_request("query parameter `q` is required");
     }
     let page = cursor.page(SEARCH_DEFAULT_LIMIT)?;
-    let (limit, offset) = (page.fetch(), page.offset());
     // An unavailable index is reported, never disguised as "no matches":
     // an operator must be able to tell a broken index from an empty one.
     let Some(engine) = crate::search::engine() else {
@@ -674,22 +707,34 @@ async fn search(
     } else {
         crate::search::SearchMode::Exact
     };
-    let (pids, _index_total) = engine.search_page(
-        q.trim(),
-        mode,
-        params.kind.as_deref(),
-        usize::try_from(limit).unwrap_or(usize::MAX),
-        usize::try_from(offset).unwrap_or(usize::MAX),
-    )?;
-    let rows = PlanModel::find_by_pids(&ctx, &parse_pids(&pids)).await?;
-    let hidden = super::plan_access::hidden_plans(
-        &ctx,
-        &rows.iter().map(|r| r.pid).collect::<Vec<_>>(),
-        &caller,
-    )
-    .await;
-    let refs = readable_refs(&rows, &caller, &hidden);
-    Ok(page.respond(refs))
+    let (ctx, caller, q, kind) = (&ctx, &caller, q.trim(), params.kind.as_deref());
+    // Read past the hits the caller may not see, so the page is full and its next link true (FR-46). Every hit is
+    // one entry, a hit no live plan answers included, so a batch shorter than asked for means the hits have ended.
+    let filled = page
+        .fill(
+            move |limit, offset| async move {
+                let (hits, _index_total) = engine.search_page(
+                    q,
+                    mode,
+                    kind,
+                    usize::try_from(limit).unwrap_or(0),
+                    usize::try_from(offset).unwrap_or(0),
+                )?;
+                let found = PlanModel::find_by_pids(ctx, &parse_pids(&hits)).await?;
+                let rows: Vec<Option<PlanModel>> = hits
+                    .iter()
+                    .map(|hit| {
+                        uuid::Uuid::parse_str(hit)
+                            .ok()
+                            .and_then(|pid| found.iter().find(|row| row.pid == pid).cloned())
+                    })
+                    .collect();
+                Ok(visible_refs(ctx, &rows, caller).await)
+            },
+            Option::is_some,
+        )
+        .await?;
+    Ok(respond_refs(filled))
 }
 
 /// Score a query against an explicit candidate list (no persistence).

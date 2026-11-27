@@ -329,7 +329,7 @@ pub const ROUTE_DOCS: &[(&str, &str, &str, &str)] = &[
     ("post", "/api/plan-templates/{pid}/delete", "plan_templates", "`POST /api/plan-templates/{pid}/delete` (and `DELETE`) — soft-delete."),
     ("get", "/api/plan-templates/{pid}/plans", "blueprint_sync", "`GET /api/plan-templates/{pid}/plans`: the plans made from this template that the caller can read, and how many template changes each has waiting; a plan with none is up to date."),
     ("post", "/api/plan-templates/{pid}/revise", "blueprint_sync", "`POST /api/plan-templates/{pid}/revise`: re-capture a plan tree as the template's next version. Plans made from the template are not touched; each sees the difference through `template-diff`."),
-    ("get", "/api/plans", "plans", "List active plans (cap 100). Accepts `?parent=<pid>` to roll up one plan's direct children. `GET /api/plans`.  # Errors  A DB error when the query fails."),
+    ("get", "/api/plans", "plans", "List active plans, newest first, 100 a page by default. Accepts `?parent=<pid>` to roll up one plan's direct children. A page reads on past the plans the caller may not see, so it is full while visible plans remain (FR-46). `GET /api/plans`.  # Errors  A DB error when the query fails."),
     ("post", "/api/plans", "plans", "Create a plan. `POST /api/plans`.  # Errors  `422` on validation failure or a containment cycle."),
     ("get", "/api/plans/audit/recent", "plans", "Recent audit entries (cap 100). `GET /api/plans/audit/recent`.  # Errors  A DB error when the query fails."),
     ("get", "/api/plans/bulk-jobs", "bulk", "`GET /api/plans/bulk-jobs` — the caller's jobs (an admin sees all)."),

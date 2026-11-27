@@ -825,7 +825,10 @@ across currencies.
   outside that `422`, never clamped) and an opaque `?cursor=`, with
   `Link: <…>; rel="next"` while more rows follow and none on the last
   page; body still the bare array. There is **no total**, because it would
-  count rows the caller's record policy hides. A cursor is signed with
+  count rows the caller's record policy hides; for the same reason a page is
+  never short because rows were hidden: a list whose rows a policy hides one
+  by one (plans, plan search) reads on past them, up to ten pages' worth, and
+  its next page starts right after the last row it returned. A cursor is signed with
   `PROJECT_PORTFOLIO_MANAGEMENT_CURSOR_KEY` over its position, path and
   filters, so a made-up, edited or moved one is `422`; one past 10 000 rows
   is `400` `offset_too_large`, and `?offset=` is `400`

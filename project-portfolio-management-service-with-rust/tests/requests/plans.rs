@@ -219,6 +219,53 @@ async fn list_and_search_are_paginated() {
     .await;
 }
 
+/// Plans the caller may not see neither shorten a page nor end the list early (FR-46, axa-cursor-pagination 0.1.4's
+/// `fill`): a page reads on past them, every visible plan is reached once, and every page but the last is full. Before,
+/// a page dropped its hidden rows after the read, so it came back short, saying how many were hidden, and lost its
+/// next link when the extra row that showed more was one of them.
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL"]
+async fn hidden_plans_do_not_shorten_a_page_or_end_the_list() {
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        if let Some(engine) = project_portfolio_management::search::engine() {
+            engine.clear().expect("clear the search index");
+        }
+        let mut pids = Vec::new();
+        for i in 0..9 {
+            let created = request
+                .post("/api/plans")
+                .json(&json!({"name": format!("Filled Plan {i}")}))
+                .await;
+            pids.push(created.json::<Value>()["pid"].as_str().expect("pid").to_string());
+        }
+        // Two of every three are private with no members, so the anonymous caller sees plans 0, 3 and 6.
+        for pid in pids.iter().enumerate().filter(|(i, _)| i % 3 != 0).map(|(_, pid)| pid) {
+            sqlx::query(
+                "INSERT INTO plan_access_settings (pid, plan_pid, private, members, created_at, updated_at)
+                 VALUES (gen_random_uuid(), $1::uuid, true, '[]', now(), now())",
+            )
+            .bind(pid)
+            .execute(project_portfolio_management::db::pool(&ctx))
+            .await
+            .expect("make the plan private");
+        }
+        let first = request.get("/api/plans?limit=2").await;
+        assert_eq!(first.json::<Value>().as_array().expect("array").len(), 2, "a full first page");
+        let (rows, pages) = super::walk(&request, "/api/plans?limit=2").await;
+        let names: Vec<&str> = rows.iter().filter_map(|r| r["name"].as_str()).collect();
+        assert_eq!(names, ["Filled Plan 6", "Filled Plan 3", "Filled Plan 0"], "newest first, each once");
+        assert_eq!(pages, 2);
+        let (hits, pages) = super::walk(&request, "/api/plans/search?q=Filled&limit=2").await;
+        let mut found: Vec<&str> = hits.iter().filter_map(|r| r["name"].as_str()).collect();
+        found.sort_unstable();
+        assert_eq!(found, ["Filled Plan 0", "Filled Plan 3", "Filled Plan 6"]);
+        assert_eq!(pages, 2);
+    })
+    .await;
+}
+
 /// Tantivy search reaches the fields an `ILIKE` over `name` never could
 /// — the goal a plan is trying to achieve, the owner org, an
 /// identifier — tolerates a typo when asked to, and a `?kind=` filter

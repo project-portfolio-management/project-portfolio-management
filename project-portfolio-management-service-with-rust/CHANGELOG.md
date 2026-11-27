@@ -9,6 +9,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — a page of plans is full while visible plans remain; axa-cursor-pagination 0.1.4 (2026-11-27)
+
+- `axa-cursor-pagination` 0.1.2 → 0.1.4 (the lockfile only; published inside the two-day cooldown, by the maintainer's
+  exception). 0.1.4 adds `CursorPage::fill` and `next_link_at`, and refuses a cursor whose page would not fit SQL as a
+  bad cursor instead of saturating it.
+- `GET /api/plans` and `GET /api/plans/search` dropped the plans the caller may not see after reading a page, so a page
+  came back short (saying how many were hidden) and lost its next link when the extra row that showed more was hidden,
+  ending the list early. They now fill the page (`pagination::Page::fill`, at most `FILL_SCAN_PAGES` = 10 pages read)
+  and start the next page after the last row returned. Test: `requests::plans::hidden_plans_do_not_shorten_a_page_or_end_the_list`,
+  which fails on the old code.
+- Not changed: the other paged lists, which already leave hidden rows out in SQL. A page that spends the read budget can
+  still be short; a page that reads past many hidden plans takes longer, which a careful caller could notice.
+
 ### Changed — team utilization reports no figure instead of a bound; `Figure` is deleted (2026-11-23)
 
 - `spec/rust-checked-arithmetic` (RCA-DECL-6, RCA-IN-6, RCA-INT-4): `effort::utilization`, `team_utilization` and

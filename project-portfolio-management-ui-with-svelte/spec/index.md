@@ -3484,5 +3484,13 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   administrator) or the reader's own, from `GET /api/resource-roles`; set or cleared (a blank role) with `PUT`, the
   person checked as a `person:` or `worker:` reference and the role as at most 60 characters before sending; the plan
   above is read again, since a role decides whose declared capacity is a row's supply; 403 in its own sentence.
-- **Not built** in part n: custom fields, goals, onboarding templates, a framework's and a way of
+- **`/plans/[pid]/goals`** ("Goals", a plan workspace link first among governance, FR-12 and CF-2, 2026-11-27) lists
+  the plan's goals in order with their description, target date (`formatDate`) and status (a named one in the reader's
+  language, a custom one in its own words). A goal is added, changed or removed after a question; the title is checked
+  as neither blank nor over 512 characters, the date as a real day and a custom status as named, all before sending;
+  a change that changes nothing sends nothing; the form is not offered at 256 goals. A goal is addressed by its
+  position, so every change sends the list's `ETag` from the last answer as `If-Match` (the client reads it through
+  `RequestOptions.onResponse`); a 412 (the list changed meanwhile) or a 404 (the goal is gone) is said in the page's
+  words and the list read again. Rules in `src/lib/goal-view.ts`; `tests/e2e/goals.spec.ts`.
+- **Not built** in part n: custom fields, onboarding templates, a framework's and a way of
   working's text and versions, editing a process definition or an announcement, approval requests outside a process.

@@ -1,7 +1,7 @@
 // PPM wire shapes and the small pure helpers that format or reshape them (CQ-9: split out of ppm.ts).
 // `ppm.ts` re-exports everything here, so `#lib/api/ppm.js` imports are unchanged.
 
-import type { Collection } from "./types";
+import type { Collection, Goal } from "./types";
 import { t } from "../i18n.svelte.js";
 
 // ---- wire shapes (mirroring the service responses) ----
@@ -5808,4 +5808,16 @@ export interface ComponentBody {
 export interface ResourceRole {
   person_ref: string;
   role: string | null;
+}
+
+/** A goal and its zero-based position, by which it is addressed (`GET /api/plans/{pid}/goals`, FR-12). */
+export interface IndexedGoal extends Goal {
+  index: number;
+}
+
+/** A plan's goals and the list's entity tag, sent back as `If-Match` so a write to a moved goal is refused (CF-2). */
+export interface GoalList {
+  goals: IndexedGoal[];
+  /** `null` when the answer carried none (then a write is sent without `If-Match`). */
+  etag: string | null;
 }

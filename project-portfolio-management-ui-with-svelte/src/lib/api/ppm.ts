@@ -7,7 +7,7 @@
 // Welsh (machine-written, unreviewed); the other locales fall back to English.
 import { API_BASE_URL } from "#lib/config.js";
 import { ApiClient } from "./client";
-import type { Collection } from "./types";
+import type { Collection, Goal } from "./types";
 import { rowOf } from "#lib/row-of.js";
 import { mspdiReport, simQuery } from "./ppm-types";
 import type { PeopleImpact } from "#lib/people-impact.js";
@@ -360,6 +360,8 @@ import type {
   BulkJobStarted,
   BulkJobStatus,
   ReviewQueueItem,
+  GoalList,
+  IndexedGoal,
   ResourceRole,
   Component,
   ComponentBody,
@@ -2292,6 +2294,62 @@ export class PpmClient {
     return this.http.delete(
       `/api/plans/${encodeURIComponent(planPid)}/components/${encodeURIComponent(pid)}`,
     );
+  }
+
+  /**
+   * A plan's goals with their positions, and the list's `ETag` (FR-12, CF-2). Every goal write answers the same, so
+   * the tag in hand is always the last one the service gave.
+   */
+  async goals(planPid: string): Promise<GoalList> {
+    let etag: string | null = null;
+    const goals = await this.http.get<IndexedGoal[]>(
+      `/api/plans/${encodeURIComponent(planPid)}/goals`,
+      { onResponse: (r) => (etag = r.headers.get("etag")) },
+    );
+    return { goals: goals ?? [], etag };
+  }
+  /** Append a goal; answers with the whole list and its new tag. */
+  async addGoal(planPid: string, goal: Goal): Promise<GoalList> {
+    let etag: string | null = null;
+    const goals = await this.http.post<IndexedGoal[]>(
+      `/api/plans/${encodeURIComponent(planPid)}/goals`,
+      { body: goal, onResponse: (r) => (etag = r.headers.get("etag")) },
+    );
+    return { goals: goals ?? [], etag };
+  }
+  /** Replace the goal at `index`, refused with 412 when the list changed since `etag` was read. */
+  async replaceGoal(
+    planPid: string,
+    index: number,
+    goal: Goal,
+    etag: string | null,
+  ): Promise<GoalList> {
+    let next: string | null = null;
+    const goals = await this.http.put<IndexedGoal[]>(
+      `/api/plans/${encodeURIComponent(planPid)}/goals/${index}`,
+      {
+        body: goal,
+        headers: etag ? { "If-Match": etag } : {},
+        onResponse: (r) => (next = r.headers.get("etag")),
+      },
+    );
+    return { goals: goals ?? [], etag: next };
+  }
+  /** Remove the goal at `index` (the ones after it move up), refused with 412 when the list changed since `etag`. */
+  async removeGoal(
+    planPid: string,
+    index: number,
+    etag: string | null,
+  ): Promise<GoalList> {
+    let next: string | null = null;
+    const goals = await this.http.delete<IndexedGoal[]>(
+      `/api/plans/${encodeURIComponent(planPid)}/goals/${index}`,
+      {
+        headers: etag ? { "If-Match": etag } : {},
+        onResponse: (r) => (next = r.headers.get("etag")),
+      },
+    );
+    return { goals: goals ?? [], etag: next };
   }
 
   /** Everyone's primary role (a resource manager or an administrator), else just the caller's own. */

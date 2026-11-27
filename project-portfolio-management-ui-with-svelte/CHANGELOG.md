@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/plans/[pid]/goals` (FR-12, CF-2, 2026-11-27)
+
+- Four client methods and `RequestOptions.onResponse` (to read an `ETag`); `src/lib/goal-view.ts`; 39 strings in every
+  locale.
+
 ### Added — people's primary roles on `/resources` (2026-11-27)
 
 - `ResourceRoles.svelte`; two client methods; 14 strings in every locale.

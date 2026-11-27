@@ -41,6 +41,11 @@ export interface RequestOptions {
    * to the service. Pass your own to reuse a key across a retry; pass `false` to send none.
    */
   idempotencyKey?: string | false;
+  /**
+   * Called with a successful response before its body is returned, so a caller can read a header (an `ETag` to send
+   * back as `If-Match`, CF-2) while the call stays a plain `get`/`put`/`delete` the route and body checks read.
+   */
+  onResponse?: (response: Response) => void;
 }
 
 /** A fresh key. `crypto.randomUUID` needs a secure context; the fallback is for plain http and tests. */
@@ -338,6 +343,7 @@ export class ApiClient {
       );
       throw new ApiError(response.status, message, parsed);
     }
+    opts.onResponse?.(response);
     return { data: parsed as T, response };
   }
 }

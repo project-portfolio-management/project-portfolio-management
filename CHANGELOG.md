@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a plan's goals)
+
+- A new `/plans/[pid]/goals` ("Goals") lists a plan's goals in order and adds, changes or removes one (after a
+  question), every limit checked first. A goal is known by its position, so each change sends the list's `ETag` as
+  `If-Match`; a list changed meanwhile (412) is said in the page's words and read again. 39 new strings in every
+  locale, machine-written in 14, none reviewed. Not verified: against a real service.
+
 ## 27 November (people's primary roles on `/resources`)
 
 - `/resources` lists people's primary roles and sets or clears one (a resource manager or an administrator), reading

@@ -799,10 +799,13 @@ test("hammocks: the span in words, every rule checked first, made and unmade aft
     "Remove the link from Phase one to Design? The task itself is not changed.",
   );
   await answer(page, true);
-  expect(writes(sent).at(-1)).toEqual({
-    method: "DELETE",
-    path: `/api/plans/${PID}/hammocks/${H1}/links/${T1}`,
-  });
+  // The write follows the answer; wait for it rather than read the list at once.
+  await expect
+    .poll(() => writes(sent).at(-1))
+    .toEqual({
+      method: "DELETE",
+      path: `/api/plans/${PID}/hammocks/${H1}/links/${T1}`,
+    });
 
   await h
     .getByRole("button", { name: "Make Phase one a task again", exact: true })

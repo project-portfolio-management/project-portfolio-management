@@ -9,8 +9,9 @@ import {
   systemText,
   type FrameworkForm,
   type LinkForm,
+  versionOffer,
 } from "../../src/lib/framework-view";
-import type { Framework } from "../../src/lib/api/ppm";
+import type { Framework, FrameworkInForce } from "../../src/lib/api/ppm";
 
 const form = (over: Partial<FrameworkForm> = {}): FrameworkForm => ({
   ...formOf(null),
@@ -315,5 +316,48 @@ describe("linkBody and systemText", () => {
       "Azure DevOps 12",
     );
     expect(systemText({ system: null, external_id: null })).toBe("");
+  });
+});
+
+describe("versionOffer (CF-4)", () => {
+  const rec = {
+    pid: "w1",
+    name: "Scrum",
+    description: null,
+    scope: "organization",
+    owner_plan_pid: null,
+    plans_using: 1,
+    version: 2,
+  } as Framework;
+  const inForce = (over: Partial<FrameworkInForce>): FrameworkInForce => ({
+    plan_pid: "p",
+    source: "own",
+    from_plan_pid: null,
+    reason: null,
+    latest_version: 2,
+    behind: false,
+    ...over,
+  });
+  it("offers nothing to a plan on the newest version", () => {
+    expect(versionOffer(inForce({}), rec)).toBeNull();
+    expect(versionOffer(null, rec)).toBeNull();
+    expect(
+      versionOffer(inForce({ behind: true, latest_version: 3 }), null),
+    ).toBeNull();
+  });
+  it("offers a move to a plan behind on its own link, and only says so for an inherited one", () => {
+    expect(
+      versionOffer(inForce({ behind: true, latest_version: 3 }), rec),
+    ).toEqual({ kind: "move", from: 2, to: 3 });
+    expect(
+      versionOffer(
+        inForce({ source: "inherited", behind: true, latest_version: 3 }),
+        rec,
+      ),
+    ).toEqual({
+      kind: "inherited_behind",
+      from: 2,
+      to: 3,
+    });
   });
 });

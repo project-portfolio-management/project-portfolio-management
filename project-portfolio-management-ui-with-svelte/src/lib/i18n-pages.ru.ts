@@ -9478,4 +9478,23 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.onboarding_templates.could_not_save": "Не удалось сохранить список.",
   "p.onboarding_templates.forbidden":
     "Чтобы изменить список, нужно право управлять людьми.",
+  "p.frameworks.version_n": "Версия {n}",
+  "p.frameworks.behind":
+    "Этот план следует версии {from}; новейшая — версия {to}.",
+  "p.frameworks.move": "Перейти на версию {n}",
+  "p.frameworks.move_ask":
+    "Перевести этот план на версию {to} «{name}»? Сейчас он следует версии {from}; затем к нему применяется новейший текст.",
+  "p.frameworks.moved": "Теперь этот план следует версии {n}.",
+  "p.frameworks.behind_inherited":
+    "Какая версия действует, решает план выше; переведите его там.",
+  "p.frameworks.show_versions": "Показать версии",
+  "p.frameworks.could_not_load_versions": "Не удалось загрузить версии.",
+  "p.frameworks.versions_heading": "Версии «{name}», новейшая первой",
+  "p.frameworks.plans_following": "планов следуют: {n}",
+  "p.frameworks.newest": "новейшая",
+  "p.frameworks.this_plan": "этого плана",
+  "p.frameworks.pin": "Следовать версии {n}",
+  "p.frameworks.pin_ask":
+    "Пусть этот план следует версии {n} «{name}»? Он сохранит её, пока его не переведут.",
+  "p.frameworks.pinned": "Теперь этот план следует версии {n}.",
 };

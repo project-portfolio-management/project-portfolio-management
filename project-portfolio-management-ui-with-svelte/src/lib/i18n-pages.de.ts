@@ -9712,4 +9712,24 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Die Checkliste konnte nicht gespeichert werden.",
   "p.onboarding_templates.forbidden":
     "Eine Checkliste zu ändern erfordert die Berechtigung, Personen zu verwalten.",
+  "p.frameworks.version_n": "Fassung {n}",
+  "p.frameworks.behind":
+    "Dieser Plan folgt Fassung {from}; die neueste ist Fassung {to}.",
+  "p.frameworks.move": "Zu Fassung {n} wechseln",
+  "p.frameworks.move_ask":
+    "Diesen Plan auf Fassung {to} von „{name}“ umstellen? Er folgt jetzt Fassung {from}; danach gilt für ihn der neueste Text.",
+  "p.frameworks.moved": "Dieser Plan folgt jetzt Fassung {n}.",
+  "p.frameworks.behind_inherited":
+    "Ein übergeordneter Plan bestimmt, welche Fassung gilt; stellen Sie ihn dort um.",
+  "p.frameworks.show_versions": "Fassungen anzeigen",
+  "p.frameworks.could_not_load_versions":
+    "Die Fassungen konnten nicht geladen werden.",
+  "p.frameworks.versions_heading": "Fassungen von „{name}“, neueste zuerst",
+  "p.frameworks.plans_following": "folgende Pläne: {n}",
+  "p.frameworks.newest": "neueste",
+  "p.frameworks.this_plan": "dieser Plan",
+  "p.frameworks.pin": "Fassung {n} folgen",
+  "p.frameworks.pin_ask":
+    "Diesen Plan Fassung {n} von „{name}“ folgen lassen? Er behält diese Fassung, bis er umgestellt wird.",
+  "p.frameworks.pinned": "Dieser Plan folgt jetzt Fassung {n}.",
 };

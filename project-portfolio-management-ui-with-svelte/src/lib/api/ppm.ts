@@ -362,6 +362,7 @@ import type {
   BulkJobStatus,
   ReviewQueueItem,
   CustomFieldDef,
+  FrameworkVersions,
   OnboardingTemplate,
   OnboardingTemplateBody,
   CustomFieldSearch,
@@ -1833,18 +1834,35 @@ export class PpmClient {
       `/api/plans/${pid}/${family === "ways-of-working" ? "ways-of-working" : "governance-framework"}`,
     );
   }
-  /** Follow `frameworkPid`, or follow none of its own (the plan then inherits) with null. */
+  /**
+   * Follow `frameworkPid`, or follow none of its own (the plan then inherits) with null. A `version` pins that one;
+   * without one the plan follows the record's current version, which is how a plan that is behind moves (CF-4).
+   */
   linkFramework(
     family: FrameworkFamily,
     pid: string,
     frameworkPid: string | null,
+    version?: number,
   ): Promise<FrameworkInForce> {
+    const body: { framework_pid: string | null; version?: number } = {
+      framework_pid: frameworkPid,
+    };
+    if (version !== undefined) body.version = version;
     return this.http.put(
       `/api/plans/${pid}/${family === "ways-of-working" ? "ways-of-working" : "governance-framework"}`,
-      {
-        body: { framework_pid: frameworkPid },
-      },
+      { body },
     );
+  }
+  /** One framework's current text. */
+  framework(family: FrameworkFamily, pid: string): Promise<Framework> {
+    return this.http.get(`/api/${family}/${encodeURIComponent(pid)}`);
+  }
+  /** Every version a framework has had, newest first, with how many plans follow each. */
+  frameworkVersions(
+    family: FrameworkFamily,
+    pid: string,
+  ): Promise<FrameworkVersions> {
+    return this.http.get(`/api/${family}/${encodeURIComponent(pid)}/versions`);
   }
   /** A plan's links, or a task's when `taskPid` is given. */
   planLinks(pid: string, taskPid?: string): Promise<PlanLink[]> {

@@ -7,7 +7,15 @@
   import { errorReason, errorText } from "#lib/error-text.js";
   import { t, localeHref, tn } from "#lib/i18n.svelte.js";
   import { onMount } from "svelte";
-  import { PpmClient, type Framework, type FrameworkFamily, type FrameworkInForce } from "#lib/api/ppm.js";
+  import { askConfirm } from "#lib/confirm.svelte.js";
+  import { formatDateTime, formatInteger } from "#lib/locale-format.js";
+  import {
+    PpmClient,
+    type Framework,
+    type FrameworkFamily,
+    type FrameworkInForce,
+    type FrameworkVersions,
+  } from "#lib/api/ppm.js";
   import {
     DECISION_MODELS,
     decisionModelLabel,
@@ -19,6 +27,7 @@
     recordOf,
     sourceText,
     summary,
+    versionOffer,
     type FrameworkForm,
   } from "#lib/framework-view.js";
 
@@ -34,8 +43,12 @@
   let creating = $state(false);
   let form = $state<FrameworkForm>(formOf(null));
   let problems = $state<string[]>([]);
+  let versions = $state<FrameworkVersions | null>(null);
+  let versionsError = $state<string | null>(null);
+  let preview = $state<Framework | null>(null);
 
   const record = $derived(recordOf(family, inForce));
+  const offer = $derived(versionOffer(inForce, record));
   /** A record this plan owns, or an organisation-wide one (which other plans may follow too: see `sharedWith`). */
   const editable = $derived(!!record && (record.owner_plan_pid === pid || record.scope === "organization"));
   /** How many other plans an edit would also change. */
@@ -59,9 +72,60 @@
     try {
       inForce = await ppm.linkFramework(family, pid, chosen);
       chosen = "";
+      preview = null;
+      versions = null;
       notice = t("p.frameworks.followed");
     } catch (err) {
       notice = message(err);
+    }
+  }
+
+  /** Move this plan to the record's newest version (CF-4): a deliberate act, asked first. */
+  async function moveToLatest() {
+    if (!record || !offer) return;
+    const to = offer.to; // `offer` clears once the plan is on the newest version
+    if (!(await askConfirm(t("p.frameworks.move_ask", { name: record.name, from: formatInteger(offer.from), to: formatInteger(offer.to) })))) return;
+    try {
+      inForce = await ppm.linkFramework(family, pid, record.pid);
+      notice = t("p.frameworks.moved", { n: formatInteger(to) });
+      if (versions) await showVersions();
+    } catch (err) {
+      notice = message(err);
+    }
+  }
+
+  /** Every version of the record in force, newest first. */
+  async function showVersions() {
+    if (!record) return;
+    try {
+      versions = await ppm.frameworkVersions(family, record.pid);
+      versionsError = null;
+    } catch (err) {
+      versionsError = errorText(err, "p.frameworks.could_not_load_versions");
+    }
+  }
+
+  /** Pin this plan to one version of the record it follows. */
+  async function pin(version: number) {
+    if (!record) return;
+    if (!(await askConfirm(t("p.frameworks.pin_ask", { name: record.name, n: formatInteger(version) })))) return;
+    try {
+      inForce = await ppm.linkFramework(family, pid, record.pid, version);
+      notice = t("p.frameworks.pinned", { n: formatInteger(version) });
+      await showVersions();
+    } catch (err) {
+      notice = message(err);
+    }
+  }
+
+  /** The text of the record chosen to follow, read before following it. */
+  async function loadPreview() {
+    preview = null;
+    if (!chosen) return;
+    try {
+      preview = await ppm.framework(family, chosen);
+    } catch {
+      preview = null; // the list already names it; its text is a help, not a need
     }
   }
 
@@ -142,6 +206,19 @@
         {/if}
         <span class="small muted"> · {record.scope === "plan" ? t("p.frameworks.scope_plan") : t("p.frameworks.scope_org")}</span>
       </p>
+      {#if record.version !== undefined}
+        <p class="small" data-testid="fw-version">{t("p.frameworks.version_n", { n: formatInteger(record.version) })}</p>
+      {/if}
+      {#if offer}
+        <div class="banner" data-testid="fw-behind">
+          <p>{t("p.frameworks.behind", { from: formatInteger(offer.from), to: formatInteger(offer.to) })}</p>
+          {#if offer.kind === "move"}
+            <button type="button" onclick={moveToLatest}>{t("p.frameworks.move", { n: formatInteger(offer.to) })}</button>
+          {:else}
+            <p class="small">{t("p.frameworks.behind_inherited")}</p>
+          {/if}
+        </div>
+      {/if}
       {#if record.description}<p>{record.description}</p>{/if}
       <dl>
         {#each summary(family, record) as [label, value] (label)}<dt>{label}</dt><dd>{value}</dd>{/each}
@@ -149,7 +226,37 @@
       <p class="actions">
         {#if editable}<button type="button" onclick={startEdit}>{t("p.frameworks.edit")}</button>{/if}
         {#if inForce.source === "own"}<button type="button" onclick={unfollow}>{t("p.frameworks.unfollow")}</button>{/if}
+        <button type="button" onclick={showVersions}>{t("p.frameworks.show_versions")}</button>
       </p>
+      {#if versionsError}<p class="banner" role="alert">{versionsError}</p>{/if}
+      {#if versions}
+        <section aria-labelledby="versions-h">
+          <h3 id="versions-h">{t("p.frameworks.versions_heading", { name: record.name })}</h3>
+          <ol class="versions" data-testid="fw-versions">
+            {#each versions.versions as v (v.version)}
+              <li>
+                <details>
+                  <summary>
+                    {t("p.frameworks.version_n", { n: formatInteger(v.version) })} · {formatDateTime(v.created_at)}
+                    {#if v.created_by}· {v.created_by}{/if}
+                    · {t("p.frameworks.plans_following", { n: formatInteger(v.plans_following) })}
+                    {#if v.current}· <strong>{t("p.frameworks.newest")}</strong>{/if}
+                    {#if v.version === record.version}· <strong>{t("p.frameworks.this_plan")}</strong>{/if}
+                  </summary>
+                  <p><strong>{v.name}</strong></p>
+                  {#if v.description}<p>{v.description}</p>{/if}
+                  <dl>
+                    {#each summary(family, { ...record, ...v }) as [label, value] (label)}<dt>{label}</dt><dd>{value}</dd>{/each}
+                  </dl>
+                  {#if inForce.source === "own" && v.version !== record.version}
+                    <button type="button" onclick={() => pin(v.version)}>{t("p.frameworks.pin", { n: formatInteger(v.version) })}</button>
+                  {/if}
+                </details>
+              </li>
+            {/each}
+          </ol>
+        </section>
+      {/if}
     {:else}
       <p>{inForce.reason ?? t("p.frameworks.none")}</p>
     {/if}
@@ -161,11 +268,20 @@
       <p class="muted">{t("p.frameworks.no_others")}</p>
     {:else}
       <label>{t("p.frameworks.choose")}
-        <select bind:value={chosen}>
+        <select bind:value={chosen} onchange={loadPreview}>
           <option value=""></option>
           {#each others as f (f.pid)}<option value={f.pid}>{f.name}</option>{/each}
         </select>
       </label>
+      {#if preview && preview.pid === chosen}
+        <div class="surface" data-testid="fw-preview">
+          <p><strong>{preview.name}</strong>{#if preview.version !== undefined} · {t("p.frameworks.version_n", { n: formatInteger(preview.version) })}{/if}</p>
+          {#if preview.description}<p>{preview.description}</p>{/if}
+          <dl>
+            {#each summary(family, preview) as [label, value] (label)}<dt>{label}</dt><dd>{value}</dd>{/each}
+          </dl>
+        </div>
+      {/if}
       <button type="button" disabled={!chosen} onclick={follow}>{t("p.frameworks.follow")}</button>
       {#if deletable}<button type="button" onclick={destroy}>{t("p.frameworks.delete", { name: chosenRecord?.name ?? "" })}</button>{/if}
     {/if}
@@ -258,6 +374,7 @@
 
 <style>
   .path-row { margin-block-end: 0.5rem; }
+  .versions { padding-inline-start: 1.25rem; }
   .path-row button,
   fieldset > button { min-block-size: 2rem; margin-block: 0.25rem; }
 </style>

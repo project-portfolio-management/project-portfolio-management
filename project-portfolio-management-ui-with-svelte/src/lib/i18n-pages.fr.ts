@@ -9674,4 +9674,24 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.onboarding_templates.could_not_save": "Impossible d'enregistrer la liste.",
   "p.onboarding_templates.forbidden":
     "Modifier une liste demande l'autorisation de gérer les personnes.",
+  "p.frameworks.version_n": "Version numéro {n}",
+  "p.frameworks.behind":
+    "Ce plan suit la version {from} ; la plus récente est la version {to}.",
+  "p.frameworks.move": "Passer à la version {n}",
+  "p.frameworks.move_ask":
+    "Passer ce plan à la version {to} de « {name} » ? Il suit la version {from} ; le texte le plus récent s'appliquera ensuite.",
+  "p.frameworks.moved": "Ce plan suit maintenant la version {n}.",
+  "p.frameworks.behind_inherited":
+    "Un plan au-dessus de celui-ci décide de la version qui s'applique ; changez-la là-bas.",
+  "p.frameworks.show_versions": "Afficher les versions",
+  "p.frameworks.could_not_load_versions": "Impossible de charger les versions.",
+  "p.frameworks.versions_heading":
+    "Versions de « {name} », la plus récente d'abord",
+  "p.frameworks.plans_following": "plans qui la suivent : {n}",
+  "p.frameworks.newest": "la plus récente",
+  "p.frameworks.this_plan": "celle de ce plan",
+  "p.frameworks.pin": "Suivre la version {n}",
+  "p.frameworks.pin_ask":
+    "Faire suivre à ce plan la version {n} de « {name} » ? Il la garde jusqu'à ce qu'on le change.",
+  "p.frameworks.pinned": "Ce plan suit maintenant la version {n}.",
 };

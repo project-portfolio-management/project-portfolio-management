@@ -396,3 +396,97 @@ test("a shared way of working asks for confirmation before it is changed for oth
   await expect(page.getByRole("status")).toContainText("Deleted Old kanban.");
   await audit(page);
 });
+
+test("a plan behind its way of working is told, moves after a question, reads every version and pins one (CF-4)", async ({
+  page,
+}) => {
+  const sent: unknown[] = [];
+  let pinned = 1;
+  const v = (n: number) => ({
+    ...scrum,
+    version: n,
+    cadence_days: n === 1 ? 14 : 10,
+    name: n === 1 ? "Scrum, two weeks" : "Scrum, ten days",
+  });
+  await page.route("**/api/ways-of-working", (r) =>
+    r.fulfill({ json: [v(2), kanban] }),
+  );
+  await page.route("**/api/ways-of-working/w2", (r) =>
+    r.fulfill({
+      json: { ...kanban, version: 1, description: "Pull, never push" },
+    }),
+  );
+  await page.route("**/api/ways-of-working/w1/versions", (r) =>
+    r.fulfill({
+      json: {
+        framework_pid: "w1",
+        current_version: 2,
+        versions: [2, 1].map((n) => ({
+          ...v(n),
+          current: n === 2,
+          created_by: "alice",
+          created_at: "2026-11-0" + n + "T09:00:00Z",
+          plans_following: n === pinned ? 1 : 0,
+        })),
+      },
+    }),
+  );
+  await page.route(`**/api/plans/${PID}/ways-of-working`, (r) => {
+    if (r.request().method() === "PUT") {
+      const b = r.request().postDataJSON() as { version?: number };
+      sent.push(b);
+      pinned = b.version ?? 2;
+    }
+    return r.fulfill({
+      json: {
+        plan_pid: PID,
+        source: "own",
+        from_plan_pid: null,
+        ways_of_working: v(pinned),
+        reason: null,
+        latest_version: 2,
+        behind: pinned !== 2,
+      },
+    });
+  });
+  await page.goto(`/en-001/plans/${PID}/ways-of-working`);
+  await expect(page.getByTestId("fw-version")).toHaveText("Version 1");
+  await expect(page.getByTestId("fw-behind")).toContainText(
+    "This plan follows version 1; the newest is version 2.",
+  );
+  await audit(page);
+  const ask = page.getByRole("alertdialog");
+  await page.getByRole("button", { name: "Move to version 2" }).click();
+  await expect(ask).toContainText(
+    "Move this plan to version 2 of “Scrum, two weeks”?",
+  );
+  await ask.getByRole("button", { name: "Cancel" }).click();
+  expect(sent).toEqual([]);
+  await page.getByRole("button", { name: "Move to version 2" }).click();
+  await ask.getByRole("button", { name: "OK" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "This plan now follows version 2.",
+  );
+  await expect(page.getByTestId("fw-behind")).toHaveCount(0);
+  expect(sent).toEqual([{ framework_pid: "w1" }]);
+
+  await page.getByRole("button", { name: "Show the versions" }).click();
+  const rows = page.getByTestId("fw-versions").getByRole("listitem");
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0)).toContainText("Version 2");
+  await expect(rows.nth(0)).toContainText("newest");
+  await expect(rows.nth(0)).toContainText("this plan's");
+  await rows.nth(1).locator("summary").click();
+  await expect(rows.nth(1)).toContainText("14 days");
+  await rows.nth(1).getByRole("button", { name: "Follow version 1" }).click();
+  await ask.getByRole("button", { name: "OK" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "This plan now follows version 1.",
+  );
+  expect(sent.at(-1)).toEqual({ framework_pid: "w1", version: 1 });
+
+  await page.getByLabel("Shared or existing").selectOption("w2");
+  await expect(page.getByTestId("fw-preview")).toContainText(
+    "Pull, never push",
+  );
+});

@@ -9423,4 +9423,23 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.onboarding_templates.could_not_save": "Không lưu được danh sách.",
   "p.onboarding_templates.forbidden":
     "Thay đổi danh sách cần quyền quản lý con người.",
+  "p.frameworks.version_n": "Phiên bản {n}",
+  "p.frameworks.behind":
+    "Kế hoạch này theo phiên bản {from}; phiên bản mới nhất là {to}.",
+  "p.frameworks.move": "Chuyển sang phiên bản {n}",
+  "p.frameworks.move_ask":
+    "Chuyển kế hoạch này sang phiên bản {to} của “{name}”? Hiện nó theo phiên bản {from}; sau đó văn bản mới nhất sẽ áp dụng.",
+  "p.frameworks.moved": "Kế hoạch này giờ theo phiên bản {n}.",
+  "p.frameworks.behind_inherited":
+    "Một kế hoạch cấp trên quyết định phiên bản áp dụng; hãy chuyển ở đó.",
+  "p.frameworks.show_versions": "Hiện các phiên bản",
+  "p.frameworks.could_not_load_versions": "Không tải được các phiên bản.",
+  "p.frameworks.versions_heading": "Các phiên bản của “{name}”, mới nhất trước",
+  "p.frameworks.plans_following": "số kế hoạch đang theo: {n}",
+  "p.frameworks.newest": "mới nhất",
+  "p.frameworks.this_plan": "của kế hoạch này",
+  "p.frameworks.pin": "Theo phiên bản {n}",
+  "p.frameworks.pin_ask":
+    "Cho kế hoạch này theo phiên bản {n} của “{name}”? Nó giữ phiên bản đó cho đến khi được chuyển.",
+  "p.frameworks.pinned": "Kế hoạch này giờ theo phiên bản {n}.",
 };

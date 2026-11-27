@@ -527,6 +527,8 @@ export interface Framework {
   scope: "organization" | "plan";
   owner_plan_pid: string | null;
   plans_using: number;
+  /** The version shown: the record's current one, or in `FrameworkInForce` the one the plan follows (CF-4). */
+  version?: number;
   // Ways of working.
   methodology?: string;
   cadence_days?: number | null;
@@ -555,6 +557,29 @@ export interface FrameworkInForce {
   ways_of_working?: Framework | null;
   governance_framework?: Framework | null;
   reason: string | null;
+  /** The record's current version (CF-4). */
+  latest_version?: number | null;
+  /** The plan follows an older version than the record now has; moving it is a deliberate act. */
+  behind?: boolean;
+}
+
+/** One version of a framework (`GET /api/<family>/{pid}/versions`): its text then, and who follows it now. */
+export type FrameworkVersion = Omit<
+  Framework,
+  "scope" | "owner_plan_pid" | "plans_using" | "pid"
+> & {
+  version: number;
+  current: boolean;
+  created_by: string | null;
+  created_at: string;
+  plans_following: number;
+};
+
+/** `GET /api/<family>/{pid}/versions`, newest first. */
+export interface FrameworkVersions {
+  framework_pid: string;
+  current_version: number;
+  versions: FrameworkVersion[];
 }
 
 /** One link on a plan (`/api/plans/{pid}/links`). */

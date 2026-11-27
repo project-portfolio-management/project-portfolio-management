@@ -9150,4 +9150,23 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.onboarding_templates.could_not_save": "তালিকা সংরক্ষণ করা যায়নি।",
   "p.onboarding_templates.forbidden":
     "তালিকা বদলাতে মানুষ পরিচালনার অনুমতি লাগে।",
+  "p.frameworks.version_n": "সংস্করণ {n}",
+  "p.frameworks.behind":
+    "এই পরিকল্পনা সংস্করণ {from} অনুসরণ করে; সর্বশেষটি সংস্করণ {to}।",
+  "p.frameworks.move": "সংস্করণ {n}-এ যান",
+  "p.frameworks.move_ask":
+    "এই পরিকল্পনাকে “{name}”-এর সংস্করণ {to}-এ নেবেন? এটি এখন সংস্করণ {from} অনুসরণ করে; তারপর সর্বশেষ লেখা এর ক্ষেত্রে প্রযোজ্য হবে।",
+  "p.frameworks.moved": "এই পরিকল্পনা এখন সংস্করণ {n} অনুসরণ করে।",
+  "p.frameworks.behind_inherited":
+    "কোন সংস্করণ প্রযোজ্য তা উপরের পরিকল্পনা ঠিক করে; সেখানে বদলান।",
+  "p.frameworks.show_versions": "সংস্করণগুলো দেখান",
+  "p.frameworks.could_not_load_versions": "সংস্করণগুলো লোড করা যায়নি।",
+  "p.frameworks.versions_heading": "“{name}”-এর সংস্করণ, সর্বশেষটি আগে",
+  "p.frameworks.plans_following": "অনুসরণকারী পরিকল্পনা: {n}",
+  "p.frameworks.newest": "সর্বশেষ",
+  "p.frameworks.this_plan": "এই পরিকল্পনার",
+  "p.frameworks.pin": "সংস্করণ {n} অনুসরণ করুন",
+  "p.frameworks.pin_ask":
+    "এই পরিকল্পনাকে “{name}”-এর সংস্করণ {n} অনুসরণ করাবেন? বদলানো পর্যন্ত এটি সেই সংস্করণ রাখবে।",
+  "p.frameworks.pinned": "এই পরিকল্পনা এখন সংস্করণ {n} অনুসরণ করে।",
 };

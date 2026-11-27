@@ -9194,4 +9194,23 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.onboarding_templates.could_not_save": "체크리스트를 저장할 수 없습니다.",
   "p.onboarding_templates.forbidden":
     "체크리스트를 바꾸려면 사람을 관리할 권한이 필요합니다.",
+  "p.frameworks.version_n": "버전 {n}",
+  "p.frameworks.behind":
+    "이 계획은 버전 {from}을(를) 따릅니다. 최신 버전은 {to}입니다.",
+  "p.frameworks.move": "버전 {n}(으)로 옮기기",
+  "p.frameworks.move_ask":
+    "이 계획을 “{name}”의 버전 {to}(으)로 옮길까요? 지금은 버전 {from}을(를) 따르며, 옮기면 최신 내용이 적용됩니다.",
+  "p.frameworks.moved": "이 계획은 이제 버전 {n}을(를) 따릅니다.",
+  "p.frameworks.behind_inherited":
+    "어느 버전을 적용할지는 상위 계획이 정합니다. 그곳에서 옮기세요.",
+  "p.frameworks.show_versions": "버전 보기",
+  "p.frameworks.could_not_load_versions": "버전을 불러올 수 없습니다.",
+  "p.frameworks.versions_heading": "“{name}”의 버전(최신순)",
+  "p.frameworks.plans_following": "따르는 계획: {n}",
+  "p.frameworks.newest": "최신",
+  "p.frameworks.this_plan": "이 계획의 버전",
+  "p.frameworks.pin": "버전 {n} 따르기",
+  "p.frameworks.pin_ask":
+    "이 계획이 “{name}”의 버전 {n}을(를) 따르게 할까요? 옮길 때까지 그 버전을 유지합니다.",
+  "p.frameworks.pinned": "이 계획은 이제 버전 {n}을(를) 따릅니다.",
 };

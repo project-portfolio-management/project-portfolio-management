@@ -9531,4 +9531,23 @@ export const PAGES_ID: Record<PageKey, string> = {
     "Tidak dapat menyimpan daftar periksa.",
   "p.onboarding_templates.forbidden":
     "Mengubah daftar periksa memerlukan izin untuk mengelola orang.",
+  "p.frameworks.version_n": "Versi {n}",
+  "p.frameworks.behind":
+    "Rencana ini mengikuti versi {from}; yang terbaru adalah versi {to}.",
+  "p.frameworks.move": "Pindah ke versi {n}",
+  "p.frameworks.move_ask":
+    "Pindahkan rencana ini ke versi {to} dari “{name}”? Kini mengikuti versi {from}; teks terbaru lalu berlaku untuknya.",
+  "p.frameworks.moved": "Rencana ini kini mengikuti versi {n}.",
+  "p.frameworks.behind_inherited":
+    "Rencana di atas rencana ini yang menentukan versi yang berlaku; pindahkan di sana.",
+  "p.frameworks.show_versions": "Tampilkan versi",
+  "p.frameworks.could_not_load_versions": "Tidak dapat memuat versi.",
+  "p.frameworks.versions_heading": "Versi “{name}”, yang terbaru dulu",
+  "p.frameworks.plans_following": "rencana yang mengikuti: {n}",
+  "p.frameworks.newest": "terbaru",
+  "p.frameworks.this_plan": "milik rencana ini",
+  "p.frameworks.pin": "Ikuti versi {n}",
+  "p.frameworks.pin_ask":
+    "Jadikan rencana ini mengikuti versi {n} dari “{name}”? Versi itu dipertahankan sampai dipindahkan.",
+  "p.frameworks.pinned": "Rencana ini kini mengikuti versi {n}.",
 };

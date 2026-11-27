@@ -3516,5 +3516,12 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   and nothing is sent when nothing changed (`PUT /api/onboarding/templates/{kind}`). A custom one goes back to the
   built-in after a question (`DELETE`); cases already started keep their items. 403 (no permission to manage
   people) in its own sentence. Rules in `src/lib/onboarding-template-view.ts`; `tests/e2e/onboarding-templates.spec.ts`.
-- **Not built** in part n: a task's custom field values, a framework's and a way of
-  working's text and versions, editing a process definition or an announcement, approval requests outside a process.
+- **A framework's versions** (`/plans/[pid]/ways-of-working` and `…/governance-framework`, `FrameworkPanel.svelte`,
+  CF-4, 2026-11-27): the version the plan follows; when it is behind the record's newest (`behind`, `latest_version`),
+  a banner says so, and a plan following it on its own link moves to the newest after a question (`PUT` of the link
+  with no version), while one that inherits it is told the plan above decides. "Show the versions" lists every version
+  newest first (`GET /api/<family>/{pid}/versions`): when and by whom, how many plans follow it, the newest and this
+  plan's marked, each with its text; this plan can follow an earlier one after a question (`PUT` with `version`).
+  Choosing another framework to follow shows its text first (`GET /api/<family>/{pid}`).
+  `tests/e2e/frameworks-and-links.spec.ts`.
+- **Not built** in part n: a task's custom field values, editing a process definition or an announcement, approval requests outside a process.

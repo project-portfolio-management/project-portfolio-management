@@ -9349,4 +9349,23 @@ export const PAGES_JA: Record<PageKey, string> = {
     "チェックリストを保存できませんでした。",
   "p.onboarding_templates.forbidden":
     "チェックリストの変更には人を管理する権限が必要です。",
+  "p.frameworks.version_n": "バージョン {n}",
+  "p.frameworks.behind":
+    "この計画はバージョン {from} に従っています。最新はバージョン {to} です。",
+  "p.frameworks.move": "バージョン {n} に移行",
+  "p.frameworks.move_ask":
+    "この計画を「{name}」のバージョン {to} に移しますか？ 現在はバージョン {from} に従っており、移行後は最新の内容が適用されます。",
+  "p.frameworks.moved": "この計画はバージョン {n} に従うようになりました。",
+  "p.frameworks.behind_inherited":
+    "どのバージョンを適用するかは上位の計画が決めます。そちらで移行してください。",
+  "p.frameworks.show_versions": "バージョンを表示",
+  "p.frameworks.could_not_load_versions": "バージョンを読み込めませんでした。",
+  "p.frameworks.versions_heading": "「{name}」のバージョン（新しい順）",
+  "p.frameworks.plans_following": "従っている計画: {n}",
+  "p.frameworks.newest": "最新",
+  "p.frameworks.this_plan": "この計画のもの",
+  "p.frameworks.pin": "バージョン {n} に従う",
+  "p.frameworks.pin_ask":
+    "この計画を「{name}」のバージョン {n} に従わせますか？ 移行するまでそのバージョンを保持します。",
+  "p.frameworks.pinned": "この計画はバージョン {n} に従うようになりました。",
 };

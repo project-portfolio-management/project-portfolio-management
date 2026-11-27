@@ -9510,4 +9510,23 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.onboarding_templates.could_not_save": "Methu cadw'r rhestr wirio.",
   "p.onboarding_templates.forbidden":
     "Mae newid rhestr wirio yn gofyn am y caniatâd i reoli pobl.",
+  "p.frameworks.version_n": "Fersiwn {n}",
+  "p.frameworks.behind":
+    "Mae'r cynllun hwn yn dilyn fersiwn {from}; y fersiwn diweddaraf yw {to}.",
+  "p.frameworks.move": "Symud i fersiwn {n}",
+  "p.frameworks.move_ask":
+    "Symud y cynllun hwn i fersiwn {to} o “{name}”? Mae'n dilyn fersiwn {from} nawr; bydd y testun diweddaraf wedyn yn berthnasol iddo.",
+  "p.frameworks.moved": "Mae'r cynllun hwn bellach yn dilyn fersiwn {n}.",
+  "p.frameworks.behind_inherited":
+    "Cynllun uwchlaw'r un hwn sy'n penderfynu pa fersiwn sy'n berthnasol; symudwch ef yno.",
+  "p.frameworks.show_versions": "Dangos y fersiynau",
+  "p.frameworks.could_not_load_versions": "Methu llwytho'r fersiynau.",
+  "p.frameworks.versions_heading": "Fersiynau “{name}”, y diweddaraf yn gyntaf",
+  "p.frameworks.plans_following": "cynlluniau sy'n dilyn: {n}",
+  "p.frameworks.newest": "diweddaraf",
+  "p.frameworks.this_plan": "y cynllun hwn",
+  "p.frameworks.pin": "Dilyn fersiwn {n}",
+  "p.frameworks.pin_ask":
+    "Gwneud i'r cynllun hwn ddilyn fersiwn {n} o “{name}”? Mae'n cadw'r fersiwn honno nes ei symud.",
+  "p.frameworks.pinned": "Mae'r cynllun hwn bellach yn dilyn fersiwn {n}.",
 };

@@ -9,6 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a framework's versions on its plan pages (CF-4, 2026-11-27)
+
+- `FrameworkPanel.svelte`: the version followed, behind and the move to the newest, every version, a pin, another's text;
+  two client methods and `linkFramework`'s `version`; `versionOffer` in `src/lib/framework-view.ts`; 15 strings in
+  every locale.
+
 ### Added — `/onboarding-templates` (2026-11-27)
 
 - Three client methods; `src/lib/onboarding-template-view.ts`; a top-navigation section; 29 strings in every locale.

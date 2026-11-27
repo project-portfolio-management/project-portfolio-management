@@ -9040,4 +9040,23 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.onboarding_templates.could_not_save": "सूची सहेजी नहीं जा सकी।",
   "p.onboarding_templates.forbidden":
     "सूची बदलने के लिए लोगों को प्रबंधित करने की अनुमति चाहिए।",
+  "p.frameworks.version_n": "संस्करण {n}",
+  "p.frameworks.behind":
+    "यह योजना संस्करण {from} का पालन करती है; नवीनतम संस्करण {to} है।",
+  "p.frameworks.move": "संस्करण {n} पर जाएँ",
+  "p.frameworks.move_ask":
+    "इस योजना को “{name}” के संस्करण {to} पर ले जाएँ? यह अभी संस्करण {from} का पालन करती है; फिर नवीनतम पाठ इस पर लागू होगा।",
+  "p.frameworks.moved": "यह योजना अब संस्करण {n} का पालन करती है।",
+  "p.frameworks.behind_inherited":
+    "कौन-सा संस्करण लागू है, यह ऊपर की योजना तय करती है; उसे वहाँ बदलें।",
+  "p.frameworks.show_versions": "संस्करण दिखाएँ",
+  "p.frameworks.could_not_load_versions": "संस्करण लोड नहीं हो सके।",
+  "p.frameworks.versions_heading": "“{name}” के संस्करण, नवीनतम पहले",
+  "p.frameworks.plans_following": "पालन करने वाली योजनाएँ: {n}",
+  "p.frameworks.newest": "नवीनतम",
+  "p.frameworks.this_plan": "इस योजना का",
+  "p.frameworks.pin": "संस्करण {n} का पालन करें",
+  "p.frameworks.pin_ask":
+    "इस योजना से “{name}” के संस्करण {n} का पालन करवाएँ? बदले जाने तक यह वही संस्करण रखेगी।",
+  "p.frameworks.pinned": "यह योजना अब संस्करण {n} का पालन करती है।",
 };

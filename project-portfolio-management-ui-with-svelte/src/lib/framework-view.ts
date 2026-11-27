@@ -463,3 +463,25 @@ export function decisionModelLabel(m: string): string {
   };
   return labels[m] ?? m;
 }
+
+/**
+ * What the page says about the version a plan follows (CF-4): a plan behind on its own link may move to the newest
+ * version (a deliberate act); one behind through a plan above it is told so, since moving belongs to that plan.
+ */
+export function versionOffer(
+  r: FrameworkInForce | null,
+  record: Framework | null,
+): { kind: "move" | "inherited_behind"; from: number; to: number } | null {
+  if (
+    !r?.behind ||
+    !record ||
+    record.version === undefined ||
+    r.latest_version == null
+  )
+    return null;
+  return {
+    kind: r.source === "own" ? "move" : "inherited_behind",
+    from: record.version,
+    to: r.latest_version,
+  };
+}

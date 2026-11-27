@@ -9285,6 +9285,25 @@ export const PAGES_EN = {
   "p.onboarding_templates.could_not_save": "Could not save the checklist.",
   "p.onboarding_templates.forbidden":
     "Changing a checklist needs the permission to manage people.",
+  "p.frameworks.version_n": "Version {n}",
+  "p.frameworks.behind":
+    "This plan follows version {from}; the newest is version {to}.",
+  "p.frameworks.move": "Move to version {n}",
+  "p.frameworks.move_ask":
+    "Move this plan to version {to} of “{name}”? It follows version {from} now; the newest text then applies to it.",
+  "p.frameworks.moved": "This plan now follows version {n}.",
+  "p.frameworks.behind_inherited":
+    "A plan above this one decides which version applies; move it there.",
+  "p.frameworks.show_versions": "Show the versions",
+  "p.frameworks.could_not_load_versions": "Could not load the versions.",
+  "p.frameworks.versions_heading": "Versions of “{name}”, newest first",
+  "p.frameworks.plans_following": "plans following: {n}",
+  "p.frameworks.newest": "newest",
+  "p.frameworks.this_plan": "this plan's",
+  "p.frameworks.pin": "Follow version {n}",
+  "p.frameworks.pin_ask":
+    "Make this plan follow version {n} of “{name}”? It keeps that version until it is moved.",
+  "p.frameworks.pinned": "This plan now follows version {n}.",
 } as const;
 
 /** A key in the page and component catalogue. */

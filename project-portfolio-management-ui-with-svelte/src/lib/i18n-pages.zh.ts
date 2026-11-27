@@ -8619,4 +8619,21 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.onboarding_templates.saved": "已保存“{kind}”的清单。",
   "p.onboarding_templates.could_not_save": "无法保存清单。",
   "p.onboarding_templates.forbidden": "更改清单需要管理人员的权限。",
+  "p.frameworks.version_n": "版本 {n}",
+  "p.frameworks.behind": "此计划遵循版本 {from}；最新的是版本 {to}。",
+  "p.frameworks.move": "改用版本 {n}",
+  "p.frameworks.move_ask":
+    "将此计划改为“{name}”的版本 {to}？它目前遵循版本 {from}；改用后适用最新文本。",
+  "p.frameworks.moved": "此计划现在遵循版本 {n}。",
+  "p.frameworks.behind_inherited": "由上级计划决定适用哪个版本；请在那里更改。",
+  "p.frameworks.show_versions": "显示版本",
+  "p.frameworks.could_not_load_versions": "无法加载版本。",
+  "p.frameworks.versions_heading": "“{name}”的版本，最新的在前",
+  "p.frameworks.plans_following": "遵循的计划：{n}",
+  "p.frameworks.newest": "最新",
+  "p.frameworks.this_plan": "此计划所用",
+  "p.frameworks.pin": "遵循版本 {n}",
+  "p.frameworks.pin_ask":
+    "让此计划遵循“{name}”的版本 {n}？在更改之前它会保留该版本。",
+  "p.frameworks.pinned": "此计划现在遵循版本 {n}。",
 };

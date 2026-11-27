@@ -8989,4 +8989,23 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.onboarding_templates.saved": "حُفظت قائمة «{kind}».",
   "p.onboarding_templates.could_not_save": "تعذّر حفظ القائمة.",
   "p.onboarding_templates.forbidden": "يتطلّب تغيير القائمة إذن إدارة الأشخاص.",
+  "p.frameworks.version_n": "الإصدار {n}",
+  "p.frameworks.behind":
+    "تتبع هذه الخطة الإصدار {from}؛ والأحدث هو الإصدار {to}.",
+  "p.frameworks.move": "الانتقال إلى الإصدار {n}",
+  "p.frameworks.move_ask":
+    "نقل هذه الخطة إلى الإصدار {to} من «{name}»؟ تتبع الآن الإصدار {from}؛ ثم ينطبق عليها أحدث نص.",
+  "p.frameworks.moved": "تتبع هذه الخطة الآن الإصدار {n}.",
+  "p.frameworks.behind_inherited":
+    "تقرر خطة أعلى من هذه أي إصدار ينطبق؛ انقلها هناك.",
+  "p.frameworks.show_versions": "عرض الإصدارات",
+  "p.frameworks.could_not_load_versions": "تعذّر تحميل الإصدارات.",
+  "p.frameworks.versions_heading": "إصدارات «{name}»، الأحدث أولًا",
+  "p.frameworks.plans_following": "الخطط التي تتبعه: {n}",
+  "p.frameworks.newest": "الأحدث",
+  "p.frameworks.this_plan": "إصدار هذه الخطة",
+  "p.frameworks.pin": "اتباع الإصدار {n}",
+  "p.frameworks.pin_ask":
+    "جعل هذه الخطة تتبع الإصدار {n} من «{name}»؟ تحتفظ به حتى تُنقل.",
+  "p.frameworks.pinned": "تتبع هذه الخطة الآن الإصدار {n}.",
 };

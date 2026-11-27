@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a framework's versions)
+
+- A plan's ways of working and governance framework pages show the version the plan follows, say when it is behind
+  the newest and move it there after a question, list every version (and follow an earlier one after a question), and
+  show another framework's text before following it (CF-4). 15 new strings in every locale, machine-written in 14,
+  none reviewed. Not verified: against a real service.
+
 ## 27 November (checklist templates)
 
 - A new `/onboarding-templates` ("Checklist templates") shows the checklist each onboarding or offboarding case

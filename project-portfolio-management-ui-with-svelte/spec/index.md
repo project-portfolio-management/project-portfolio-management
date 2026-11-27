@@ -3594,6 +3594,4 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   whole set of translations when they changed), every problem said first; removing the colour removes its translations
   too, after a question (`colour: null`). Rules in `src/lib/family-view.ts`; `tests/e2e/product-family.spec.ts`.
 - **Not built** in part l: gathering several edits into one pending change set (each edit above is saved at once),
-  translations, an item's details and
-  organizations,  and organizations' short and
-  translated names.
+  translations, an item's details and organizations, and organizations' short and translated names.

@@ -16,7 +16,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   bad cursor instead of saturating it.
 - `GET /api/plans` and `GET /api/plans/search` dropped the plans the caller may not see after reading a page, so a page
   came back short (saying how many were hidden) and lost its next link when the extra row that showed more was hidden,
-  ending the list early. They now fill the page (`pagination::Page::fill`, at most `FILL_SCAN_PAGES` = 10 pages read)
+  ending the list early. They now fill the page (`pagination::Page::fill`, at most `FILL_SCAN_PAGES` = 10 pages read,
+  `MAX_FILL_SCAN` = 5,010 rows; the budget is a `checked_mul`, as the arithmetic census requires)
   and start the next page after the last row returned. Test: `requests::plans::hidden_plans_do_not_shorten_a_page_or_end_the_list`,
   which fails on the old code.
 - Not changed: the other paged lists, which already leave hidden rows out in SQL. A page that spends the read budget can

@@ -424,6 +424,9 @@ pub mod pagination {
     /// [`Page::fetch`] rows, so a caller who may see almost nothing cannot make one request read the whole list.
     pub const FILL_SCAN_PAGES: u64 = 10;
 
+    /// The most rows one filled page may read: [`FILL_SCAN_PAGES`] pages of the largest page and its extra row.
+    pub const MAX_FILL_SCAN: u64 = 5_010;
+
     /// On a response its handler paged, so the paging layer leaves it alone.
     #[derive(Debug, Clone, Copy)]
     pub struct Paged;
@@ -578,9 +581,12 @@ pub mod pagination {
             Fut: Future<Output = axa::Result<Vec<T>>>,
             K: FnMut(&T) -> bool,
         {
-            self.0
-                .fill(self.fetch().saturating_mul(FILL_SCAN_PAGES), fetch, keep)
-                .await
+            // The page is at most [`MAX_LIMIT`] rows, so the budget is at most [`MAX_FILL_SCAN`] and cannot overflow.
+            let budget = match self.fetch().checked_mul(FILL_SCAN_PAGES) {
+                Some(n) => n,
+                None => MAX_FILL_SCAN,
+            };
+            self.0.fill(budget, fetch, keep).await
         }
 
         /// A page [`Page::fill`] filled, as a bare JSON array with `Link: rel="next"` when there is one.
@@ -626,6 +632,16 @@ pub mod pagination {
                 .unwrap()
                 .0
                 .to_string()
+        }
+
+        #[test]
+        fn the_fill_budget_is_ten_of_the_largest_pages() {
+            assert_eq!(
+                MAX_LIMIT
+                    .checked_add(1)
+                    .and_then(|rows| rows.checked_mul(FILL_SCAN_PAGES)),
+                Some(MAX_FILL_SCAN)
+            );
         }
 
         #[test]

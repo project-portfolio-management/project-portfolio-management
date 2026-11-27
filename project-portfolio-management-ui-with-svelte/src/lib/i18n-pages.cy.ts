@@ -9160,4 +9160,69 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "Popeth sy'n cael ei storio am y cynllun, fel JSON, ar gyfer cais am gofnodion neu fynediad. Lle mae eich mynediad yn cuddio pobl, mae pwy sy'n ei arwain a'i berchen wedi'u cuddio ac mae'r ffeil yn dweud hynny. Mae pob allforyn o'r fath yn cael ei ysgrifennu i lwybr archwilio'r cynllun.",
   "p.plan_export.record_download": "Lawrlwytho cofnod y cynllun",
+  "p.template_sync.link": "Newidiadau'r templed",
+  "p.template_sync.title": "Newidiadau'r templed",
+  "p.template_sync.title_ppm": "Newidiadau'r templed — PPM",
+  "p.template_sync.loading": "Wrthi'n llwytho…",
+  "p.template_sync.could_not_load": "Methu llwytho newidiadau'r templed.",
+  "p.template_sync.not_from_template":
+    "Ni wnaed y cynllun hwn o dempled a gadwyd, felly nid oes dim i'w ddiweddaru.",
+  "p.template_sync.made_from": "Wedi'i wneud o'r templed “{name}”.",
+  "p.template_sync.versions":
+    "Wedi'i ddiweddaru i fersiwn {synced}; mae'r templed ar fersiwn {version}.",
+  "p.template_sync.intro":
+    "Mae pob newid isod yn un o'r templed ers i'r cynllun hwn gael ei ddiweddaru ddiwethaf. Ticiwch y rhai i'w cymryd; mae'r gweddill yn aros. Mae newid i dasg y mae pobl y cynllun hwn eu hunain wedi'i golygu neu ei dileu yn cael ei roi ar waith dim ond os ydych hefyd yn ticio “Trosysgrifo golygiad y cynllun hwn”.",
+  "p.template_sync.up_to_date":
+    "Yn gyfredol: nid oes newid nad yw'r cynllun hwn wedi'i gymryd.",
+  "p.template_sync.kind_add": "wedi'i ychwanegu",
+  "p.template_sync.kind_change": "wedi'i newid",
+  "p.template_sync.kind_remove": "wedi'i dileu",
+  "p.template_sync.kind_unknown": "newid anhysbys",
+  "p.template_sync.take": "Cymryd y newid hwn",
+  "p.template_sync.edited":
+    "Mae pobl y cynllun hwn eu hunain wedi golygu neu ddileu'r dasg hon.",
+  "p.template_sync.overwrite": "Trosysgrifo golygiad y cynllun hwn",
+  "p.template_sync.diff_title": "Teitl: {from} → {to}",
+  "p.template_sync.diff_description": "Disgrifiad: {from} → {to}",
+  "p.template_sync.diff_points": "Pwyntiau: {from} → {to}",
+  "p.template_sync.none_value": "dim",
+  "p.template_sync.apply": "Rhoi'r newidiadau a ddewiswyd ar waith",
+  "p.template_sync.apply_ask":
+    "Rhoi'r newidiadau a ddewiswyd ar waith yn y cynllun hwn? Mae tasgau'n cael eu hychwanegu, eu newid neu eu dileu fel y'u rhestrir, ac mae'r newid yn cael ei gofnodi.",
+  "p.template_sync.choose_first": "Ticiwch o leiaf un newid yn gyntaf.",
+  "p.template_sync.applied": "Wedi'u rhoi ar waith: {n}.",
+  "p.template_sync.overwritten":
+    "O'r rheini, yn trosysgrifo golygiadau'r cynllun hwn: {n}.",
+  "p.template_sync.remaining": "Yn dal i aros: {n}.",
+  "p.template_sync.refused_edited":
+    "Ni roddwyd “{title}” ar waith: mae'r cynllun hwn wedi'i golygu; ticiwch “Trosysgrifo golygiad y cynllun hwn” i'w roi ar waith beth bynnag.",
+  "p.template_sync.refused_removed":
+    "Ni roddwyd “{title}” ar waith: dilëodd y cynllun hwn y dasg, felly nid oes dim i'w newid.",
+  "p.template_sync.could_not_apply": "Methu rhoi'r newidiadau ar waith.",
+  "p.template_sync.apply_refused":
+    "Gwrthododd y gwasanaeth y newidiadau: efallai fod y templed wedi newid yn y cyfamser. Darllenwch y newidiadau eto.",
+  "p.template_sync.plans_h": "Cynlluniau a wnaed ohono",
+  "p.template_sync.plans_none":
+    "Ni wnaed unrhyw gynllun y gallwch ei ddarllen ohono.",
+  "p.template_sync.plans_row": "fersiwn {synced} o {version}",
+  "p.template_sync.waiting": "newidiadau'n aros: {n}",
+  "p.template_sync.plan_up_to_date": "yn gyfredol",
+  "p.template_sync.open_changes": "Gweld y newidiadau",
+  "p.template_sync.could_not_load_plans":
+    "Methu llwytho'r cynlluniau a wnaed ohono.",
+  "p.template_sync.revise_h": "Ei ddiwygio o gynllun",
+  "p.template_sync.revise_says":
+    "Mae tasgau'r goeden gynlluniau a ddewiswyd yn dod yn fersiwn nesaf y templed. Rhaid i'r goeden gadw siâp y templed: yr un cynlluniau yn yr un lleoedd, gyda chynlluniau newydd ar y diwedd yn unig. Nid yw cynlluniau a wnaed o'r templed yn cael eu newid; mae pob un yn gweld y gwahaniaeth ar ei dudalen Newidiadau'r templed.",
+  "p.template_sync.revise_plan": "Coeden gynlluniau",
+  "p.template_sync.revise_choose": "Dewiswch gynllun",
+  "p.template_sync.revise": "Diwygio'r templed",
+  "p.template_sync.revise_ask":
+    "Gwneud tasgau “{name}” yn fersiwn nesaf “{template}”?",
+  "p.template_sync.revised": "Bellach yn fersiwn {version}.",
+  "p.template_sync.revised_omitted":
+    "Gadawyd allan gynlluniau yn y goeden na allwch eu darllen: {n}.",
+  "p.template_sync.revise_shape":
+    "Nid oes gan y goeden gynlluniau siâp y templed mwyach: gall diwygiad newid tasgau ac ychwanegu cynlluniau ar y diwedd, nid symud nac ailenwi cynlluniau.",
+  "p.template_sync.could_not_revise": "Methu diwygio'r templed.",
+  "p.template_sync.revise_pick": "Dewiswch y goeden gynlluniau yn gyntaf.",
 };

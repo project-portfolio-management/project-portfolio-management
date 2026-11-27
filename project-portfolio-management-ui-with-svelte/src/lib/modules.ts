@@ -51,6 +51,9 @@ export const PLAN_LINKS = [
   { key: "handover", module: "tasks" },
   { key: "wbs", module: "tasks" },
   { key: "import", module: "tasks" },
+  // `template-diff` and `template-sync` are owned by no module in the service (always on); a template's changes are
+  // tasks, so the page sits with import and export (NC-12, NC-1 slice 12 part k).
+  { key: "template", module: "tasks" },
   // The service files `export` under no module (always on); it sits beside import, which is filed under tasks.
   { key: "export", module: "tasks" },
   { key: "costs", module: "financials" },

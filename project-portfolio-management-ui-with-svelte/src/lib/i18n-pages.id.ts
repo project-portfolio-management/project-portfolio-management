@@ -9183,4 +9183,70 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "Semua yang tersimpan tentang rencana, sebagai JSON, untuk permintaan catatan atau akses. Bila akses Anda menyamarkan orang, siapa yang memimpin dan memilikinya disamarkan dan berkas menyatakannya. Setiap ekspor seperti ini dicatat di jejak audit rencana.",
   "p.plan_export.record_download": "Unduh catatan rencana",
+  "p.template_sync.link": "Perubahan templat",
+  "p.template_sync.title": "Perubahan templat",
+  "p.template_sync.title_ppm": "Perubahan templat — PPM",
+  "p.template_sync.loading": "Memuat…",
+  "p.template_sync.could_not_load": "Tidak dapat memuat perubahan templat.",
+  "p.template_sync.not_from_template":
+    "Rencana ini tidak dibuat dari templat yang disimpan, jadi tidak ada yang perlu diperbarui.",
+  "p.template_sync.made_from": "Dibuat dari templat “{name}”.",
+  "p.template_sync.versions":
+    "Diperbarui ke versi {synced}; templat ada di versi {version}.",
+  "p.template_sync.intro":
+    "Setiap perubahan di bawah berasal dari templat sejak rencana ini terakhir diperbarui. Centang yang akan diambil; sisanya tetap menunggu. Perubahan pada tugas yang telah diubah atau dihapus oleh orang-orang rencana ini hanya diterapkan jika Anda juga mencentang “Timpa suntingan rencana ini”.",
+  "p.template_sync.up_to_date":
+    "Mutakhir: tidak ada perubahan yang belum diambil rencana ini.",
+  "p.template_sync.kind_add": "ditambahkan",
+  "p.template_sync.kind_change": "diubah",
+  "p.template_sync.kind_remove": "dihapus",
+  "p.template_sync.kind_unknown": "perubahan tidak diketahui",
+  "p.template_sync.take": "Ambil perubahan ini",
+  "p.template_sync.edited":
+    "Orang-orang rencana ini telah mengubah atau menghapus tugas ini.",
+  "p.template_sync.overwrite": "Timpa suntingan rencana ini",
+  "p.template_sync.diff_title": "Judul: {from} → {to}",
+  "p.template_sync.diff_description": "Deskripsi: {from} → {to}",
+  "p.template_sync.diff_points": "Poin: {from} → {to}",
+  "p.template_sync.none_value": "tidak ada",
+  "p.template_sync.apply": "Terapkan perubahan yang dipilih",
+  "p.template_sync.apply_ask":
+    "Terapkan perubahan yang dipilih ke rencana ini? Tugas ditambahkan, diubah, atau dihapus seperti tercantum, dan perubahan dicatat.",
+  "p.template_sync.choose_first":
+    "Centang setidaknya satu perubahan lebih dulu.",
+  "p.template_sync.applied": "Diterapkan: {n}.",
+  "p.template_sync.overwritten":
+    "Dari itu, menimpa suntingan rencana ini: {n}.",
+  "p.template_sync.remaining": "Masih menunggu: {n}.",
+  "p.template_sync.refused_edited":
+    "“{title}” tidak diterapkan: rencana ini telah mengubahnya; centang “Timpa suntingan rencana ini” untuk tetap menerapkannya.",
+  "p.template_sync.refused_removed":
+    "“{title}” tidak diterapkan: rencana ini telah menghapus tugas itu, jadi tidak ada yang diubah.",
+  "p.template_sync.could_not_apply": "Tidak dapat menerapkan perubahan.",
+  "p.template_sync.apply_refused":
+    "Layanan menolak perubahan: templat mungkin telah berubah sementara itu. Baca perubahan lagi.",
+  "p.template_sync.plans_h": "Rencana yang dibuat darinya",
+  "p.template_sync.plans_none":
+    "Tidak ada rencana yang dapat Anda baca yang dibuat darinya.",
+  "p.template_sync.plans_row": "versi {synced} dari {version}",
+  "p.template_sync.waiting": "perubahan menunggu: {n}",
+  "p.template_sync.plan_up_to_date": "mutakhir",
+  "p.template_sync.open_changes": "Lihat perubahan",
+  "p.template_sync.could_not_load_plans":
+    "Tidak dapat memuat rencana yang dibuat darinya.",
+  "p.template_sync.revise_h": "Revisi dari sebuah rencana",
+  "p.template_sync.revise_says":
+    "Tugas-tugas pohon rencana yang dipilih menjadi versi berikutnya dari templat. Pohon harus mempertahankan bentuk templat: rencana yang sama di tempat yang sama, dengan rencana baru hanya di akhir. Rencana yang dibuat dari templat tidak diubah; masing-masing melihat perbedaannya di halaman Perubahan templat.",
+  "p.template_sync.revise_plan": "Pohon rencana",
+  "p.template_sync.revise_choose": "Pilih rencana",
+  "p.template_sync.revise": "Revisi templat",
+  "p.template_sync.revise_ask":
+    "Jadikan tugas-tugas “{name}” versi berikutnya dari “{template}”?",
+  "p.template_sync.revised": "Sekarang versi {version}.",
+  "p.template_sync.revised_omitted":
+    "Rencana di pohon yang tidak dapat Anda baca dilewati: {n}.",
+  "p.template_sync.revise_shape":
+    "Pohon rencana tidak lagi berbentuk seperti templat: revisi dapat mengubah tugas dan menambah rencana di akhir, bukan memindahkan atau mengganti nama rencana.",
+  "p.template_sync.could_not_revise": "Tidak dapat merevisi templat.",
+  "p.template_sync.revise_pick": "Pilih pohon rencana lebih dulu.",
 };

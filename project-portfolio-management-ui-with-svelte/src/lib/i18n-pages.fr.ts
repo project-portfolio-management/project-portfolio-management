@@ -9319,4 +9319,71 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "Tout ce qui est enregistré sur le plan, en JSON, pour une demande de dossier ou d'accès. Là où votre accès masque les personnes, qui le dirige et qui le possède sont masqués, et le fichier le dit. Chaque export de ce type est inscrit dans la piste d'audit du plan.",
   "p.plan_export.record_download": "Télécharger le dossier du plan",
+  "p.template_sync.link": "Modifications du modèle",
+  "p.template_sync.title": "Modifications du modèle",
+  "p.template_sync.title_ppm": "Modifications du modèle — PPM",
+  "p.template_sync.loading": "Chargement…",
+  "p.template_sync.could_not_load":
+    "Impossible de charger les modifications du modèle.",
+  "p.template_sync.not_from_template":
+    "Ce plan n'a pas été créé à partir d'un modèle enregistré ; il n'y a rien à mettre à jour.",
+  "p.template_sync.made_from": "Créé à partir du modèle « {name} ».",
+  "p.template_sync.versions":
+    "Mis à jour avec la version {synced} ; le modèle en est à la version {version}.",
+  "p.template_sync.intro":
+    "Chaque modification ci-dessous vient du modèle depuis la dernière mise à jour de ce plan. Cochez celles à reprendre ; les autres restent en attente. Une modification d'une tâche que les personnes de ce plan ont elles-mêmes modifiée ou supprimée n'est appliquée que si vous cochez aussi « Écraser la modification de ce plan ».",
+  "p.template_sync.up_to_date":
+    "À jour : aucune modification que ce plan n'a pas reprise.",
+  "p.template_sync.kind_add": "ajoutée",
+  "p.template_sync.kind_change": "modifiée",
+  "p.template_sync.kind_remove": "supprimée",
+  "p.template_sync.kind_unknown": "modification inconnue",
+  "p.template_sync.take": "Reprendre cette modification",
+  "p.template_sync.edited":
+    "Les personnes de ce plan ont modifié ou supprimé cette tâche.",
+  "p.template_sync.overwrite": "Écraser la modification de ce plan",
+  "p.template_sync.diff_title": "Titre : {from} → {to}",
+  "p.template_sync.diff_description": "Description : {from} → {to}",
+  "p.template_sync.diff_points": "Points : {from} → {to}",
+  "p.template_sync.none_value": "aucun",
+  "p.template_sync.apply": "Appliquer les modifications choisies",
+  "p.template_sync.apply_ask":
+    "Appliquer les modifications choisies à ce plan ? Les tâches sont ajoutées, modifiées ou supprimées comme indiqué, et le changement est consigné.",
+  "p.template_sync.choose_first": "Cochez d'abord au moins une modification.",
+  "p.template_sync.applied": "Appliquées : {n}.",
+  "p.template_sync.overwritten":
+    "Dont en écrasant des modifications de ce plan : {n}.",
+  "p.template_sync.remaining": "Encore en attente : {n}.",
+  "p.template_sync.refused_edited":
+    "« {title} » n'a pas été appliquée : ce plan l'a modifiée ; cochez « Écraser la modification de ce plan » pour l'appliquer quand même.",
+  "p.template_sync.refused_removed":
+    "« {title} » n'a pas été appliquée : ce plan a supprimé la tâche, il n'y a donc rien à modifier.",
+  "p.template_sync.could_not_apply":
+    "Impossible d'appliquer les modifications.",
+  "p.template_sync.apply_refused":
+    "Le service a refusé les modifications : le modèle a peut-être changé entre-temps. Relisez les modifications.",
+  "p.template_sync.plans_h": "Plans créés à partir de lui",
+  "p.template_sync.plans_none":
+    "Aucun plan que vous pouvez lire n'a été créé à partir de lui.",
+  "p.template_sync.plans_row": "version {synced} sur {version}",
+  "p.template_sync.waiting": "modifications en attente : {n}",
+  "p.template_sync.plan_up_to_date": "à jour",
+  "p.template_sync.open_changes": "Voir les modifications",
+  "p.template_sync.could_not_load_plans":
+    "Impossible de charger les plans créés à partir de lui.",
+  "p.template_sync.revise_h": "Le réviser à partir d'un plan",
+  "p.template_sync.revise_says":
+    "Les tâches de l'arbre de plans choisi deviennent la version suivante du modèle. L'arbre doit garder la forme du modèle : les mêmes plans aux mêmes places, de nouveaux plans seulement à la fin. Les plans créés à partir du modèle ne changent pas ; chacun voit la différence sur sa page Modifications du modèle.",
+  "p.template_sync.revise_plan": "Arbre de plans",
+  "p.template_sync.revise_choose": "Choisissez un plan",
+  "p.template_sync.revise": "Réviser le modèle",
+  "p.template_sync.revise_ask":
+    "Faire des tâches de « {name} » la version suivante de « {template} » ?",
+  "p.template_sync.revised": "Désormais version {version}.",
+  "p.template_sync.revised_omitted":
+    "Plans de l'arbre que vous ne pouvez pas lire, laissés de côté : {n}.",
+  "p.template_sync.revise_shape":
+    "L'arbre de plans n'a plus la forme du modèle : une révision peut modifier des tâches et ajouter des plans à la fin, pas déplacer ni renommer des plans.",
+  "p.template_sync.could_not_revise": "Impossible de réviser le modèle.",
+  "p.template_sync.revise_pick": "Choisissez d'abord l'arbre de plans.",
 };

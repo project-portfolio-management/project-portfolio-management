@@ -8304,4 +8304,63 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "以 JSON 提供计划的全部存储内容，用于记录或查阅请求。若你的权限会遮盖人员，负责人和所有者会被遮盖，文件中会注明。每次此类导出都会写入计划的审计记录。",
   "p.plan_export.record_download": "下载计划记录",
+  "p.template_sync.link": "模板变更",
+  "p.template_sync.title": "模板变更",
+  "p.template_sync.title_ppm": "模板变更 — PPM",
+  "p.template_sync.loading": "正在加载…",
+  "p.template_sync.could_not_load": "无法加载模板的变更。",
+  "p.template_sync.not_from_template":
+    "此计划不是由已保存的模板创建的，因此无需更新。",
+  "p.template_sync.made_from": "由模板“{name}”创建。",
+  "p.template_sync.versions":
+    "已更新到版本 {synced}；模板当前为版本 {version}。",
+  "p.template_sync.intro":
+    "下面每项变更都是自此计划上次更新以来模板所做的。勾选要采纳的；其余继续等待。对于此计划的人员自己编辑或删除过的任务，只有同时勾选“覆盖此计划的编辑”时才会应用其变更。",
+  "p.template_sync.up_to_date": "已是最新：没有此计划未采纳的变更。",
+  "p.template_sync.kind_add": "新增",
+  "p.template_sync.kind_change": "修改",
+  "p.template_sync.kind_remove": "删除",
+  "p.template_sync.kind_unknown": "未知变更",
+  "p.template_sync.take": "采纳此变更",
+  "p.template_sync.edited": "此计划的人员已编辑或删除此任务。",
+  "p.template_sync.overwrite": "覆盖此计划的编辑",
+  "p.template_sync.diff_title": "标题：{from} → {to}",
+  "p.template_sync.diff_description": "描述：{from} → {to}",
+  "p.template_sync.diff_points": "点数：{from} → {to}",
+  "p.template_sync.none_value": "无",
+  "p.template_sync.apply": "应用所选变更",
+  "p.template_sync.apply_ask":
+    "将所选变更应用到此计划？任务会按列出的内容新增、修改或删除，并记录此次变更。",
+  "p.template_sync.choose_first": "请先勾选至少一项变更。",
+  "p.template_sync.applied": "已应用：{n}。",
+  "p.template_sync.overwritten": "其中覆盖此计划自身编辑的：{n}。",
+  "p.template_sync.remaining": "仍在等待：{n}。",
+  "p.template_sync.refused_edited":
+    "“{title}”未应用：此计划已编辑过它；若仍要应用，请勾选“覆盖此计划的编辑”。",
+  "p.template_sync.refused_removed":
+    "“{title}”未应用：此计划已删除该任务，没有可修改的内容。",
+  "p.template_sync.could_not_apply": "无法应用变更。",
+  "p.template_sync.apply_refused":
+    "服务拒绝了变更：模板可能已在此期间更改。请重新读取变更。",
+  "p.template_sync.plans_h": "由此模板创建的计划",
+  "p.template_sync.plans_none": "没有你能读取的、由此模板创建的计划。",
+  "p.template_sync.plans_row": "版本 {synced}/{version}",
+  "p.template_sync.waiting": "等待中的变更：{n}",
+  "p.template_sync.plan_up_to_date": "已是最新",
+  "p.template_sync.open_changes": "查看变更",
+  "p.template_sync.could_not_load_plans": "无法加载由此模板创建的计划。",
+  "p.template_sync.revise_h": "从计划修订",
+  "p.template_sync.revise_says":
+    "所选计划树的任务将成为模板的下一个版本。计划树必须保持模板的结构：相同的计划在相同的位置，新计划只能在末尾。由模板创建的计划不会改变；每个计划都可在其“模板变更”页面看到差异。",
+  "p.template_sync.revise_plan": "计划树",
+  "p.template_sync.revise_choose": "选择计划",
+  "p.template_sync.revise": "修订模板",
+  "p.template_sync.revise_ask":
+    "将“{name}”的任务作为“{template}”的下一个版本？",
+  "p.template_sync.revised": "现为版本 {version}。",
+  "p.template_sync.revised_omitted": "已略过计划树中你无法读取的计划：{n}。",
+  "p.template_sync.revise_shape":
+    "计划树已不再符合模板的结构：修订可以更改任务并在末尾添加计划，但不能移动或重命名计划。",
+  "p.template_sync.could_not_revise": "无法修订模板。",
+  "p.template_sync.revise_pick": "请先选择计划树。",
 };

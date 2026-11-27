@@ -9081,4 +9081,69 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "Mọi thứ được lưu về kế hoạch, dưới dạng JSON, cho yêu cầu hồ sơ hoặc yêu cầu truy cập. Khi quyền truy cập của bạn che người, người dẫn dắt và chủ sở hữu bị che và tệp có ghi rõ. Mỗi lần xuất như vậy được ghi vào nhật ký kiểm tra của kế hoạch.",
   "p.plan_export.record_download": "Tải hồ sơ của kế hoạch",
+  "p.template_sync.link": "Thay đổi của mẫu",
+  "p.template_sync.title": "Thay đổi của mẫu",
+  "p.template_sync.title_ppm": "Thay đổi của mẫu — PPM",
+  "p.template_sync.loading": "Đang tải…",
+  "p.template_sync.could_not_load": "Không thể tải các thay đổi của mẫu.",
+  "p.template_sync.not_from_template":
+    "Kế hoạch này không được tạo từ một mẫu đã lưu, nên không có gì để cập nhật.",
+  "p.template_sync.made_from": "Được tạo từ mẫu “{name}”.",
+  "p.template_sync.versions":
+    "Đã cập nhật theo phiên bản {synced}; mẫu đang ở phiên bản {version}.",
+  "p.template_sync.intro":
+    "Mỗi thay đổi bên dưới là của mẫu kể từ lần cuối kế hoạch này được cập nhật. Đánh dấu những thay đổi muốn nhận; phần còn lại vẫn chờ. Một thay đổi cho công việc mà chính người của kế hoạch này đã sửa hoặc xóa chỉ được áp dụng nếu bạn cũng đánh dấu “Ghi đè chỉnh sửa của kế hoạch này”.",
+  "p.template_sync.up_to_date":
+    "Đã cập nhật: không có thay đổi nào kế hoạch này chưa nhận.",
+  "p.template_sync.kind_add": "đã thêm",
+  "p.template_sync.kind_change": "đã đổi",
+  "p.template_sync.kind_remove": "đã xóa",
+  "p.template_sync.kind_unknown": "thay đổi không rõ",
+  "p.template_sync.take": "Nhận thay đổi này",
+  "p.template_sync.edited":
+    "Chính người của kế hoạch này đã sửa hoặc xóa công việc này.",
+  "p.template_sync.overwrite": "Ghi đè chỉnh sửa của kế hoạch này",
+  "p.template_sync.diff_title": "Tiêu đề: {from} → {to}",
+  "p.template_sync.diff_description": "Mô tả: {from} → {to}",
+  "p.template_sync.diff_points": "Điểm: {from} → {to}",
+  "p.template_sync.none_value": "không có",
+  "p.template_sync.apply": "Áp dụng các thay đổi đã chọn",
+  "p.template_sync.apply_ask":
+    "Áp dụng các thay đổi đã chọn cho kế hoạch này? Công việc được thêm, đổi hoặc xóa như đã liệt kê, và thay đổi được ghi lại.",
+  "p.template_sync.choose_first": "Hãy đánh dấu ít nhất một thay đổi trước.",
+  "p.template_sync.applied": "Đã áp dụng: {n}.",
+  "p.template_sync.overwritten":
+    "Trong đó, ghi đè chỉnh sửa của kế hoạch này: {n}.",
+  "p.template_sync.remaining": "Vẫn đang chờ: {n}.",
+  "p.template_sync.refused_edited":
+    "“{title}” chưa được áp dụng: kế hoạch này đã sửa nó; đánh dấu “Ghi đè chỉnh sửa của kế hoạch này” để vẫn áp dụng.",
+  "p.template_sync.refused_removed":
+    "“{title}” chưa được áp dụng: kế hoạch này đã xóa công việc, nên không có gì để đổi.",
+  "p.template_sync.could_not_apply": "Không thể áp dụng các thay đổi.",
+  "p.template_sync.apply_refused":
+    "Dịch vụ đã từ chối các thay đổi: có thể mẫu đã thay đổi trong lúc đó. Hãy đọc lại các thay đổi.",
+  "p.template_sync.plans_h": "Các kế hoạch tạo từ mẫu",
+  "p.template_sync.plans_none":
+    "Không có kế hoạch nào bạn có thể đọc được tạo từ mẫu này.",
+  "p.template_sync.plans_row": "phiên bản {synced} trên {version}",
+  "p.template_sync.waiting": "thay đổi đang chờ: {n}",
+  "p.template_sync.plan_up_to_date": "đã cập nhật",
+  "p.template_sync.open_changes": "Xem các thay đổi",
+  "p.template_sync.could_not_load_plans":
+    "Không thể tải các kế hoạch tạo từ mẫu.",
+  "p.template_sync.revise_h": "Sửa đổi mẫu từ một kế hoạch",
+  "p.template_sync.revise_says":
+    "Các công việc của cây kế hoạch đã chọn trở thành phiên bản tiếp theo của mẫu. Cây phải giữ hình dạng của mẫu: cùng các kế hoạch ở cùng vị trí, kế hoạch mới chỉ ở cuối. Các kế hoạch tạo từ mẫu không bị đổi; mỗi kế hoạch thấy khác biệt trên trang Thay đổi của mẫu.",
+  "p.template_sync.revise_plan": "Cây kế hoạch",
+  "p.template_sync.revise_choose": "Chọn một kế hoạch",
+  "p.template_sync.revise": "Sửa đổi mẫu",
+  "p.template_sync.revise_ask":
+    "Biến các công việc của “{name}” thành phiên bản tiếp theo của “{template}”?",
+  "p.template_sync.revised": "Giờ là phiên bản {version}.",
+  "p.template_sync.revised_omitted":
+    "Các kế hoạch trong cây mà bạn không đọc được đã bị bỏ qua: {n}.",
+  "p.template_sync.revise_shape":
+    "Cây kế hoạch không còn hình dạng của mẫu: một lần sửa đổi có thể đổi công việc và thêm kế hoạch ở cuối, không thể di chuyển hay đổi tên kế hoạch.",
+  "p.template_sync.could_not_revise": "Không thể sửa đổi mẫu.",
+  "p.template_sync.revise_pick": "Hãy chọn cây kế hoạch trước.",
 };

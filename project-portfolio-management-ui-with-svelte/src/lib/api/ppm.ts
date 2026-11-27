@@ -361,6 +361,11 @@ import type {
   BulkJobStatus,
   ReviewQueueItem,
   StartExportBody,
+  TemplateDiff,
+  TemplatePlan,
+  TemplateRevised,
+  TemplateSyncBody,
+  TemplateSynced,
   SkillGap,
   SprintCeremonies,
   SprintCommitment,
@@ -2204,6 +2209,39 @@ export class PpmClient {
     return this.http.post(
       `/api/plans/review-queue/${encodeURIComponent(pid)}/reject`,
       { body: {} },
+    );
+  }
+
+  // ---- blueprint sync (NC-12; NC-1 slice 12 part k) ----
+  /** The plans made from a template that the caller can read, with how many changes each has waiting. */
+  templatePlans(pid: string): Promise<TemplatePlan[]> {
+    return this.http.get(
+      `/api/plan-templates/${encodeURIComponent(pid)}/plans`,
+    );
+  }
+  /** Re-capture a plan tree as the template's next version; plans made from it are not touched. */
+  reviseTemplate(pid: string, fromPlan: string): Promise<TemplateRevised> {
+    return this.http.post(
+      `/api/plan-templates/${encodeURIComponent(pid)}/revise`,
+      {
+        body: { from_plan: fromPlan },
+      },
+    );
+  }
+  /** The template's changes since this plan was last brought up to date; 404 for a plan not made from one. */
+  templateDiff(planPid: string): Promise<TemplateDiff> {
+    return this.http.get(
+      `/api/plans/${encodeURIComponent(planPid)}/template-diff`,
+    );
+  }
+  /** Apply the named changes; one to a task the plan edited needs naming in `overwrite_local` too. */
+  templateSync(
+    planPid: string,
+    body: TemplateSyncBody,
+  ): Promise<TemplateSynced> {
+    return this.http.post(
+      `/api/plans/${encodeURIComponent(planPid)}/template-sync`,
+      { body },
     );
   }
 

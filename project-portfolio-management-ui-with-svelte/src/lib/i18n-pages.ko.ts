@@ -8861,4 +8861,67 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "계획에 대해 저장된 모든 것을 JSON으로, 기록 또는 열람 요청을 위해 제공합니다. 접근 권한이 사람을 가리는 경우 책임자와 소유자가 가려지며 파일에 그렇게 적힙니다. 이러한 내보내기는 매번 계획의 감사 기록에 남습니다.",
   "p.plan_export.record_download": "계획의 기록 다운로드",
+  "p.template_sync.link": "템플릿 변경",
+  "p.template_sync.title": "템플릿 변경",
+  "p.template_sync.title_ppm": "템플릿 변경 — PPM",
+  "p.template_sync.loading": "불러오는 중…",
+  "p.template_sync.could_not_load": "템플릿 변경을 불러올 수 없습니다.",
+  "p.template_sync.not_from_template":
+    "이 계획은 저장된 템플릿으로 만들어지지 않아 갱신할 것이 없습니다.",
+  "p.template_sync.made_from": "템플릿 “{name}”(으)로 만듦.",
+  "p.template_sync.versions":
+    "버전 {synced}까지 갱신됨; 템플릿은 버전 {version}입니다.",
+  "p.template_sync.intro":
+    "아래의 각 변경은 이 계획이 마지막으로 갱신된 뒤 템플릿이 바꾼 것입니다. 받을 것에 표시하세요. 나머지는 계속 대기합니다. 이 계획의 사람들이 직접 편집하거나 삭제한 작업에 대한 변경은 “이 계획의 편집 덮어쓰기”에도 표시해야만 적용됩니다.",
+  "p.template_sync.up_to_date": "최신: 이 계획이 받지 않은 변경이 없습니다.",
+  "p.template_sync.kind_add": "추가됨",
+  "p.template_sync.kind_change": "변경됨",
+  "p.template_sync.kind_remove": "삭제됨",
+  "p.template_sync.kind_unknown": "알 수 없는 변경",
+  "p.template_sync.take": "이 변경 받기",
+  "p.template_sync.edited":
+    "이 계획의 사람들이 이 작업을 편집하거나 삭제했습니다.",
+  "p.template_sync.overwrite": "이 계획의 편집 덮어쓰기",
+  "p.template_sync.diff_title": "제목: {from} → {to}",
+  "p.template_sync.diff_description": "설명: {from} → {to}",
+  "p.template_sync.diff_points": "포인트: {from} → {to}",
+  "p.template_sync.none_value": "없음",
+  "p.template_sync.apply": "선택한 변경 적용",
+  "p.template_sync.apply_ask":
+    "선택한 변경을 이 계획에 적용할까요? 작업이 목록대로 추가, 변경 또는 삭제되며 변경이 기록됩니다.",
+  "p.template_sync.choose_first": "먼저 변경을 하나 이상 표시하세요.",
+  "p.template_sync.applied": "적용됨: {n}.",
+  "p.template_sync.overwritten": "그중 이 계획의 편집을 덮어쓴 것: {n}.",
+  "p.template_sync.remaining": "아직 대기 중: {n}.",
+  "p.template_sync.refused_edited":
+    "“{title}”은(는) 적용되지 않았습니다: 이 계획이 편집했습니다. 그래도 적용하려면 “이 계획의 편집 덮어쓰기”에 표시하세요.",
+  "p.template_sync.refused_removed":
+    "“{title}”은(는) 적용되지 않았습니다: 이 계획이 작업을 삭제해 바꿀 것이 없습니다.",
+  "p.template_sync.could_not_apply": "변경을 적용할 수 없습니다.",
+  "p.template_sync.apply_refused":
+    "서비스가 변경을 거부했습니다: 그 사이 템플릿이 바뀌었을 수 있습니다. 변경을 다시 읽으세요.",
+  "p.template_sync.plans_h": "이 템플릿으로 만든 계획",
+  "p.template_sync.plans_none":
+    "읽을 수 있는 계획 중 이 템플릿으로 만든 것이 없습니다.",
+  "p.template_sync.plans_row": "버전 {synced}/{version}",
+  "p.template_sync.waiting": "대기 중인 변경: {n}",
+  "p.template_sync.plan_up_to_date": "최신",
+  "p.template_sync.open_changes": "변경 보기",
+  "p.template_sync.could_not_load_plans":
+    "이 템플릿으로 만든 계획을 불러올 수 없습니다.",
+  "p.template_sync.revise_h": "계획에서 개정",
+  "p.template_sync.revise_says":
+    "선택한 계획 트리의 작업이 템플릿의 다음 버전이 됩니다. 트리는 템플릿의 모양을 유지해야 합니다: 같은 계획이 같은 자리에, 새 계획은 끝에만. 템플릿으로 만든 계획은 바뀌지 않으며, 각 계획은 자신의 템플릿 변경 페이지에서 차이를 봅니다.",
+  "p.template_sync.revise_plan": "계획 트리",
+  "p.template_sync.revise_choose": "계획 선택",
+  "p.template_sync.revise": "템플릿 개정",
+  "p.template_sync.revise_ask":
+    "“{name}”의 작업을 “{template}”의 다음 버전으로 만들까요?",
+  "p.template_sync.revised": "이제 버전 {version}입니다.",
+  "p.template_sync.revised_omitted":
+    "읽을 수 없는 트리의 계획은 제외되었습니다: {n}.",
+  "p.template_sync.revise_shape":
+    "계획 트리가 더 이상 템플릿의 모양이 아닙니다: 개정은 작업을 바꾸고 끝에 계획을 추가할 수 있지만, 계획을 옮기거나 이름을 바꿀 수는 없습니다.",
+  "p.template_sync.could_not_revise": "템플릿을 개정할 수 없습니다.",
+  "p.template_sync.revise_pick": "먼저 계획 트리를 선택하세요.",
 };

@@ -9133,4 +9133,69 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "Всё, что хранится о плане, в формате JSON, для запроса записей или доступа. Если ваш доступ скрывает людей, руководитель и владелец скрыты, и файл это указывает. Каждый такой экспорт записывается в журнал аудита плана.",
   "p.plan_export.record_download": "Скачать запись о плане",
+  "p.template_sync.link": "Изменения шаблона",
+  "p.template_sync.title": "Изменения шаблона",
+  "p.template_sync.title_ppm": "Изменения шаблона — PPM",
+  "p.template_sync.loading": "Загрузка…",
+  "p.template_sync.could_not_load": "Не удалось загрузить изменения шаблона.",
+  "p.template_sync.not_from_template":
+    "Этот план не создан из сохранённого шаблона, обновлять нечего.",
+  "p.template_sync.made_from": "Создан из шаблона «{name}».",
+  "p.template_sync.versions":
+    "Обновлён до версии {synced}; шаблон в версии {version}.",
+  "p.template_sync.intro":
+    "Каждое изменение ниже сделано в шаблоне с последнего обновления этого плана. Отметьте те, что принять; остальные будут ждать. Изменение задачи, которую люди этого плана сами изменили или удалили, применяется, только если вы также отметите «Перезаписать правку этого плана».",
+  "p.template_sync.up_to_date":
+    "Актуален: нет изменений, которые этот план не принял.",
+  "p.template_sync.kind_add": "добавлена",
+  "p.template_sync.kind_change": "изменена",
+  "p.template_sync.kind_remove": "удалена",
+  "p.template_sync.kind_unknown": "неизвестное изменение",
+  "p.template_sync.take": "Принять это изменение",
+  "p.template_sync.edited":
+    "Люди этого плана сами изменили или удалили эту задачу.",
+  "p.template_sync.overwrite": "Перезаписать правку этого плана",
+  "p.template_sync.diff_title": "Название: {from} → {to}",
+  "p.template_sync.diff_description": "Описание: {from} → {to}",
+  "p.template_sync.diff_points": "Баллы: {from} → {to}",
+  "p.template_sync.none_value": "нет",
+  "p.template_sync.apply": "Применить выбранные изменения",
+  "p.template_sync.apply_ask":
+    "Применить выбранные изменения к этому плану? Задачи будут добавлены, изменены или удалены, как перечислено, и изменение будет записано.",
+  "p.template_sync.choose_first": "Сначала отметьте хотя бы одно изменение.",
+  "p.template_sync.applied": "Применено: {n}.",
+  "p.template_sync.overwritten":
+    "Из них с перезаписью правок этого плана: {n}.",
+  "p.template_sync.remaining": "Ещё ждут: {n}.",
+  "p.template_sync.refused_edited":
+    "«{title}» не применено: этот план изменил задачу; отметьте «Перезаписать правку этого плана», чтобы всё равно применить.",
+  "p.template_sync.refused_removed":
+    "«{title}» не применено: этот план удалил задачу, менять нечего.",
+  "p.template_sync.could_not_apply": "Не удалось применить изменения.",
+  "p.template_sync.apply_refused":
+    "Сервис отклонил изменения: возможно, шаблон тем временем изменился. Прочитайте изменения снова.",
+  "p.template_sync.plans_h": "Планы, созданные из него",
+  "p.template_sync.plans_none":
+    "Нет планов, которые вы можете читать, созданных из него.",
+  "p.template_sync.plans_row": "версия {synced} из {version}",
+  "p.template_sync.waiting": "ждут изменений: {n}",
+  "p.template_sync.plan_up_to_date": "актуален",
+  "p.template_sync.open_changes": "Посмотреть изменения",
+  "p.template_sync.could_not_load_plans":
+    "Не удалось загрузить планы, созданные из него.",
+  "p.template_sync.revise_h": "Обновить по плану",
+  "p.template_sync.revise_says":
+    "Задачи выбранного дерева планов станут следующей версией шаблона. Дерево должно сохранить форму шаблона: те же планы на тех же местах, новые планы только в конце. Планы, созданные из шаблона, не меняются; каждый видит разницу на своей странице «Изменения шаблона».",
+  "p.template_sync.revise_plan": "Дерево планов",
+  "p.template_sync.revise_choose": "Выберите план",
+  "p.template_sync.revise": "Обновить шаблон",
+  "p.template_sync.revise_ask":
+    "Сделать задачи «{name}» следующей версией «{template}»?",
+  "p.template_sync.revised": "Теперь версия {version}.",
+  "p.template_sync.revised_omitted":
+    "Пропущены планы дерева, которые вы не можете читать: {n}.",
+  "p.template_sync.revise_shape":
+    "Дерево планов больше не повторяет форму шаблона: обновление может менять задачи и добавлять планы в конец, но не перемещать и не переименовывать планы.",
+  "p.template_sync.could_not_revise": "Не удалось обновить шаблон.",
+  "p.template_sync.revise_pick": "Сначала выберите дерево планов.",
 };

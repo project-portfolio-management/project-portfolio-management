@@ -4,6 +4,8 @@
   plan (the template's own when left blank), a start date when the template carries dates, and an optional plan to put
   it under. A saved template can be removed; plans already made from it stay. A built-in starter cannot be removed.
   Every problem the service would refuse is said before anything is sent; a refusal is the catalogue's sentence.
+  NC-12 (NC-1 slice 12 part k): the plans made from it, each with how many of the template's changes it has waiting and a
+  link to its Template changes page; a saved template is revised from a plan tree after a question.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -12,7 +14,11 @@
   import { askConfirm } from "#lib/confirm.svelte.js";
   import { errorText } from "#lib/error-text.js";
   import { localeHref, t, tn } from "#lib/i18n.svelte.js";
-  import { PpmClient, type InstantiatedTemplate, type PlanTemplate } from "#lib/api/ppm.js";
+  import { PpmClient, type InstantiatedTemplate, type PlanTemplate, type TemplatePlan, type TemplateRevised } from "#lib/api/ppm.js";
+  import { ApiError } from "#lib/api/client.js";
+  import { formatInteger } from "#lib/locale-format.js";
+  import { reviseRefusalKey } from "#lib/template-sync-view.js";
+  import { tDynamic } from "#lib/i18n.svelte.js";
   import { PlanRepository } from "#lib/api/plans.js";
   import type { PlanRef } from "#lib/api/types.js";
   import { PLAN_NAME_MAX, instantiateBody, outline } from "#lib/template-view.js";
@@ -52,9 +58,47 @@
       plans = []; // no plan to put it under: it becomes a top-level plan, which the form still offers
     }
   }
+  // The plans made from it, and revising it from a plan tree (NC-12).
+  let madeFrom = $state<TemplatePlan[] | null>(null);
+  let madeError = $state<string | null>(null);
+  async function loadMade() {
+    try {
+      madeFrom = await ppm.templatePlans(pid);
+      madeError = null;
+    } catch (err) {
+      madeError = errorText(err, "p.template_sync.could_not_load_plans");
+    }
+  }
+  let reviseFrom = $state("");
+  let revised = $state<TemplateRevised | null>(null);
+  let reviseError = $state<string | null>(null);
+  async function revise(e: SubmitEvent) {
+    e.preventDefault();
+    revised = null;
+    reviseError = null;
+    const from = plans.find((p) => p.pid === reviseFrom);
+    if (!tpl || !from) {
+      reviseError = t("p.template_sync.revise_pick");
+      return;
+    }
+    if (!(await askConfirm(t("p.template_sync.revise_ask", { name: from.name, template: tpl.name })))) return;
+    busy = true;
+    try {
+      revised = await ppm.reviseTemplate(pid, from.pid);
+      await Promise.all([load(), loadMade()]);
+    } catch (err) {
+      const status = err instanceof ApiError ? err.status : undefined;
+      reviseError =
+        status === 422 ? tDynamic(reviseRefusalKey(status)) : errorText(err, "p.template_sync.could_not_revise");
+    } finally {
+      busy = false;
+    }
+  }
+
   onMount(() => {
     void load();
     void loadPlans();
+    void loadMade();
   });
 
   async function start(e: SubmitEvent) {
@@ -166,7 +210,48 @@
     </form>
   </section>
 
+  <section aria-labelledby="made-h">
+    <h2 id="made-h">{t("p.template_sync.plans_h")}</h2>
+    {#if madeError}<p class="banner" role="alert">{madeError}</p>{/if}
+    {#if madeFrom && madeFrom.length === 0}
+      <p class="small muted" data-testid="made-none">{t("p.template_sync.plans_none")}</p>
+    {:else if madeFrom}
+      <ul class="stack" data-testid="made-from">
+        {#each madeFrom as m (m.plan_pid)}
+          <li>
+            <a href={localeHref(`/plans/${m.plan_pid}`)}>{m.name ?? m.plan_pid}</a>
+            <span class="small muted">· {t("p.template_sync.plans_row", { synced: formatInteger(m.synced_version), version: formatInteger(m.template_version) })} ·
+              {m.changes_waiting > 0 ? t("p.template_sync.waiting", { n: formatInteger(m.changes_waiting) }) : t("p.template_sync.plan_up_to_date")}</span>
+            {#if m.changes_waiting > 0}<a class="small" href={localeHref(`/plans/${m.plan_pid}/template`)}>{t("p.template_sync.open_changes")}</a>{/if}
+          </li>
+        {/each}
+      </ul>
+    {/if}
+  </section>
+
   {#if !starter}
+    <section aria-labelledby="revise-h">
+      <h2 id="revise-h">{t("p.template_sync.revise_h")}</h2>
+      <p class="small muted">{t("p.template_sync.revise_says")}</p>
+      {#if reviseError}<p class="banner" role="alert">{reviseError}</p>{/if}
+      {#if revised}
+        <p class="banner success" role="status" data-testid="revised">
+          {t("p.template_sync.revised", { version: formatInteger(revised.version) })}
+          {#if revised.omitted_unreadable > 0}{t("p.template_sync.revised_omitted", { n: formatInteger(revised.omitted_unreadable) })}{/if}
+        </p>
+      {/if}
+      <form class="stack" onsubmit={revise}>
+        <label>
+          {t("p.template_sync.revise_plan")}
+          <select bind:value={reviseFrom}>
+            <option value="">{t("p.template_sync.revise_choose")}</option>
+            {#each plans as p (p.pid)}<option value={p.pid}>{p.name}</option>{/each}
+          </select>
+        </label>
+        <div class="row"><button class="button" type="submit" disabled={busy}>{t("p.template_sync.revise")}</button></div>
+      </form>
+    </section>
+
     <section aria-labelledby="remove-h">
       <h2 id="remove-h">{t("p.plan_templates.remove_heading")}</h2>
       <p class="small muted">{t("p.plan_templates.remove_says")}</p>

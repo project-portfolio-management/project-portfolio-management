@@ -8944,6 +8944,70 @@ export const PAGES_EN = {
   "p.plan_export.record_intro":
     "Everything stored about the plan, as JSON, for a records or access request. Where your access masks people, who leads and owns it is masked and the file says so. Every such export is written to the plan's audit trail.",
   "p.plan_export.record_download": "Download the plan's record",
+  "p.template_sync.link": "Template changes",
+  "p.template_sync.title": "Template changes",
+  "p.template_sync.title_ppm": "Template changes — PPM",
+  "p.template_sync.loading": "Loading…",
+  "p.template_sync.could_not_load": "Could not load the template's changes.",
+  "p.template_sync.not_from_template":
+    "This plan was not made from a saved template, so there is nothing to bring up to date.",
+  "p.template_sync.made_from": "Made from the template “{name}”.",
+  "p.template_sync.versions":
+    "Brought up to date with version {synced}; the template is at version {version}.",
+  "p.template_sync.intro":
+    "Each change below is the template's since this plan was last brought up to date. Tick the ones to take; the rest stay waiting. A change to a task this plan's own people have edited or removed is applied only if you also tick “Overwrite this plan's edit”.",
+  "p.template_sync.up_to_date":
+    "Up to date: there is no change this plan has not taken.",
+  "p.template_sync.kind_add": "added",
+  "p.template_sync.kind_change": "changed",
+  "p.template_sync.kind_remove": "removed",
+  "p.template_sync.kind_unknown": "unknown change",
+  "p.template_sync.take": "Take this change",
+  "p.template_sync.edited":
+    "This plan's own people have edited or removed this task.",
+  "p.template_sync.overwrite": "Overwrite this plan's edit",
+  "p.template_sync.diff_title": "Title: {from} → {to}",
+  "p.template_sync.diff_description": "Description: {from} → {to}",
+  "p.template_sync.diff_points": "Points: {from} → {to}",
+  "p.template_sync.none_value": "none",
+  "p.template_sync.apply": "Apply the chosen changes",
+  "p.template_sync.apply_ask":
+    "Apply the chosen changes to this plan? Tasks are added, changed or removed as listed, and the change is recorded.",
+  "p.template_sync.choose_first": "Tick at least one change first.",
+  "p.template_sync.applied": "Applied: {n}.",
+  "p.template_sync.overwritten":
+    "Of those, overwriting this plan's own edits: {n}.",
+  "p.template_sync.remaining": "Still waiting: {n}.",
+  "p.template_sync.refused_edited":
+    "“{title}” was not applied: this plan has edited it; tick “Overwrite this plan's edit” to apply it anyway.",
+  "p.template_sync.refused_removed":
+    "“{title}” was not applied: this plan removed the task, so there is nothing to change.",
+  "p.template_sync.could_not_apply": "Could not apply the changes.",
+  "p.template_sync.apply_refused":
+    "The service refused the changes: the template may have changed meanwhile. Read the changes again.",
+  "p.template_sync.plans_h": "Plans made from it",
+  "p.template_sync.plans_none": "No plan you can read was made from it.",
+  "p.template_sync.plans_row": "version {synced} of {version}",
+  "p.template_sync.waiting": "changes waiting: {n}",
+  "p.template_sync.plan_up_to_date": "up to date",
+  "p.template_sync.open_changes": "See the changes",
+  "p.template_sync.could_not_load_plans":
+    "Could not load the plans made from it.",
+  "p.template_sync.revise_h": "Revise it from a plan",
+  "p.template_sync.revise_says":
+    "The chosen plan tree's tasks become the template's next version. The tree must keep the template's shape: the same plans in the same places, with new plans only at the end. Plans made from the template are not changed; each sees the difference on its Template changes page.",
+  "p.template_sync.revise_plan": "Plan tree",
+  "p.template_sync.revise_choose": "Choose a plan",
+  "p.template_sync.revise": "Revise the template",
+  "p.template_sync.revise_ask":
+    "Make the tasks of “{name}” the next version of “{template}”?",
+  "p.template_sync.revised": "Now version {version}.",
+  "p.template_sync.revised_omitted":
+    "Plans in the tree you cannot read were left out: {n}.",
+  "p.template_sync.revise_shape":
+    "The plan tree no longer has the template's shape: a revision may change tasks and add plans at the end, not move or rename plans.",
+  "p.template_sync.could_not_revise": "Could not revise the template.",
+  "p.template_sync.revise_pick": "Choose the plan tree first.",
 } as const;
 
 /** A key in the page and component catalogue. */

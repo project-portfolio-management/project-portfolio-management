@@ -8713,4 +8713,65 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "योजना के बारे में संग्रहीत सब कुछ, JSON के रूप में, रिकॉर्ड या पहुँच अनुरोध के लिए। जहाँ आपकी पहुँच लोगों को छिपाती है, वहाँ कौन इसका नेतृत्व करता है और कौन स्वामी है यह छिपा रहता है और फ़ाइल यह बताती है। ऐसा हर निर्यात योजना के ऑडिट लॉग में लिखा जाता है।",
   "p.plan_export.record_download": "योजना का रिकॉर्ड डाउनलोड करें",
+  "p.template_sync.link": "टेम्पलेट के बदलाव",
+  "p.template_sync.title": "टेम्पलेट के बदलाव",
+  "p.template_sync.title_ppm": "टेम्पलेट के बदलाव — PPM",
+  "p.template_sync.loading": "लोड हो रहा है…",
+  "p.template_sync.could_not_load": "टेम्पलेट के बदलाव लोड नहीं हो सके।",
+  "p.template_sync.not_from_template":
+    "यह योजना किसी सहेजे गए टेम्पलेट से नहीं बनी, इसलिए अद्यतन करने को कुछ नहीं है।",
+  "p.template_sync.made_from": "टेम्पलेट “{name}” से बनी।",
+  "p.template_sync.versions":
+    "संस्करण {synced} तक अद्यतन; टेम्पलेट संस्करण {version} पर है।",
+  "p.template_sync.intro":
+    "नीचे का हर बदलाव इस योजना के पिछले अद्यतन के बाद से टेम्पलेट का है। जिन्हें लेना है उन पर टिक करें; बाकी प्रतीक्षा में रहते हैं। जिस कार्य को इस योजना के अपने लोगों ने संपादित या हटाया है, उसका बदलाव तभी लागू होता है जब आप “इस योजना का संपादन अधिलेखित करें” पर भी टिक करें।",
+  "p.template_sync.up_to_date":
+    "अद्यतन: ऐसा कोई बदलाव नहीं जो इस योजना ने न लिया हो।",
+  "p.template_sync.kind_add": "जोड़ा गया",
+  "p.template_sync.kind_change": "बदला गया",
+  "p.template_sync.kind_remove": "हटाया गया",
+  "p.template_sync.kind_unknown": "अज्ञात बदलाव",
+  "p.template_sync.take": "यह बदलाव लें",
+  "p.template_sync.edited": "इस योजना के अपने लोगों ने यह कार्य संपादित या हटाया है।",
+  "p.template_sync.overwrite": "इस योजना का संपादन अधिलेखित करें",
+  "p.template_sync.diff_title": "शीर्षक: {from} → {to}",
+  "p.template_sync.diff_description": "विवरण: {from} → {to}",
+  "p.template_sync.diff_points": "अंक: {from} → {to}",
+  "p.template_sync.none_value": "कुछ नहीं",
+  "p.template_sync.apply": "चुने गए बदलाव लागू करें",
+  "p.template_sync.apply_ask":
+    "चुने गए बदलाव इस योजना पर लागू करें? सूची के अनुसार कार्य जोड़े, बदले या हटाए जाते हैं, और बदलाव दर्ज होता है।",
+  "p.template_sync.choose_first": "पहले कम से कम एक बदलाव पर टिक करें।",
+  "p.template_sync.applied": "लागू: {n}।",
+  "p.template_sync.overwritten": "इनमें से इस योजना के संपादन अधिलेखित करके: {n}।",
+  "p.template_sync.remaining": "अभी भी प्रतीक्षा में: {n}।",
+  "p.template_sync.refused_edited":
+    "“{title}” लागू नहीं हुआ: इस योजना ने इसे संपादित किया है; फिर भी लागू करने के लिए “इस योजना का संपादन अधिलेखित करें” पर टिक करें।",
+  "p.template_sync.refused_removed":
+    "“{title}” लागू नहीं हुआ: इस योजना ने कार्य हटा दिया है, इसलिए बदलने को कुछ नहीं है।",
+  "p.template_sync.could_not_apply": "बदलाव लागू नहीं हो सके।",
+  "p.template_sync.apply_refused":
+    "सेवा ने बदलाव अस्वीकार किए: शायद इस बीच टेम्पलेट बदल गया। बदलाव फिर से पढ़ें।",
+  "p.template_sync.plans_h": "इससे बनी योजनाएँ",
+  "p.template_sync.plans_none": "आप पढ़ सकें ऐसी कोई योजना इससे नहीं बनी।",
+  "p.template_sync.plans_row": "{version} में से संस्करण {synced}",
+  "p.template_sync.waiting": "प्रतीक्षारत बदलाव: {n}",
+  "p.template_sync.plan_up_to_date": "अद्यतन",
+  "p.template_sync.open_changes": "बदलाव देखें",
+  "p.template_sync.could_not_load_plans": "इससे बनी योजनाएँ लोड नहीं हो सकीं।",
+  "p.template_sync.revise_h": "किसी योजना से संशोधित करें",
+  "p.template_sync.revise_says":
+    "चुने गए योजना-वृक्ष के कार्य टेम्पलेट का अगला संस्करण बनते हैं। वृक्ष को टेम्पलेट का आकार बनाए रखना होगा: वही योजनाएँ उन्हीं स्थानों पर, नई योजनाएँ केवल अंत में। टेम्पलेट से बनी योजनाएँ नहीं बदलतीं; हर एक अपने टेम्पलेट के बदलाव पृष्ठ पर अंतर देखती है।",
+  "p.template_sync.revise_plan": "योजना-वृक्ष",
+  "p.template_sync.revise_choose": "एक योजना चुनें",
+  "p.template_sync.revise": "टेम्पलेट संशोधित करें",
+  "p.template_sync.revise_ask":
+    "“{name}” के कार्यों को “{template}” का अगला संस्करण बनाएँ?",
+  "p.template_sync.revised": "अब संस्करण {version}।",
+  "p.template_sync.revised_omitted":
+    "वृक्ष की वे योजनाएँ छोड़ दी गईं जिन्हें आप नहीं पढ़ सकते: {n}।",
+  "p.template_sync.revise_shape":
+    "योजना-वृक्ष में अब टेम्पलेट का आकार नहीं है: संशोधन कार्य बदल सकता है और अंत में योजनाएँ जोड़ सकता है, योजनाएँ हटा या नाम बदल नहीं सकता।",
+  "p.template_sync.could_not_revise": "टेम्पलेट संशोधित नहीं हो सका।",
+  "p.template_sync.revise_pick": "पहले योजना-वृक्ष चुनें।",
 };

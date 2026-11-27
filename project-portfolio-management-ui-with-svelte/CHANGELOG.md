@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — template revisions and a plan's template changes (NC-12, 2026-11-27)
+
+- `/plan-templates/[pid]` gains the plans made from it and "Revise it from a plan"; new `/plans/[pid]/template`. Four
+  client methods; `src/lib/template-sync-view.ts`; 49 strings in every locale.
+
 ### Added — a plan's record as JSON on `/plans/[pid]/export` (2026-11-27)
 
 - A download link for `GET /api/plans/{pid}/export`, named by the link; three strings in every locale.

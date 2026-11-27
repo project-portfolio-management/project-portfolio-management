@@ -8664,4 +8664,64 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "كل ما هو محفوظ عن الخطة، بصيغة JSON، لطلب سجلات أو وصول. حيث تُخفي صلاحيتك الأشخاص، يُخفى من يقودها ومن يملكها ويذكر الملف ذلك. كل تصدير من هذا النوع يُكتب في سجل تدقيق الخطة.",
   "p.plan_export.record_download": "نزّل سجل الخطة",
+  "p.template_sync.link": "تغييرات القالب",
+  "p.template_sync.title": "تغييرات القالب",
+  "p.template_sync.title_ppm": "تغييرات القالب — PPM",
+  "p.template_sync.loading": "جارٍ التحميل…",
+  "p.template_sync.could_not_load": "تعذّر تحميل تغييرات القالب.",
+  "p.template_sync.not_from_template":
+    "لم تُنشأ هذه الخطة من قالب محفوظ، فلا شيء لتحديثه.",
+  "p.template_sync.made_from": "أُنشئت من القالب «{name}».",
+  "p.template_sync.versions":
+    "حُدّثت إلى الإصدار {synced}؛ والقالب في الإصدار {version}.",
+  "p.template_sync.intro":
+    "كل تغيير أدناه أجراه القالب منذ آخر تحديث لهذه الخطة. حدّد ما تريد أخذه؛ ويبقى الباقي منتظرًا. التغيير على مهمة عدّلها أو حذفها أهل هذه الخطة أنفسهم لا يُطبّق إلا إذا حدّدت أيضًا «اكتب فوق تعديل هذه الخطة».",
+  "p.template_sync.up_to_date": "محدّثة: لا تغيير لم تأخذه هذه الخطة.",
+  "p.template_sync.kind_add": "أُضيفت",
+  "p.template_sync.kind_change": "غُيّرت",
+  "p.template_sync.kind_remove": "حُذفت",
+  "p.template_sync.kind_unknown": "تغيير غير معروف",
+  "p.template_sync.take": "خذ هذا التغيير",
+  "p.template_sync.edited": "عدّل أهل هذه الخطة هذه المهمة أو حذفوها.",
+  "p.template_sync.overwrite": "اكتب فوق تعديل هذه الخطة",
+  "p.template_sync.diff_title": "العنوان: {from} ← {to}",
+  "p.template_sync.diff_description": "الوصف: {from} ← {to}",
+  "p.template_sync.diff_points": "النقاط: {from} ← {to}",
+  "p.template_sync.none_value": "لا شيء",
+  "p.template_sync.apply": "طبّق التغييرات المختارة",
+  "p.template_sync.apply_ask":
+    "أتطبّق التغييرات المختارة على هذه الخطة؟ تُضاف المهام أو تُغيَّر أو تُحذف كما هو مدرج، ويُسجَّل التغيير.",
+  "p.template_sync.choose_first": "حدّد تغييرًا واحدًا على الأقل أولًا.",
+  "p.template_sync.applied": "طُبّق: {n}.",
+  "p.template_sync.overwritten": "منها ما كتب فوق تعديلات هذه الخطة: {n}.",
+  "p.template_sync.remaining": "ما زال منتظرًا: {n}.",
+  "p.template_sync.refused_edited":
+    "لم يُطبّق «{title}»: عدّلت هذه الخطة المهمة؛ حدّد «اكتب فوق تعديل هذه الخطة» لتطبيقه على أي حال.",
+  "p.template_sync.refused_removed":
+    "لم يُطبّق «{title}»: حذفت هذه الخطة المهمة، فلا شيء لتغييره.",
+  "p.template_sync.could_not_apply": "تعذّر تطبيق التغييرات.",
+  "p.template_sync.apply_refused":
+    "رفضت الخدمة التغييرات: ربما تغيّر القالب في الأثناء. اقرأ التغييرات مرة أخرى.",
+  "p.template_sync.plans_h": "الخطط المُنشأة منه",
+  "p.template_sync.plans_none": "لا توجد خطة يمكنك قراءتها أُنشئت منه.",
+  "p.template_sync.plans_row": "الإصدار {synced} من {version}",
+  "p.template_sync.waiting": "تغييرات منتظرة: {n}",
+  "p.template_sync.plan_up_to_date": "محدّثة",
+  "p.template_sync.open_changes": "اعرض التغييرات",
+  "p.template_sync.could_not_load_plans": "تعذّر تحميل الخطط المُنشأة منه.",
+  "p.template_sync.revise_h": "راجِعه من خطة",
+  "p.template_sync.revise_says":
+    "تصبح مهام شجرة الخطط المختارة الإصدار التالي من القالب. يجب أن تحافظ الشجرة على شكل القالب: الخطط نفسها في الأماكن نفسها، والخطط الجديدة في النهاية فقط. لا تتغيّر الخطط المُنشأة من القالب؛ ترى كل منها الفرق في صفحة تغييرات القالب الخاصة بها.",
+  "p.template_sync.revise_plan": "شجرة الخطط",
+  "p.template_sync.revise_choose": "اختر خطة",
+  "p.template_sync.revise": "راجِع القالب",
+  "p.template_sync.revise_ask":
+    "أتجعل مهام «{name}» الإصدار التالي من «{template}»؟",
+  "p.template_sync.revised": "الإصدار الآن {version}.",
+  "p.template_sync.revised_omitted":
+    "تُركت خطط في الشجرة لا يمكنك قراءتها: {n}.",
+  "p.template_sync.revise_shape":
+    "لم تعد لشجرة الخطط شكل القالب: يمكن للمراجعة أن تغيّر المهام وتضيف خططًا في النهاية، لا أن تنقل الخطط أو تعيد تسميتها.",
+  "p.template_sync.could_not_revise": "تعذّرت مراجعة القالب.",
+  "p.template_sync.revise_pick": "اختر شجرة الخطط أولًا.",
 };

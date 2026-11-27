@@ -3436,3 +3436,22 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   Welsh). **Not built:** `POST /api/plans/match`,
   a single plan's export (`GET /api/plans/{pid}/export`), templates' revise, plans and sync, and the MSPDI batch import,
   which are the rest of part k; a kept file's expiry, which the list does not carry.
+
+## A template's revisions reaching its plans (NC-1 slice 12 part k, NC-12)
+
+- **`/plan-templates/[pid]`** lists the plans made from the template that the reader can read, each with the version
+  it was last brought up to date with, the template's version, and how many changes it has waiting (or "up to date"),
+  linking to that plan's Template changes page. A saved template (not a built-in starter) is revised from a plan tree
+  chosen from the plan list, after a question naming both; the rule is said first (the same plans in the same places,
+  new plans only at the end; plans made from it are not changed). The answer says the new version and how many
+  unreadable plans were left out; a reshaped tree (422) has its own sentence.
+- **`/plans/[pid]/template`** ("Template changes", a plan workspace link) reads `GET /api/plans/{pid}/template-diff`:
+  the template's name (linked) and both versions; each change as a symbol and a word (+ added, ~ changed, − removed),
+  what a change alters (title, description, points; an absent value said as none), and a warning where the plan's own
+  people edited or removed the task. A change is taken by a tick; one the plan edited also needs "Overwrite this
+  plan's edit", which waits for its change to be ticked. Applied after a question (`POST …/template-sync`, only the
+  ticked ids and, for edited ones, the overwrites); what was applied, what overwrote the plan's edits, each refusal by
+  title and why (edited without the overwrite, or a task the plan removed) and what still waits are said; the list is
+  read again. A plan not made from a saved template (404) says so. The service's English reasons are never shown.
+- Rules in `src/lib/template-sync-view.ts` (`tests/unit/template-sync-view.test.ts`); `tests/e2e/template-sync.spec.ts`
+  and `tests/e2e/plan-templates.spec.ts` (stubbed service, axe, Welsh).

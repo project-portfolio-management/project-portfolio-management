@@ -9250,4 +9250,70 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "Tudo o que está guardado sobre o plano, em JSON, para um pedido de registos ou de acesso. Onde o seu acesso mascara pessoas, quem o lidera e quem é o dono ficam mascarados e o ficheiro di-lo. Cada exportação destas fica no registo de auditoria do plano.",
   "p.plan_export.record_download": "Transferir o registo do plano",
+  "p.template_sync.link": "Alterações do modelo",
+  "p.template_sync.title": "Alterações do modelo",
+  "p.template_sync.title_ppm": "Alterações do modelo — PPM",
+  "p.template_sync.loading": "A carregar…",
+  "p.template_sync.could_not_load":
+    "Não foi possível carregar as alterações do modelo.",
+  "p.template_sync.not_from_template":
+    "Este plano não foi criado a partir de um modelo guardado, por isso não há nada a atualizar.",
+  "p.template_sync.made_from": "Criado a partir do modelo «{name}».",
+  "p.template_sync.versions":
+    "Atualizado com a versão {synced}; o modelo está na versão {version}.",
+  "p.template_sync.intro":
+    "Cada alteração abaixo é do modelo desde a última vez que este plano foi atualizado. Assinale as que quer aceitar; as restantes continuam à espera. Uma alteração a uma tarefa que as pessoas deste plano editaram ou removeram só é aplicada se assinalar também «Substituir a edição deste plano».",
+  "p.template_sync.up_to_date":
+    "Atualizado: não há nenhuma alteração que este plano não tenha aceitado.",
+  "p.template_sync.kind_add": "adicionada",
+  "p.template_sync.kind_change": "alterada",
+  "p.template_sync.kind_remove": "removida",
+  "p.template_sync.kind_unknown": "alteração desconhecida",
+  "p.template_sync.take": "Aceitar esta alteração",
+  "p.template_sync.edited":
+    "As pessoas deste plano editaram ou removeram esta tarefa.",
+  "p.template_sync.overwrite": "Substituir a edição deste plano",
+  "p.template_sync.diff_title": "Título: {from} → {to}",
+  "p.template_sync.diff_description": "Descrição: {from} → {to}",
+  "p.template_sync.diff_points": "Pontos: {from} → {to}",
+  "p.template_sync.none_value": "nenhum",
+  "p.template_sync.apply": "Aplicar as alterações escolhidas",
+  "p.template_sync.apply_ask":
+    "Aplicar as alterações escolhidas a este plano? As tarefas são adicionadas, alteradas ou removidas como indicado, e a alteração fica registada.",
+  "p.template_sync.choose_first": "Assinale primeiro pelo menos uma alteração.",
+  "p.template_sync.applied": "Aplicadas: {n}.",
+  "p.template_sync.overwritten":
+    "Destas, substituindo edições deste plano: {n}.",
+  "p.template_sync.remaining": "Ainda à espera: {n}.",
+  "p.template_sync.refused_edited":
+    "«{title}» não foi aplicada: este plano editou-a; assinale «Substituir a edição deste plano» para a aplicar mesmo assim.",
+  "p.template_sync.refused_removed":
+    "«{title}» não foi aplicada: este plano removeu a tarefa, por isso não há nada a alterar.",
+  "p.template_sync.could_not_apply": "Não foi possível aplicar as alterações.",
+  "p.template_sync.apply_refused":
+    "O serviço recusou as alterações: o modelo pode ter mudado entretanto. Leia as alterações outra vez.",
+  "p.template_sync.plans_h": "Planos criados a partir dele",
+  "p.template_sync.plans_none":
+    "Nenhum plano que possa ler foi criado a partir dele.",
+  "p.template_sync.plans_row": "versão {synced} de {version}",
+  "p.template_sync.waiting": "alterações à espera: {n}",
+  "p.template_sync.plan_up_to_date": "atualizado",
+  "p.template_sync.open_changes": "Ver as alterações",
+  "p.template_sync.could_not_load_plans":
+    "Não foi possível carregar os planos criados a partir dele.",
+  "p.template_sync.revise_h": "Revê-lo a partir de um plano",
+  "p.template_sync.revise_says":
+    "As tarefas da árvore de planos escolhida passam a ser a próxima versão do modelo. A árvore tem de manter a forma do modelo: os mesmos planos nos mesmos lugares, com planos novos só no fim. Os planos criados a partir do modelo não mudam; cada um vê a diferença na sua página Alterações do modelo.",
+  "p.template_sync.revise_plan": "Árvore de planos",
+  "p.template_sync.revise_choose": "Escolha um plano",
+  "p.template_sync.revise": "Rever o modelo",
+  "p.template_sync.revise_ask":
+    "Fazer das tarefas de «{name}» a próxima versão de «{template}»?",
+  "p.template_sync.revised": "Agora na versão {version}.",
+  "p.template_sync.revised_omitted":
+    "Planos da árvore que não pode ler foram deixados de fora: {n}.",
+  "p.template_sync.revise_shape":
+    "A árvore de planos já não tem a forma do modelo: uma revisão pode alterar tarefas e adicionar planos no fim, não mover nem mudar o nome a planos.",
+  "p.template_sync.could_not_revise": "Não foi possível rever o modelo.",
+  "p.template_sync.revise_pick": "Escolha primeiro a árvore de planos.",
 };

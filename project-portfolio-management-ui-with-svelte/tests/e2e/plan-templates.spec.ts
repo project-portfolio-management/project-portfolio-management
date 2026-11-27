@@ -80,7 +80,7 @@ const TEMPLATES = {
 
 async function stubTemplates(
   page: Page,
-  opts: { saveStatus?: number; omitted?: number } = {},
+  opts: { saveStatus?: number; omitted?: number; reviseStatus?: number } = {},
 ) {
   const sent: Array<{ method: string; path: string; body: unknown }> = [];
   const live = new Set([SAVED, STARTER]);
@@ -107,6 +107,38 @@ async function stubTemplates(
             };
           }),
         });
+      if (/^\/api\/plan-templates\/[^/]+\/plans$/.test(path))
+        return route.fulfill({
+          json: [
+            {
+              plan_pid: PID,
+              name: "Website replatform",
+              synced_version: 1,
+              template_version: 2,
+              changes_waiting: 3,
+            },
+            {
+              plan_pid: NEW_ROOT,
+              name: "Second rollout",
+              synced_version: 2,
+              template_version: 2,
+              changes_waiting: 0,
+            },
+          ],
+        });
+      if (/^\/api\/plan-templates\/[^/]+\/revise$/.test(path))
+        return opts.reviseStatus
+          ? route.fulfill({
+              status: opts.reviseStatus,
+              json: { code: "unprocessable_entity", detail: "service text" },
+            })
+          : route.fulfill({
+              json: {
+                pid: SAVED,
+                version: 3,
+                omitted_unreadable: opts.omitted ?? 0,
+              },
+            });
       const one = path.match(/^\/api\/plan-templates\/([^/]+)$/);
       if (one) {
         if (!live.has(one[1]!))
@@ -327,4 +359,87 @@ test("a template reads in Welsh and passes axe", async ({ page }) => {
       (v) => v.impact === "serious" || v.impact === "critical",
     ),
   ).toEqual([]);
+});
+
+test("a template lists the plans made from it and is revised from a plan tree after a question (NC-12)", async ({
+  page,
+}) => {
+  const sent = await stubTemplates(page, { omitted: 1 });
+  await page.goto(`/en-001/plan-templates/${SAVED}`);
+  await settle(page);
+  const made = page.getByTestId("made-from");
+  await expect(made.getByRole("listitem")).toHaveCount(2);
+  await expect(made.getByRole("listitem").nth(0)).toContainText(
+    "version 1 of 2 · changes waiting: 3",
+  );
+  await expect(
+    made.getByRole("link", { name: "See the changes" }),
+  ).toHaveAttribute("href", `/en-001/plans/${PID}/template`);
+  await expect(made.getByRole("listitem").nth(1)).toContainText("up to date");
+  const revise = page.getByRole("region", { name: "Revise it from a plan" });
+  await revise.getByRole("button", { name: "Revise the template" }).click();
+  await expect(revise.getByRole("alert")).toHaveText(
+    "Choose the plan tree first.",
+  );
+  await revise
+    .getByLabel("Plan tree")
+    .selectOption({ label: "Website replatform" });
+  const ask = page.getByRole("alertdialog");
+  await revise.getByRole("button", { name: "Revise the template" }).click();
+  await expect(ask).toContainText(
+    "Make the tasks of “Website replatform” the next version of “Replatform kit”?",
+  );
+  await ask.getByRole("button", { name: "Cancel" }).click();
+  expect(sent).toEqual([]);
+  await revise.getByRole("button", { name: "Revise the template" }).click();
+  await ask.getByRole("button", { name: "OK" }).click();
+  await expect(page.getByTestId("revised")).toContainText("Now version 3.");
+  await expect(page.getByTestId("revised")).toContainText(
+    "Plans in the tree you cannot read were left out: 1.",
+  );
+  expect(sent).toEqual([
+    {
+      method: "POST",
+      path: `/api/plan-templates/${SAVED}/revise`,
+      body: { from_plan: PID },
+    },
+  ]);
+  const a = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+  expect(
+    a.violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => v.id),
+  ).toEqual([]);
+});
+
+test("a revision that would reshape the tree is refused in the catalogue's words", async ({
+  page,
+}) => {
+  await stubTemplates(page, { reviseStatus: 422 });
+  await page.goto(`/en-001/plan-templates/${SAVED}`);
+  await settle(page);
+  const revise = page.getByRole("region", { name: "Revise it from a plan" });
+  await revise
+    .getByLabel("Plan tree")
+    .selectOption({ label: "Website replatform" });
+  await revise.getByRole("button", { name: "Revise the template" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "OK" })
+    .click();
+  await expect(revise.getByRole("alert")).toHaveText(
+    "The plan tree no longer has the template's shape: a revision may change tasks and add plans at the end, not move or rename plans.",
+  );
+  await expect(page.getByText("service text")).toHaveCount(0);
+});
+
+test("a starter offers no revision", async ({ page }) => {
+  await stubTemplates(page);
+  await page.goto(`/en-001/plan-templates/${STARTER}`);
+  await settle(page);
+  await expect(
+    page.getByRole("region", { name: "Revise it from a plan" }),
+  ).toHaveCount(0);
 });

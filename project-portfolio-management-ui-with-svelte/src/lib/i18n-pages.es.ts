@@ -9255,4 +9255,70 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "Todo lo guardado sobre el plan, en JSON, para una solicitud de registros o de acceso. Donde su acceso enmascara a las personas, quién lo dirige y quién es su propietario quedan enmascarados y el archivo lo indica. Cada exportación así queda en el registro de auditoría del plan.",
   "p.plan_export.record_download": "Descargar el registro del plan",
+  "p.template_sync.link": "Cambios de la plantilla",
+  "p.template_sync.title": "Cambios de la plantilla",
+  "p.template_sync.title_ppm": "Cambios de la plantilla — PPM",
+  "p.template_sync.loading": "Cargando…",
+  "p.template_sync.could_not_load":
+    "No se pudieron cargar los cambios de la plantilla.",
+  "p.template_sync.not_from_template":
+    "Este plan no se creó a partir de una plantilla guardada, así que no hay nada que actualizar.",
+  "p.template_sync.made_from": "Creado a partir de la plantilla «{name}».",
+  "p.template_sync.versions":
+    "Actualizado a la versión {synced}; la plantilla está en la versión {version}.",
+  "p.template_sync.intro":
+    "Cada cambio de abajo es de la plantilla desde la última vez que se actualizó este plan. Marque los que quiera tomar; el resto sigue esperando. Un cambio a una tarea que las personas de este plan han editado o eliminado solo se aplica si marca también «Sobrescribir la edición de este plan».",
+  "p.template_sync.up_to_date":
+    "Al día: no hay ningún cambio que este plan no haya tomado.",
+  "p.template_sync.kind_add": "añadida",
+  "p.template_sync.kind_change": "cambiada",
+  "p.template_sync.kind_remove": "eliminada",
+  "p.template_sync.kind_unknown": "cambio desconocido",
+  "p.template_sync.take": "Tomar este cambio",
+  "p.template_sync.edited":
+    "Las personas de este plan han editado o eliminado esta tarea.",
+  "p.template_sync.overwrite": "Sobrescribir la edición de este plan",
+  "p.template_sync.diff_title": "Título: {from} → {to}",
+  "p.template_sync.diff_description": "Descripción: {from} → {to}",
+  "p.template_sync.diff_points": "Puntos: {from} → {to}",
+  "p.template_sync.none_value": "ninguno",
+  "p.template_sync.apply": "Aplicar los cambios elegidos",
+  "p.template_sync.apply_ask":
+    "¿Aplicar los cambios elegidos a este plan? Las tareas se añaden, cambian o eliminan como se indica, y el cambio queda registrado.",
+  "p.template_sync.choose_first": "Marque primero al menos un cambio.",
+  "p.template_sync.applied": "Aplicados: {n}.",
+  "p.template_sync.overwritten":
+    "De ellos, sobrescribiendo ediciones de este plan: {n}.",
+  "p.template_sync.remaining": "Aún esperando: {n}.",
+  "p.template_sync.refused_edited":
+    "«{title}» no se aplicó: este plan lo ha editado; marque «Sobrescribir la edición de este plan» para aplicarlo igualmente.",
+  "p.template_sync.refused_removed":
+    "«{title}» no se aplicó: este plan eliminó la tarea, así que no hay nada que cambiar.",
+  "p.template_sync.could_not_apply": "No se pudieron aplicar los cambios.",
+  "p.template_sync.apply_refused":
+    "El servicio rechazó los cambios: puede que la plantilla haya cambiado entretanto. Vuelva a leer los cambios.",
+  "p.template_sync.plans_h": "Planes creados a partir de ella",
+  "p.template_sync.plans_none":
+    "Ningún plan que pueda leer se creó a partir de ella.",
+  "p.template_sync.plans_row": "versión {synced} de {version}",
+  "p.template_sync.waiting": "cambios en espera: {n}",
+  "p.template_sync.plan_up_to_date": "al día",
+  "p.template_sync.open_changes": "Ver los cambios",
+  "p.template_sync.could_not_load_plans":
+    "No se pudieron cargar los planes creados a partir de ella.",
+  "p.template_sync.revise_h": "Revisarla a partir de un plan",
+  "p.template_sync.revise_says":
+    "Las tareas del árbol de planes elegido pasan a ser la siguiente versión de la plantilla. El árbol debe conservar la forma de la plantilla: los mismos planes en los mismos lugares, con planes nuevos solo al final. Los planes creados a partir de la plantilla no cambian; cada uno ve la diferencia en su página Cambios de la plantilla.",
+  "p.template_sync.revise_plan": "Árbol de planes",
+  "p.template_sync.revise_choose": "Elija un plan",
+  "p.template_sync.revise": "Revisar la plantilla",
+  "p.template_sync.revise_ask":
+    "¿Convertir las tareas de «{name}» en la siguiente versión de «{template}»?",
+  "p.template_sync.revised": "Ahora es la versión {version}.",
+  "p.template_sync.revised_omitted":
+    "Se omitieron planes del árbol que no puede leer: {n}.",
+  "p.template_sync.revise_shape":
+    "El árbol de planes ya no tiene la forma de la plantilla: una revisión puede cambiar tareas y añadir planes al final, no mover ni renombrar planes.",
+  "p.template_sync.could_not_revise": "No se pudo revisar la plantilla.",
+  "p.template_sync.revise_pick": "Elija primero el árbol de planes.",
 };

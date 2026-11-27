@@ -9345,4 +9345,73 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "Alles, was über den Plan gespeichert ist, als JSON, für eine Akten- oder Auskunftsanfrage. Wo Ihr Zugriff Personen maskiert, sind Leitung und Eigentümer maskiert, und die Datei sagt es. Jeder solche Export wird im Prüfprotokoll des Plans vermerkt.",
   "p.plan_export.record_download": "Datensatz des Plans herunterladen",
+  "p.template_sync.link": "Vorlagenänderungen",
+  "p.template_sync.title": "Vorlagenänderungen",
+  "p.template_sync.title_ppm": "Vorlagenänderungen — PPM",
+  "p.template_sync.loading": "Wird geladen…",
+  "p.template_sync.could_not_load":
+    "Die Änderungen der Vorlage konnten nicht geladen werden.",
+  "p.template_sync.not_from_template":
+    "Dieser Plan wurde nicht aus einer gespeicherten Vorlage erstellt; es gibt nichts zu aktualisieren.",
+  "p.template_sync.made_from": "Erstellt aus der Vorlage „{name}“.",
+  "p.template_sync.versions":
+    "Auf Version {synced} gebracht; die Vorlage ist bei Version {version}.",
+  "p.template_sync.intro":
+    "Jede Änderung unten stammt aus der Vorlage seit der letzten Aktualisierung dieses Plans. Haken Sie an, was übernommen werden soll; der Rest wartet. Eine Änderung an einer Aufgabe, die die Leute dieses Plans selbst bearbeitet oder entfernt haben, wird nur übernommen, wenn Sie auch „Die Bearbeitung dieses Plans überschreiben“ anhaken.",
+  "p.template_sync.up_to_date":
+    "Aktuell: Es gibt keine Änderung, die dieser Plan nicht übernommen hat.",
+  "p.template_sync.kind_add": "hinzugefügt",
+  "p.template_sync.kind_change": "geändert",
+  "p.template_sync.kind_remove": "entfernt",
+  "p.template_sync.kind_unknown": "unbekannte Änderung",
+  "p.template_sync.take": "Diese Änderung übernehmen",
+  "p.template_sync.edited":
+    "Die Leute dieses Plans haben diese Aufgabe selbst bearbeitet oder entfernt.",
+  "p.template_sync.overwrite": "Die Bearbeitung dieses Plans überschreiben",
+  "p.template_sync.diff_title": "Titel: {from} → {to}",
+  "p.template_sync.diff_description": "Beschreibung: {from} → {to}",
+  "p.template_sync.diff_points": "Punkte: {from} → {to}",
+  "p.template_sync.none_value": "keine",
+  "p.template_sync.apply": "Die gewählten Änderungen übernehmen",
+  "p.template_sync.apply_ask":
+    "Die gewählten Änderungen in diesen Plan übernehmen? Aufgaben werden wie aufgeführt hinzugefügt, geändert oder entfernt, und die Änderung wird protokolliert.",
+  "p.template_sync.choose_first":
+    "Haken Sie zuerst mindestens eine Änderung an.",
+  "p.template_sync.applied": "Übernommen: {n}.",
+  "p.template_sync.overwritten":
+    "Davon mit Überschreiben eigener Bearbeitungen dieses Plans: {n}.",
+  "p.template_sync.remaining": "Noch wartend: {n}.",
+  "p.template_sync.refused_edited":
+    "„{title}“ wurde nicht übernommen: Dieser Plan hat sie bearbeitet; haken Sie „Die Bearbeitung dieses Plans überschreiben“ an, um sie trotzdem zu übernehmen.",
+  "p.template_sync.refused_removed":
+    "„{title}“ wurde nicht übernommen: Dieser Plan hat die Aufgabe entfernt; es gibt nichts zu ändern.",
+  "p.template_sync.could_not_apply":
+    "Die Änderungen konnten nicht übernommen werden.",
+  "p.template_sync.apply_refused":
+    "Der Dienst hat die Änderungen abgelehnt: Die Vorlage hat sich vielleicht inzwischen geändert. Lesen Sie die Änderungen erneut.",
+  "p.template_sync.plans_h": "Daraus erstellte Pläne",
+  "p.template_sync.plans_none":
+    "Kein Plan, den Sie lesen können, wurde daraus erstellt.",
+  "p.template_sync.plans_row": "Version {synced} von {version}",
+  "p.template_sync.waiting": "wartende Änderungen: {n}",
+  "p.template_sync.plan_up_to_date": "aktuell",
+  "p.template_sync.open_changes": "Änderungen ansehen",
+  "p.template_sync.could_not_load_plans":
+    "Die daraus erstellten Pläne konnten nicht geladen werden.",
+  "p.template_sync.revise_h": "Aus einem Plan überarbeiten",
+  "p.template_sync.revise_says":
+    "Die Aufgaben des gewählten Planbaums werden zur nächsten Version der Vorlage. Der Baum muss die Form der Vorlage behalten: dieselben Pläne an denselben Stellen, neue Pläne nur am Ende. Aus der Vorlage erstellte Pläne werden nicht geändert; jeder sieht den Unterschied auf seiner Seite Vorlagenänderungen.",
+  "p.template_sync.revise_plan": "Planbaum",
+  "p.template_sync.revise_choose": "Plan wählen",
+  "p.template_sync.revise": "Vorlage überarbeiten",
+  "p.template_sync.revise_ask":
+    "Die Aufgaben von „{name}“ zur nächsten Version von „{template}“ machen?",
+  "p.template_sync.revised": "Jetzt Version {version}.",
+  "p.template_sync.revised_omitted":
+    "Pläne im Baum, die Sie nicht lesen können, wurden ausgelassen: {n}.",
+  "p.template_sync.revise_shape":
+    "Der Planbaum hat nicht mehr die Form der Vorlage: Eine Überarbeitung kann Aufgaben ändern und Pläne am Ende anfügen, aber keine Pläne verschieben oder umbenennen.",
+  "p.template_sync.could_not_revise":
+    "Die Vorlage konnte nicht überarbeitet werden.",
+  "p.template_sync.revise_pick": "Wählen Sie zuerst den Planbaum.",
 };

@@ -8816,4 +8816,69 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "পরিকল্পনা সম্পর্কে সংরক্ষিত সবকিছু, JSON হিসেবে, রেকর্ড বা প্রবেশাধিকারের অনুরোধের জন্য। আপনার প্রবেশাধিকার যেখানে ব্যক্তিদের আড়াল করে, সেখানে কে নেতৃত্ব দেন ও কে মালিক তা আড়াল থাকে এবং ফাইলে তা বলা থাকে। এমন প্রতিটি রপ্তানি পরিকল্পনার নিরীক্ষা লগে লেখা হয়।",
   "p.plan_export.record_download": "পরিকল্পনার রেকর্ড ডাউনলোড করুন",
+  "p.template_sync.link": "টেমপ্লেটের পরিবর্তন",
+  "p.template_sync.title": "টেমপ্লেটের পরিবর্তন",
+  "p.template_sync.title_ppm": "টেমপ্লেটের পরিবর্তন — PPM",
+  "p.template_sync.loading": "লোড হচ্ছে…",
+  "p.template_sync.could_not_load": "টেমপ্লেটের পরিবর্তন লোড করা যায়নি।",
+  "p.template_sync.not_from_template":
+    "এই পরিকল্পনাটি সংরক্ষিত কোনো টেমপ্লেট থেকে তৈরি হয়নি, তাই হালনাগাদ করার কিছু নেই।",
+  "p.template_sync.made_from": "“{name}” টেমপ্লেট থেকে তৈরি।",
+  "p.template_sync.versions":
+    "{synced} সংস্করণ পর্যন্ত হালনাগাদ; টেমপ্লেটটি {version} সংস্করণে।",
+  "p.template_sync.intro":
+    "নিচের প্রতিটি পরিবর্তন এই পরিকল্পনা শেষবার হালনাগাদ হওয়ার পর থেকে টেমপ্লেটের। যেগুলো নিতে চান টিক দিন; বাকিগুলো অপেক্ষায় থাকে। এই পরিকল্পনার নিজের লোকেরা যে কাজ সম্পাদনা বা মুছে ফেলেছেন, তার পরিবর্তন তখনই প্রয়োগ হয় যদি আপনি “এই পরিকল্পনার সম্পাদনা ওভাররাইট করুন”-এও টিক দেন।",
+  "p.template_sync.up_to_date":
+    "হালনাগাদ: এমন কোনো পরিবর্তন নেই যা এই পরিকল্পনা নেয়নি।",
+  "p.template_sync.kind_add": "যোগ হয়েছে",
+  "p.template_sync.kind_change": "বদলেছে",
+  "p.template_sync.kind_remove": "মুছে গেছে",
+  "p.template_sync.kind_unknown": "অজানা পরিবর্তন",
+  "p.template_sync.take": "এই পরিবর্তনটি নিন",
+  "p.template_sync.edited":
+    "এই পরিকল্পনার নিজের লোকেরা এই কাজটি সম্পাদনা বা মুছে ফেলেছেন।",
+  "p.template_sync.overwrite": "এই পরিকল্পনার সম্পাদনা ওভাররাইট করুন",
+  "p.template_sync.diff_title": "শিরোনাম: {from} → {to}",
+  "p.template_sync.diff_description": "বিবরণ: {from} → {to}",
+  "p.template_sync.diff_points": "পয়েন্ট: {from} → {to}",
+  "p.template_sync.none_value": "কিছু নেই",
+  "p.template_sync.apply": "বেছে নেওয়া পরিবর্তনগুলো প্রয়োগ করুন",
+  "p.template_sync.apply_ask":
+    "বেছে নেওয়া পরিবর্তনগুলো এই পরিকল্পনায় প্রয়োগ করবেন? তালিকা অনুযায়ী কাজ যোগ, বদল বা মুছে ফেলা হবে, এবং পরিবর্তনটি লিপিবদ্ধ হবে।",
+  "p.template_sync.choose_first": "আগে অন্তত একটি পরিবর্তনে টিক দিন।",
+  "p.template_sync.applied": "প্রয়োগ হয়েছে: {n}।",
+  "p.template_sync.overwritten":
+    "এর মধ্যে এই পরিকল্পনার সম্পাদনা ওভাররাইট করে: {n}।",
+  "p.template_sync.remaining": "এখনো অপেক্ষায়: {n}।",
+  "p.template_sync.refused_edited":
+    "“{title}” প্রয়োগ হয়নি: এই পরিকল্পনা এটি সম্পাদনা করেছে; তবুও প্রয়োগ করতে “এই পরিকল্পনার সম্পাদনা ওভাররাইট করুন”-এ টিক দিন।",
+  "p.template_sync.refused_removed":
+    "“{title}” প্রয়োগ হয়নি: এই পরিকল্পনা কাজটি মুছে ফেলেছে, তাই বদলানোর কিছু নেই।",
+  "p.template_sync.could_not_apply": "পরিবর্তনগুলো প্রয়োগ করা যায়নি।",
+  "p.template_sync.apply_refused":
+    "পরিষেবা পরিবর্তনগুলো প্রত্যাখ্যান করেছে: হয়তো এর মধ্যে টেমপ্লেট বদলেছে। পরিবর্তনগুলো আবার পড়ুন।",
+  "p.template_sync.plans_h": "এটি থেকে তৈরি পরিকল্পনা",
+  "p.template_sync.plans_none":
+    "আপনি পড়তে পারেন এমন কোনো পরিকল্পনা এটি থেকে তৈরি হয়নি।",
+  "p.template_sync.plans_row": "{version}-এর মধ্যে {synced} সংস্করণ",
+  "p.template_sync.waiting": "অপেক্ষমাণ পরিবর্তন: {n}",
+  "p.template_sync.plan_up_to_date": "হালনাগাদ",
+  "p.template_sync.open_changes": "পরিবর্তনগুলো দেখুন",
+  "p.template_sync.could_not_load_plans":
+    "এটি থেকে তৈরি পরিকল্পনাগুলো লোড করা যায়নি।",
+  "p.template_sync.revise_h": "একটি পরিকল্পনা থেকে সংশোধন করুন",
+  "p.template_sync.revise_says":
+    "বেছে নেওয়া পরিকল্পনা-বৃক্ষের কাজগুলো টেমপ্লেটের পরের সংস্করণ হয়। বৃক্ষটিকে টেমপ্লেটের আকার রাখতে হবে: একই পরিকল্পনা একই জায়গায়, নতুন পরিকল্পনা কেবল শেষে। টেমপ্লেট থেকে তৈরি পরিকল্পনাগুলো বদলায় না; প্রত্যেকটি তার টেমপ্লেটের পরিবর্তন পাতায় পার্থক্য দেখে।",
+  "p.template_sync.revise_plan": "পরিকল্পনা-বৃক্ষ",
+  "p.template_sync.revise_choose": "একটি পরিকল্পনা বেছে নিন",
+  "p.template_sync.revise": "টেমপ্লেট সংশোধন করুন",
+  "p.template_sync.revise_ask":
+    "“{name}”-এর কাজগুলোকে “{template}”-এর পরের সংস্করণ করবেন?",
+  "p.template_sync.revised": "এখন সংস্করণ {version}।",
+  "p.template_sync.revised_omitted":
+    "বৃক্ষের যেসব পরিকল্পনা আপনি পড়তে পারেন না সেগুলো বাদ দেওয়া হয়েছে: {n}।",
+  "p.template_sync.revise_shape":
+    "পরিকল্পনা-বৃক্ষের আর টেমপ্লেটের আকার নেই: সংশোধন কাজ বদলাতে ও শেষে পরিকল্পনা যোগ করতে পারে, পরিকল্পনা সরাতে বা নাম বদলাতে নয়।",
+  "p.template_sync.could_not_revise": "টেমপ্লেট সংশোধন করা যায়নি।",
+  "p.template_sync.revise_pick": "আগে পরিকল্পনা-বৃক্ষ বেছে নিন।",
 };

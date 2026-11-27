@@ -9003,4 +9003,69 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.plan_export.record_intro":
     "計画について保存されているすべてを JSON で、記録や開示の請求のために。アクセス権で人物が伏せられる場合は、責任者と所有者が伏せられ、ファイルにその旨が記されます。このエクスポートは毎回、計画の監査記録に残ります。",
   "p.plan_export.record_download": "計画の記録をダウンロード",
+  "p.template_sync.link": "テンプレートの変更",
+  "p.template_sync.title": "テンプレートの変更",
+  "p.template_sync.title_ppm": "テンプレートの変更 — PPM",
+  "p.template_sync.loading": "読み込み中…",
+  "p.template_sync.could_not_load":
+    "テンプレートの変更を読み込めませんでした。",
+  "p.template_sync.not_from_template":
+    "この計画は保存済みテンプレートから作成されていないため、更新するものはありません。",
+  "p.template_sync.made_from": "テンプレート「{name}」から作成。",
+  "p.template_sync.versions":
+    "バージョン {synced} まで更新済み。テンプレートはバージョン {version} です。",
+  "p.template_sync.intro":
+    "以下の変更は、この計画を最後に更新して以降のテンプレートの変更です。取り込むものにチェックを付けてください。残りは待機のままです。この計画の担当者が自ら編集または削除したタスクへの変更は、「この計画の編集を上書きする」にもチェックを付けた場合だけ適用されます。",
+  "p.template_sync.up_to_date":
+    "最新です：この計画が取り込んでいない変更はありません。",
+  "p.template_sync.kind_add": "追加",
+  "p.template_sync.kind_change": "変更",
+  "p.template_sync.kind_remove": "削除",
+  "p.template_sync.kind_unknown": "不明な変更",
+  "p.template_sync.take": "この変更を取り込む",
+  "p.template_sync.edited":
+    "この計画の担当者がこのタスクを編集または削除しています。",
+  "p.template_sync.overwrite": "この計画の編集を上書きする",
+  "p.template_sync.diff_title": "タイトル：{from} → {to}",
+  "p.template_sync.diff_description": "説明：{from} → {to}",
+  "p.template_sync.diff_points": "ポイント：{from} → {to}",
+  "p.template_sync.none_value": "なし",
+  "p.template_sync.apply": "選んだ変更を適用",
+  "p.template_sync.apply_ask":
+    "選んだ変更をこの計画に適用しますか？一覧のとおりにタスクが追加・変更・削除され、変更は記録されます。",
+  "p.template_sync.choose_first": "先に変更を 1 つ以上選んでください。",
+  "p.template_sync.applied": "適用：{n}。",
+  "p.template_sync.overwritten": "うち、この計画の編集を上書き：{n}。",
+  "p.template_sync.remaining": "まだ待機中：{n}。",
+  "p.template_sync.refused_edited":
+    "「{title}」は適用されませんでした：この計画で編集されています。それでも適用するには「この計画の編集を上書きする」にチェックを付けてください。",
+  "p.template_sync.refused_removed":
+    "「{title}」は適用されませんでした：この計画でタスクが削除されているため、変更するものがありません。",
+  "p.template_sync.could_not_apply": "変更を適用できませんでした。",
+  "p.template_sync.apply_refused":
+    "サービスが変更を拒否しました：その間にテンプレートが変わった可能性があります。変更を読み直してください。",
+  "p.template_sync.plans_h": "このテンプレートから作成された計画",
+  "p.template_sync.plans_none":
+    "読める計画でこのテンプレートから作成されたものはありません。",
+  "p.template_sync.plans_row": "バージョン {synced}／{version}",
+  "p.template_sync.waiting": "待機中の変更：{n}",
+  "p.template_sync.plan_up_to_date": "最新",
+  "p.template_sync.open_changes": "変更を見る",
+  "p.template_sync.could_not_load_plans":
+    "このテンプレートから作成された計画を読み込めませんでした。",
+  "p.template_sync.revise_h": "計画から改訂する",
+  "p.template_sync.revise_says":
+    "選んだ計画ツリーのタスクがテンプレートの次のバージョンになります。ツリーはテンプレートの形を保つ必要があります：同じ計画が同じ位置にあり、新しい計画は末尾だけです。テンプレートから作成された計画は変わりません。それぞれの「テンプレートの変更」ページで差分が見えます。",
+  "p.template_sync.revise_plan": "計画ツリー",
+  "p.template_sync.revise_choose": "計画を選ぶ",
+  "p.template_sync.revise": "テンプレートを改訂",
+  "p.template_sync.revise_ask":
+    "「{name}」のタスクを「{template}」の次のバージョンにしますか？",
+  "p.template_sync.revised": "バージョン {version} になりました。",
+  "p.template_sync.revised_omitted":
+    "読めないツリー内の計画は除外されました：{n}。",
+  "p.template_sync.revise_shape":
+    "計画ツリーがテンプレートの形ではなくなっています：改訂ではタスクの変更と末尾への計画の追加はできますが、計画の移動や名前の変更はできません。",
+  "p.template_sync.could_not_revise": "テンプレートを改訂できませんでした。",
+  "p.template_sync.revise_pick": "先に計画ツリーを選んでください。",
 };

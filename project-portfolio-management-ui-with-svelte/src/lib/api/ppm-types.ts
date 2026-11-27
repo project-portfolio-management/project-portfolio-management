@@ -5675,3 +5675,58 @@ export interface ReviewQueueItem {
   created_at: string;
   updated_at: string;
 }
+
+// ---- blueprint sync: a template's revisions reaching the plans made from it (NC-12; NC-1 slice 12 part k) ----
+
+/** A plan made from a template (`GET /api/plan-templates/{pid}/plans`). */
+export interface TemplatePlan {
+  plan_pid: string;
+  name: string | null;
+  synced_version: number;
+  template_version: number;
+  changes_waiting: number;
+}
+
+/** What revising a template answers. */
+export interface TemplateRevised {
+  pid: string;
+  version: number;
+  /** Plans in the tree the caller cannot read, left out of the new version. */
+  omitted_unreadable: number;
+}
+
+/** One change a template made since the plan was last brought up to date. */
+export interface TemplateChange {
+  /** `add:3`, `change:1`, `remove:2`. */
+  id: string;
+  kind: "add" | "change" | "remove";
+  title: string;
+  from: TemplateTask | null;
+  to: TemplateTask | null;
+  /** The plan's own people have edited or removed this task. */
+  locally_edited: boolean;
+}
+
+/** `GET /api/plans/{pid}/template-diff`. */
+export interface TemplateDiff {
+  template_pid: string;
+  template_name: string;
+  synced_version: number;
+  template_version: number;
+  changes: TemplateChange[];
+}
+
+/** `POST /api/plans/{pid}/template-sync` body. */
+export interface TemplateSyncBody {
+  accept: string[];
+  overwrite_local?: string[];
+}
+
+/** What applying template changes answers. */
+export interface TemplateSynced {
+  applied: string[];
+  overwritten_local_edits: string[];
+  /** English reasons; not shown. */
+  refused: { id: string; reason: string }[];
+  remaining: number;
+}

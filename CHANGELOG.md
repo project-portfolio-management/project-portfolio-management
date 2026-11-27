@@ -16,6 +16,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a template's revisions reaching its plans)
+
+- `/plan-templates/[pid]` lists the plans made from a template, each with how many of its changes it has waiting, and
+  revises a saved template from a plan tree after a question. A new `/plans/[pid]/template` ("Template changes")
+  takes the template's changes one by one; a change to a task the plan edited needs a second tick to overwrite; it says
+  what was applied, overwritten, refused and still waiting. 49 new strings in every locale, machine-written in 14, none
+  reviewed. Not built: the MSPDI batch import. Not verified: against a real service.
+
 ## 27 November (a plan's record as JSON)
 
 - `/plans/[pid]/export` also downloads the plan's record as JSON (`GET /api/plans/{pid}/export`: masked where the

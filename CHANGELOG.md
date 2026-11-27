@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a product plan's public roadmap)
+
+- A new `/plans/[pid]/roadmap` ("Product roadmap") makes a Product plan's public roadmap, saves its own fields, marks
+  it reviewed, and adds, changes, moves and removes its items, every limit said first. Publishing, translations and
+  the roadmap lists are not built yet. 72 new strings in every locale, machine-written in 14, none reviewed. Not
+  verified: against a real service.
+
 ## 27 November (a task's custom field values)
 
 - A task's page has a "Custom fields" section, the same as a plan's: each task field typed, the required ones said

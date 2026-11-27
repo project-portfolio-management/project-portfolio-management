@@ -9397,6 +9397,92 @@ export const PAGES_EN = {
     "No custom field is declared for tasks yet. Fields are declared on the page",
   "p.custom_fields.task_values_could_not_load":
     "Could not load this task's custom fields.",
+  "p.product_roadmap.title": "Product roadmap",
+  "p.product_roadmap.title_ppm": "Product roadmap — PPM",
+  "p.product_roadmap.intro":
+    "What this product is doing now, next and later, as its public roadmap shows it. A roadmap belongs to a plan of kind Product.",
+  "p.product_roadmap.loading": "Loading the roadmap…",
+  "p.product_roadmap.could_not_load": "Could not load the roadmap.",
+  "p.product_roadmap.not_product":
+    "Only a plan of kind Product has a public roadmap. Change the plan's kind to make one.",
+  "p.product_roadmap.state_h": "Its state",
+  "p.product_roadmap.published": "Published",
+  "p.product_roadmap.not_published": "Not published",
+  "p.product_roadmap.fresh.fresh": "Fresh",
+  "p.product_roadmap.fresh.stale": "Stale: due a review",
+  "p.product_roadmap.fresh.unknown": "Never reviewed",
+  "p.product_roadmap.reviewed_on": "last reviewed {date}",
+  "p.product_roadmap.stale_rule":
+    "A roadmap is stale {days} days after its last review.",
+  "p.product_roadmap.mark_reviewed": "Mark it reviewed today",
+  "p.product_roadmap.reviewed_done": "Marked reviewed today.",
+  "p.product_roadmap.own_h": "The roadmap",
+  "p.product_roadmap.make_h": "Make the roadmap",
+  "p.product_roadmap.f_title": "Title (up to 200 characters)",
+  "p.product_roadmap.f_slug":
+    "Address (lower-case letters, digits and single hyphens, up to 64)",
+  "p.product_roadmap.f_slug_new":
+    "Address (optional; made from the title when left empty)",
+  "p.product_roadmap.f_vision": "Vision (optional, up to 2,000 characters)",
+  "p.product_roadmap.f_service":
+    "What the product is, for someone new to it (optional, up to 2,000 characters)",
+  "p.product_roadmap.save": "Save the roadmap",
+  "p.product_roadmap.make": "Make the roadmap now",
+  "p.product_roadmap.made": "Made the roadmap.",
+  "p.product_roadmap.saved": "Saved the roadmap.",
+  "p.product_roadmap.unchanged": "Nothing changed, so nothing was sent.",
+  "p.product_roadmap.items_h": "Items",
+  "p.product_roadmap.no_items": "No items yet.",
+  "p.product_roadmap.placement.recently_delivered": "Recently delivered",
+  "p.product_roadmap.placement.now": "Now",
+  "p.product_roadmap.placement.next": "Next",
+  "p.product_roadmap.placement.later": "Later",
+  "p.product_roadmap.placement.delivered_this_year": "Delivered this year",
+  "p.product_roadmap.placement.not_doing": "Not doing",
+  "p.product_roadmap.placement.none": "Not placed",
+  "p.product_roadmap.phase_is": "Phase: {phase}",
+  "p.product_roadmap.tags_are": "Tags: {tags}",
+  "p.product_roadmap.outcome_is": "Expected outcome: {outcome}",
+  "p.product_roadmap.change_item": "Change “{title}”",
+  "p.product_roadmap.save_item": "Save the item",
+  "p.product_roadmap.cancel": "Cancel",
+  "p.product_roadmap.change": "Change",
+  "p.product_roadmap.up": "Up",
+  "p.product_roadmap.down": "Down",
+  "p.product_roadmap.move_to": "Move to",
+  "p.product_roadmap.move": "Move",
+  "p.product_roadmap.remove": "Remove",
+  "p.product_roadmap.remove_ask":
+    "Remove “{title}” ({id})? Its public id is never given to another item.",
+  "p.product_roadmap.add_h": "Add an item",
+  "p.product_roadmap.f_placement": "Where it goes",
+  "p.product_roadmap.f_description":
+    "What the work is (optional, up to 2,000 characters)",
+  "p.product_roadmap.f_outcome":
+    "What changes, and for whom (optional, up to 2,000 characters)",
+  "p.product_roadmap.f_phase":
+    "Phase, in the product's own words (optional, up to 100 characters)",
+  "p.product_roadmap.f_tags":
+    "Tags, separated by commas (optional; up to 20, each up to 50 characters)",
+  "p.product_roadmap.add": "Add the item",
+  "p.product_roadmap.item_added": "Added “{title}”.",
+  "p.product_roadmap.item_saved": "Saved “{title}”.",
+  "p.product_roadmap.item_moved": "Moved “{title}” to {placement}.",
+  "p.product_roadmap.item_removed": "Removed “{title}”.",
+  "p.product_roadmap.title_bad": "A title is required, up to 200 characters.",
+  "p.product_roadmap.slug_bad":
+    "The address must be lower-case letters, digits and single hyphens, up to 64 characters.",
+  "p.product_roadmap.text_long": "A text is at most 2,000 characters.",
+  "p.product_roadmap.phase_long": "The phase is at most 100 characters.",
+  "p.product_roadmap.tags_many": "At most 20 tags.",
+  "p.product_roadmap.tag_long": "A tag is at most 50 characters.",
+  "p.product_roadmap.tag_twice": "Each tag may appear only once.",
+  "p.product_roadmap.slug_taken":
+    "Another roadmap has or had that address; choose another.",
+  "p.product_roadmap.gone":
+    "The roadmap or the item is no longer there; the page has been read again.",
+  "p.product_roadmap.could_not_save": "Could not save the roadmap.",
+  "p.product_roadmap.could_not_change_item": "Could not change the item.",
 } as const;
 
 /** A key in the page and component catalogue. */

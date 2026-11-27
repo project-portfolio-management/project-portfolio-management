@@ -9593,4 +9593,92 @@ export const PAGES_RU: Record<PageKey, string> = {
     "Для задач пока не объявлено ни одного настраиваемого поля. Поля объявляются на странице",
   "p.custom_fields.task_values_could_not_load":
     "Не удалось загрузить настраиваемые поля этой задачи.",
+  "p.product_roadmap.title": "Дорожная карта продукта",
+  "p.product_roadmap.title_ppm": "Дорожная карта продукта — PPM",
+  "p.product_roadmap.intro":
+    "Что этот продукт делает сейчас, дальше и позже, как это показывает его публичная дорожная карта. Дорожная карта принадлежит плану вида Product.",
+  "p.product_roadmap.loading": "Загрузка дорожной карты…",
+  "p.product_roadmap.could_not_load": "Не удалось загрузить дорожную карту.",
+  "p.product_roadmap.not_product":
+    "Публичная дорожная карта есть только у плана вида Product. Измените вид плана, чтобы её создать.",
+  "p.product_roadmap.state_h": "Её состояние",
+  "p.product_roadmap.published": "Опубликована",
+  "p.product_roadmap.not_published": "Не опубликована",
+  "p.product_roadmap.fresh.fresh": "Актуальна",
+  "p.product_roadmap.fresh.stale": "Устарела: пора пересмотреть",
+  "p.product_roadmap.fresh.unknown": "Ни разу не пересматривалась",
+  "p.product_roadmap.reviewed_on": "последний пересмотр {date}",
+  "p.product_roadmap.stale_rule":
+    "Дорожная карта устаревает через {days} дней после последнего пересмотра.",
+  "p.product_roadmap.mark_reviewed": "Отметить как пересмотренную сегодня",
+  "p.product_roadmap.reviewed_done": "Отмечена как пересмотренная сегодня.",
+  "p.product_roadmap.own_h": "Дорожная карта",
+  "p.product_roadmap.make_h": "Создать дорожную карту",
+  "p.product_roadmap.f_title": "Название (до 200 символов)",
+  "p.product_roadmap.f_slug":
+    "Адрес (строчные буквы, цифры и одиночные дефисы, до 64)",
+  "p.product_roadmap.f_slug_new":
+    "Адрес (необязательно; если пусто, создаётся из названия)",
+  "p.product_roadmap.f_vision": "Видение (необязательно, до 2000 символов)",
+  "p.product_roadmap.f_service":
+    "Что это за продукт, для того, кто его не знает (необязательно, до 2000 символов)",
+  "p.product_roadmap.save": "Сохранить дорожную карту",
+  "p.product_roadmap.make": "Создать дорожную карту сейчас",
+  "p.product_roadmap.made": "Дорожная карта создана.",
+  "p.product_roadmap.saved": "Дорожная карта сохранена.",
+  "p.product_roadmap.unchanged":
+    "Ничего не изменилось, поэтому ничего не отправлено.",
+  "p.product_roadmap.items_h": "Пункты",
+  "p.product_roadmap.no_items": "Пунктов пока нет.",
+  "p.product_roadmap.placement.recently_delivered": "Недавно выпущено",
+  "p.product_roadmap.placement.now": "Сейчас",
+  "p.product_roadmap.placement.next": "Дальше",
+  "p.product_roadmap.placement.later": "Позже",
+  "p.product_roadmap.placement.delivered_this_year": "Выпущено в этом году",
+  "p.product_roadmap.placement.not_doing": "Не будет сделано",
+  "p.product_roadmap.placement.none": "Без места",
+  "p.product_roadmap.phase_is": "Этап: {phase}",
+  "p.product_roadmap.tags_are": "Метки: {tags}",
+  "p.product_roadmap.outcome_is": "Ожидаемый результат: {outcome}",
+  "p.product_roadmap.change_item": "Изменить «{title}»",
+  "p.product_roadmap.save_item": "Сохранить пункт",
+  "p.product_roadmap.cancel": "Отмена",
+  "p.product_roadmap.change": "Изменить",
+  "p.product_roadmap.up": "Выше",
+  "p.product_roadmap.down": "Ниже",
+  "p.product_roadmap.move_to": "Переместить в",
+  "p.product_roadmap.move": "Переместить",
+  "p.product_roadmap.remove": "Удалить",
+  "p.product_roadmap.remove_ask":
+    "Удалить «{title}» ({id})? Его публичный идентификатор никогда не достанется другому пункту.",
+  "p.product_roadmap.add_h": "Добавить пункт",
+  "p.product_roadmap.f_placement": "Куда он идёт",
+  "p.product_roadmap.f_description":
+    "Что это за работа (необязательно, до 2000 символов)",
+  "p.product_roadmap.f_outcome":
+    "Что изменится и для кого (необязательно, до 2000 символов)",
+  "p.product_roadmap.f_phase":
+    "Этап, словами продукта (необязательно, до 100 символов)",
+  "p.product_roadmap.f_tags":
+    "Метки через запятую (необязательно; до 20, каждая до 50 символов)",
+  "p.product_roadmap.add": "Добавить этот пункт",
+  "p.product_roadmap.item_added": "«{title}» добавлен.",
+  "p.product_roadmap.item_saved": "«{title}» сохранён.",
+  "p.product_roadmap.item_moved": "«{title}» перемещён в {placement}.",
+  "p.product_roadmap.item_removed": "«{title}» удалён.",
+  "p.product_roadmap.title_bad": "Нужно название, до 200 символов.",
+  "p.product_roadmap.slug_bad":
+    "Адрес должен состоять из строчных букв, цифр и одиночных дефисов, до 64 символов.",
+  "p.product_roadmap.text_long": "Текст — не длиннее 2000 символов.",
+  "p.product_roadmap.phase_long": "Этап — не длиннее 100 символов.",
+  "p.product_roadmap.tags_many": "Не больше 20 меток.",
+  "p.product_roadmap.tag_long": "Метка — не длиннее 50 символов.",
+  "p.product_roadmap.tag_twice":
+    "Каждая метка может встречаться только один раз.",
+  "p.product_roadmap.slug_taken":
+    "Этот адрес есть или был у другой дорожной карты; выберите другой.",
+  "p.product_roadmap.gone":
+    "Дорожной карты или пункта больше нет; страница прочитана заново.",
+  "p.product_roadmap.could_not_save": "Не удалось сохранить дорожную карту.",
+  "p.product_roadmap.could_not_change_item": "Не удалось изменить пункт.",
 };

@@ -3551,3 +3551,21 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   plan's only), each typed, required ones said first, only changes sent. `tests/e2e/plan-task-edit.spec.ts`; specs whose
   task page is about something else declare no fields (`stubNoCustomFields` in `tests/e2e/fixtures.ts`).
 - Part n is built.
+
+## A product plan's public roadmap (NC-1 slice 12 part l, RE-1, RE-3)
+
+- **`/plans/[pid]/roadmap`** ("Product roadmap", a plan workspace link under the service's `roadmap` module,
+  2026-11-27): a plan of kind Product makes its roadmap from a title (the address, its slug, made by the service when
+  left empty); a plan of another kind is told it has none. Its state says published or not and how fresh it is
+  (fresh, stale past the deployment's days, or never reviewed) with the last review, and it is marked reviewed today
+  (`PUT …/reviewed`). Its own fields (title, address, vision, what the product is) are saved with only what changed
+  (`PUT /api/plans/{pid}/roadmap`; an emptied text clears it). Its items are shown in page order by placement (recently
+  delivered, now, next, later, delivered this year, not doing), then the unplaced; one is added with its placement,
+  changed (title, description, expected outcome, phase, tags as one comma-separated line; only what changed), moved one
+  place up or down or to another placement (`POST …/move`), and removed after a question (its public id never reused).
+  Every limit is said first; a slug another roadmap has or had (409) and a roadmap or item gone (404) have their own
+  sentences. Rules in `src/lib/product-roadmap-view.ts` (the `/roadmap` ideas page keeps `roadmap-view.ts`);
+  `tests/e2e/product-roadmap.spec.ts`.
+- **Not built** in part l: publishing as one change set (preview and publish), translations, an item's details and
+  organizations, the roadmap's category and family, `/roadmaps`, `/roadmap-categories`, and organizations' short and
+  translated names.

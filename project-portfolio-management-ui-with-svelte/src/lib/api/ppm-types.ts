@@ -2,6 +2,7 @@
 // `ppm.ts` re-exports everything here, so `#lib/api/ppm.js` imports are unchanged.
 
 import type { Collection, Goal } from "./types";
+import type { RoadmapItem } from "#lib/product-roadmap-view.js";
 import { t } from "../i18n.svelte.js";
 
 // ---- wire shapes (mirroring the service responses) ----
@@ -5939,4 +5940,25 @@ export interface ApprovalRequest {
   created_at: string;
   process_execution_pid?: string | null;
   process_step?: number | null;
+}
+
+/** A product plan's public roadmap (`GET /api/plans/{pid}/roadmap`, RE-1), its items in page order. */
+export interface ProductRoadmap {
+  pid: string;
+  plan_pid: string;
+  slug: string;
+  title: string;
+  vision: string | null;
+  service_description: string | null;
+  category_pid: string | null;
+  published: boolean;
+  reviewed_on: string | null;
+  /** RE-3: `unknown` when never reviewed, `stale` past the deployment's days, else `fresh`. */
+  freshness: {
+    state: "fresh" | "stale" | "unknown";
+    stale_after_days: number;
+    stale_from: string | null;
+    today: string;
+  };
+  items: RoadmapItem[];
 }

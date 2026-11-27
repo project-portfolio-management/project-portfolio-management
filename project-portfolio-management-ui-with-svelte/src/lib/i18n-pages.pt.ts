@@ -9716,4 +9716,91 @@ export const PAGES_PT: Record<PageKey, string> = {
     "Ainda não há campos personalizados declarados para tarefas. Os campos são declarados na página",
   "p.custom_fields.task_values_could_not_load":
     "Não foi possível carregar os campos personalizados desta tarefa.",
+  "p.product_roadmap.title": "Roteiro do produto",
+  "p.product_roadmap.title_ppm": "Roteiro do produto — PPM",
+  "p.product_roadmap.intro":
+    "O que este produto faz agora, a seguir e mais tarde, como o seu roteiro público o mostra. Um roteiro pertence a um plano do tipo Product.",
+  "p.product_roadmap.loading": "A carregar o roteiro…",
+  "p.product_roadmap.could_not_load": "Não foi possível carregar o roteiro.",
+  "p.product_roadmap.not_product":
+    "Só um plano do tipo Product tem roteiro público. Altere o tipo do plano para criar um.",
+  "p.product_roadmap.state_h": "O seu estado",
+  "p.product_roadmap.published": "Publicado",
+  "p.product_roadmap.not_published": "Não publicado",
+  "p.product_roadmap.fresh.fresh": "Atualizado",
+  "p.product_roadmap.fresh.stale": "Desatualizado: precisa de revisão",
+  "p.product_roadmap.fresh.unknown": "Nunca revisto",
+  "p.product_roadmap.reviewed_on": "revisto pela última vez em {date}",
+  "p.product_roadmap.stale_rule":
+    "Um roteiro fica desatualizado {days} dias após a última revisão.",
+  "p.product_roadmap.mark_reviewed": "Marcar como revisto hoje",
+  "p.product_roadmap.reviewed_done": "Marcado como revisto hoje.",
+  "p.product_roadmap.own_h": "O roteiro",
+  "p.product_roadmap.make_h": "Criar o roteiro",
+  "p.product_roadmap.f_title": "Título (até 200 caracteres)",
+  "p.product_roadmap.f_slug":
+    "Endereço (minúsculas, algarismos e hífenes simples, até 64)",
+  "p.product_roadmap.f_slug_new":
+    "Endereço (opcional; feito a partir do título se ficar vazio)",
+  "p.product_roadmap.f_vision": "Visão (opcional, até 2000 caracteres)",
+  "p.product_roadmap.f_service":
+    "O que é o produto, para quem não o conhece (opcional, até 2000 caracteres)",
+  "p.product_roadmap.save": "Guardar o roteiro",
+  "p.product_roadmap.make": "Criar o roteiro agora",
+  "p.product_roadmap.made": "Roteiro criado.",
+  "p.product_roadmap.saved": "Roteiro guardado.",
+  "p.product_roadmap.unchanged": "Nada mudou, por isso nada foi enviado.",
+  "p.product_roadmap.items_h": "Elementos",
+  "p.product_roadmap.no_items": "Ainda sem elementos.",
+  "p.product_roadmap.placement.recently_delivered": "Entregue recentemente",
+  "p.product_roadmap.placement.now": "Agora",
+  "p.product_roadmap.placement.next": "A seguir",
+  "p.product_roadmap.placement.later": "Mais tarde",
+  "p.product_roadmap.placement.delivered_this_year": "Entregue este ano",
+  "p.product_roadmap.placement.not_doing": "Não será feito",
+  "p.product_roadmap.placement.none": "Sem lugar",
+  "p.product_roadmap.phase_is": "Fase: {phase}",
+  "p.product_roadmap.tags_are": "Etiquetas: {tags}",
+  "p.product_roadmap.outcome_is": "Resultado esperado: {outcome}",
+  "p.product_roadmap.change_item": "Alterar «{title}»",
+  "p.product_roadmap.save_item": "Guardar o elemento",
+  "p.product_roadmap.cancel": "Cancelar",
+  "p.product_roadmap.change": "Alterar",
+  "p.product_roadmap.up": "Subir",
+  "p.product_roadmap.down": "Descer",
+  "p.product_roadmap.move_to": "Mover para",
+  "p.product_roadmap.move": "Mover",
+  "p.product_roadmap.remove": "Remover",
+  "p.product_roadmap.remove_ask":
+    "Remover «{title}» ({id})? O seu identificador público nunca é dado a outro elemento.",
+  "p.product_roadmap.add_h": "Adicionar um elemento",
+  "p.product_roadmap.f_placement": "Onde fica",
+  "p.product_roadmap.f_description":
+    "O que é o trabalho (opcional, até 2000 caracteres)",
+  "p.product_roadmap.f_outcome":
+    "O que muda, e para quem (opcional, até 2000 caracteres)",
+  "p.product_roadmap.f_phase":
+    "Fase, nas palavras do produto (opcional, até 100 caracteres)",
+  "p.product_roadmap.f_tags":
+    "Etiquetas, separadas por vírgulas (opcional; até 20, cada uma até 50 caracteres)",
+  "p.product_roadmap.add": "Adicionar o elemento",
+  "p.product_roadmap.item_added": "«{title}» adicionado.",
+  "p.product_roadmap.item_saved": "«{title}» guardado.",
+  "p.product_roadmap.item_moved": "«{title}» movido para {placement}.",
+  "p.product_roadmap.item_removed": "«{title}» removido.",
+  "p.product_roadmap.title_bad": "É necessário um título, até 200 caracteres.",
+  "p.product_roadmap.slug_bad":
+    "O endereço tem de ter minúsculas, algarismos e hífenes simples, até 64 caracteres.",
+  "p.product_roadmap.text_long": "Um texto tem no máximo 2000 caracteres.",
+  "p.product_roadmap.phase_long": "A fase tem no máximo 100 caracteres.",
+  "p.product_roadmap.tags_many": "No máximo 20 etiquetas.",
+  "p.product_roadmap.tag_long": "Uma etiqueta tem no máximo 50 caracteres.",
+  "p.product_roadmap.tag_twice": "Cada etiqueta só pode aparecer uma vez.",
+  "p.product_roadmap.slug_taken":
+    "Outro roteiro tem ou teve esse endereço; escolha outro.",
+  "p.product_roadmap.gone":
+    "O roteiro ou o elemento já não existe; a página foi lida de novo.",
+  "p.product_roadmap.could_not_save": "Não foi possível guardar o roteiro.",
+  "p.product_roadmap.could_not_change_item":
+    "Não foi possível alterar o elemento.",
 };

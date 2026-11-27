@@ -9647,4 +9647,91 @@ export const PAGES_ID: Record<PageKey, string> = {
     "Belum ada bidang khusus yang dideklarasikan untuk tugas. Bidang dideklarasikan di halaman",
   "p.custom_fields.task_values_could_not_load":
     "Tidak dapat memuat bidang khusus tugas ini.",
+  "p.product_roadmap.title": "Peta jalan produk",
+  "p.product_roadmap.title_ppm": "Peta jalan produk — PPM",
+  "p.product_roadmap.intro":
+    "Apa yang dikerjakan produk ini sekarang, berikutnya, dan nanti, seperti yang ditunjukkan peta jalan publiknya. Peta jalan milik rencana berjenis Product.",
+  "p.product_roadmap.loading": "Memuat peta jalan…",
+  "p.product_roadmap.could_not_load": "Tidak dapat memuat peta jalan.",
+  "p.product_roadmap.not_product":
+    "Hanya rencana berjenis Product yang memiliki peta jalan publik. Ubah jenis rencana untuk membuatnya.",
+  "p.product_roadmap.state_h": "Keadaannya",
+  "p.product_roadmap.published": "Diterbitkan",
+  "p.product_roadmap.not_published": "Belum diterbitkan",
+  "p.product_roadmap.fresh.fresh": "Terkini",
+  "p.product_roadmap.fresh.stale": "Usang: perlu ditinjau",
+  "p.product_roadmap.fresh.unknown": "Belum pernah ditinjau",
+  "p.product_roadmap.reviewed_on": "terakhir ditinjau {date}",
+  "p.product_roadmap.stale_rule":
+    "Peta jalan menjadi usang {days} hari setelah tinjauan terakhirnya.",
+  "p.product_roadmap.mark_reviewed": "Tandai sudah ditinjau hari ini",
+  "p.product_roadmap.reviewed_done": "Ditandai sudah ditinjau hari ini.",
+  "p.product_roadmap.own_h": "Peta jalan ini",
+  "p.product_roadmap.make_h": "Buat peta jalan",
+  "p.product_roadmap.f_title": "Judul (hingga 200 karakter)",
+  "p.product_roadmap.f_slug":
+    "Alamat (huruf kecil, angka, dan tanda hubung tunggal, hingga 64)",
+  "p.product_roadmap.f_slug_new":
+    "Alamat (opsional; dibuat dari judul jika kosong)",
+  "p.product_roadmap.f_vision": "Visi (opsional, hingga 2.000 karakter)",
+  "p.product_roadmap.f_service":
+    "Apa produk ini, bagi orang yang baru mengenalnya (opsional, hingga 2.000 karakter)",
+  "p.product_roadmap.save": "Simpan peta jalan",
+  "p.product_roadmap.make": "Buat peta jalan sekarang",
+  "p.product_roadmap.made": "Peta jalan dibuat.",
+  "p.product_roadmap.saved": "Peta jalan disimpan.",
+  "p.product_roadmap.unchanged":
+    "Tidak ada yang berubah, jadi tidak ada yang dikirim.",
+  "p.product_roadmap.items_h": "Butir",
+  "p.product_roadmap.no_items": "Belum ada butir.",
+  "p.product_roadmap.placement.recently_delivered": "Baru dikirim",
+  "p.product_roadmap.placement.now": "Sekarang",
+  "p.product_roadmap.placement.next": "Berikutnya",
+  "p.product_roadmap.placement.later": "Nanti",
+  "p.product_roadmap.placement.delivered_this_year": "Dikirim tahun ini",
+  "p.product_roadmap.placement.not_doing": "Tidak dikerjakan",
+  "p.product_roadmap.placement.none": "Belum ditempatkan",
+  "p.product_roadmap.phase_is": "Fase: {phase}",
+  "p.product_roadmap.tags_are": "Tag: {tags}",
+  "p.product_roadmap.outcome_is": "Hasil yang diharapkan: {outcome}",
+  "p.product_roadmap.change_item": "Ubah “{title}”",
+  "p.product_roadmap.save_item": "Simpan butir",
+  "p.product_roadmap.cancel": "Batal",
+  "p.product_roadmap.change": "Ubah",
+  "p.product_roadmap.up": "Naik",
+  "p.product_roadmap.down": "Turun",
+  "p.product_roadmap.move_to": "Pindahkan ke",
+  "p.product_roadmap.move": "Pindahkan",
+  "p.product_roadmap.remove": "Hapus",
+  "p.product_roadmap.remove_ask":
+    "Hapus “{title}” ({id})? ID publiknya tidak pernah diberikan ke butir lain.",
+  "p.product_roadmap.add_h": "Tambah butir",
+  "p.product_roadmap.f_placement": "Tempatnya",
+  "p.product_roadmap.f_description":
+    "Apa pekerjaannya (opsional, hingga 2.000 karakter)",
+  "p.product_roadmap.f_outcome":
+    "Apa yang berubah, dan bagi siapa (opsional, hingga 2.000 karakter)",
+  "p.product_roadmap.f_phase":
+    "Fase, dalam kata-kata produk sendiri (opsional, hingga 100 karakter)",
+  "p.product_roadmap.f_tags":
+    "Tag, dipisahkan koma (opsional; hingga 20, masing-masing hingga 50 karakter)",
+  "p.product_roadmap.add": "Tambahkan butir",
+  "p.product_roadmap.item_added": "“{title}” ditambahkan.",
+  "p.product_roadmap.item_saved": "“{title}” disimpan.",
+  "p.product_roadmap.item_moved": "“{title}” dipindahkan ke {placement}.",
+  "p.product_roadmap.item_removed": "“{title}” dihapus.",
+  "p.product_roadmap.title_bad": "Judul wajib diisi, hingga 200 karakter.",
+  "p.product_roadmap.slug_bad":
+    "Alamat harus huruf kecil, angka, dan tanda hubung tunggal, hingga 64 karakter.",
+  "p.product_roadmap.text_long": "Teks paling banyak 2.000 karakter.",
+  "p.product_roadmap.phase_long": "Fase paling banyak 100 karakter.",
+  "p.product_roadmap.tags_many": "Paling banyak 20 tag.",
+  "p.product_roadmap.tag_long": "Tag paling banyak 50 karakter.",
+  "p.product_roadmap.tag_twice": "Setiap tag hanya boleh muncul sekali.",
+  "p.product_roadmap.slug_taken":
+    "Peta jalan lain memiliki atau pernah memiliki alamat itu; pilih yang lain.",
+  "p.product_roadmap.gone":
+    "Peta jalan atau butir itu sudah tidak ada; halaman telah dibaca ulang.",
+  "p.product_roadmap.could_not_save": "Tidak dapat menyimpan peta jalan.",
+  "p.product_roadmap.could_not_change_item": "Tidak dapat mengubah butir.",
 };

@@ -9837,4 +9837,95 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Für Aufgaben ist noch kein benutzerdefiniertes Feld festgelegt. Felder werden festgelegt auf der Seite",
   "p.custom_fields.task_values_could_not_load":
     "Die benutzerdefinierten Felder dieser Aufgabe konnten nicht geladen werden.",
+  "p.product_roadmap.title": "Produkt-Roadmap",
+  "p.product_roadmap.title_ppm": "Produkt-Roadmap — PPM",
+  "p.product_roadmap.intro":
+    "Was dieses Produkt jetzt, als Nächstes und später tut, wie seine öffentliche Roadmap es zeigt. Eine Roadmap gehört zu einem Plan der Art Product.",
+  "p.product_roadmap.loading": "Roadmap wird geladen…",
+  "p.product_roadmap.could_not_load":
+    "Die Roadmap konnte nicht geladen werden.",
+  "p.product_roadmap.not_product":
+    "Nur ein Plan der Art Product hat eine öffentliche Roadmap. Ändern Sie die Art des Plans, um eine anzulegen.",
+  "p.product_roadmap.state_h": "Ihr Zustand",
+  "p.product_roadmap.published": "Veröffentlicht",
+  "p.product_roadmap.not_published": "Nicht veröffentlicht",
+  "p.product_roadmap.fresh.fresh": "Aktuell",
+  "p.product_roadmap.fresh.stale": "Veraltet: Überprüfung fällig",
+  "p.product_roadmap.fresh.unknown": "Nie überprüft",
+  "p.product_roadmap.reviewed_on": "zuletzt überprüft am {date}",
+  "p.product_roadmap.stale_rule":
+    "Eine Roadmap gilt {days} Tage nach ihrer letzten Überprüfung als veraltet.",
+  "p.product_roadmap.mark_reviewed": "Heute als überprüft markieren",
+  "p.product_roadmap.reviewed_done": "Heute als überprüft markiert.",
+  "p.product_roadmap.own_h": "Die Roadmap",
+  "p.product_roadmap.make_h": "Roadmap anlegen",
+  "p.product_roadmap.f_title": "Titel (bis zu 200 Zeichen)",
+  "p.product_roadmap.f_slug":
+    "Adresse (Kleinbuchstaben, Ziffern und einzelne Bindestriche, bis zu 64)",
+  "p.product_roadmap.f_slug_new":
+    "Adresse (optional; leer wird sie aus dem Titel gebildet)",
+  "p.product_roadmap.f_vision": "Vision (optional, bis zu 2.000 Zeichen)",
+  "p.product_roadmap.f_service":
+    "Was das Produkt ist, für jemanden, der es nicht kennt (optional, bis zu 2.000 Zeichen)",
+  "p.product_roadmap.save": "Roadmap speichern",
+  "p.product_roadmap.make": "Roadmap jetzt anlegen",
+  "p.product_roadmap.made": "Roadmap angelegt.",
+  "p.product_roadmap.saved": "Roadmap gespeichert.",
+  "p.product_roadmap.unchanged":
+    "Nichts geändert, daher wurde nichts gesendet.",
+  "p.product_roadmap.items_h": "Einträge",
+  "p.product_roadmap.no_items": "Noch keine Einträge.",
+  "p.product_roadmap.placement.recently_delivered": "Kürzlich geliefert",
+  "p.product_roadmap.placement.now": "Jetzt",
+  "p.product_roadmap.placement.next": "Als Nächstes",
+  "p.product_roadmap.placement.later": "Später",
+  "p.product_roadmap.placement.delivered_this_year": "Dieses Jahr geliefert",
+  "p.product_roadmap.placement.not_doing": "Wird nicht gemacht",
+  "p.product_roadmap.placement.none": "Nicht eingeordnet",
+  "p.product_roadmap.phase_is": "In der Phase: {phase}",
+  "p.product_roadmap.tags_are": "Schlagwörter: {tags}",
+  "p.product_roadmap.outcome_is": "Erwartetes Ergebnis: {outcome}",
+  "p.product_roadmap.change_item": "„{title}“ ändern",
+  "p.product_roadmap.save_item": "Eintrag speichern",
+  "p.product_roadmap.cancel": "Abbrechen",
+  "p.product_roadmap.change": "Ändern",
+  "p.product_roadmap.up": "Nach oben",
+  "p.product_roadmap.down": "Nach unten",
+  "p.product_roadmap.move_to": "Verschieben nach",
+  "p.product_roadmap.move": "Verschieben",
+  "p.product_roadmap.remove": "Entfernen",
+  "p.product_roadmap.remove_ask":
+    "„{title}“ ({id}) entfernen? Seine öffentliche Kennung wird nie einem anderen Eintrag gegeben.",
+  "p.product_roadmap.add_h": "Einen Eintrag hinzufügen",
+  "p.product_roadmap.f_placement": "Wohin er gehört",
+  "p.product_roadmap.f_description":
+    "Was die Arbeit ist (optional, bis zu 2.000 Zeichen)",
+  "p.product_roadmap.f_outcome":
+    "Was sich ändert und für wen (optional, bis zu 2.000 Zeichen)",
+  "p.product_roadmap.f_phase":
+    "Phase, in den Worten des Produkts (optional, bis zu 100 Zeichen)",
+  "p.product_roadmap.f_tags":
+    "Schlagwörter, durch Kommas getrennt (optional; bis zu 20, je bis zu 50 Zeichen)",
+  "p.product_roadmap.add": "Eintrag hinzufügen",
+  "p.product_roadmap.item_added": "„{title}“ hinzugefügt.",
+  "p.product_roadmap.item_saved": "„{title}“ gespeichert.",
+  "p.product_roadmap.item_moved": "„{title}“ nach {placement} verschoben.",
+  "p.product_roadmap.item_removed": "„{title}“ entfernt.",
+  "p.product_roadmap.title_bad":
+    "Ein Titel ist erforderlich, bis zu 200 Zeichen.",
+  "p.product_roadmap.slug_bad":
+    "Die Adresse muss aus Kleinbuchstaben, Ziffern und einzelnen Bindestrichen bestehen, bis zu 64 Zeichen.",
+  "p.product_roadmap.text_long": "Ein Text hat höchstens 2.000 Zeichen.",
+  "p.product_roadmap.phase_long": "Die Phase hat höchstens 100 Zeichen.",
+  "p.product_roadmap.tags_many": "Höchstens 20 Schlagwörter.",
+  "p.product_roadmap.tag_long": "Ein Schlagwort hat höchstens 50 Zeichen.",
+  "p.product_roadmap.tag_twice": "Jedes Schlagwort darf nur einmal vorkommen.",
+  "p.product_roadmap.slug_taken":
+    "Eine andere Roadmap hat oder hatte diese Adresse; wählen Sie eine andere.",
+  "p.product_roadmap.gone":
+    "Die Roadmap oder der Eintrag ist nicht mehr vorhanden; die Seite wurde neu gelesen.",
+  "p.product_roadmap.could_not_save":
+    "Die Roadmap konnte nicht gespeichert werden.",
+  "p.product_roadmap.could_not_change_item":
+    "Der Eintrag konnte nicht geändert werden.",
 };

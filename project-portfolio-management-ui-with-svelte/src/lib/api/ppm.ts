@@ -6,7 +6,7 @@
 // The strings these views show come from the page catalogues: English and
 // Welsh (machine-written, unreviewed); the other locales fall back to English.
 import { API_BASE_URL } from "#lib/config.js";
-import { ApiClient } from "./client";
+import { ApiClient, ApiError } from "./client";
 import type { Collection, Goal } from "./types";
 import { rowOf } from "#lib/row-of.js";
 import { mspdiReport, simQuery } from "./ppm-types";
@@ -21,6 +21,12 @@ import type {
 import type { CapacityHeatmap } from "#lib/capacity-heatmap-view.js";
 import type { DefBody } from "#lib/custom-field-view.js";
 import type { ApprovalRequestBody } from "#lib/approvals-view.js";
+import type {
+  ItemBody,
+  Placement,
+  RoadmapForm,
+  RoadmapItem,
+} from "#lib/product-roadmap-view.js";
 import type {
   CapacityCommitment,
   CommitmentInput,
@@ -364,6 +370,7 @@ import type {
   ReviewQueueItem,
   ApprovalRequest,
   CustomFieldDef,
+  ProductRoadmap,
   ProcessDetail,
   FrameworkVersions,
   OnboardingTemplate,
@@ -2542,6 +2549,67 @@ export class PpmClient {
       { body: {} },
     );
   }
+  /** A product plan's roadmap, or `null` before it is made (404). */
+  async productRoadmap(pid: string): Promise<ProductRoadmap | null> {
+    try {
+      return await this.http.get<ProductRoadmap>(
+        `/api/plans/${encodeURIComponent(pid)}/roadmap`,
+      );
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) return null;
+      throw err;
+    }
+  }
+  /** Make the roadmap (a Product plan only) or change its own fields; an absent field is kept, `""` clears it. */
+  saveProductRoadmap(
+    pid: string,
+    body: Partial<RoadmapForm>,
+  ): Promise<ProductRoadmap> {
+    return this.http.put(`/api/plans/${encodeURIComponent(pid)}/roadmap`, {
+      body,
+    });
+  }
+  /** Mark the roadmap reviewed today, in the deployment's zone (RE-3). */
+  markProductRoadmapReviewed(pid: string): Promise<ProductRoadmap> {
+    return this.http.put(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap/reviewed`,
+      { body: { today: true } },
+    );
+  }
+  addRoadmapItem(pid: string, body: ItemBody): Promise<RoadmapItem> {
+    return this.http.post(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap/items`,
+      { body },
+    );
+  }
+  changeRoadmapItem(
+    pid: string,
+    ipid: string,
+    body: ItemBody,
+  ): Promise<RoadmapItem> {
+    return this.http.put(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap/items/${encodeURIComponent(ipid)}`,
+      { body },
+    );
+  }
+  /** Move an item to a placement (`null`: unplaced) and a place in it, counted from 0. */
+  moveRoadmapItem(
+    pid: string,
+    ipid: string,
+    body: { placement: Placement | null; index?: number },
+  ): Promise<RoadmapItem> {
+    return this.http.post(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap/items/${encodeURIComponent(ipid)}/move`,
+      { body },
+    );
+  }
+  /** Remove an item; its public id is never given to another. */
+  removeRoadmapItem(pid: string, ipid: string): Promise<unknown> {
+    return this.http.post(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap/items/${encodeURIComponent(ipid)}/delete`,
+    );
+  }
+
   /** Requests waiting on the caller (`approver`) or that the caller made (`requester`), newest first, at most 500. */
   approvalRequests(
     mine: "approver" | "requester",

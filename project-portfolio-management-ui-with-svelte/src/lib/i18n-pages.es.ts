@@ -9727,4 +9727,91 @@ export const PAGES_ES: Record<PageKey, string> = {
     "Aún no hay ningún campo personalizado declarado para las tareas. Los campos se declaran en la página",
   "p.custom_fields.task_values_could_not_load":
     "No se pudieron cargar los campos personalizados de esta tarea.",
+  "p.product_roadmap.title": "Hoja de ruta del producto",
+  "p.product_roadmap.title_ppm": "Hoja de ruta del producto — PPM",
+  "p.product_roadmap.intro":
+    "Lo que este producto hace ahora, a continuación y más adelante, tal como lo muestra su hoja de ruta pública. Una hoja de ruta pertenece a un plan de tipo Product.",
+  "p.product_roadmap.loading": "Cargando la hoja de ruta…",
+  "p.product_roadmap.could_not_load": "No se pudo cargar la hoja de ruta.",
+  "p.product_roadmap.not_product":
+    "Solo un plan de tipo Product tiene hoja de ruta pública. Cambie el tipo del plan para crear una.",
+  "p.product_roadmap.state_h": "Su estado",
+  "p.product_roadmap.published": "Publicada",
+  "p.product_roadmap.not_published": "Sin publicar",
+  "p.product_roadmap.fresh.fresh": "Al día",
+  "p.product_roadmap.fresh.stale": "Desactualizada: toca revisarla",
+  "p.product_roadmap.fresh.unknown": "Nunca revisada",
+  "p.product_roadmap.reviewed_on": "revisada por última vez el {date}",
+  "p.product_roadmap.stale_rule":
+    "Una hoja de ruta queda desactualizada {days} días después de su última revisión.",
+  "p.product_roadmap.mark_reviewed": "Marcarla como revisada hoy",
+  "p.product_roadmap.reviewed_done": "Marcada como revisada hoy.",
+  "p.product_roadmap.own_h": "La hoja de ruta",
+  "p.product_roadmap.make_h": "Crear la hoja de ruta",
+  "p.product_roadmap.f_title": "Título (hasta 200 caracteres)",
+  "p.product_roadmap.f_slug":
+    "Dirección (minúsculas, dígitos y guiones simples, hasta 64)",
+  "p.product_roadmap.f_slug_new":
+    "Dirección (opcional; si se deja vacía se crea a partir del título)",
+  "p.product_roadmap.f_vision": "Visión (opcional, hasta 2000 caracteres)",
+  "p.product_roadmap.f_service":
+    "Qué es el producto, para quien no lo conoce (opcional, hasta 2000 caracteres)",
+  "p.product_roadmap.save": "Guardar la hoja de ruta",
+  "p.product_roadmap.make": "Crear la hoja de ruta ahora",
+  "p.product_roadmap.made": "Se creó la hoja de ruta.",
+  "p.product_roadmap.saved": "Se guardó la hoja de ruta.",
+  "p.product_roadmap.unchanged": "No cambió nada, así que no se envió nada.",
+  "p.product_roadmap.items_h": "Elementos",
+  "p.product_roadmap.no_items": "Aún no hay elementos.",
+  "p.product_roadmap.placement.recently_delivered": "Entregado recientemente",
+  "p.product_roadmap.placement.now": "Ahora",
+  "p.product_roadmap.placement.next": "A continuación",
+  "p.product_roadmap.placement.later": "Más adelante",
+  "p.product_roadmap.placement.delivered_this_year": "Entregado este año",
+  "p.product_roadmap.placement.not_doing": "No se hará",
+  "p.product_roadmap.placement.none": "Sin ubicar",
+  "p.product_roadmap.phase_is": "Fase: {phase}",
+  "p.product_roadmap.tags_are": "Etiquetas: {tags}",
+  "p.product_roadmap.outcome_is": "Resultado esperado: {outcome}",
+  "p.product_roadmap.change_item": "Cambiar «{title}»",
+  "p.product_roadmap.save_item": "Guardar el elemento",
+  "p.product_roadmap.cancel": "Cancelar",
+  "p.product_roadmap.change": "Cambiar",
+  "p.product_roadmap.up": "Subir",
+  "p.product_roadmap.down": "Bajar",
+  "p.product_roadmap.move_to": "Mover a",
+  "p.product_roadmap.move": "Mover",
+  "p.product_roadmap.remove": "Quitar",
+  "p.product_roadmap.remove_ask":
+    "¿Quitar «{title}» ({id})? Su identificador público nunca se da a otro elemento.",
+  "p.product_roadmap.add_h": "Añadir un elemento",
+  "p.product_roadmap.f_placement": "Dónde va",
+  "p.product_roadmap.f_description":
+    "Qué es el trabajo (opcional, hasta 2000 caracteres)",
+  "p.product_roadmap.f_outcome":
+    "Qué cambia, y para quién (opcional, hasta 2000 caracteres)",
+  "p.product_roadmap.f_phase":
+    "Fase, en las palabras del producto (opcional, hasta 100 caracteres)",
+  "p.product_roadmap.f_tags":
+    "Etiquetas, separadas por comas (opcional; hasta 20, cada una de hasta 50 caracteres)",
+  "p.product_roadmap.add": "Añadir el elemento",
+  "p.product_roadmap.item_added": "Se añadió «{title}».",
+  "p.product_roadmap.item_saved": "Se guardó «{title}».",
+  "p.product_roadmap.item_moved": "Se movió «{title}» a {placement}.",
+  "p.product_roadmap.item_removed": "Se quitó «{title}».",
+  "p.product_roadmap.title_bad":
+    "Se necesita un título, de hasta 200 caracteres.",
+  "p.product_roadmap.slug_bad":
+    "La dirección debe tener minúsculas, dígitos y guiones simples, hasta 64 caracteres.",
+  "p.product_roadmap.text_long": "Un texto tiene como máximo 2000 caracteres.",
+  "p.product_roadmap.phase_long": "La fase tiene como máximo 100 caracteres.",
+  "p.product_roadmap.tags_many": "Como máximo 20 etiquetas.",
+  "p.product_roadmap.tag_long": "Una etiqueta tiene como máximo 50 caracteres.",
+  "p.product_roadmap.tag_twice": "Cada etiqueta puede aparecer solo una vez.",
+  "p.product_roadmap.slug_taken":
+    "Otra hoja de ruta tiene o tuvo esa dirección; elija otra.",
+  "p.product_roadmap.gone":
+    "La hoja de ruta o el elemento ya no está; se ha vuelto a leer la página.",
+  "p.product_roadmap.could_not_save": "No se pudo guardar la hoja de ruta.",
+  "p.product_roadmap.could_not_change_item": "No se pudo cambiar el elemento.",
 };

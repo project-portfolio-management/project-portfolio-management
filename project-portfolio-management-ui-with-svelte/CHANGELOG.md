@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/plans/[pid]/roadmap` (RE-1, RE-3, 2026-11-27)
+
+- Seven client methods; `src/lib/product-roadmap-view.ts`; a plan workspace link (module `roadmap`); 72 strings in
+  every locale, under `p.product_roadmap.*` (the `/roadmap` ideas page has `p.roadmap.*`).
+
 ### Added — a task's custom field values (RM-1, 2026-11-27)
 
 - `CustomFieldValues.svelte`, out of `/plans/[pid]/fields`, on a task's page too; `stubNoCustomFields` for the e2e

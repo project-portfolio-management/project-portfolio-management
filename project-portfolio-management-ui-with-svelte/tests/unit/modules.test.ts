@@ -86,6 +86,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "financials",
       "milestones",
       "governance",
+      "roadmap",
     ];
     for (const l of PLAN_LINKS) expect(known).toContain(l.module);
   });

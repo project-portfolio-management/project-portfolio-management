@@ -9793,4 +9793,95 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Aucun champ personnalisé n'est encore déclaré pour les tâches. Les champs sont déclarés sur la page",
   "p.custom_fields.task_values_could_not_load":
     "Impossible de charger les champs personnalisés de cette tâche.",
+  "p.product_roadmap.title": "Feuille de route du produit",
+  "p.product_roadmap.title_ppm": "Feuille de route du produit — PPM",
+  "p.product_roadmap.intro":
+    "Ce que fait ce produit maintenant, ensuite et plus tard, tel que le montre sa feuille de route publique. Une feuille de route appartient à un plan de type Product.",
+  "p.product_roadmap.loading": "Chargement de la feuille de route…",
+  "p.product_roadmap.could_not_load":
+    "Impossible de charger la feuille de route.",
+  "p.product_roadmap.not_product":
+    "Seul un plan de type Product a une feuille de route publique. Changez le type du plan pour en créer une.",
+  "p.product_roadmap.state_h": "Son état",
+  "p.product_roadmap.published": "Publiée",
+  "p.product_roadmap.not_published": "Non publiée",
+  "p.product_roadmap.fresh.fresh": "À jour",
+  "p.product_roadmap.fresh.stale": "Périmée : revue à faire",
+  "p.product_roadmap.fresh.unknown": "Jamais revue",
+  "p.product_roadmap.reviewed_on": "revue le {date}",
+  "p.product_roadmap.stale_rule":
+    "Une feuille de route est périmée {days} jours après sa dernière revue.",
+  "p.product_roadmap.mark_reviewed": "La marquer revue aujourd'hui",
+  "p.product_roadmap.reviewed_done": "Marquée revue aujourd'hui.",
+  "p.product_roadmap.own_h": "La feuille de route",
+  "p.product_roadmap.make_h": "Créer la feuille de route",
+  "p.product_roadmap.f_title": "Titre (jusqu'à 200 caractères)",
+  "p.product_roadmap.f_slug":
+    "Adresse (minuscules, chiffres et tirets simples, jusqu'à 64)",
+  "p.product_roadmap.f_slug_new":
+    "Adresse (facultative ; tirée du titre si elle est vide)",
+  "p.product_roadmap.f_vision":
+    "Vision (facultative, jusqu'à 2 000 caractères)",
+  "p.product_roadmap.f_service":
+    "Ce qu'est le produit, pour qui le découvre (facultatif, jusqu'à 2 000 caractères)",
+  "p.product_roadmap.save": "Enregistrer la feuille de route",
+  "p.product_roadmap.make": "Créer la feuille de route maintenant",
+  "p.product_roadmap.made": "Feuille de route créée.",
+  "p.product_roadmap.saved": "Feuille de route enregistrée.",
+  "p.product_roadmap.unchanged": "Rien n'a changé : rien n'a été envoyé.",
+  "p.product_roadmap.items_h": "Éléments",
+  "p.product_roadmap.no_items": "Aucun élément pour l'instant.",
+  "p.product_roadmap.placement.recently_delivered": "Livré récemment",
+  "p.product_roadmap.placement.now": "Maintenant",
+  "p.product_roadmap.placement.next": "Ensuite",
+  "p.product_roadmap.placement.later": "Plus tard",
+  "p.product_roadmap.placement.delivered_this_year": "Livré cette année",
+  "p.product_roadmap.placement.not_doing": "Ne sera pas fait",
+  "p.product_roadmap.placement.none": "Non placé",
+  "p.product_roadmap.phase_is": "Phase : {phase}",
+  "p.product_roadmap.tags_are": "Étiquettes : {tags}",
+  "p.product_roadmap.outcome_is": "Résultat attendu : {outcome}",
+  "p.product_roadmap.change_item": "Modifier « {title} »",
+  "p.product_roadmap.save_item": "Enregistrer l'élément",
+  "p.product_roadmap.cancel": "Annuler",
+  "p.product_roadmap.change": "Modifier",
+  "p.product_roadmap.up": "Monter",
+  "p.product_roadmap.down": "Descendre",
+  "p.product_roadmap.move_to": "Déplacer vers",
+  "p.product_roadmap.move": "Déplacer",
+  "p.product_roadmap.remove": "Retirer",
+  "p.product_roadmap.remove_ask":
+    "Retirer « {title} » ({id}) ? Son identifiant public n'est jamais donné à un autre élément.",
+  "p.product_roadmap.add_h": "Ajouter un élément",
+  "p.product_roadmap.f_placement": "Où il va",
+  "p.product_roadmap.f_description":
+    "Ce qu'est le travail (facultatif, jusqu'à 2 000 caractères)",
+  "p.product_roadmap.f_outcome":
+    "Ce qui change, et pour qui (facultatif, jusqu'à 2 000 caractères)",
+  "p.product_roadmap.f_phase":
+    "Phase, dans les mots du produit (facultative, jusqu'à 100 caractères)",
+  "p.product_roadmap.f_tags":
+    "Étiquettes, séparées par des virgules (facultatives ; jusqu'à 20, de 50 caractères chacune au plus)",
+  "p.product_roadmap.add": "Ajouter l'élément",
+  "p.product_roadmap.item_added": "« {title} » ajouté.",
+  "p.product_roadmap.item_saved": "« {title} » enregistré.",
+  "p.product_roadmap.item_moved": "« {title} » déplacé vers {placement}.",
+  "p.product_roadmap.item_removed": "« {title} » retiré.",
+  "p.product_roadmap.title_bad": "Un titre est requis, jusqu'à 200 caractères.",
+  "p.product_roadmap.slug_bad":
+    "L'adresse doit contenir des minuscules, chiffres et tirets simples, jusqu'à 64 caractères.",
+  "p.product_roadmap.text_long": "Un texte compte au plus 2 000 caractères.",
+  "p.product_roadmap.phase_long": "La phase compte au plus 100 caractères.",
+  "p.product_roadmap.tags_many": "Au plus 20 étiquettes.",
+  "p.product_roadmap.tag_long": "Une étiquette compte au plus 50 caractères.",
+  "p.product_roadmap.tag_twice":
+    "Chaque étiquette ne peut figurer qu'une fois.",
+  "p.product_roadmap.slug_taken":
+    "Une autre feuille de route a ou avait cette adresse ; choisissez-en une autre.",
+  "p.product_roadmap.gone":
+    "La feuille de route ou l'élément n'existe plus ; la page a été relue.",
+  "p.product_roadmap.could_not_save":
+    "Impossible d'enregistrer la feuille de route.",
+  "p.product_roadmap.could_not_change_item":
+    "Impossible de modifier l'élément.",
 };

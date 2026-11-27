@@ -9509,4 +9509,21 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.components.removed": "„{name}“ entfernt.",
   "p.components.saved": "„{name}“ gespeichert.",
   "p.components.added": "„{name}“ hinzugefügt.",
+  "p.resource_roles.heading": "Hauptrollen der Personen",
+  "p.resource_roles.says":
+    "Die Hauptrolle einer Person entscheidet, in welcher Zeile oben ihre angegebene Kapazität als Angebot zählt. Eine festzulegen erfordert die Rolle Ressourcenmanager oder einen Administrator; alle anderen sehen nur ihre eigene.",
+  "p.resource_roles.none": "Noch hat niemand eine Hauptrolle.",
+  "p.resource_roles.person": "Person (ein person:- oder worker:-Bezug)",
+  "p.resource_roles.role": "Rolle (bis zu 60 Zeichen; leer löscht sie)",
+  "p.resource_roles.set": "Rolle festlegen",
+  "p.resource_roles.form": "Hauptrolle einer Person festlegen",
+  "p.resource_roles.person_bad":
+    "Die Person muss ein person:- oder worker:-Bezug sein.",
+  "p.resource_roles.role_too_long": "Die Rolle ist länger als 60 Zeichen.",
+  "p.resource_roles.forbidden":
+    "Eine Rolle festzulegen erfordert die Rolle Ressourcenmanager oder einen Administrator.",
+  "p.resource_roles.could_not_load": "Die Rollen konnten nicht geladen werden.",
+  "p.resource_roles.could_not_set": "Die Rolle konnte nicht festgelegt werden.",
+  "p.resource_roles.set_ok": "{person} hat jetzt die Hauptrolle „{role}“.",
+  "p.resource_roles.cleared_ok": "{person} hat keine Hauptrolle mehr.",
 };

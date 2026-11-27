@@ -9316,4 +9316,22 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.components.removed": "Dilëwyd “{name}”.",
   "p.components.saved": "Cadwyd “{name}”.",
   "p.components.added": "Ychwanegwyd “{name}”.",
+  "p.resource_roles.heading": "Prif rolau pobl",
+  "p.resource_roles.says":
+    "Prif rôl person sy'n penderfynu pa res uchod sy'n cyfrif ei gapasiti a ddatganwyd fel cyflenwad. Mae gosod un yn gofyn am rôl rheolwr adnoddau neu weinyddwr; dim ond ei rôl ei hun y mae unrhyw un arall yn ei gweld.",
+  "p.resource_roles.none": "Nid oes gan neb brif rôl eto.",
+  "p.resource_roles.person": "Person (cyfeirnod person: neu worker:)",
+  "p.resource_roles.role":
+    "Rôl (hyd at 60 nod; mae gadael yn wag yn ei chlirio)",
+  "p.resource_roles.set": "Gosod y rôl",
+  "p.resource_roles.form": "Gosod prif rôl person",
+  "p.resource_roles.person_bad":
+    "Rhaid i'r person fod yn gyfeirnod person: neu worker:.",
+  "p.resource_roles.role_too_long": "Mae'r rôl dros 60 nod.",
+  "p.resource_roles.forbidden":
+    "Mae gosod rôl yn gofyn am rôl rheolwr adnoddau neu weinyddwr.",
+  "p.resource_roles.could_not_load": "Methu llwytho'r rolau.",
+  "p.resource_roles.could_not_set": "Methu gosod y rôl.",
+  "p.resource_roles.set_ok": "Mae gan {person} y brif rôl “{role}” bellach.",
+  "p.resource_roles.cleared_ok": "Nid oes gan {person} brif rôl mwyach.",
 };

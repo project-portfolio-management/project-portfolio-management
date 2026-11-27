@@ -5803,3 +5803,9 @@ export interface ComponentBody {
   name: string;
   lead_ref?: string | null;
 }
+
+/** A person's primary role (`GET` / `PUT /api/resource-roles`; NC-1 slice 12 part n). */
+export interface ResourceRole {
+  person_ref: string;
+  role: string | null;
+}

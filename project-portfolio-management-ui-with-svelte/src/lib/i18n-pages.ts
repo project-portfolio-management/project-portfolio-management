@@ -9097,6 +9097,23 @@ export const PAGES_EN = {
   "p.components.removed": "Removed “{name}”.",
   "p.components.saved": "Saved “{name}”.",
   "p.components.added": "Added “{name}”.",
+  "p.resource_roles.heading": "People's primary roles",
+  "p.resource_roles.says":
+    "A person's primary role decides which row above counts their declared capacity as supply. Setting one needs the resource manager role or an administrator; anyone else sees only their own.",
+  "p.resource_roles.none": "No one has a primary role yet.",
+  "p.resource_roles.person": "Person (a person: or worker: reference)",
+  "p.resource_roles.role": "Role (up to 60 characters; blank clears it)",
+  "p.resource_roles.set": "Set the role",
+  "p.resource_roles.form": "Set a person's primary role",
+  "p.resource_roles.person_bad":
+    "The person must be a person: or worker: reference.",
+  "p.resource_roles.role_too_long": "The role is over 60 characters.",
+  "p.resource_roles.forbidden":
+    "Setting a role needs the resource manager role or an administrator.",
+  "p.resource_roles.could_not_load": "Could not load the roles.",
+  "p.resource_roles.could_not_set": "Could not set the role.",
+  "p.resource_roles.set_ok": "{person} now has the primary role “{role}”.",
+  "p.resource_roles.cleared_ok": "{person} no longer has a primary role.",
 } as const;
 
 /** A key in the page and component catalogue. */

@@ -8967,4 +8967,21 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.components.removed": "“{name}” সরানো হয়েছে।",
   "p.components.saved": "“{name}” সংরক্ষিত হয়েছে।",
   "p.components.added": "“{name}” যোগ হয়েছে।",
+  "p.resource_roles.heading": "ব্যক্তিদের প্রধান ভূমিকা",
+  "p.resource_roles.says":
+    "একজন ব্যক্তির প্রধান ভূমিকা ঠিক করে উপরের কোন সারি তাঁর ঘোষিত সক্ষমতাকে সরবরাহ হিসেবে গণনা করে। এটি নির্ধারণে রিসোর্স ম্যানেজার ভূমিকা বা প্রশাসক দরকার; অন্যরা শুধু নিজেরটি দেখেন।",
+  "p.resource_roles.none": "এখনো কারও প্রধান ভূমিকা নেই।",
+  "p.resource_roles.person": "ব্যক্তি (একটি person: বা worker: রেফারেন্স)",
+  "p.resource_roles.role": "ভূমিকা (৬০ অক্ষর পর্যন্ত; ফাঁকা রাখলে মুছে যায়)",
+  "p.resource_roles.set": "ভূমিকা নির্ধারণ করুন",
+  "p.resource_roles.form": "একজন ব্যক্তির প্রধান ভূমিকা নির্ধারণ করুন",
+  "p.resource_roles.person_bad":
+    "ব্যক্তিকে অবশ্যই person: বা worker: রেফারেন্স হতে হবে।",
+  "p.resource_roles.role_too_long": "ভূমিকাটি ৬০ অক্ষরের বেশি।",
+  "p.resource_roles.forbidden":
+    "ভূমিকা নির্ধারণে রিসোর্স ম্যানেজার ভূমিকা বা প্রশাসক দরকার।",
+  "p.resource_roles.could_not_load": "ভূমিকাগুলো লোড করা যায়নি।",
+  "p.resource_roles.could_not_set": "ভূমিকা নির্ধারণ করা যায়নি।",
+  "p.resource_roles.set_ok": "{person}-এর প্রধান ভূমিকা এখন “{role}”।",
+  "p.resource_roles.cleared_ok": "{person}-এর আর কোনো প্রধান ভূমিকা নেই।",
 };

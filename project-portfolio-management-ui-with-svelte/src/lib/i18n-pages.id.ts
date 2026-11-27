@@ -9338,4 +9338,21 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.components.removed": "“{name}” dihapus.",
   "p.components.saved": "“{name}” disimpan.",
   "p.components.added": "“{name}” ditambahkan.",
+  "p.resource_roles.heading": "Peran utama orang",
+  "p.resource_roles.says":
+    "Peran utama seseorang menentukan baris mana di atas yang menghitung kapasitas yang dinyatakannya sebagai pasokan. Menetapkannya memerlukan peran manajer sumber daya atau administrator; orang lain hanya melihat milik mereka sendiri.",
+  "p.resource_roles.none": "Belum ada yang memiliki peran utama.",
+  "p.resource_roles.person": "Orang (rujukan person: atau worker:)",
+  "p.resource_roles.role": "Peran (hingga 60 karakter; kosong menghapusnya)",
+  "p.resource_roles.set": "Tetapkan peran",
+  "p.resource_roles.form": "Tetapkan peran utama seseorang",
+  "p.resource_roles.person_bad":
+    "Orang harus berupa rujukan person: atau worker:.",
+  "p.resource_roles.role_too_long": "Peran lebih dari 60 karakter.",
+  "p.resource_roles.forbidden":
+    "Menetapkan peran memerlukan peran manajer sumber daya atau administrator.",
+  "p.resource_roles.could_not_load": "Tidak dapat memuat peran.",
+  "p.resource_roles.could_not_set": "Tidak dapat menetapkan peran.",
+  "p.resource_roles.set_ok": "{person} kini memiliki peran utama “{role}”.",
+  "p.resource_roles.cleared_ok": "{person} tidak lagi memiliki peran utama.",
 };

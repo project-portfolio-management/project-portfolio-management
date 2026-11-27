@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — people's primary roles on `/resources` (2026-11-27)
+
+- `ResourceRoles.svelte`; two client methods; 14 strings in every locale.
+
 ### Added — `/plans/[pid]/components` (PL-11, 2026-11-27)
 
 - Five client methods; `src/lib/component-view.ts`; 32 strings in every locale.

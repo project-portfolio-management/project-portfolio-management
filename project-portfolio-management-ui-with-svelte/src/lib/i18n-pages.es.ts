@@ -9411,4 +9411,22 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.components.removed": "Se quitó «{name}».",
   "p.components.saved": "Se guardó «{name}».",
   "p.components.added": "Se añadió «{name}».",
+  "p.resource_roles.heading": "Funciones principales de las personas",
+  "p.resource_roles.says":
+    "La función principal de una persona decide en qué fila de arriba cuenta su capacidad declarada como oferta. Asignarla requiere la función de gestor de recursos o un administrador; cualquier otra persona ve solo la suya.",
+  "p.resource_roles.none": "Nadie tiene aún una función principal.",
+  "p.resource_roles.person": "Persona (una referencia person: o worker:)",
+  "p.resource_roles.role": "Función (hasta 60 caracteres; en blanco la borra)",
+  "p.resource_roles.set": "Asignar la función",
+  "p.resource_roles.form": "Asignar la función principal de una persona",
+  "p.resource_roles.person_bad":
+    "La persona debe ser una referencia person: o worker:.",
+  "p.resource_roles.role_too_long": "La función supera los 60 caracteres.",
+  "p.resource_roles.forbidden":
+    "Asignar una función requiere la función de gestor de recursos o un administrador.",
+  "p.resource_roles.could_not_load": "No se pudieron cargar las funciones.",
+  "p.resource_roles.could_not_set": "No se pudo asignar la función.",
+  "p.resource_roles.set_ok":
+    "{person} tiene ahora la función principal «{role}».",
+  "p.resource_roles.cleared_ok": "{person} ya no tiene función principal.",
 };

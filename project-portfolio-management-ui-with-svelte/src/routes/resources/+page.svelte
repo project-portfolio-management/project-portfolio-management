@@ -26,6 +26,7 @@
   import PlannedHours from "#lib/components/PlannedHours.svelte";
   import SkillGapView from "#lib/components/SkillGapView.svelte";
   import RateLookupForm from "#lib/components/RateLookupForm.svelte";
+  import ResourceRoles from "#lib/components/ResourceRoles.svelte";
 
   const ppm = PpmClient.withFetch();
   let from = $state("");
@@ -158,6 +159,7 @@
 <PlannedHours {planName} />
 <SkillGapView {plans} />
 <RateLookupForm />
+<ResourceRoles onchanged={() => void load()} />
 
 <style>
   table {

@@ -3480,5 +3480,9 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   that changes nothing sends nothing; a blank lead clears it. A component with tasks is not offered for removal (the
   page says how many to move first); an empty one is removed after a question. A name taken meanwhile (409) and the
   plan's limit of 200 (422) have their own sentences. Rules in `src/lib/component-view.ts`; `tests/e2e/components.spec.ts`.
-- **Not built** in part n: custom fields, goals, resource roles, onboarding templates, a framework's and a way of
+- **People's primary roles** (`/resources`, `ResourceRoles.svelte`, 2026-11-27): everyone's (a resource manager or an
+  administrator) or the reader's own, from `GET /api/resource-roles`; set or cleared (a blank role) with `PUT`, the
+  person checked as a `person:` or `worker:` reference and the role as at most 60 characters before sending; the plan
+  above is read again, since a role decides whose declared capacity is a row's supply; 403 in its own sentence.
+- **Not built** in part n: custom fields, goals, onboarding templates, a framework's and a way of
   working's text and versions, editing a process definition or an announcement, approval requests outside a process.

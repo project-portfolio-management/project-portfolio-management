@@ -9477,4 +9477,22 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.components.removed": "« {name} » retiré.",
   "p.components.saved": "« {name} » enregistré.",
   "p.components.added": "« {name} » ajouté.",
+  "p.resource_roles.heading": "Rôles principaux des personnes",
+  "p.resource_roles.says":
+    "Le rôle principal d'une personne décide dans quelle ligne ci-dessus sa capacité déclarée compte comme offre. En définir un exige le rôle de gestionnaire des ressources ou un administrateur ; les autres ne voient que le leur.",
+  "p.resource_roles.none": "Personne n'a encore de rôle principal.",
+  "p.resource_roles.person": "Personne (une référence person: ou worker:)",
+  "p.resource_roles.role": "Rôle (60 caractères au plus ; vide l'efface)",
+  "p.resource_roles.set": "Définir le rôle",
+  "p.resource_roles.form": "Définir le rôle principal d'une personne",
+  "p.resource_roles.person_bad":
+    "La personne doit être une référence person: ou worker:.",
+  "p.resource_roles.role_too_long": "Le rôle dépasse 60 caractères.",
+  "p.resource_roles.forbidden":
+    "Définir un rôle exige le rôle de gestionnaire des ressources ou un administrateur.",
+  "p.resource_roles.could_not_load": "Impossible de charger les rôles.",
+  "p.resource_roles.could_not_set": "Impossible de définir le rôle.",
+  "p.resource_roles.set_ok":
+    "{person} a désormais le rôle principal « {role} ».",
+  "p.resource_roles.cleared_ok": "{person} n'a plus de rôle principal.",
 };

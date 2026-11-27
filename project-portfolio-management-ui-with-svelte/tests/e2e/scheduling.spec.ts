@@ -293,6 +293,89 @@ test("resources: a shortage is said in words and FTE, with a table twin", async 
   await audit(page);
 });
 
+test("resources: people's primary roles are listed and set, and the plan is read again (NC-1 slice 12 part n)", async ({
+  page,
+}) => {
+  let reads = 0;
+  let roles = [
+    { person_ref: "person:aaaaaaaa-0000-4000-8000-000000000001", role: "dev" },
+  ];
+  const put: unknown[] = [];
+  await stub(page, {
+    "GET /api/resource-plan": () => {
+      reads += 1;
+      return RESOURCES;
+    },
+    "GET /api/resource-roles": () => roles,
+    "PUT /api/resource-roles": (_r: Route, body: unknown) => {
+      put.push(body);
+      const b = body as { person_ref: string; role: string | null };
+      roles = b.role
+        ? [...roles, { person_ref: b.person_ref, role: b.role }]
+        : roles.filter((r) => r.person_ref !== b.person_ref);
+      return b;
+    },
+  });
+  await page.goto("/en-001/resources");
+  const section = page.getByTestId("resource-roles");
+  await expect(section).toContainText(
+    "person:aaaaaaaa-0000-4000-8000-000000000001: dev",
+  );
+  const form = section.getByRole("form", {
+    name: "Set a person's primary role",
+  });
+  await form.getByLabel(/^Person/).fill("Ana");
+  await form.getByRole("button", { name: "Set the role" }).click();
+  await expect(section.getByRole("alert")).toHaveText(
+    "The person must be a person: or worker: reference.",
+  );
+  expect(put).toEqual([]);
+  const before = reads;
+  await form.getByLabel(/^Person/).fill(" worker:7 ");
+  await form.getByLabel(/^Role/).fill(" qa ");
+  await form.getByRole("button", { name: "Set the role" }).click();
+  await expect(section.getByRole("status")).toHaveText(
+    "worker:7 now has the primary role “qa”.",
+  );
+  expect(put).toEqual([{ person_ref: "worker:7", role: "qa" }]);
+  await expect(section).toContainText("worker:7: qa");
+  await expect.poll(() => reads).toBeGreaterThan(before);
+  await form.getByLabel(/^Person/).fill("worker:7");
+  await form.getByRole("button", { name: "Set the role" }).click();
+  await expect(section.getByRole("status")).toHaveText(
+    "worker:7 no longer has a primary role.",
+  );
+  expect(put.at(-1)).toEqual({ person_ref: "worker:7", role: null });
+  await audit(page);
+});
+
+test("resources: setting a role without the right says so in the catalogue's words", async ({
+  page,
+}) => {
+  await stub(page, {
+    "GET /api/resource-plan": RESOURCES,
+    "GET /api/resource-roles": [],
+  });
+  // Registered after the stub, so it answers first: a 403 for the write.
+  await page.route("**/api/proxy/api/resource-roles", (route) =>
+    route.request().method() === "PUT"
+      ? route.fulfill({
+          status: 403,
+          json: { code: "forbidden", detail: "service text" },
+        })
+      : route.fallback(),
+  );
+  await page.goto("/en-001/resources");
+  const section = page.getByTestId("resource-roles");
+  await expect(section).toContainText("No one has a primary role yet.");
+  await section.getByLabel(/^Person/).fill("person:1");
+  await section.getByRole("button", { name: "Set the role" }).click();
+  await expect(section.getByRole("alert")).toHaveText(
+    "Setting a role needs the resource manager role or an administrator.",
+  );
+  await expect(page.getByText("service text")).toHaveCount(0);
+});
+
 const RISK = {
   plan_pid: PLAN,
   calendar: "default",

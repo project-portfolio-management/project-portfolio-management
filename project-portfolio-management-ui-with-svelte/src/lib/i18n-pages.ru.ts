@@ -9288,4 +9288,21 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.components.removed": "«{name}» удалён.",
   "p.components.saved": "«{name}» сохранён.",
   "p.components.added": "«{name}» добавлен.",
+  "p.resource_roles.heading": "Основные роли людей",
+  "p.resource_roles.says":
+    "Основная роль человека определяет, в какой строке выше его заявленная ёмкость считается предложением. Чтобы назначить её, нужна роль менеджера ресурсов или администратора; остальные видят только свою.",
+  "p.resource_roles.none": "Пока ни у кого нет основной роли.",
+  "p.resource_roles.person": "Человек (ссылка person: или worker:)",
+  "p.resource_roles.role": "Роль (до 60 символов; пустое поле её снимает)",
+  "p.resource_roles.set": "Назначить роль",
+  "p.resource_roles.form": "Назначить основную роль человека",
+  "p.resource_roles.person_bad":
+    "Человек должен быть ссылкой person: или worker:.",
+  "p.resource_roles.role_too_long": "Роль длиннее 60 символов.",
+  "p.resource_roles.forbidden":
+    "Чтобы назначить роль, нужна роль менеджера ресурсов или администратора.",
+  "p.resource_roles.could_not_load": "Не удалось загрузить роли.",
+  "p.resource_roles.could_not_set": "Не удалось назначить роль.",
+  "p.resource_roles.set_ok": "У {person} теперь основная роль «{role}».",
+  "p.resource_roles.cleared_ok": "У {person} больше нет основной роли.",
 };

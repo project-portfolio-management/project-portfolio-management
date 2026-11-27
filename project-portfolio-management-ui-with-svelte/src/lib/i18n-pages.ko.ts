@@ -9010,4 +9010,20 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.components.removed": "“{name}”을(를) 제거했습니다.",
   "p.components.saved": "“{name}”을(를) 저장했습니다.",
   "p.components.added": "“{name}”을(를) 추가했습니다.",
+  "p.resource_roles.heading": "사람의 주 역할",
+  "p.resource_roles.says":
+    "사람의 주 역할은 위의 어느 행이 그 사람의 신고된 용량을 공급으로 셀지 정합니다. 설정하려면 자원 관리자 역할이나 관리자가 필요하며, 그 외 사람은 자신의 것만 봅니다.",
+  "p.resource_roles.none": "아직 주 역할이 있는 사람이 없습니다.",
+  "p.resource_roles.person": "사람(person: 또는 worker: 참조)",
+  "p.resource_roles.role": "역할(최대 60자, 비우면 해제)",
+  "p.resource_roles.set": "역할 설정",
+  "p.resource_roles.form": "사람의 주 역할 설정",
+  "p.resource_roles.person_bad": "사람은 person: 또는 worker: 참조여야 합니다.",
+  "p.resource_roles.role_too_long": "역할이 60자를 넘습니다.",
+  "p.resource_roles.forbidden":
+    "역할을 설정하려면 자원 관리자 역할이나 관리자가 필요합니다.",
+  "p.resource_roles.could_not_load": "역할을 불러올 수 없습니다.",
+  "p.resource_roles.could_not_set": "역할을 설정할 수 없습니다.",
+  "p.resource_roles.set_ok": "이제 {person}의 주 역할은 “{role}”입니다.",
+  "p.resource_roles.cleared_ok": "{person}에게 더 이상 주 역할이 없습니다.",
 };

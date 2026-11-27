@@ -16,6 +16,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (people's primary roles on `/resources`)
+
+- `/resources` lists people's primary roles and sets or clears one (a resource manager or an administrator), reading
+  the resource plan again, since a role decides whose declared capacity is a row's supply. 14 new strings in every
+  locale, machine-written in 14, none reviewed. Not verified: against a real service.
+
 ## 27 November (a plan's components)
 
 - A new `/plans/[pid]/components` ("Components") lists each component with its open, done and total tasks and the

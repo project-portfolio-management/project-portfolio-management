@@ -9234,4 +9234,21 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.components.removed": "Đã xóa “{name}”.",
   "p.components.saved": "Đã lưu “{name}”.",
   "p.components.added": "Đã thêm “{name}”.",
+  "p.resource_roles.heading": "Vai trò chính của mỗi người",
+  "p.resource_roles.says":
+    "Vai trò chính của một người quyết định dòng nào ở trên tính năng lực đã khai báo của họ là nguồn cung. Đặt vai trò cần vai trò quản lý nguồn lực hoặc quản trị viên; người khác chỉ thấy của chính mình.",
+  "p.resource_roles.none": "Chưa ai có vai trò chính.",
+  "p.resource_roles.person": "Người (tham chiếu person: hoặc worker:)",
+  "p.resource_roles.role": "Vai trò (tối đa 60 ký tự; để trống sẽ xóa)",
+  "p.resource_roles.set": "Đặt vai trò",
+  "p.resource_roles.form": "Đặt vai trò chính của một người",
+  "p.resource_roles.person_bad":
+    "Người phải là tham chiếu person: hoặc worker:.",
+  "p.resource_roles.role_too_long": "Vai trò dài hơn 60 ký tự.",
+  "p.resource_roles.forbidden":
+    "Đặt vai trò cần vai trò quản lý nguồn lực hoặc quản trị viên.",
+  "p.resource_roles.could_not_load": "Không thể tải các vai trò.",
+  "p.resource_roles.could_not_set": "Không thể đặt vai trò.",
+  "p.resource_roles.set_ok": "{person} giờ có vai trò chính “{role}”.",
+  "p.resource_roles.cleared_ok": "{person} không còn vai trò chính.",
 };

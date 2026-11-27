@@ -9156,4 +9156,21 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.components.removed": "「{name}」を削除しました。",
   "p.components.saved": "「{name}」を保存しました。",
   "p.components.added": "「{name}」を追加しました。",
+  "p.resource_roles.heading": "メンバーの主な役割",
+  "p.resource_roles.says":
+    "人の主な役割によって、申告済みキャパシティが上のどの行の供給として数えられるかが決まります。設定にはリソースマネージャーの役割か管理者が必要です。それ以外の人は自分の役割だけが見えます。",
+  "p.resource_roles.none": "まだ主な役割を持つ人はいません。",
+  "p.resource_roles.person": "人（person: または worker: の参照）",
+  "p.resource_roles.role": "役割（60 文字まで。空欄で解除）",
+  "p.resource_roles.set": "役割を設定",
+  "p.resource_roles.form": "人の主な役割を設定",
+  "p.resource_roles.person_bad":
+    "人は person: または worker: の参照にしてください。",
+  "p.resource_roles.role_too_long": "役割が 60 文字を超えています。",
+  "p.resource_roles.forbidden":
+    "役割の設定にはリソースマネージャーの役割か管理者が必要です。",
+  "p.resource_roles.could_not_load": "役割を読み込めませんでした。",
+  "p.resource_roles.could_not_set": "役割を設定できませんでした。",
+  "p.resource_roles.set_ok": "{person} の主な役割は「{role}」になりました。",
+  "p.resource_roles.cleared_ok": "{person} の主な役割はなくなりました。",
 };

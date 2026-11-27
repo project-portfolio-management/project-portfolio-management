@@ -360,6 +360,7 @@ import type {
   BulkJobStarted,
   BulkJobStatus,
   ReviewQueueItem,
+  ResourceRole,
   Component,
   ComponentBody,
   ComponentSummary,
@@ -2291,6 +2292,15 @@ export class PpmClient {
     return this.http.delete(
       `/api/plans/${encodeURIComponent(planPid)}/components/${encodeURIComponent(pid)}`,
     );
+  }
+
+  /** Everyone's primary role (a resource manager or an administrator), else just the caller's own. */
+  resourceRoles(): Promise<ResourceRole[]> {
+    return this.http.get("/api/resource-roles");
+  }
+  /** Set a person's primary role, or clear it with `null`; 403 without the right. */
+  setResourceRole(body: ResourceRole): Promise<ResourceRole> {
+    return this.http.put("/api/resource-roles", { body });
   }
 
   // ---- tracker import (T-28n) ----

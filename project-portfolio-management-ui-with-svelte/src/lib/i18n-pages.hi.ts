@@ -8859,4 +8859,20 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.components.removed": "“{name}” हटाया गया।",
   "p.components.saved": "“{name}” सहेजा गया।",
   "p.components.added": "“{name}” जोड़ा गया।",
+  "p.resource_roles.heading": "लोगों की मुख्य भूमिकाएँ",
+  "p.resource_roles.says":
+    "किसी व्यक्ति की मुख्य भूमिका तय करती है कि ऊपर कौन-सी पंक्ति उसकी घोषित क्षमता को आपूर्ति के रूप में गिनती है। इसे तय करने के लिए संसाधन प्रबंधक भूमिका या व्यवस्थापक चाहिए; बाकी लोग केवल अपनी देखते हैं।",
+  "p.resource_roles.none": "अभी किसी की मुख्य भूमिका नहीं है।",
+  "p.resource_roles.person": "व्यक्ति (person: या worker: संदर्भ)",
+  "p.resource_roles.role": "भूमिका (60 वर्णों तक; खाली छोड़ने से हट जाती है)",
+  "p.resource_roles.set": "भूमिका तय करें",
+  "p.resource_roles.form": "किसी व्यक्ति की मुख्य भूमिका तय करें",
+  "p.resource_roles.person_bad": "व्यक्ति person: या worker: संदर्भ होना चाहिए।",
+  "p.resource_roles.role_too_long": "भूमिका 60 वर्णों से अधिक है।",
+  "p.resource_roles.forbidden":
+    "भूमिका तय करने के लिए संसाधन प्रबंधक भूमिका या व्यवस्थापक चाहिए।",
+  "p.resource_roles.could_not_load": "भूमिकाएँ लोड नहीं हो सकीं।",
+  "p.resource_roles.could_not_set": "भूमिका तय नहीं हो सकी।",
+  "p.resource_roles.set_ok": "{person} की मुख्य भूमिका अब “{role}” है।",
+  "p.resource_roles.cleared_ok": "{person} की अब कोई मुख्य भूमिका नहीं है।",
 };

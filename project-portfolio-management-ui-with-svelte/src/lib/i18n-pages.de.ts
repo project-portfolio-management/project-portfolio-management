@@ -9237,4 +9237,77 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.util.unavailable_small_group": "zu wenige Personen für eine Anzeige",
   "p.util.window_one": "Über den letzten {n} Tag.",
   "p.util.window_other": "Über die letzten {n} Tage.",
+  "p.jobs.title": "Importe und Exporte",
+  "p.jobs.title_ppm": "Importe und Exporte — PPM",
+  "p.jobs.intro":
+    "Massenimporte und -exporte von Plänen, die neuesten zuerst. Ein Auftrag läuft im Hintergrund: Lesen Sie die Liste erneut, um den Fortschritt zu sehen.",
+  "p.jobs.loading": "Wird geladen…",
+  "p.jobs.could_not_load": "Die Aufträge konnten nicht geladen werden.",
+  "p.jobs.none": "Es gibt keinen Auftrag, den Sie sehen können.",
+  "p.jobs.refresh": "Erneut lesen",
+  "p.jobs.filter_kind": "Art",
+  "p.jobs.filter_status": "Zustand",
+  "p.jobs.any": "beliebig",
+  "p.jobs.kind_import": "Import",
+  "p.jobs.kind_export": "Export",
+  "p.jobs.fmt_jsonl": "JSON-Zeilen",
+  "p.jobs.status_queued": "in der Warteschlange",
+  "p.jobs.status_running": "läuft",
+  "p.jobs.status_completed": "abgeschlossen",
+  "p.jobs.status_completed_with_errors": "mit Fehlern abgeschlossen",
+  "p.jobs.status_failed": "fehlgeschlagen",
+  "p.jobs.status_cancelled": "abgebrochen",
+  "p.jobs.status_unknown": "unbekannter Zustand",
+  "p.jobs.started": "Begonnen {at}",
+  "p.jobs.not_started": "Noch nicht begonnen",
+  "p.jobs.finished": "beendet {at}",
+  "p.jobs.progress": "{percent} erledigt",
+  "p.jobs.rows":
+    "{total} Zeilen: {created} angelegt, {updated} aktualisiert, {unchanged} unverändert, {review} zur Prüfung zurückgehalten, {failed} fehlgeschlagen.",
+  "p.jobs.not_reconciled": "Diese Zahlen ergeben nicht die Gesamtzahl.",
+  "p.jobs.held":
+    "Zur Prüfung zurückgehaltene Zeilen warten in der Prüfwarteschlange, für die es noch keine Ansicht gibt.",
+  "p.jobs.stopping":
+    "Zum Anhalten aufgefordert: Er beendet die aktuelle Zeile und behält, was verarbeitet wurde.",
+  "p.jobs.errors": "Fehlerbericht (CSV)",
+  "p.jobs.download": "Export herunterladen",
+  "p.jobs.cancel": "Abbrechen",
+  "p.jobs.cancel_named": "Den {kind}-Auftrag abbrechen",
+  "p.jobs.cancel_ask":
+    "Diesen Auftrag abbrechen? Ein wartender Auftrag beginnt nicht; ein laufender beendet die aktuelle Zeile und behält, was verarbeitet wurde.",
+  "p.jobs.nothing_to_cancel":
+    "Nichts abzubrechen: Der Auftrag war bereits beendet oder bereits zum Anhalten aufgefordert.",
+  "p.jobs.could_not_cancel": "Der Auftrag konnte nicht abgebrochen werden.",
+  "p.jobs.gone": "Dieser Auftrag ist nicht mehr vorhanden.",
+  "p.jobs.export_h": "Pläne exportieren",
+  "p.jobs.export_rules":
+    "Nur Pläne, die Sie lesen können, höchstens 100.000. Personenbezüge werden maskiert, es sei denn, Sie fordern einen vollständigen Export an, der das destruktive Recht erfordert.",
+  "p.jobs.format": "Dateiformat",
+  "p.jobs.full": "Vollständiger Export mit Personenbezügen",
+  "p.jobs.kind_filter": "Planart (optional)",
+  "p.jobs.name_filter": "Name enthält (optional)",
+  "p.jobs.start_export": "Export starten",
+  "p.jobs.export_forbidden":
+    "Ein vollständiger Export erfordert das destruktive Recht.",
+  "p.jobs.export_refused":
+    "Der Dienst hat den Export abgelehnt: Grenzen Sie den Filter ein (höchstens 100.000 Pläne).",
+  "p.jobs.could_not_export": "Der Export konnte nicht gestartet werden.",
+  "p.jobs.import_h": "Pläne importieren",
+  "p.jobs.import_rules":
+    "Ein Plan pro Zeile (JSON-Zeilen) oder pro Reihe (CSV), höchstens 100.000 Zeilen; die Installation begrenzt die Dateigröße. Dieselbe Datei erneut zu senden startet nichts Neues.",
+  "p.jobs.file": "Datei",
+  "p.jobs.keyless":
+    "Eine Zeile ohne Kennung, die wie ein vorhandener Plan aussieht,",
+  "p.jobs.keyless_review": "wird zur Prüfung zurückgehalten",
+  "p.jobs.keyless_create": "wird trotzdem angelegt",
+  "p.jobs.start_import": "Import starten",
+  "p.jobs.no_file": "Wählen Sie zuerst eine Datei.",
+  "p.jobs.too_big":
+    "Die Datei überschreitet die Größengrenze der Installation.",
+  "p.jobs.import_refused":
+    "Der Dienst hat die Datei abgelehnt: Sie ist leer, zu groß oder nicht im gewählten Format.",
+  "p.jobs.could_not_import": "Der Import konnte nicht gestartet werden.",
+  "p.jobs.queued_ok": "Gestartet: Der Auftrag steht oben in der Liste.",
+  "p.jobs.replayed":
+    "Diese Datei wurde bereits gesendet; ihr Auftrag steht in der Liste.",
 };

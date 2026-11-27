@@ -70,6 +70,12 @@ export function buildNavItems(): NavEntry[] {
       },
     },
     {
+      href: "/jobs",
+      get label() {
+        return t("p.jobs.title");
+      },
+    },
+    {
       href: "/exceptions",
       get label() {
         return t("p.exceptions.title");

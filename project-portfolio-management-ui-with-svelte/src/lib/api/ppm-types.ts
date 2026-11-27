@@ -5575,3 +5575,78 @@ export interface AdoptionBody {
   window_days: number;
   definition: string;
 }
+
+// ---- bulk import and export jobs (T-8; NC-1 slice 12 part k) ----
+
+/** A bulk job's kind. */
+export type BulkJobKind = "import" | "export";
+/** A bulk job's state, as the service stores it. */
+export type BulkJobStatus =
+  | "queued"
+  | "running"
+  | "completed"
+  | "completed_with_errors"
+  | "failed"
+  | "cancelled";
+
+/** One bulk job, as `GET /api/plans/bulk-jobs` and the status routes answer it. */
+export interface BulkJob {
+  job_id: string;
+  kind: BulkJobKind;
+  status: BulkJobStatus;
+  format: "jsonl" | "csv";
+  counts: {
+    total: number;
+    created: number;
+    updated: number;
+    unchanged: number;
+    queued_for_review: number;
+    failed: number;
+  };
+  /** Whether the counts add up to the total. */
+  reconciles: boolean;
+  rows_omitted: number;
+  /** Set when some rows failed and their report is kept. */
+  errors_url: string | null;
+  /** Set when some rows are held for review. */
+  review_url: string | null;
+  /** Set for a finished export whose file is kept. */
+  download_url: string | null;
+  /** When the kept file goes; only the status routes say (the list does not). */
+  expires_at: string | null;
+  failure_reason: string | null;
+  progress: number;
+  cancel_requested: boolean;
+  cancelled: boolean;
+  /** English; not shown. */
+  note: string | null;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+/** `POST /api/plans/export` body. */
+export interface StartExportBody {
+  format?: "jsonl" | "csv";
+  masking_profile?: "masked" | "full";
+  include_soft_deleted?: boolean;
+  kind?: string;
+  name_like?: string;
+}
+
+/** What starting a job answers (`202`, or `200` with `replayed` for an import sent again with the same key). */
+export interface BulkJobStarted {
+  job_id: string;
+  status: BulkJobStatus;
+  replayed?: boolean;
+}
+
+/** What `POST /api/plans/bulk-jobs/{id}/cancel` answers. */
+export interface BulkJobCancel {
+  job_id: string;
+  status: BulkJobStatus;
+  cancel_requested: boolean;
+  /** Whether this request changed anything (false: already finished, or already asked to stop). */
+  changed: boolean;
+  /** English; not shown. */
+  note: string;
+}

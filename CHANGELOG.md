@@ -16,6 +16,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (NC-1 slice 12 part k in part: bulk imports and exports)
+
+- A new `/jobs` page ("Imports and exports") lists the bulk import and export jobs with each state in words and a
+  symbol, every count, whether they add up, the error report and an export's file as links; cancels a queued or running
+  job after a question; and starts an export or an import (a file sent as it is). 59 new strings in every locale,
+  machine-written in 14 and none reviewed; the Welsh ones are in the review CSV.
+- Not built: the review queue for held rows, the duplicate check, a single plan's export, the templates' revise and sync,
+  the MSPDI batch import. Not verified: against a real service (the Playwright test stubs it).
+
 ## 26 November (LC-1 in part: what hosted CI costs and why it fails)
 
 - `spec/local-ci-cd.md` gains an evidence section from all 676 runs of `ci.yml` since 2026-10-10: 137 failed, and 73 of

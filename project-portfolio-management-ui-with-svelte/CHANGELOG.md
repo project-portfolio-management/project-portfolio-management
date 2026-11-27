@@ -9,6 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/jobs`, bulk imports and exports (NC-1 slice 12 part k, in part; 2026-11-27)
+
+- `/jobs` lists the bulk jobs (state in words and a symbol, every count, whether they add up, the error report and an
+  export's file as links), cancels a queued or running job after a question, and starts an export or an import.
+  `src/lib/jobs-view.ts`; five client methods in `ppm.ts`; 59 keys in every catalogue, machine-written, none reviewed.
+- Not built: the review queue, the duplicate check, a single plan's export, template revise and sync, the MSPDI batch
+  import. Not verified: against a real service.
+
 ### Added — Bengali, Indonesian and Vietnamese (WW-1.1, 2026-11-22)
 
 - Three locales, `bn-001`, `id-001` and `vi-001` (now 17), each with a page catalogue (`i18n-pages.<bn|id|vi>.ts`, loaded only

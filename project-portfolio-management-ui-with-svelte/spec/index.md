@@ -3405,3 +3405,28 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   text"`, and each test checks it is not shown. The translations are machine-written and unreviewed. **Not verified:**
   against a real service; a live stream held open for long through the proxy, or across replicas (the service's hub is
   per process).
+
+## Bulk imports and exports (NC-1 slice 12 part k, in part; T-8)
+
+- **`/jobs`** (in the navigation as "Imports and exports") lists the caller's bulk jobs (an administrator's: everyone's,
+  as the service answers), a job not started first, then newest first. Each shows its kind and format, its state as a
+  word and a symbol (… queued, ▶ running with how far it has got, ✓ completed, ◐ completed with errors, ✗ failed, ■
+  cancelled; an unknown state is said as unknown), when it started and finished in the reader's time, every count in one
+  sentence in the reader's numbers, a warning when the counts do not add up to the total, and that rows held for review
+  wait in a queue with no screen yet. The error report (`?format=csv`) and a finished export's file are links through
+  the UI's proxy. The list filters by kind and by state; "Read again" reads it again.
+- A queued job, or a running one not yet asked to stop, is cancelled after a question that says what cancelling does
+  (Cancel sends nothing); an answer that nothing changed is said in the page's words.
+- **Export** says first that only readable plans are exported, at most 100,000, and that a full export with people
+  references needs the destructive right; it sends only what differs from the service's defaults (`format`,
+  `masking_profile: full`, a trimmed `kind` and `name_like`). **Import** takes one file, guesses its format from the
+  name (`.csv`, else JSON lines) and lets the reader change it, and asks what a row with no identifier that looks like an
+  existing plan does (held for review, the default, or created anyway); the file goes as the raw body, so sending the
+  same file again is answered with the job it already started, which is said.
+- Refusals are the catalogue's sentences: a full export without the right (403), an export or a file the service
+  refuses (422), a file over the deployment's limit (413), a job that is gone (404). The service's `note` and
+  `failure_reason` are English and never shown.
+- Rules in `src/lib/jobs-view.ts` (`tests/unit/jobs-view.test.ts`); `tests/e2e/jobs.spec.ts` (stubbed service, axe,
+  Welsh). **Not built:** the review queue (`GET /api/plans/review-queue`, confirm and reject), `POST /api/plans/match`,
+  a single plan's export (`GET /api/plans/{pid}/export`), templates' revise, plans and sync, and the MSPDI batch import,
+  which are the rest of part k; a kept file's expiry, which the list does not carry.

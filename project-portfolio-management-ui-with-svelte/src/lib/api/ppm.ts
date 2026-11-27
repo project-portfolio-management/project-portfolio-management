@@ -354,6 +354,12 @@ import type {
   RateLookup,
   RateLookupQuery,
   ResolvePlaceholderBody,
+  BulkJob,
+  BulkJobCancel,
+  BulkJobKind,
+  BulkJobStarted,
+  BulkJobStatus,
+  StartExportBody,
   SkillGap,
   SprintCeremonies,
   SprintCommitment,
@@ -2134,6 +2140,49 @@ export class PpmClient {
   }
   runReport(pid: string): Promise<ReportRun> {
     return this.http.get(`/api/reports/${pid}/run`);
+  }
+
+  // ---- bulk import and export jobs (T-8; NC-1 slice 12 part k) ----
+  /** The caller's bulk jobs (an administrator's: everyone's), newest first, at most 200; by kind and status. */
+  bulkJobs(
+    filter: { kind?: BulkJobKind; status?: BulkJobStatus } = {},
+  ): Promise<BulkJob[]> {
+    const q = new URLSearchParams();
+    if (filter.kind) q.set("kind", filter.kind);
+    if (filter.status) q.set("status", filter.status);
+    const s = q.toString();
+    return this.http.get(`/api/plans/bulk-jobs${s ? `?${s}` : ""}`);
+  }
+  /** One job read again, with its kept file's expiry. */
+  bulkJob(kind: BulkJobKind, id: string): Promise<BulkJob> {
+    return this.http.get(
+      `/api/plans/${kind === "import" ? "import" : "export"}/${encodeURIComponent(id)}`,
+    );
+  }
+  /** Stop a queued job, or ask a running one to stop after its current row. */
+  cancelBulkJob(id: string): Promise<BulkJobCancel> {
+    return this.http.post(
+      `/api/plans/bulk-jobs/${encodeURIComponent(id)}/cancel`,
+      { body: {} },
+    );
+  }
+  /** Queue an export of the plans the caller may read. */
+  startExport(body: StartExportBody): Promise<BulkJobStarted> {
+    return this.http.post("/api/plans/export", { body });
+  }
+  /**
+   * Queue an import of a file: JSON lines or CSV, sent as the raw body. The client's Idempotency-Key for the same
+   * file means a retry is answered with the job it already started (`replayed`).
+   */
+  startImport(
+    file: Blob | string,
+    format: "jsonl" | "csv",
+    onKeyless: "review" | "create",
+  ): Promise<BulkJobStarted> {
+    return this.http.post(
+      `/api/plans/import?format=${format}&on_keyless=${onKeyless}`,
+      { rawBody: file, headers: { "content-type": "text/plain" } },
+    );
   }
 
   // ---- tracker import (T-28n) ----

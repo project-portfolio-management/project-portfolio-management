@@ -9671,6 +9671,19 @@ export const PAGES_EN = {
     "The first detail line is at the top, and each line is at most one level deeper than the one above, at most two levels in.",
   "p.product_roadmap.details_many": "At most 50 detail lines.",
   "p.product_roadmap.orgs_many": "At most 50 organizations.",
+  "p.product_roadmap.gather_h": "Gathering edits",
+  "p.product_roadmap.gather_intro":
+    "With gathering on, a change to the roadmap's own fields, a change to an item and a new item are kept in this tab instead of saved, then previewed and published together as one change set. Moves, removals, translations and reviews are still saved at once. Nothing gathered is kept in the browser's storage: leaving or reloading asks first.",
+  "p.product_roadmap.gather_on": "Gather my edits into one change set",
+  "p.product_roadmap.pending_n": "Pending: {n}",
+  "p.product_roadmap.pending_added": "Gathered; {n} pending.",
+  "p.product_roadmap.pending_preview": "Preview the pending changes",
+  "p.product_roadmap.pending_discard": "Discard the pending changes",
+  "p.product_roadmap.pending_discard_ask":
+    "Discard all {n} pending changes? Nothing has been sent for them.",
+  "p.product_roadmap.pending_discarded": "Discarded the pending changes.",
+  "p.product_roadmap.pending_slug":
+    "The address is not part of a change set: save it with gathering off.",
 } as const;
 
 /** A key in the page and component catalogue. */

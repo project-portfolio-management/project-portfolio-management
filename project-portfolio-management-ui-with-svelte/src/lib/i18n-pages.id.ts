@@ -9928,4 +9928,18 @@ export const PAGES_ID: Record<PageKey, string> = {
     "Baris detail pertama ada di atas, dan setiap baris paling banyak satu tingkat lebih dalam dari baris di atasnya, paling dalam dua tingkat.",
   "p.product_roadmap.details_many": "Paling banyak 50 baris detail.",
   "p.product_roadmap.orgs_many": "Paling banyak 50 organisasi.",
+  "p.product_roadmap.gather_h": "Mengumpulkan suntingan",
+  "p.product_roadmap.gather_intro":
+    "Dengan pengumpulan aktif, perubahan pada bidang peta jalan sendiri, perubahan pada butir, dan butir baru disimpan di tab ini alih-alih dikirim, lalu dipratinjau dan diterbitkan bersama sebagai satu set perubahan. Pemindahan, penghapusan, terjemahan, dan tinjauan tetap langsung disimpan. Tidak ada yang dikumpulkan disimpan di penyimpanan peramban: keluar atau memuat ulang akan bertanya dulu.",
+  "p.product_roadmap.gather_on":
+    "Kumpulkan suntingan saya menjadi satu set perubahan",
+  "p.product_roadmap.pending_n": "Tertunda: {n}",
+  "p.product_roadmap.pending_added": "Dikumpulkan; {n} tertunda.",
+  "p.product_roadmap.pending_preview": "Pratinjau perubahan tertunda",
+  "p.product_roadmap.pending_discard": "Buang perubahan tertunda",
+  "p.product_roadmap.pending_discard_ask":
+    "Buang semua {n} perubahan tertunda? Belum ada yang dikirim untuknya.",
+  "p.product_roadmap.pending_discarded": "Perubahan tertunda dibuang.",
+  "p.product_roadmap.pending_slug":
+    "Alamat bukan bagian dari set perubahan: simpan dengan pengumpulan nonaktif.",
 };

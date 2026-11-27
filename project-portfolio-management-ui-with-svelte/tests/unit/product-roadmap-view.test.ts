@@ -21,6 +21,14 @@ import {
   type RoadmapItem,
   detailsText,
   parseDetails,
+  emptyPending,
+  gatherItem,
+  gatherNew,
+  gatherRoadmap,
+  pendingCount,
+  pendingLines,
+  pendingSet,
+  withPending,
 } from "../../src/lib/product-roadmap-view";
 
 const r = {
@@ -382,5 +390,92 @@ describe("an item's details and organizations (RE-1, RE-7)", () => {
         base,
       ),
     ).toEqual({ problems: ["p.product_roadmap.orgs_many"] });
+  });
+});
+
+describe("a pending change set (RE-2, RE-13)", () => {
+  const read = {
+    title: "Payments",
+    slug: "payments",
+    vision: null,
+    service_description: null,
+    category_pid: null,
+    published: false,
+    items: [
+      {
+        pid: "a",
+        public_id: "RA",
+        title: "Tap to pay",
+        description: null,
+        expected_outcome: null,
+        phase: null,
+        tags: ["cards"],
+        placement: "now" as const,
+        position: 0,
+        organization_pids: ["o1", "o2"],
+      },
+    ],
+  };
+
+  it("gathers fields against what was read, keeps the first base, and drops a field put back", () => {
+    let p = emptyPending();
+    const r = gatherRoadmap(p, read, { title: "Pay", vision: "Tap" });
+    if (!("pending" in r)) throw new Error("refused");
+    p = r.pending;
+    const again = gatherRoadmap(
+      p,
+      { ...read, title: "Pay" },
+      { title: "Pay now" },
+    );
+    if (!("pending" in again)) throw new Error("refused");
+    p = again.pending;
+    expect(p.roadmap).toEqual({
+      title: { base: "Payments", value: "Pay now" },
+      vision: { base: null, value: "Tap" },
+    });
+    const back = gatherRoadmap(p, read, { vision: "" });
+    if (!("pending" in back)) throw new Error("refused");
+    expect(Object.keys(back.pending.roadmap)).toEqual(["title"]);
+    expect(gatherRoadmap(p, read, { slug: "pay" })).toEqual({
+      problems: ["p.product_roadmap.pending_slug"],
+    });
+  });
+
+  it("gathers item fields and new items, counts them, and builds the change set and its lines", () => {
+    let p = gatherItem(emptyPending(), read.items[0]!, {
+      phase: "Beta",
+      organization_pids: ["o2", "o1"],
+    });
+    expect(p.items).toEqual({ a: { phase: { base: null, value: "Beta" } } });
+    p = gatherNew(p, { title: "Refunds", placement: "next" });
+    expect(pendingCount(p)).toBe(2);
+    expect(pendingSet(p, { base: false, value: true })).toEqual({
+      roadmap: { published: { base: false, value: true } },
+      items: [{ pid: "a", fields: { phase: { base: null, value: "Beta" } } }],
+      new: [{ title: "Refunds", placement: "next" }],
+    });
+    expect(pendingLines(p)).toEqual([
+      { subject: "item", item: "a", field: "phase", from: null, to: "Beta" },
+      { subject: "new_item", title: "Refunds" },
+    ]);
+    expect(gatherItem(p, read.items[0]!, { phase: "" }).items).toEqual({});
+  });
+
+  it("shows the roadmap as it will read, an emptied text as none", () => {
+    let p = gatherItem(emptyPending(), read.items[0]!, { phase: "Beta" });
+    const r = gatherRoadmap(p, read, { title: "Pay", vision: "" });
+    if (!("pending" in r)) throw new Error("refused");
+    p = {
+      ...r.pending,
+      roadmap: {
+        ...r.pending.roadmap,
+        service_description: { base: "x", value: "" },
+      },
+    };
+    const shown = withPending(read, p);
+    expect(shown.title).toBe("Pay");
+    expect(shown.service_description).toBeNull();
+    expect(shown.items[0]!.phase).toBe("Beta");
+    expect(read.items[0]!.phase).toBeNull();
   });
 });

@@ -9728,4 +9728,17 @@ export const PAGES_JA: Record<PageKey, string> = {
     "詳細の最初の行は最上位で、各行は上の行より最大 1 階層深く、2 階層までです。",
   "p.product_roadmap.details_many": "詳細は 50 行までです。",
   "p.product_roadmap.orgs_many": "組織は 50 までです。",
+  "p.product_roadmap.gather_h": "編集をまとめる",
+  "p.product_roadmap.gather_intro":
+    "まとめる設定がオンのとき、ロードマップ自体のフィールドの変更、項目の変更、新しい項目は保存されずにこのタブに保持され、まとめて 1 つの変更セットとしてプレビューし公開します。移動、削除、翻訳、レビューはこれまでどおりすぐに保存されます。まとめた内容はブラウザーのストレージに保存されません。離れるときや再読み込みのときは先に確認します。",
+  "p.product_roadmap.gather_on": "編集を 1 つの変更セットにまとめる",
+  "p.product_roadmap.pending_n": "保留中: {n}",
+  "p.product_roadmap.pending_added": "まとめました。保留中: {n}。",
+  "p.product_roadmap.pending_preview": "保留中の変更をプレビュー",
+  "p.product_roadmap.pending_discard": "保留中の変更を破棄",
+  "p.product_roadmap.pending_discard_ask":
+    "保留中の {n} 件の変更をすべて破棄しますか？まだ何も送信していません。",
+  "p.product_roadmap.pending_discarded": "保留中の変更を破棄しました。",
+  "p.product_roadmap.pending_slug":
+    "アドレスは変更セットに含められません。まとめる設定をオフにして保存してください。",
 };

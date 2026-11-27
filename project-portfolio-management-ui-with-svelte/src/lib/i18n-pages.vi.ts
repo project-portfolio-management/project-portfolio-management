@@ -9808,4 +9808,18 @@ export const PAGES_VI: Record<PageKey, string> = {
     "Dòng chi tiết đầu tiên ở cấp trên cùng, mỗi dòng sâu hơn dòng trên tối đa một cấp, tối đa hai cấp.",
   "p.product_roadmap.details_many": "Tối đa 50 dòng chi tiết.",
   "p.product_roadmap.orgs_many": "Tối đa 50 tổ chức.",
+  "p.product_roadmap.gather_h": "Gom các chỉnh sửa",
+  "p.product_roadmap.gather_intro":
+    "Khi bật gom, thay đổi ở các trường của chính lộ trình, thay đổi một mục và mục mới được giữ trong thẻ này thay vì lưu, rồi được xem trước và xuất bản cùng nhau thành một bộ thay đổi. Di chuyển, xóa, bản dịch và đánh giá vẫn được lưu ngay. Không có gì đã gom được lưu vào bộ nhớ của trình duyệt: rời đi hoặc tải lại sẽ hỏi trước.",
+  "p.product_roadmap.gather_on":
+    "Gom các chỉnh sửa của tôi thành một bộ thay đổi",
+  "p.product_roadmap.pending_n": "Đang chờ: {n}",
+  "p.product_roadmap.pending_added": "Đã gom; {n} đang chờ.",
+  "p.product_roadmap.pending_preview": "Xem trước các thay đổi đang chờ",
+  "p.product_roadmap.pending_discard": "Bỏ các thay đổi đang chờ",
+  "p.product_roadmap.pending_discard_ask":
+    "Bỏ cả {n} thay đổi đang chờ? Chưa gửi gì cho chúng.",
+  "p.product_roadmap.pending_discarded": "Đã bỏ các thay đổi đang chờ.",
+  "p.product_roadmap.pending_slug":
+    "Địa chỉ không thuộc bộ thay đổi: hãy lưu nó khi tắt gom.",
 };

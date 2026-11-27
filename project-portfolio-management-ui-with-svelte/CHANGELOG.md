@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a roadmap's pending change set (RE-2, RE-13, 2026-11-27)
+
+- Gathering on `/plans/[pid]/roadmap`: `gatherRoadmap`, `gatherItem`, `gatherNew`, `pendingSet`, `pendingLines` and
+  `withPending` in `src/lib/product-roadmap-view.ts`; an ended session keeps the edits; leaving asks first; 10
+  strings in every locale, machine-written. Not built: moves and removals in a change set; not verified against a
+  real service or a real expired token.
+
 ### Added — an item's details and organizations on `/plans/[pid]/roadmap` (RE-1, RE-7, 2026-11-27)
 
 - `parseDetails` and `detailsText` in `src/lib/product-roadmap-view.ts`; the item form's details and organizations;

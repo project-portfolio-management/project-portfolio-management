@@ -473,3 +473,135 @@ export function translationSummary(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([lang, review]) => ({ lang, review }));
 }
+
+// ---- gathering several edits into one pending change set (RE-2, RE-13) ----
+
+/** Edits gathered in this tab, not yet sent: the roadmap's own fields and items' by field, and new items. */
+export interface Pending {
+  roadmap: Record<string, FieldChange>;
+  items: Record<string, Record<string, FieldChange>>;
+  new: ItemBody[];
+}
+
+export const emptyPending = (): Pending => ({
+  roadmap: {},
+  items: {},
+  new: [],
+});
+
+/** A value as the service compares it: an empty text is none; organizations in any order. */
+function comparable(field: string, v: unknown): string {
+  if (v === "" || v === undefined) return "null";
+  if (field === "organization_pids" && Array.isArray(v))
+    return JSON.stringify([...v].map(String).sort());
+  return JSON.stringify(v);
+}
+
+/** Fold a change into gathered fields: the base is what was read (kept from the first edit); a field back at its base drops out. */
+function fold(
+  fields: Record<string, FieldChange>,
+  read: Record<string, unknown>,
+  body: Record<string, unknown>,
+): Record<string, FieldChange> {
+  const out = { ...fields };
+  for (const [f, value] of Object.entries(body)) {
+    const base = f in out ? out[f]!.base : (read[f] ?? null);
+    if (comparable(f, base) === comparable(f, value)) delete out[f];
+    else out[f] = { base, value };
+  }
+  return out;
+}
+
+/** Gather a change to the roadmap's own fields; the address (slug) is not part of a change set, so it is refused. */
+export function gatherRoadmap(
+  p: Pending,
+  read: RoadmapFields,
+  body: RoadmapBody,
+): { pending: Pending } | { problems: string[] } {
+  if ("slug" in body) return { problems: ["p.product_roadmap.pending_slug"] };
+  return {
+    pending: { ...p, roadmap: fold(p.roadmap, fieldsOf(read), { ...body }) },
+  };
+}
+
+/** Gather a change to an item, against the item as read. */
+export function gatherItem(
+  p: Pending,
+  read: RoadmapItem,
+  body: ItemBody,
+): Pending {
+  const items = { ...p.items };
+  const fields = fold(items[read.pid] ?? {}, fieldsOf(read), { ...body });
+  if (Object.keys(fields).length === 0) delete items[read.pid];
+  else items[read.pid] = fields;
+  return { ...p, items };
+}
+
+/** Gather a new item. */
+export const gatherNew = (p: Pending, body: ItemBody): Pending => ({
+  ...p,
+  new: [...p.new, body],
+});
+
+/** How many changes are gathered: each field, and each new item. */
+export const pendingCount = (p: Pending): number =>
+  Object.keys(p.roadmap).length +
+  Object.values(p.items).reduce((n, f) => n + Object.keys(f).length, 0) +
+  p.new.length;
+
+const shownValue = (v: unknown) => (v === "" ? null : v);
+
+/** The roadmap as it will read once the gathered edits are published (new items aside). */
+export function withPending<T extends { items: RoadmapItem[] }>(
+  r: T,
+  p: Pending,
+): T {
+  const over = (fields: Record<string, FieldChange> | undefined) =>
+    Object.fromEntries(
+      Object.entries(fields ?? {}).map(([f, c]) => [f, shownValue(c.value)]),
+    );
+  return Object.assign({}, r, over(p.roadmap), {
+    items: r.items.map((i) =>
+      p.items[i.pid] ? Object.assign({}, i, over(p.items[i.pid])) : i,
+    ),
+  });
+}
+
+/** The change set the gathered edits make, with the published flag's change when one is asked. */
+export function pendingSet(p: Pending, published?: FieldChange): ChangeSet {
+  const set: ChangeSet = {};
+  const roadmap = { ...p.roadmap, ...(published ? { published } : {}) };
+  if (Object.keys(roadmap).length > 0) set.roadmap = roadmap;
+  const items = Object.entries(p.items).map(([pid, fields]) => ({
+    pid,
+    fields,
+  }));
+  if (items.length > 0) set.items = items;
+  if (p.new.length > 0) set.new = p.new;
+  return set;
+}
+
+/** The gathered edits as change lines, in the order the preview gives them. */
+export function pendingLines(p: Pending): ChangeLine[] {
+  return [
+    ...Object.entries(p.roadmap).map(([field, c]): ChangeLine => ({
+      subject: "roadmap",
+      field,
+      from: c.base,
+      to: c.value,
+    })),
+    ...Object.entries(p.items).flatMap(([item, fields]) =>
+      Object.entries(fields).map(([field, c]): ChangeLine => ({
+        subject: "item",
+        item,
+        field,
+        from: c.base,
+        to: c.value,
+      })),
+    ),
+    ...p.new.map((n): ChangeLine => ({
+      subject: "new_item",
+      title: n.title ?? null,
+    })),
+  ];
+}

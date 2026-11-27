@@ -9408,4 +9408,17 @@ export const PAGES_HI: Record<PageKey, string> = {
     "विवरण की पहली पंक्ति सबसे ऊपर होती है, और हर पंक्ति ऊपर वाली से अधिकतम एक स्तर गहरी, अधिकतम दो स्तर तक।",
   "p.product_roadmap.details_many": "अधिकतम 50 विवरण पंक्तियाँ।",
   "p.product_roadmap.orgs_many": "अधिकतम 50 संगठन।",
+  "p.product_roadmap.gather_h": "संपादन इकट्ठा करना",
+  "p.product_roadmap.gather_intro":
+    "इकट्ठा करना चालू होने पर, रोडमैप के अपने फ़ील्ड में बदलाव, किसी मद में बदलाव और नई मद सहेजे जाने के बजाय इसी टैब में रखे जाते हैं, फिर एक बदलाव-समूह के रूप में साथ में पूर्वावलोकन और प्रकाशित होते हैं। ले जाना, हटाना, अनुवाद और समीक्षा अब भी तुरंत सहेजे जाते हैं। इकट्ठा किया कुछ भी ब्राउज़र के भंडारण में नहीं रखा जाता: छोड़ने या दोबारा लोड करने पर पहले पूछा जाता है।",
+  "p.product_roadmap.gather_on": "मेरे संपादन एक बदलाव-समूह में इकट्ठा करें",
+  "p.product_roadmap.pending_n": "लंबित: {n}",
+  "p.product_roadmap.pending_added": "इकट्ठा किया; {n} लंबित।",
+  "p.product_roadmap.pending_preview": "लंबित बदलावों का पूर्वावलोकन करें",
+  "p.product_roadmap.pending_discard": "लंबित बदलाव छोड़ें",
+  "p.product_roadmap.pending_discard_ask":
+    "सभी {n} लंबित बदलाव छोड़ें? उनके लिए कुछ नहीं भेजा गया है।",
+  "p.product_roadmap.pending_discarded": "लंबित बदलाव छोड़ दिए गए।",
+  "p.product_roadmap.pending_slug":
+    "पता बदलाव-समूह का हिस्सा नहीं है: इकट्ठा करना बंद करके उसे सहेजें।",
 };

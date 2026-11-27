@@ -9360,4 +9360,17 @@ export const PAGES_AR: Record<PageKey, string> = {
     "يكون أول سطر تفاصيل في الأعلى، وكل سطر أعمق من السطر الذي فوقه بمستوى واحد على الأكثر، بمستويين على الأكثر.",
   "p.product_roadmap.details_many": "50 سطر تفاصيل على الأكثر.",
   "p.product_roadmap.orgs_many": "50 منظمة على الأكثر.",
+  "p.product_roadmap.gather_h": "جمع التعديلات",
+  "p.product_roadmap.gather_intro":
+    "عند تشغيل الجمع، يُحتفظ في هذا التبويب بتغيير حقول خارطة الطريق نفسها وتغيير بند وبند جديد بدل حفظها، ثم تُعاين وتُنشر معًا كمجموعة تغييرات واحدة. أما النقل والإزالة والترجمات والمراجعات فتُحفظ فورًا كما كانت. لا يُحفظ شيء مما جُمع في تخزين المتصفح: المغادرة أو إعادة التحميل تسأل أولًا.",
+  "p.product_roadmap.gather_on": "اجمع تعديلاتي في مجموعة تغييرات واحدة",
+  "p.product_roadmap.pending_n": "معلّق: {n}",
+  "p.product_roadmap.pending_added": "جُمع؛ المعلّق: {n}.",
+  "p.product_roadmap.pending_preview": "معاينة التغييرات المعلّقة",
+  "p.product_roadmap.pending_discard": "تجاهل التغييرات المعلّقة",
+  "p.product_roadmap.pending_discard_ask":
+    "تجاهل كل التغييرات المعلّقة ({n})؟ لم يُرسل شيء منها.",
+  "p.product_roadmap.pending_discarded": "تم تجاهل التغييرات المعلّقة.",
+  "p.product_roadmap.pending_slug":
+    "العنوان ليس جزءًا من مجموعة تغييرات: احفظه والجمع متوقف.",
 };

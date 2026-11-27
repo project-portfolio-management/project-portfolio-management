@@ -10129,4 +10129,19 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Die erste Detailzeile steht oben, jede Zeile höchstens eine Ebene tiefer als die darüber, höchstens zwei Ebenen.",
   "p.product_roadmap.details_many": "Höchstens 50 Detailzeilen.",
   "p.product_roadmap.orgs_many": "Höchstens 50 Organisationen.",
+  "p.product_roadmap.gather_h": "Änderungen sammeln",
+  "p.product_roadmap.gather_intro":
+    "Mit Sammeln wird eine Änderung an den eigenen Feldern der Roadmap, an einem Eintrag oder ein neuer Eintrag in diesem Tab behalten statt gespeichert und dann gemeinsam als ein Änderungssatz in der Vorschau gezeigt und veröffentlicht. Verschieben, Entfernen, Übersetzungen und Überprüfungen werden weiterhin sofort gespeichert. Nichts Gesammeltes landet im Speicher des Browsers: Verlassen oder Neuladen fragt zuerst.",
+  "p.product_roadmap.gather_on":
+    "Meine Änderungen in einem Änderungssatz sammeln",
+  "p.product_roadmap.pending_n": "Ausstehend: {n}",
+  "p.product_roadmap.pending_added": "Gesammelt; {n} ausstehend.",
+  "p.product_roadmap.pending_preview":
+    "Ausstehende Änderungen in der Vorschau zeigen",
+  "p.product_roadmap.pending_discard": "Ausstehende Änderungen verwerfen",
+  "p.product_roadmap.pending_discard_ask":
+    "Alle {n} ausstehenden Änderungen verwerfen? Für sie wurde nichts gesendet.",
+  "p.product_roadmap.pending_discarded": "Ausstehende Änderungen verworfen.",
+  "p.product_roadmap.pending_slug":
+    "Die Adresse gehört nicht zu einem Änderungssatz: Speichern Sie sie mit ausgeschaltetem Sammeln.",
 };

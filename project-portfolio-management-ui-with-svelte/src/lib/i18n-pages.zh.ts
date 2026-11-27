@@ -8977,4 +8977,16 @@ export const PAGES_ZH: Record<PageKey, string> = {
     "第一行详情位于顶层，每行最多比上一行深一级，最多两级。",
   "p.product_roadmap.details_many": "最多 50 行详情。",
   "p.product_roadmap.orgs_many": "最多 50 个组织。",
+  "p.product_roadmap.gather_h": "汇集编辑",
+  "p.product_roadmap.gather_intro":
+    "开启汇集后，对路线图本身字段的更改、对条目的更改和新条目会保留在此标签页中而不保存，之后作为一个变更集一起预览和发布。移动、删除、翻译和复审仍会立即保存。汇集的内容不会存入浏览器存储：离开或重新加载前会先询问。",
+  "p.product_roadmap.gather_on": "将我的编辑汇集为一个变更集",
+  "p.product_roadmap.pending_n": "待处理：{n}",
+  "p.product_roadmap.pending_added": "已汇集；待处理 {n} 项。",
+  "p.product_roadmap.pending_preview": "预览待处理的更改",
+  "p.product_roadmap.pending_discard": "放弃待处理的更改",
+  "p.product_roadmap.pending_discard_ask":
+    "放弃全部 {n} 项待处理的更改？尚未为其发送任何内容。",
+  "p.product_roadmap.pending_discarded": "已放弃待处理的更改。",
+  "p.product_roadmap.pending_slug": "地址不属于变更集：请在关闭汇集后保存。",
 };

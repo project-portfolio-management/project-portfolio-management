@@ -1,6 +1,6 @@
 // RE-1 and RE-3 (NC-1 slice 12 part l) in a real browser: `/plans/[pid]/roadmap` makes a Product plan's roadmap,
 // changes its own fields with only what changed sent, marks it reviewed, and adds, changes, moves and removes items;
-// translates the roadmap and its items field by field (RE-6); sets an item's details and organizations; a plan of another kind is told it has none; a slug another roadmap holds is said in the page's words. Welsh; axe.
+// translates the roadmap and its items field by field (RE-6); sets an item's details and organizations; gathers edits into one pending change set, kept through an ended session; a plan of another kind is told it has none; a slug another roadmap holds is said in the page's words. Welsh; axe.
 
 import { test, expect, type Page } from "./test";
 import AxeBuilder from "@axe-core/playwright";
@@ -30,7 +30,13 @@ const item = (
 
 async function stub(
   page: Page,
-  opts: { kind?: string; made?: boolean; putStatus?: number } = {},
+  opts: {
+    kind?: string;
+    made?: boolean;
+    putStatus?: number;
+    publishConflict?: boolean;
+    publish401?: number;
+  } = {},
 ) {
   const sent: Array<{ method: string; path: string; body: unknown }> = [];
   let roadmap: Record<string, unknown> | null =
@@ -94,20 +100,37 @@ async function stub(
         json: { code: "conflict", detail: "service text" },
       });
     const items = (roadmap?.items ?? []) as ReturnType<typeof item>[];
+    // A change set's lines, as the service gives them: the roadmap's fields, items' fields, then new items.
+    type Set = {
+      roadmap?: Record<string, { base: unknown; value: unknown }>;
+      items?: {
+        pid: string;
+        fields: Record<string, { base: unknown; value: unknown }>;
+      }[];
+      new?: { title: string; placement?: string }[];
+    };
+    const linesOf = (b: Set) => [
+      ...Object.entries(b.roadmap ?? {}).map(([field, c]) => ({
+        subject: "roadmap",
+        field,
+        from: c.base,
+        to: c.value,
+      })),
+      ...(b.items ?? []).flatMap((i) =>
+        Object.entries(i.fields).map(([field, c]) => ({
+          subject: "item",
+          item: i.pid,
+          field,
+          from: c.base,
+          to: c.value,
+        })),
+      ),
+      ...(b.new ?? []).map((n) => ({ subject: "new_item", title: n.title })),
+    ];
     if (path.endsWith("/publish/preview")) {
-      const b = body as {
-        roadmap: { published: { base: boolean; value: boolean } };
-      };
       return route.fulfill({
         json: {
-          changes: [
-            {
-              subject: "roadmap",
-              field: "published",
-              from: b.roadmap.published.base,
-              to: b.roadmap.published.value,
-            },
-          ],
+          changes: linesOf(body as Set),
           conflicts: [],
           problems: [],
           would_publish: true,
@@ -115,6 +138,11 @@ async function stub(
       });
     }
     if (path.endsWith("/publish")) {
+      if (opts.publish401 && opts.publish401-- > 0)
+        return route.fulfill({
+          status: 401,
+          json: { error: "unauthorized", description: "service text" },
+        });
       if (opts.publishConflict)
         return route.fulfill({
           status: 409,
@@ -132,9 +160,23 @@ async function stub(
             ],
           },
         });
-      const b = body as { roadmap: { published: { value: boolean } } };
-      roadmap = { ...roadmap, published: b.roadmap.published.value };
-      return route.fulfill({ json: { applied: [], roadmap } });
+      const b = body as Set;
+      const value = (f: Record<string, { value: unknown }>) =>
+        Object.fromEntries(Object.entries(f).map(([k, c]) => [k, c.value]));
+      roadmap = {
+        ...roadmap,
+        ...value(b.roadmap ?? {}),
+        items: [
+          ...items.map((i) => {
+            const c = (b.items ?? []).find((x) => x.pid === i.pid);
+            return c ? { ...i, ...value(c.fields) } : i;
+          }),
+          ...(b.new ?? []).map((n, k) =>
+            item(`n${k}`, n.title, n.placement ?? null, 9),
+          ),
+        ],
+      };
+      return route.fulfill({ json: { applied: linesOf(b), roadmap } });
     }
     if (path.endsWith("/roadmap") && method === "PUT") {
       roadmap = {
@@ -647,4 +689,122 @@ test("an item's details are indented lines and its organizations are picked from
       .filter((v) => v.impact === "serious" || v.impact === "critical")
       .map((v) => v.id),
   ).toEqual([]);
+});
+
+test("edits gathered into one pending change set are shown, kept through an ended session, and published together (RE-2, RE-13)", async ({
+  page,
+}) => {
+  const sent = await stub(page, { publish401: 1 });
+  await page.goto(`/en-001/plans/${PID}/roadmap`);
+  await settle(page);
+  const pending = page.getByTestId("pending");
+  await pending
+    .getByRole("checkbox", { name: "Gather my edits into one change set" })
+    .check();
+
+  const own = page.getByRole("form", { name: "The roadmap", exact: true });
+  await own.getByLabel(/^Address/).fill("pay-now");
+  await own.getByRole("button", { name: "Save the roadmap" }).click();
+  await expect(page.getByTestId("roadmap-problems")).toHaveText(
+    "The address is not part of a change set: save it with gathering off.",
+  );
+  await own.getByLabel(/^Address/).fill("payments");
+  await own.getByLabel(/^Title/).fill("Payments now");
+  await own.getByRole("button", { name: "Save the roadmap" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Gathered; 1 pending.",
+  );
+  await expect(own.getByLabel(/^Title/)).toHaveValue("Payments now");
+
+  const tap = page
+    .getByTestId("placement-now")
+    .getByRole("listitem")
+    .filter({ hasText: "Tap to pay" })
+    .first();
+  await tap.getByRole("button", { name: "Change" }).click();
+  const form = page.getByRole("form", { name: "Change “Tap to pay”" });
+  await form.getByLabel(/^Phase/).fill("Beta");
+  await form.getByRole("button", { name: "Save the item" }).click();
+  await expect(tap).toContainText("Phase: Beta");
+
+  const add = page.getByRole("form", { name: "Add an item" });
+  await add.getByLabel(/^Title/).fill("Instalments");
+  await add.getByRole("button", { name: "Add the item" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Gathered; 3 pending.",
+  );
+  await expect(
+    pending.getByTestId("pending-lines").getByRole("listitem"),
+  ).toHaveText([
+    "Title: from Payments to Payments now",
+    "“Tap to pay”, Phase: from none to Beta",
+    "A new item: “Instalments”",
+  ]);
+  await expect(pending.getByRole("checkbox")).toBeDisabled();
+  expect(sent.filter((s) => s.method !== "GET")).toEqual([]);
+
+  // Leaving by a link asks first; staying keeps everything.
+  page.once("dialog", (d) => void d.dismiss());
+  await page.getByRole("link", { name: /back/i }).first().click();
+  await expect(pending.getByTestId("pending-count")).toHaveText("Pending: 3");
+
+  await pending
+    .getByRole("button", { name: "Preview the pending changes" })
+    .click();
+  const preview = page.getByTestId("publish-preview");
+  await expect(
+    preview.getByTestId("preview-changes").getByRole("listitem"),
+  ).toHaveCount(3);
+  await preview.getByRole("button", { name: "Publish the change set" }).click();
+  await expect(
+    page.getByTestId("roadmap-error").getByRole("link", { name: /sign in/i }),
+  ).toBeVisible();
+  await expect(pending.getByTestId("pending-count")).toHaveText("Pending: 3");
+  await expect(page.getByText("service text")).toHaveCount(0);
+
+  await preview.getByRole("button", { name: "Publish the change set" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Published the change set.",
+  );
+  expect(sent.at(-1)).toEqual({
+    method: "POST",
+    path: `/api/plans/${PID}/roadmap/publish`,
+    body: {
+      roadmap: { title: { base: "Payments", value: "Payments now" } },
+      items: [{ pid: "a", fields: { phase: { base: null, value: "Beta" } } }],
+      new: [{ title: "Instalments", placement: "now" }],
+    },
+  });
+  await expect(pending.getByTestId("pending-count")).toHaveCount(0);
+  await expect(page.getByTestId("placement-now")).toContainText("Instalments");
+  await expect(pending.getByRole("checkbox")).toBeEnabled();
+});
+
+test("gathered edits are discarded only after a question", async ({ page }) => {
+  await stub(page);
+  await page.goto(`/en-001/plans/${PID}/roadmap`);
+  await settle(page);
+  const pending = page.getByTestId("pending");
+  await pending
+    .getByRole("checkbox", { name: "Gather my edits into one change set" })
+    .check();
+  const own = page.getByRole("form", { name: "The roadmap", exact: true });
+  await own.getByLabel(/^Vision/).fill("Pay by phone");
+  await own.getByRole("button", { name: "Save the roadmap" }).click();
+  await expect(pending.getByTestId("pending-count")).toHaveText("Pending: 1");
+  const ask = page.getByRole("alertdialog");
+  await pending
+    .getByRole("button", { name: "Discard the pending changes" })
+    .click();
+  await expect(ask).toContainText("Discard all 1 pending changes?");
+  await ask.getByRole("button", { name: "Cancel" }).click();
+  await expect(pending.getByTestId("pending-count")).toHaveText("Pending: 1");
+  await pending
+    .getByRole("button", { name: "Discard the pending changes" })
+    .click();
+  await ask.getByRole("button", { name: "OK" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Discarded the pending changes.",
+  );
+  await expect(own.getByLabel(/^Vision/)).toHaveValue("Pay in a tap");
 });

@@ -9566,4 +9566,17 @@ export const PAGES_KO: Record<PageKey, string> = {
     "세부 사항의 첫 줄은 최상위이며, 각 줄은 윗줄보다 최대 한 수준 깊고 최대 두 수준까지입니다.",
   "p.product_roadmap.details_many": "세부 사항은 최대 50줄입니다.",
   "p.product_roadmap.orgs_many": "조직은 최대 50개입니다.",
+  "p.product_roadmap.gather_h": "편집 모으기",
+  "p.product_roadmap.gather_intro":
+    "모으기를 켜면 로드맵 자체 필드의 변경, 항목 변경, 새 항목이 저장되지 않고 이 탭에 보관되었다가, 하나의 변경 세트로 함께 미리 보고 게시됩니다. 이동, 삭제, 번역, 검토는 여전히 바로 저장됩니다. 모은 내용은 브라우저 저장소에 보관되지 않으며, 떠나거나 새로 고칠 때 먼저 묻습니다.",
+  "p.product_roadmap.gather_on": "내 편집을 하나의 변경 세트로 모으기",
+  "p.product_roadmap.pending_n": "대기 중: {n}",
+  "p.product_roadmap.pending_added": "모았습니다. 대기 중: {n}.",
+  "p.product_roadmap.pending_preview": "대기 중인 변경 미리 보기",
+  "p.product_roadmap.pending_discard": "대기 중인 변경 버리기",
+  "p.product_roadmap.pending_discard_ask":
+    "대기 중인 변경 {n}개를 모두 버릴까요? 아직 아무것도 보내지 않았습니다.",
+  "p.product_roadmap.pending_discarded": "대기 중인 변경을 버렸습니다.",
+  "p.product_roadmap.pending_slug":
+    "주소는 변경 세트에 포함되지 않습니다. 모으기를 끄고 저장하세요.",
 };

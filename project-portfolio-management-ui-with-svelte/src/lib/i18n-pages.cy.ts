@@ -9899,4 +9899,17 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Mae'r llinell fanylion gyntaf ar y brig, a phob llinell un lefel yn ddyfnach na'r un uwch ei phen ar y mwyaf, dwy lefel i mewn ar y mwyaf.",
   "p.product_roadmap.details_many": "50 llinell fanylion ar y mwyaf.",
   "p.product_roadmap.orgs_many": "50 sefydliad ar y mwyaf.",
+  "p.product_roadmap.gather_h": "Casglu golygiadau",
+  "p.product_roadmap.gather_intro":
+    "Gyda chasglu ymlaen, caiff newid i feysydd y map ffordd ei hun, newid i eitem ac eitem newydd eu cadw yn y tab hwn yn lle eu cadw, yna eu rhagweld a'u cyhoeddi gyda'i gilydd fel un set newidiadau. Caiff symudiadau, dileadau, cyfieithiadau ac adolygiadau eu cadw ar unwaith o hyd. Ni chedwir dim a gasglwyd yn storfa'r porwr: mae gadael neu ail-lwytho'n gofyn yn gyntaf.",
+  "p.product_roadmap.gather_on": "Casglu fy ngolygiadau yn un set newidiadau",
+  "p.product_roadmap.pending_n": "Yn aros: {n}",
+  "p.product_roadmap.pending_added": "Wedi'i gasglu; {n} yn aros.",
+  "p.product_roadmap.pending_preview": "Rhagweld y newidiadau sy'n aros",
+  "p.product_roadmap.pending_discard": "Taflu'r newidiadau sy'n aros",
+  "p.product_roadmap.pending_discard_ask":
+    "Taflu pob un o'r {n} newid sy'n aros? Nid oes dim wedi'i anfon ar eu cyfer.",
+  "p.product_roadmap.pending_discarded": "Taflwyd y newidiadau sy'n aros.",
+  "p.product_roadmap.pending_slug":
+    "Nid yw'r cyfeiriad yn rhan o set newidiadau: cadwch ef gyda chasglu i ffwrdd.",
 };

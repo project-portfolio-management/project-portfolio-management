@@ -9999,4 +9999,17 @@ export const PAGES_PT: Record<PageKey, string> = {
     "A primeira linha de detalhe fica no topo, e cada linha no máximo um nível abaixo da anterior, até dois níveis.",
   "p.product_roadmap.details_many": "No máximo 50 linhas de detalhe.",
   "p.product_roadmap.orgs_many": "No máximo 50 organizações.",
+  "p.product_roadmap.gather_h": "Juntar alterações",
+  "p.product_roadmap.gather_intro":
+    "Com a junção ligada, uma alteração aos campos do próprio roteiro, a um elemento ou um elemento novo fica neste separador em vez de ser guardada, e depois é pré-visualizada e publicada com as outras num só conjunto. Mover, remover, traduzir e rever continuam a ser guardados de imediato. Nada do que se junta fica no armazenamento do navegador: sair ou recarregar pergunta primeiro.",
+  "p.product_roadmap.gather_on": "Juntar as minhas alterações num conjunto",
+  "p.product_roadmap.pending_n": "Pendentes: {n}",
+  "p.product_roadmap.pending_added": "Juntado; {n} pendentes.",
+  "p.product_roadmap.pending_preview": "Pré-visualizar as alterações pendentes",
+  "p.product_roadmap.pending_discard": "Descartar as alterações pendentes",
+  "p.product_roadmap.pending_discard_ask":
+    "Descartar as {n} alterações pendentes? Nada foi enviado por elas.",
+  "p.product_roadmap.pending_discarded": "Alterações pendentes descartadas.",
+  "p.product_roadmap.pending_slug":
+    "O endereço não faz parte de um conjunto de alterações: guarde-o com a junção desligada.",
 };

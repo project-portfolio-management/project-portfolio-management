@@ -10084,4 +10084,20 @@ export const PAGES_FR: Record<PageKey, string> = {
     "La première ligne de détail est en haut, et chaque ligne au plus un niveau plus bas que la précédente, deux niveaux au plus.",
   "p.product_roadmap.details_many": "50 lignes de détail au plus.",
   "p.product_roadmap.orgs_many": "50 organisations au plus.",
+  "p.product_roadmap.gather_h": "Regrouper les modifications",
+  "p.product_roadmap.gather_intro":
+    "Le regroupement activé, une modification des champs propres de la feuille de route, d'un élément ou un nouvel élément est gardée dans cet onglet au lieu d'être enregistrée, puis prévisualisée et publiée avec les autres en un seul lot. Les déplacements, retraits, traductions et revues restent enregistrés aussitôt. Rien de regroupé n'est gardé dans le stockage du navigateur : quitter ou recharger demande d'abord.",
+  "p.product_roadmap.gather_on": "Regrouper mes modifications en un seul lot",
+  "p.product_roadmap.pending_n": "En attente : {n}",
+  "p.product_roadmap.pending_added": "Regroupé ; {n} en attente.",
+  "p.product_roadmap.pending_preview":
+    "Prévisualiser les modifications en attente",
+  "p.product_roadmap.pending_discard":
+    "Abandonner les modifications en attente",
+  "p.product_roadmap.pending_discard_ask":
+    "Abandonner les {n} modifications en attente ? Rien n'a été envoyé pour elles.",
+  "p.product_roadmap.pending_discarded":
+    "Modifications en attente abandonnées.",
+  "p.product_roadmap.pending_slug":
+    "L'adresse ne fait pas partie d'un lot : enregistrez-la avec le regroupement désactivé.",
 };

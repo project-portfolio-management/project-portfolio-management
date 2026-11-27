@@ -3614,5 +3614,13 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   above, at most two in; at most 50 lines of up to 300 characters), and shown as an indented list. The organizations
   it is for are picked from the active ones (a retired one the item has stays offered, marked), each named in the
   reader's language, and shown under it; at most 50. Both go with the item's other fields, only when changed.
-- **Not built** in part l: gathering several edits into one pending change set (each edit above is saved at once),
-  translating an item's details, and organization names on pages other than `/organizations` and this one.
+- **A pending change set** (on `/plans/[pid]/roadmap`, RE-2, RE-13, 2026-11-27): with "Gather my edits into one
+  change set" on, a change to the roadmap's own fields (not its address, which is said first), a change to an item and
+  a new item are kept in the tab, in memory only, each field with the value first read as its base (a field put back
+  drops out); the page reads as it will once published. The pending changes are counted and listed in words, then
+  previewed and published as one change set (with publishing or withdrawing, when that is asked too), or discarded
+  after a question. An ended session (401) keeps them and offers sign-in in a new tab; a conflict (409) keeps them;
+  leaving by a link asks first and closing or reloading lets the browser ask. Moves, removals, translations and
+  reviews are still saved at once. Gathering cannot be turned off while changes are pending.
+- **Not built** in part l: translating an item's details; moves and removals in a change set; organization names on
+  pages other than `/organizations` and this one.

@@ -16,6 +16,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a roadmap's pending change set)
+
+- On a product roadmap, edits can be gathered instead of saved one by one: changes to the roadmap, changes to items
+  and new items are kept in the tab, listed, previewed and published together as one change set, or discarded after a
+  question. An ended session keeps them and offers sign-in in a new tab; leaving asks first. This finishes part (l) of
+  slice 12. 10 new strings in every locale, machine-written in 14, none reviewed. Not built: moves and removals in a
+  change set, translating details. Not verified: against a real service or a real expired token.
+
 ## 27 November (a roadmap item's details and organizations)
 
 - An item on a product roadmap now takes its details, written as indented lines and shown as a list, and the

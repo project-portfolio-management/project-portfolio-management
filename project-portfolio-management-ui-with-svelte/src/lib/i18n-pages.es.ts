@@ -10011,4 +10011,18 @@ export const PAGES_ES: Record<PageKey, string> = {
     "La primera línea de detalle va arriba, y cada línea como mucho un nivel más que la anterior, hasta dos niveles.",
   "p.product_roadmap.details_many": "Como máximo 50 líneas de detalle.",
   "p.product_roadmap.orgs_many": "Como máximo 50 organizaciones.",
+  "p.product_roadmap.gather_h": "Reunir cambios",
+  "p.product_roadmap.gather_intro":
+    "Con la opción de reunir, un cambio en los campos propios de la hoja de ruta, en un elemento o un elemento nuevo se guardan en esta pestaña en lugar de enviarse, y luego se previsualizan y publican juntos como un conjunto de cambios. Mover, quitar, traducir y revisar se siguen guardando al momento. Nada de lo reunido se guarda en el almacenamiento del navegador: salir o recargar pregunta antes.",
+  "p.product_roadmap.gather_on": "Reunir mis cambios en un conjunto",
+  "p.product_roadmap.pending_n": "Pendientes: {n}",
+  "p.product_roadmap.pending_added": "Reunido; {n} pendientes.",
+  "p.product_roadmap.pending_preview": "Previsualizar los cambios pendientes",
+  "p.product_roadmap.pending_discard": "Descartar los cambios pendientes",
+  "p.product_roadmap.pending_discard_ask":
+    "¿Descartar los {n} cambios pendientes? No se ha enviado nada de ellos.",
+  "p.product_roadmap.pending_discarded":
+    "Se descartaron los cambios pendientes.",
+  "p.product_roadmap.pending_slug":
+    "La dirección no forma parte de un conjunto de cambios: guárdela con la opción de reunir desactivada.",
 };

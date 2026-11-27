@@ -7,12 +7,15 @@
   has its own sentence. Publishing or taking it off the public reader goes as one change set (RE-2): previewed first
   (`POST …/publish/preview`: what would change, what conflicts), then published (`POST …/publish`), a conflict meanwhile
   (409) said in the page's words. An item's details (indented lines) and the organizations it is for are set with its
-  other fields; the roadmap and its items are translated field by field (RE-6), its category chosen (RE-7). Gathering
-  several edits into one change set and translating details are not on this page yet. Rules in
+  other fields; the roadmap and its items are translated field by field (RE-6), its category chosen (RE-7). With gathering on,
+  several edits are gathered in memory into one pending change set (RE-13), previewed and published together, kept
+  through an ended session, and leaving with any asks first. Translating details is not on this page yet. Rules in
   `src/lib/product-roadmap-view.ts`.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
+  import { beforeNavigate } from "$app/navigation";
+  import { isSessionEnded } from "#lib/unsaved.js";
   import { page } from "$app/state";
   import { askConfirm } from "#lib/confirm.svelte.js";
   import { errorText } from "#lib/error-text.js";
@@ -33,6 +36,15 @@
     fieldKey,
     groups,
     itemChange,
+    emptyPending,
+    gatherItem,
+    gatherNew,
+    gatherRoadmap,
+    pendingCount,
+    pendingLines,
+    pendingSet as gatheredSet,
+    withPending,
+    type Pending,
     publishSet,
     valueWords,
     ITEM_TRANSLATABLE,
@@ -61,6 +73,19 @@
   let roadmap = $state<ProductRoadmap | null>(null);
   let categories = $state<RoadmapCategory[]>([]);
   let organizations = $state<Organization[]>([]);
+  // RE-2, RE-13: edits gathered in this tab (in memory only), published as one change set; leaving with any asks first.
+  let gathering = $state(false);
+  let gathered = $state<Pending>(emptyPending());
+  let sessionEnded = $state(false);
+  const shown = $derived(roadmap ? withPending(roadmap, gathered) : null);
+  beforeNavigate(({ cancel, type }) => {
+    if (pendingCount(gathered) === 0) return;
+    if (type === "leave") {
+      cancel();
+      return;
+    }
+    if (!confirm(t("form.leaveUnsaved"))) cancel();
+  });
   let isProduct = $state<boolean | null>(null);
   let loaded = $state(false);
   let loadError = $state<string | null>(null);
@@ -107,7 +132,7 @@
       organizations = orgs;
       fillTranslations();
       isProduct = plan.kind === "Product";
-      form = roadmapFormOf(r);
+      form = roadmapFormOf(r ? withPending(r, gathered) : null);
       loaded = true;
       loadError = null;
     } catch (err) {
@@ -120,7 +145,9 @@
 
   /** A refusal in the page's words where it has its own sentence. */
   function refused(err: unknown, fallback: "p.product_roadmap.could_not_save" | "p.product_roadmap.could_not_change_item") {
-    if (err instanceof ApiError && err.status === 409) error = t("p.product_roadmap.slug_taken");
+    sessionEnded = isSessionEnded(err);
+    if (sessionEnded) error = t("form.sessionEnded");
+    else if (err instanceof ApiError && err.status === 409) error = t("p.product_roadmap.slug_taken");
     else if (err instanceof ApiError && err.status === 404) error = t("p.product_roadmap.gone");
     else error = errorText(err, fallback);
   }
@@ -141,9 +168,24 @@
     }
   }
 
+  /** Keep the gathered edits and say how many are pending. */
+  function gather(next: Pending) {
+    gathered = next;
+    error = null;
+    notice = t("p.product_roadmap.pending_added", { n: formatInteger(pendingCount(next)) });
+  }
+  /** Drop every gathered edit, after a question. */
+  async function discard() {
+    if (!(await askConfirm(t("p.product_roadmap.pending_discard_ask", { n: formatInteger(pendingCount(gathered)) })))) return;
+    gathered = emptyPending();
+    preview = pendingSet = null;
+    if (roadmap) form = roadmapFormOf(roadmap);
+    notice = t("p.product_roadmap.pending_discarded");
+  }
+
   async function saveRoadmap(e: SubmitEvent) {
     e.preventDefault();
-    const r = roadmapChange(form, roadmap);
+    const r = roadmapChange(form, shown);
     if (r === null) {
       notice = t("p.product_roadmap.unchanged");
       return;
@@ -151,6 +193,12 @@
     if ("problems" in r) {
       problems = r.problems;
       return;
+    }
+    if (gathering && roadmap) {
+      const g = gatherRoadmap(gathered, roadmap, r.body);
+      if ("problems" in g) return void (problems = g.problems);
+      problems = [];
+      return gather(g.pending);
     }
     problems = [];
     await run(
@@ -169,6 +217,11 @@
       return;
     }
     problems = [];
+    if (gathering && roadmap) {
+      gather(gatherNew(gathered, r.body));
+      draft = itemFormOf(null);
+      return;
+    }
     if (await run(() => ppm.addRoadmapItem(pid, r.body), t("p.product_roadmap.item_added", { title: r.body.title ?? "" }), "p.product_roadmap.could_not_change_item"))
       draft = itemFormOf(null);
   }
@@ -185,6 +238,12 @@
       return;
     }
     problems = [];
+    const read = roadmap?.items.find((x) => x.pid === i.pid);
+    if (gathering && read) {
+      gather(gatherItem(gathered, read, r.body));
+      editing = null;
+      return;
+    }
     if (await run(() => ppm.changeRoadmapItem(pid, i.pid, r.body), t("p.product_roadmap.item_saved", { title: r.body.title ?? i.title }), "p.product_roadmap.could_not_change_item"))
       editing = null;
   }
@@ -205,13 +264,22 @@
   });
   const titleOf = (pid: string | undefined) => roadmap?.items.find((i) => i.pid === pid)?.title ?? pid ?? "";
 
+  /** A category or organizations by name rather than id, for a change line. */
+  function named(field: string | null | undefined, v: unknown): unknown {
+    if (field === "category_pid" && typeof v === "string") {
+      const c = categories.find((x) => x.pid === v);
+      return c ? shownName(c, i18n.locale) : v;
+    }
+    if (field === "organization_pids" && Array.isArray(v)) return v.map((o) => orgName(String(o)));
+    return v;
+  }
   /** A change line in words. */
   function changeText(c: ChangeLine): string {
     if (c.subject === "new_item") return t("p.product_roadmap.new_item_line", { title: c.title ?? "" });
     const params = {
       field: tDynamic(fieldKey(c.field)),
-      from: valueWords(c.field, c.from, words),
-      to: valueWords(c.field, c.to, words),
+      from: valueWords(c.field, named(c.field, c.from), words),
+      to: valueWords(c.field, named(c.field, c.to), words),
     };
     return c.subject === "item"
       ? t("p.product_roadmap.item_change_line", { ...params, title: titleOf(c.item) })
@@ -228,10 +296,10 @@
   }
 
   /** Preview the change set that publishes the roadmap or takes it off the public reader. */
-  async function previewPublish(publish: boolean) {
+  async function previewPublish(publish: boolean | null) {
     if (!roadmap) return;
     error = notice = null;
-    const set = publishSet(roadmap.published, publish);
+    const set = gatheredSet(gathered, publish === null ? undefined : publishSet(roadmap.published, publish).roadmap?.published);
     busy = true;
     try {
       preview = await ppm.previewRoadmapPublish(pid, set);
@@ -252,6 +320,8 @@
       await ppm.publishRoadmap(pid, pendingSet);
       notice = t("p.product_roadmap.published_done");
       preview = pendingSet = null;
+      gathered = emptyPending();
+      sessionEnded = false;
       await load();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
@@ -259,6 +329,9 @@
         error = t("p.product_roadmap.conflict_refused");
         preview = { changes: [], conflicts: body?.conflicts ?? [], problems: [], would_publish: false };
         await load();
+      } else if (isSessionEnded(err)) {
+        sessionEnded = true;
+        error = t("form.sessionEnded");
       } else {
         error = errorText(err, "p.product_roadmap.could_not_publish");
       }
@@ -341,7 +414,12 @@
 <h1>{t("p.product_roadmap.title")}</h1>
 <p class="lede">{t("p.product_roadmap.intro")}</p>
 {#if loadError}<p class="banner" role="alert">{loadError}</p>{/if}
-{#if error}<p class="banner error" role="alert" data-testid="roadmap-error">{error}</p>{/if}
+{#if error}
+  <p class="banner error" role="alert" data-testid="roadmap-error">
+    {error}{#if sessionEnded}
+      <a href={localeHref("/signin")} target="_blank" rel="noopener">{t("form.signInNewTab")}</a>{/if}
+  </p>
+{/if}
 {#if notice}<p class="banner" role="status" data-testid="roadmap-notice">{notice}</p>{/if}
 {#if problems.length > 0}
   <ul class="banner error" role="alert" data-testid="roadmap-problems">
@@ -391,6 +469,23 @@
         </section>
       {/if}
     </section>
+
+    <section class="surface stack" aria-labelledby="gather-h" data-testid="pending">
+      <h2 id="gather-h">{t("p.product_roadmap.gather_h")}</h2>
+      <p class="small muted">{t("p.product_roadmap.gather_intro")}</p>
+      <label class="inline"
+        ><input type="checkbox" bind:checked={gathering} disabled={pendingCount(gathered) > 0} />
+        {t("p.product_roadmap.gather_on")}</label
+      >
+      {#if pendingCount(gathered) > 0}
+        <p data-testid="pending-count">{t("p.product_roadmap.pending_n", { n: formatInteger(pendingCount(gathered)) })}</p>
+        <ul data-testid="pending-lines">{#each pendingLines(gathered) as c, n (n)}<li>{changeText(c)}</li>{/each}</ul>
+        <div class="row">
+          <button class="button" type="button" disabled={busy} onclick={() => previewPublish(null)}>{t("p.product_roadmap.pending_preview")}</button>
+          <button class="button danger" type="button" disabled={busy} onclick={discard}>{t("p.product_roadmap.pending_discard")}</button>
+        </div>
+      {/if}
+    </section>
   {/if}
 
   <form class="surface stack" onsubmit={saveRoadmap} aria-labelledby="own-h" novalidate>
@@ -416,7 +511,7 @@
     <section class="stack" aria-labelledby="items-h">
       <h2 id="items-h">{t("p.product_roadmap.items_h")}</h2>
       {#if roadmap.items.length === 0}<p class="muted" data-testid="roadmap-no-items">{t("p.product_roadmap.no_items")}</p>{/if}
-      {#each groups(roadmap.items) as g (g.placement ?? "none")}
+      {#each groups(shown?.items ?? []) as g (g.placement ?? "none")}
         <section class="surface stack" aria-labelledby={`pl-${g.placement ?? "none"}`} data-testid={`placement-${g.placement ?? "none"}`}>
           <h3 id={`pl-${g.placement ?? "none"}`}>{placementLabel(g.placement)}</h3>
           <ol class="items">

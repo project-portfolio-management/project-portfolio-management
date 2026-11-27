@@ -9196,4 +9196,42 @@ export const PAGES_VI: Record<PageKey, string> = {
     "Dịch vụ đã từ chối các tệp: một tệp không phải XML MS Project, quá lớn, hoặc nêu một kế hoạch bạn không thấy được.",
   "p.mspdi_batch.link_from_jobs": "Nhập nhiều tệp MS Project",
   "p.mspdi_batch.read_failed": "Không thể đọc “{file}”.",
+  "p.components.link": "Thành phần",
+  "p.components.title": "Thành phần",
+  "p.components.title_ppm": "Thành phần — PPM",
+  "p.components.intro":
+    "Thành phần nhóm các công việc của kế hoạch theo phần việc, chẳng hạn API hoặc ứng dụng di động. Một công việc thuộc tối đa một thành phần. Mọi công việc đều được đếm: công việc không thuộc thành phần nào được liệt kê là chưa gán.",
+  "p.components.loading": "Đang tải…",
+  "p.components.could_not_load": "Không thể tải các thành phần.",
+  "p.components.none": "Kế hoạch này chưa có thành phần nào.",
+  "p.components.unassigned": "Chưa gán",
+  "p.components.counts": "{open} đang mở, {done} đã xong, tổng {total}",
+  "p.components.lead": "Người phụ trách: {lead}",
+  "p.components.no_lead": "không có người phụ trách",
+  "p.components.edit": "Đổi",
+  "p.components.save": "Lưu",
+  "p.components.cancel": "Hủy",
+  "p.components.remove": "Xóa",
+  "p.components.remove_ask":
+    "Xóa thành phần “{name}”? Không có công việc nào thuộc nó, nên không có gì khác thay đổi.",
+  "p.components.in_use":
+    "Công việc vẫn thuộc nó: {n}. Hãy chuyển sang thành phần khác trước khi xóa.",
+  "p.components.in_use_refused":
+    "Vẫn còn công việc trong thành phần này. Hãy chuyển sang thành phần khác trước.",
+  "p.components.add_h": "Thêm thành phần",
+  "p.components.name": "Tên (tối đa 120 ký tự)",
+  "p.components.lead_field":
+    "Người phụ trách (tùy chọn: tham chiếu person: hoặc worker:)",
+  "p.components.add": "Thêm thành phần",
+  "p.components.name_required": "Cần có tên.",
+  "p.components.name_too_long": "Tên dài hơn 120 ký tự.",
+  "p.components.lead_bad":
+    "Người phụ trách phải là tham chiếu person: hoặc worker:.",
+  "p.components.taken": "Kế hoạch đã có thành phần với tên này.",
+  "p.components.too_many": "Một kế hoạch có tối đa 200 thành phần.",
+  "p.components.could_not_save": "Không thể lưu thành phần.",
+  "p.components.could_not_remove": "Không thể xóa thành phần.",
+  "p.components.removed": "Đã xóa “{name}”.",
+  "p.components.saved": "Đã lưu “{name}”.",
+  "p.components.added": "Đã thêm “{name}”.",
 };

@@ -9439,4 +9439,42 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Le service a refusé les fichiers : l'un n'est pas du XML MS Project, est trop gros ou désigne un plan que vous ne pouvez pas voir.",
   "p.mspdi_batch.link_from_jobs": "Importer plusieurs fichiers MS Project",
   "p.mspdi_batch.read_failed": "Impossible de lire « {file} ».",
+  "p.components.link": "Composants",
+  "p.components.title": "Composants",
+  "p.components.title_ppm": "Composants — PPM",
+  "p.components.intro":
+    "Les composants regroupent les tâches d'un plan par partie du travail, par exemple l'API ou l'application mobile. Une tâche appartient à un composant au plus. Toutes les tâches sont comptées : celles qui ne sont dans aucun composant sont listées comme non affectées.",
+  "p.components.loading": "Chargement…",
+  "p.components.could_not_load": "Impossible de charger les composants.",
+  "p.components.none": "Ce plan n'a pas encore de composants.",
+  "p.components.unassigned": "Non affectées",
+  "p.components.counts": "{open} ouvertes, {done} faites, {total} en tout",
+  "p.components.lead": "Responsable : {lead}",
+  "p.components.no_lead": "pas de responsable",
+  "p.components.edit": "Modifier",
+  "p.components.save": "Enregistrer",
+  "p.components.cancel": "Annuler",
+  "p.components.remove": "Retirer",
+  "p.components.remove_ask":
+    "Retirer le composant « {name} » ? Aucune tâche n'y appartient, rien d'autre ne change.",
+  "p.components.in_use":
+    "Tâches qui y appartiennent encore : {n}. Déplacez-les vers un autre composant avant de le retirer.",
+  "p.components.in_use_refused":
+    "Des tâches appartiennent encore à ce composant. Déplacez-les d'abord vers un autre.",
+  "p.components.add_h": "Ajouter un composant",
+  "p.components.name": "Nom (jusqu'à 120 caractères)",
+  "p.components.lead_field":
+    "Responsable (facultatif : une référence person: ou worker:)",
+  "p.components.add": "Ajouter le composant",
+  "p.components.name_required": "Un nom est requis.",
+  "p.components.name_too_long": "Le nom dépasse 120 caractères.",
+  "p.components.lead_bad":
+    "Le responsable doit être une référence person: ou worker:.",
+  "p.components.taken": "Un composant de ce nom existe déjà dans le plan.",
+  "p.components.too_many": "Un plan compte au plus 200 composants.",
+  "p.components.could_not_save": "Impossible d'enregistrer le composant.",
+  "p.components.could_not_remove": "Impossible de retirer le composant.",
+  "p.components.removed": "« {name} » retiré.",
+  "p.components.saved": "« {name} » enregistré.",
+  "p.components.added": "« {name} » ajouté.",
 };

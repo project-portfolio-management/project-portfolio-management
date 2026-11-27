@@ -9300,4 +9300,42 @@ export const PAGES_ID: Record<PageKey, string> = {
     "Layanan menolak berkas: salah satunya bukan XML MS Project, terlalu besar, atau menyebut rencana yang tidak dapat Anda lihat.",
   "p.mspdi_batch.link_from_jobs": "Impor beberapa berkas MS Project",
   "p.mspdi_batch.read_failed": "Tidak dapat membaca “{file}”.",
+  "p.components.link": "Komponen",
+  "p.components.title": "Komponen",
+  "p.components.title_ppm": "Komponen — PPM",
+  "p.components.intro":
+    "Komponen mengelompokkan tugas rencana menurut bagian pekerjaan, misalnya API atau aplikasi seluler. Satu tugas termasuk paling banyak satu komponen. Setiap tugas dihitung: yang tidak di komponen mana pun dicantumkan sebagai belum ditetapkan.",
+  "p.components.loading": "Memuat…",
+  "p.components.could_not_load": "Tidak dapat memuat komponen.",
+  "p.components.none": "Rencana ini belum memiliki komponen.",
+  "p.components.unassigned": "Belum ditetapkan",
+  "p.components.counts": "{open} terbuka, {done} selesai, {total} seluruhnya",
+  "p.components.lead": "Pemimpin: {lead}",
+  "p.components.no_lead": "tanpa pemimpin",
+  "p.components.edit": "Ubah",
+  "p.components.save": "Simpan",
+  "p.components.cancel": "Batal",
+  "p.components.remove": "Hapus",
+  "p.components.remove_ask":
+    "Hapus komponen “{name}”? Tidak ada tugas di dalamnya, jadi tidak ada yang lain berubah.",
+  "p.components.in_use":
+    "Tugas yang masih termasuk: {n}. Pindahkan ke komponen lain sebelum menghapusnya.",
+  "p.components.in_use_refused":
+    "Masih ada tugas di komponen ini. Pindahkan ke komponen lain lebih dulu.",
+  "p.components.add_h": "Tambah komponen",
+  "p.components.name": "Nama (hingga 120 karakter)",
+  "p.components.lead_field":
+    "Pemimpin (opsional: rujukan person: atau worker:)",
+  "p.components.add": "Tambahkan komponen",
+  "p.components.name_required": "Nama wajib diisi.",
+  "p.components.name_too_long": "Nama lebih dari 120 karakter.",
+  "p.components.lead_bad":
+    "Pemimpin harus berupa rujukan person: atau worker:.",
+  "p.components.taken": "Komponen dengan nama ini sudah ada di rencana.",
+  "p.components.too_many": "Satu rencana menampung paling banyak 200 komponen.",
+  "p.components.could_not_save": "Tidak dapat menyimpan komponen.",
+  "p.components.could_not_remove": "Tidak dapat menghapus komponen.",
+  "p.components.removed": "“{name}” dihapus.",
+  "p.components.saved": "“{name}” disimpan.",
+  "p.components.added": "“{name}” ditambahkan.",
 };

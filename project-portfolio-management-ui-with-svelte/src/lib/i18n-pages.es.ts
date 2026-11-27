@@ -9373,4 +9373,42 @@ export const PAGES_ES: Record<PageKey, string> = {
     "El servicio rechazó los archivos: uno no es XML de MS Project, es demasiado grande o nombra un plan que no puede ver.",
   "p.mspdi_batch.link_from_jobs": "Importar varios archivos de MS Project",
   "p.mspdi_batch.read_failed": "No se pudo leer «{file}».",
+  "p.components.link": "Componentes",
+  "p.components.title": "Componentes",
+  "p.components.title_ppm": "Componentes — PPM",
+  "p.components.intro":
+    "Los componentes agrupan las tareas de un plan por parte del trabajo, por ejemplo la API o la aplicación móvil. Una tarea pertenece como mucho a uno. Se cuentan todas las tareas: las que no están en ningún componente aparecen como sin asignar.",
+  "p.components.loading": "Cargando…",
+  "p.components.could_not_load": "No se pudieron cargar los componentes.",
+  "p.components.none": "Este plan aún no tiene componentes.",
+  "p.components.unassigned": "Sin asignar",
+  "p.components.counts": "{open} abiertas, {done} hechas, {total} en total",
+  "p.components.lead": "Responsable: {lead}",
+  "p.components.no_lead": "sin responsable",
+  "p.components.edit": "Cambiar",
+  "p.components.save": "Guardar",
+  "p.components.cancel": "Cancelar",
+  "p.components.remove": "Quitar",
+  "p.components.remove_ask":
+    "¿Quitar el componente «{name}»? Ninguna tarea le pertenece, así que no cambia nada más.",
+  "p.components.in_use":
+    "Tareas que aún le pertenecen: {n}. Muévalas a otro componente antes de quitarlo.",
+  "p.components.in_use_refused":
+    "Todavía hay tareas en este componente. Muévalas primero a otro.",
+  "p.components.add_h": "Añadir un componente",
+  "p.components.name": "Nombre (hasta 120 caracteres)",
+  "p.components.lead_field":
+    "Responsable (opcional: una referencia person: o worker:)",
+  "p.components.add": "Añadir el componente",
+  "p.components.name_required": "El nombre es obligatorio.",
+  "p.components.name_too_long": "El nombre supera los 120 caracteres.",
+  "p.components.lead_bad":
+    "El responsable debe ser una referencia person: o worker:.",
+  "p.components.taken": "Ya existe un componente con este nombre en el plan.",
+  "p.components.too_many": "Un plan admite como máximo 200 componentes.",
+  "p.components.could_not_save": "No se pudo guardar el componente.",
+  "p.components.could_not_remove": "No se pudo quitar el componente.",
+  "p.components.removed": "Se quitó «{name}».",
+  "p.components.saved": "Se guardó «{name}».",
+  "p.components.added": "Se añadió «{name}».",
 };

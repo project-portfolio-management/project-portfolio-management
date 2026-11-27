@@ -3470,3 +3470,15 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   matched to people. A failed project's English error is not shown; the page says what to do.
 - **Not offered** (said on the page): the custom-field map (`field_map`, `create_fields`), the resource map and rates
   (`resource_map`, `rates_effective_from`). `tests/e2e/mspdi-import.spec.ts` (stubbed service, axe, Welsh).
+
+## A plan's components (NC-1 slice 12 part n, PL-11)
+
+- **`/plans/[pid]/components`** ("Components", a plan workspace link) lists every component with its open, done and total
+  tasks and its lead (a `person:` or `worker:` reference, or "no lead"), and the tasks in none as **Unassigned**, from
+  `GET …/components/summary`, so the counts add up to the plan's tasks. A component is added or changed (name up to 120
+  characters, unique in the plan ignoring case; lead optional), every limit said and checked before sending; a change
+  that changes nothing sends nothing; a blank lead clears it. A component with tasks is not offered for removal (the
+  page says how many to move first); an empty one is removed after a question. A name taken meanwhile (409) and the
+  plan's limit of 200 (422) have their own sentences. Rules in `src/lib/component-view.ts`; `tests/e2e/components.spec.ts`.
+- **Not built** in part n: custom fields, goals, resource roles, onboarding templates, a framework's and a way of
+  working's text and versions, editing a process definition or an announcement, approval requests outside a process.

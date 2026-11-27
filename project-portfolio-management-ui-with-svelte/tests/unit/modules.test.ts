@@ -11,6 +11,7 @@ describe("visiblePlanLinks (RM-7)", () => {
   it("shows only the links whose module is on", () => {
     expect(visiblePlanLinks(["tasks", "time"])).toEqual([
       "board",
+      "components",
       "flow",
       "critical-path",
       "raci",
@@ -48,6 +49,7 @@ describe("visiblePlanLinks (RM-7)", () => {
     expect(visiblePlanLinks(["risks"])).toEqual(["issues"]);
     expect(visiblePlanLinks(["milestones", "tasks"])).toEqual([
       "board",
+      "components",
       "schedule",
       "flow",
       "critical-path",

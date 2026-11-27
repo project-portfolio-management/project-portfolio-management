@@ -9250,4 +9250,42 @@ export const PAGES_RU: Record<PageKey, string> = {
     "Сервис отклонил файлы: один не является XML MS Project, слишком велик или указывает план, который вам не виден.",
   "p.mspdi_batch.link_from_jobs": "Импорт нескольких файлов MS Project",
   "p.mspdi_batch.read_failed": "Не удалось прочитать «{file}».",
+  "p.components.link": "Компоненты",
+  "p.components.title": "Компоненты",
+  "p.components.title_ppm": "Компоненты — PPM",
+  "p.components.intro":
+    "Компоненты группируют задачи плана по частям работы, например API или мобильное приложение. Задача входит не более чем в один компонент. Считаются все задачи: не входящие ни в один компонент показаны как нераспределённые.",
+  "p.components.loading": "Загрузка…",
+  "p.components.could_not_load": "Не удалось загрузить компоненты.",
+  "p.components.none": "У этого плана пока нет компонентов.",
+  "p.components.unassigned": "Нераспределённые",
+  "p.components.counts": "открыто {open}, сделано {done}, всего {total}",
+  "p.components.lead": "Руководитель: {lead}",
+  "p.components.no_lead": "без руководителя",
+  "p.components.edit": "Изменить",
+  "p.components.save": "Сохранить",
+  "p.components.cancel": "Отмена",
+  "p.components.remove": "Удалить",
+  "p.components.remove_ask":
+    "Удалить компонент «{name}»? В нём нет задач, поэтому больше ничего не изменится.",
+  "p.components.in_use":
+    "В нём ещё есть задачи: {n}. Перенесите их в другой компонент перед удалением.",
+  "p.components.in_use_refused":
+    "В этом компоненте ещё есть задачи. Сначала перенесите их в другой.",
+  "p.components.add_h": "Добавить компонент",
+  "p.components.name": "Название (до 120 символов)",
+  "p.components.lead_field":
+    "Руководитель (необязательно: ссылка person: или worker:)",
+  "p.components.add": "Добавить компонент",
+  "p.components.name_required": "Нужно название.",
+  "p.components.name_too_long": "Название длиннее 120 символов.",
+  "p.components.lead_bad":
+    "Руководитель должен быть ссылкой person: или worker:.",
+  "p.components.taken": "Компонент с таким названием в плане уже есть.",
+  "p.components.too_many": "В плане не более 200 компонентов.",
+  "p.components.could_not_save": "Не удалось сохранить компонент.",
+  "p.components.could_not_remove": "Не удалось удалить компонент.",
+  "p.components.removed": "«{name}» удалён.",
+  "p.components.saved": "«{name}» сохранён.",
+  "p.components.added": "«{name}» добавлен.",
 };

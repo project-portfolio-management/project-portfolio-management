@@ -30,6 +30,8 @@ export const PLAN_LINKS = [
   { key: "governance-framework", module: "governance" },
   { key: "links", module: "governance" },
   { key: "board", module: "tasks" },
+  // `components` is filed under the tasks module in the service (a task's component), PL-11, NC-1 slice 12 part n.
+  { key: "components", module: "tasks" },
   { key: "schedule", module: "milestones" },
   { key: "flow", module: "tasks" },
   { key: "critical-path", module: "tasks" },

@@ -9467,4 +9467,46 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Der Dienst hat die Dateien abgelehnt: Eine ist kein MS-Project-XML, ist zu groß oder nennt einen Plan, den Sie nicht sehen können.",
   "p.mspdi_batch.link_from_jobs": "Mehrere MS-Project-Dateien importieren",
   "p.mspdi_batch.read_failed": "„{file}“ konnte nicht gelesen werden.",
+  "p.components.link": "Komponenten",
+  "p.components.title": "Komponenten",
+  "p.components.title_ppm": "Komponenten — PPM",
+  "p.components.intro":
+    "Komponenten gruppieren die Aufgaben eines Plans nach Teilen der Arbeit, zum Beispiel die API oder die mobile App. Eine Aufgabe gehört zu höchstens einer. Jede Aufgabe wird gezählt: Aufgaben ohne Komponente erscheinen als nicht zugeordnet.",
+  "p.components.loading": "Wird geladen…",
+  "p.components.could_not_load":
+    "Die Komponenten konnten nicht geladen werden.",
+  "p.components.none": "Dieser Plan hat noch keine Komponenten.",
+  "p.components.unassigned": "Nicht zugeordnet",
+  "p.components.counts": "{open} offen, {done} erledigt, {total} insgesamt",
+  "p.components.lead": "Leitung: {lead}",
+  "p.components.no_lead": "keine Leitung",
+  "p.components.edit": "Ändern",
+  "p.components.save": "Speichern",
+  "p.components.cancel": "Abbrechen",
+  "p.components.remove": "Entfernen",
+  "p.components.remove_ask":
+    "Die Komponente „{name}“ entfernen? Keine Aufgabe gehört zu ihr, daher ändert sich sonst nichts.",
+  "p.components.in_use":
+    "Noch gehörende Aufgaben: {n}. Verschieben Sie sie in eine andere Komponente, bevor Sie diese entfernen.",
+  "p.components.in_use_refused":
+    "Zu dieser Komponente gehören noch Aufgaben. Verschieben Sie sie zuerst in eine andere.",
+  "p.components.add_h": "Komponente hinzufügen",
+  "p.components.name": "Name (bis zu 120 Zeichen)",
+  "p.components.lead_field":
+    "Leitung (optional: ein person:- oder worker:-Bezug)",
+  "p.components.add": "Komponente hinzufügen",
+  "p.components.name_required": "Ein Name ist erforderlich.",
+  "p.components.name_too_long": "Der Name ist länger als 120 Zeichen.",
+  "p.components.lead_bad":
+    "Die Leitung muss ein person:- oder worker:-Bezug sein.",
+  "p.components.taken":
+    "Eine Komponente mit diesem Namen gibt es im Plan schon.",
+  "p.components.too_many": "Ein Plan hat höchstens 200 Komponenten.",
+  "p.components.could_not_save":
+    "Die Komponente konnte nicht gespeichert werden.",
+  "p.components.could_not_remove":
+    "Die Komponente konnte nicht entfernt werden.",
+  "p.components.removed": "„{name}“ entfernt.",
+  "p.components.saved": "„{name}“ gespeichert.",
+  "p.components.added": "„{name}“ hinzugefügt.",
 };

@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a plan's components)
+
+- A new `/plans/[pid]/components` ("Components") lists each component with its open, done and total tasks and the
+  unassigned ones, adds, renames or sets a lead with every limit said first, and removes an empty one after a question
+  (one with tasks is not offered). 32 new strings in every locale, machine-written in 14, none reviewed. Not built: the
+  rest of NC-1 slice 12 part n. Not verified: against a real service.
+
 ## 27 November (many MS Project files at once)
 
 - A new `/mspdi-import` (linked from `/jobs`) imports up to ten MS Project files at once, each into a new plan or a

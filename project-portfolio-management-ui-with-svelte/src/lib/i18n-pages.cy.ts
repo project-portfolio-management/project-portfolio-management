@@ -9278,4 +9278,42 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Gwrthododd y gwasanaeth y ffeiliau: nid yw un yn MS Project XML, mae'n rhy fawr, neu mae'n enwi cynllun na allwch ei weld.",
   "p.mspdi_batch.link_from_jobs": "Mewnforio sawl ffeil MS Project",
   "p.mspdi_batch.read_failed": "Methu darllen “{file}”.",
+  "p.components.link": "Cydrannau",
+  "p.components.title": "Cydrannau",
+  "p.components.title_ppm": "Cydrannau — PPM",
+  "p.components.intro":
+    "Mae cydrannau'n grwpio tasgau cynllun yn ôl rhan o'r gwaith, er enghraifft yr API neu'r ap symudol. Mae tasg yn perthyn i un ar y mwyaf. Mae pob tasg yn cael ei chyfrif: rhestrir y rhai nad ydynt mewn unrhyw gydran fel heb eu neilltuo.",
+  "p.components.loading": "Wrthi'n llwytho…",
+  "p.components.could_not_load": "Methu llwytho'r cydrannau.",
+  "p.components.none": "Nid oes gan y cynllun hwn gydrannau eto.",
+  "p.components.unassigned": "Heb eu neilltuo",
+  "p.components.counts": "{open} ar agor, {done} wedi'u gwneud, {total} i gyd",
+  "p.components.lead": "Arweinydd: {lead}",
+  "p.components.no_lead": "dim arweinydd",
+  "p.components.edit": "Newid",
+  "p.components.save": "Cadw",
+  "p.components.cancel": "Canslo",
+  "p.components.remove": "Dileu",
+  "p.components.remove_ask":
+    "Dileu'r gydran “{name}”? Nid oes tasg yn perthyn iddi, felly nid oes dim arall yn newid.",
+  "p.components.in_use":
+    "Mae tasgau'n dal i berthyn iddi: {n}. Symudwch nhw i gydran arall cyn ei dileu.",
+  "p.components.in_use_refused":
+    "Mae tasgau'n dal i berthyn i'r gydran hon. Symudwch nhw i un arall yn gyntaf.",
+  "p.components.add_h": "Ychwanegu cydran",
+  "p.components.name": "Enw (hyd at 120 nod)",
+  "p.components.lead_field":
+    "Arweinydd (dewisol: cyfeirnod person: neu worker:)",
+  "p.components.add": "Ychwanegu'r gydran",
+  "p.components.name_required": "Mae angen enw.",
+  "p.components.name_too_long": "Mae'r enw dros 120 nod.",
+  "p.components.lead_bad":
+    "Rhaid i'r arweinydd fod yn gyfeirnod person: neu worker:.",
+  "p.components.taken": "Mae cydran gyda'r enw hwn eisoes yn y cynllun.",
+  "p.components.too_many": "Mae cynllun yn dal 200 o gydrannau ar y mwyaf.",
+  "p.components.could_not_save": "Methu cadw'r gydran.",
+  "p.components.could_not_remove": "Methu dileu'r gydran.",
+  "p.components.removed": "Dilëwyd “{name}”.",
+  "p.components.saved": "Cadwyd “{name}”.",
+  "p.components.added": "Ychwanegwyd “{name}”.",
 };

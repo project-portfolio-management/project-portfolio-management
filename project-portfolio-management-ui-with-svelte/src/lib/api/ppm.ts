@@ -360,6 +360,9 @@ import type {
   BulkJobStarted,
   BulkJobStatus,
   ReviewQueueItem,
+  Component,
+  ComponentBody,
+  ComponentSummary,
   MspdiBatchAnswer,
   MspdiBatchBody,
   StartExportBody,
@@ -2255,6 +2258,39 @@ export class PpmClient {
     return this.http.post(`/api/import/mspdi-batch?dry_run=${dryRun}`, {
       body,
     });
+  }
+
+  // ---- task components (PL-11; NC-1 slice 12 part n) ----
+  components(planPid: string): Promise<Component[]> {
+    return this.http.get(
+      `/api/plans/${encodeURIComponent(planPid)}/components`,
+    );
+  }
+  componentSummary(planPid: string): Promise<ComponentSummary> {
+    return this.http.get(
+      `/api/plans/${encodeURIComponent(planPid)}/components/summary`,
+    );
+  }
+  createComponent(planPid: string, body: ComponentBody): Promise<Component> {
+    return this.http.post(
+      `/api/plans/${encodeURIComponent(planPid)}/components`,
+      { body },
+    );
+  }
+  updateComponent(
+    planPid: string,
+    pid: string,
+    body: ComponentBody,
+  ): Promise<Component> {
+    return this.http.put(
+      `/api/plans/${encodeURIComponent(planPid)}/components/${encodeURIComponent(pid)}`,
+      { body },
+    );
+  }
+  deleteComponent(planPid: string, pid: string): Promise<void> {
+    return this.http.delete(
+      `/api/plans/${encodeURIComponent(planPid)}/components/${encodeURIComponent(pid)}`,
+    );
   }
 
   // ---- tracker import (T-28n) ----

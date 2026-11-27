@@ -5773,3 +5773,33 @@ export interface MspdiBatchAnswer {
     reason?: string;
   };
 }
+
+// ---- task components (PL-11; NC-1 slice 12 part n) ----
+
+/** One of a plan's components. */
+export interface Component {
+  pid: string;
+  plan_pid: string;
+  name: string;
+  lead_ref: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** `GET /api/plans/{pid}/components/summary`: every component, empty ones at zero, then the unassigned bucket. */
+export interface ComponentSummary {
+  buckets: {
+    component_pid: string | null;
+    name: string;
+    open: number;
+    done: number;
+    total: number;
+  }[];
+  total: number;
+}
+
+/** `POST` / `PUT` body. */
+export interface ComponentBody {
+  name: string;
+  lead_ref?: string | null;
+}

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/plans/[pid]/components` (PL-11, 2026-11-27)
+
+- Five client methods; `src/lib/component-view.ts`; 32 strings in every locale.
+
 ### Added — `/mspdi-import`, many MS Project files at once (NC-13, 2026-11-27)
 
 - Preview, then import after a question; one client method; 42 strings in every locale. Not offered: the field and

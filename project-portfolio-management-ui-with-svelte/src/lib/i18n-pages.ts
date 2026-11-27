@@ -9060,6 +9060,43 @@ export const PAGES_EN = {
     "The service refused the files: one is not MS Project XML, is too large, or names a plan you cannot see.",
   "p.mspdi_batch.link_from_jobs": "Import several MS Project files",
   "p.mspdi_batch.read_failed": "Could not read “{file}”.",
+  "p.components.link": "Components",
+  "p.components.title": "Components",
+  "p.components.title_ppm": "Components — PPM",
+  "p.components.intro":
+    "Components group a plan's tasks by part of the work, for example the API or the mobile app. A task belongs to at most one. Every task is counted: those in no component are listed as unassigned.",
+  "p.components.loading": "Loading…",
+  "p.components.could_not_load": "Could not load the components.",
+  "p.components.none": "This plan has no components yet.",
+  "p.components.unassigned": "Unassigned",
+  "p.components.counts": "{open} open, {done} done, {total} in all",
+  "p.components.lead": "Lead: {lead}",
+  "p.components.no_lead": "no lead",
+  "p.components.edit": "Change",
+  "p.components.save": "Save",
+  "p.components.cancel": "Cancel",
+  "p.components.remove": "Remove",
+  "p.components.remove_ask":
+    "Remove the component “{name}”? No task belongs to it, so nothing else changes.",
+  "p.components.in_use":
+    "Tasks still belong to it: {n}. Move them to another component before removing it.",
+  "p.components.in_use_refused":
+    "Tasks still belong to this component. Move them to another one first.",
+  "p.components.add_h": "Add a component",
+  "p.components.name": "Name (up to 120 characters)",
+  "p.components.lead_field": "Lead (optional: a person: or worker: reference)",
+  "p.components.add": "Add the component",
+  "p.components.name_required": "A name is required.",
+  "p.components.name_too_long": "The name is over 120 characters.",
+  "p.components.lead_bad": "The lead must be a person: or worker: reference.",
+  "p.components.taken":
+    "A component with this name already exists in the plan.",
+  "p.components.too_many": "A plan holds at most 200 components.",
+  "p.components.could_not_save": "Could not save the component.",
+  "p.components.could_not_remove": "Could not remove the component.",
+  "p.components.removed": "Removed “{name}”.",
+  "p.components.saved": "Saved “{name}”.",
+  "p.components.added": "Added “{name}”.",
 } as const;
 
 /** A key in the page and component catalogue. */

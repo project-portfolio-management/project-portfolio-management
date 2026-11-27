@@ -430,7 +430,7 @@ enum AttemptResult {
 pub(crate) fn client() -> Result<&'static reqwest::Client, &'static str> {
     static CLIENT: std::sync::OnceLock<Result<reqwest::Client, String>> =
         std::sync::OnceLock::new();
-    crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
+    axa::tls::install_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
     CLIENT
         .get_or_init(|| {
             reqwest::Client::builder()
@@ -727,7 +727,7 @@ mod tests {
     #[tokio::test]
     async fn a_transport_error_is_stored_without_the_url() {
         // Port 1 on loopback refuses the connection, so the send fails in transport, as a dead receiver would.
-        crate::app::install_tls_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
+        axa::tls::install_provider(); // reqwest is built with `rustls-no-provider` (idempotent).
         let err = reqwest::Client::new()
             .post("http://127.0.0.1:1/hooks/s3cret-token")
             .send()

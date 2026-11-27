@@ -24,8 +24,41 @@
     reason = "ld64's __eh_frame size note for one large test binary"
 )]
 
-#[macro_use]
-mod own_process;
+/// Run one test in a process of its own, inside the one test binary: axa-test's `own_process!` (axa 0.21, TST-12), which
+/// replaced this crate's own `tests/own_process.rs`.
+///
+/// The suites under `tests/` were 69 binaries; they are now modules of one (`tests/main.rs`), so Cargo links the
+/// library into one test executable rather than 69. Some of them were separate binaries for a reason: they change
+/// state that lives for the whole process and is read once. The service reads these once per process and keeps
+/// them (each is a `OnceLock` in `src/`):
+///
+/// - whether authentication is required (`auth::enforcement::REQUIRE_AUTH`, from
+///   `PROJECT_PORTFOLIO_MANAGEMENT_REQUIRE_AUTH`): most real-token suites turn it on, the request suites need it
+///   off;
+/// - the ABAC policy (`auth::policy`, from `PROJECT_PORTFOLIO_MANAGEMENT_ABAC_POLICY`), which suites set to
+///   different policies;
+/// - the handling-mark scheme (`handling_marks::scheme`), which `handling_marks` and `public_reader` set to
+///   different schemes;
+/// - the integrity-MAC key set (`compliance::mac`), set by `webhook_redelivery`;
+/// - the event transport (`streaming::transport`), set to `outbox` by `outbox_audit` and `fluvio_relay`;
+/// - the `OpenID Connect` and Keycloak verifiers (`auth::oidc`, `auth::verifier::KEYCLOAK`);
+/// - the full-text index directory (`search::ENGINE`), which `masking` and `list_search_check_duplicates_authz` set;
+/// - the global `tracing` subscriber, which `trace_span_concurrency` and `otlp_middleware` install, because what they
+///   test is the global dispatcher on a multi-threaded runtime (a thread-local `set_default` would not reach the
+///   worker threads);
+///
+/// and they set environment variables (`std::env::set_var`) that other suites would then read.
+///
+/// `own_process!` keeps that isolation without a second binary. Written first in a test's body, it starts this same
+/// executable again with `<the test's name> --exact --include-ignored --test-threads=1`, and `AXA_TEST_OWN_PROCESS`
+/// naming the test; the child process runs that one test, and the parent passes or fails with it, showing the child's
+/// output when it fails. The parent fails, too, unless the child reports exactly one test run and passed: a test name
+/// that matched nothing (a rename the name derivation missed) must not pass silently.
+macro_rules! own_process {
+    () => {
+        ::axa_test::own_process!()
+    };
+}
 
 mod otlp_collector;
 mod requests;

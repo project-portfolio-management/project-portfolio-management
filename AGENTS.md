@@ -11,7 +11,7 @@ Entry point for AI coding agents at the repository root. Five projects live here
 | iOS and iPadOS app (Swift 6, SwiftUI, Lily for Swift) | `project-portfolio-management-mobile-app-with-swift` | [AGENTS.md](project-portfolio-management-mobile-app-with-swift/AGENTS.md) |
 | Android app (Kotlin, Jetpack Compose, Lily for Kotlin) | `project-portfolio-management-mobile-app-with-kotlin` | [AGENTS.md](project-portfolio-management-mobile-app-with-kotlin/AGENTS.md) |
 
-Versions: service 0.2.0, matcher 0.2.2, UI 0.2.0 (tag `v0.2.0`). The two mobile apps are 0.1.0, unreleased, and outside the release tag (`spec/mobile-apps.md`). Rust 1.100.0 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.98 for every crate; axa 0.20 needs it for the service), Node 26, pnpm, Podman.
+Versions: service 0.2.0, matcher 0.2.2, UI 0.2.0 (tag `v0.2.0`). The two mobile apps are 0.1.0, unreleased, and outside the release tag (`spec/mobile-apps.md`). Rust 1.100.0 (pinned in `rust-toolchain.toml`; the minimum supported version is 1.98 for every crate; axa 0.24 needs it for the service), Node 26, pnpm, Podman.
 
 ## How work is done here
 

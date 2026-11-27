@@ -852,7 +852,7 @@ posture, the ABAC policy, the mark scheme, the MAC key, the event
 transport, a global `tracing` subscriber: each read once per process)
 starts with `own_process!();` and so runs alone in a fresh process of
 the same executable, which fails unless that process ran and passed
-exactly that one test (`tests/own_process.rs`).
+exactly that one test (`axa_test::own_process!`, wrapped in `tests/main.rs`).
 
 ## 12. Compliance
 

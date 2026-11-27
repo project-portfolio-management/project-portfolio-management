@@ -140,6 +140,29 @@ No migration comes with the axa change, so going back is redeploying the previou
 migrations `20261114000110` to `20261114000112` (RE-7, RE-1, RE-8), which add tables and columns only, each with a
 down file.
 
+## Upgrading to axa 0.24
+
+The release that moves the service from axa 0.20 to 0.24.1 (through 0.21, 0.22 and 0.23) renames no setting of the
+service's own, changes no route or answer, and adds no migration. `axa`, `axa-test` (0.15.1) and five axa crates
+change: `axa-idempotency-key` 0.3.0, `axa-postgres-job-queue` 0.7.0, `axa-transactional-outbox` 0.4.1,
+`axa-request-rate-limit` 0.3.4 and `axa-openapi-docs` 0.1.1. The job queue's and the outbox's tables are the same, so
+the relay need not be stopped.
+
+1. **axa refuses its own old setting names in production** (axa 0.21): `DATABASE_URL`, `BODY_LIMIT_BYTES`,
+   `HEADER_READ_TIMEOUT_SECONDS`, `HTTP_CSP` and `LOCO_ENV`. The service already refused the first three in every
+   environment when their new names are unset; `HTTP_CSP` and `LOCO_ENV` are new to the refusal. Run
+   `service check` with the deploy configuration before deploying; elsewhere each is a warning it prints.
+2. **A task's configuration leaves out the settings only a server reads** (axa 0.23, `config::LISTENER_ONLY`), so a
+   setting such as `CORS_ALLOWED_ORIGINS` cannot stop `service task …`. `start` reads them as before.
+3. **The job queue refuses a setting out of range** at connect where it held it to a limit (axa 0.22). The service
+   uses the queue's defaults, which are in range.
+4. **No request time limit is still the default**, now stated in the service's `Defaults`
+   (`request_timeout_seconds: Some(0)`, axa 0.23); `REQUEST_TIMEOUT_SECONDS` still sets one.
+5. **For developers**: `axa-test` names its Postgres template from a SHA-256 of the migrations (0.22), so each
+   developer's template is built again once.
+
+Going back is redeploying the previous tag; nothing is written that the old version cannot read.
+
 ## Upgrading to axa 0.20
 
 The release that moves the service from axa 0.19 to 0.20 renames no setting, changes no route or answer, and adds no

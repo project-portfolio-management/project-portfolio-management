@@ -2,7 +2,7 @@
 
 Entry point for AI coding agents working in the
 `project-portfolio-management` crate (v0.2.0, edition 2024, Rust 1.100.0 with a
-minimum of 1.98, axa 0.20, sqlx 0.9, axum 0.8): a registry of **plan** records
+minimum of 1.98, axa 0.24, sqlx 0.9, axum 0.8): a registry of **plan** records
 — one recursive collection with an optional Portfolio / Project / Product
 / Program / Practice / Process / Purpose / Pathway / Proposal `kind`
 label — **and** a project-management tool.
@@ -269,7 +269,7 @@ aggregate GET needs a decision in `private_aggregates`.
 A new suite is a module in `tests/main.rs`, not a new binary. A test that sets an environment variable or other
 process-wide state (the auth posture, the ABAC policy, the mark scheme, the MAC key, the event transport, a global
 `tracing` subscriber: each is read once per process) starts with `own_process!();`, which runs it alone in a fresh
-process of the same executable (`tests/own_process.rs`).
+process of the same executable (`axa_test::own_process!`, wrapped in `tests/main.rs`).
 
 ## Layout
 

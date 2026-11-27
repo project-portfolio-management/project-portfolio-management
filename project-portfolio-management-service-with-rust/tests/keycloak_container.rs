@@ -47,7 +47,7 @@ async fn status(method: &Method, path: &str, headers: &HeaderMap) -> u16 {
 
 /// Password-grant an access token for `user` from the imported realm.
 async fn token(base: &str, user: &str, password: &str) -> String {
-    project_portfolio_management::app::install_tls_provider(); // reqwest has no bundled provider.
+    axa::tls::install_provider(); // reqwest has no bundled provider.
     let body: Value = reqwest::Client::new()
         .post(format!("{base}/realms/mxi/protocol/openid-connect/token"))
         .header("content-type", "application/x-www-form-urlencoded")

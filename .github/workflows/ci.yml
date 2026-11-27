@@ -100,7 +100,7 @@ jobs:
         with:
           workspaces: ${{ env.API }}
       # Both steps run the one integration-test binary (tests/main.rs); a suite that changes process-wide state runs
-      # each of its tests in a process of its own (tests/own_process.rs).
+      # each of its tests in a process of its own (axa_test::own_process!, wrapped in tests/main.rs).
       - name: Request-level suites (tests/requests)
         run: 'cargo test --test main requests:: -- --ignored --test-threads=1'
       - name: Real-token and other database suites

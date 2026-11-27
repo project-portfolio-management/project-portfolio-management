@@ -4,7 +4,7 @@
 use axa::{
     AppContext, Environment, Error, Result,
     boot::{BootResult, TestApp},
-    cli::{Cli, Command, DbCommand, parse_vars},
+    cli::{Cli, Command, DbCommand},
     config::{Config as ServiceConfig, Defaults, MB},
     health::Checks,
     queue::{Queue, QueueOptions},
@@ -77,6 +77,9 @@ fn defaults() -> Defaults {
         production_port: None,
         body_limit: 2 * MB,
         max_connections: 1,
+        // No request time limit unless `REQUEST_TIMEOUT_SECONDS` asks for one: a limit would cut the live event
+        // streams. axa's own default is 60 seconds in production (axa 0.23, CFG-32).
+        request_timeout_seconds: Some(0),
         ..Defaults::default()
     }
 }
@@ -92,20 +95,27 @@ pub fn opts_out_of_guards(environment: &Environment) -> bool {
     }
 }
 
-/// The configuration, with the five things axa would do differently from this service's own middleware turned off: CORS,
-/// HSTS, the content security policy and the permissions policy are `http_security`'s, and a request timeout would cut
-/// the live event streams, so it needs asking for. axa's content security policy is production-only and runs first, so
-/// left on it would silently replace ours and blank `/swagger-ui`, and no test on the `test` profile would see it. Its
-/// permissions policy (new in axa 0.11, set by `HTTP_PERMISSIONS_POLICY`) would likewise replace ours, so one list, ours,
-/// is the policy whatever the environment says.
+/// The configuration a server reads, as [`service_config_from`] makes it.
 fn service_config(environment: &Environment) -> Result<ServiceConfig> {
+    service_config_from(environment, ServiceConfig::from_env)
+}
+
+/// The configuration `read` gives, with the four things axa would do differently from this service's own middleware
+/// turned off: CORS, HSTS, the content security policy and the permissions policy are `http_security`'s. (The fifth, a
+/// request timeout that would cut the live event streams, is off in [`defaults`] unless asked for.) axa's content
+/// security policy is production-only and runs first, so left on it would silently replace ours and blank `/swagger-ui`,
+/// and no test on the `test` profile would see it. Its permissions policy (new in axa 0.11, set by
+/// `HTTP_PERMISSIONS_POLICY`) would likewise replace ours, so one list, ours, is the policy whatever the environment
+/// says. `read` is [`ServiceConfig::from_env`] for a server, or [`Cli::config`] for a command, which reads a task's
+/// configuration without the settings only a server reads and applies `--binding` and `--port` (axa 0.24).
+fn service_config_from(
+    environment: &Environment,
+    read: impl FnOnce(&Environment, &Defaults) -> Result<ServiceConfig>,
+) -> Result<ServiceConfig> {
     renamed_settings(|name| std::env::var(name).ok()).map_err(Error::Message)?;
     crate::deployment_id::from_env(environment).map_err(Error::Message)?;
-    let mut config = ServiceConfig::from_env(environment, &defaults())?;
+    let mut config = read(environment, &defaults())?;
     leave_headers_to_http_security(&mut config);
-    if std::env::var_os("REQUEST_TIMEOUT_SECONDS").is_none() {
-        config.http.timeout_seconds = 0;
-    }
     // One list of trusted proxies, which axa has read as `TRUSTED_PROXIES`. The old name still works alone, and two
     // different lists refuse to start.
     if let Some(old) = crate::trusted_proxy::old_setting(|name| std::env::var(name).ok())
@@ -177,12 +187,6 @@ pub fn renamed_settings(
 /// The service: plain functions, called in order from [`App::run`].
 pub struct App;
 
-/// Choose `ring` as rustls's process-wide crypto provider. reqwest is built with `rustls-no-provider`, so nothing else
-/// installs one. An already-installed provider is left alone, so this is safe to call more than once.
-pub fn install_tls_provider() {
-    let _ = rustls::crypto::ring::default_provider().install_default();
-}
-
 impl App {
     /// The version shown to operators: the crate version and the commit it was built from.
     #[must_use]
@@ -202,7 +206,8 @@ impl App {
     ///
     /// When any of those cannot be set up.
     pub async fn context(environment: Environment, config: ServiceConfig) -> Result<AppContext> {
-        install_tls_provider();
+        // reqwest is built with `rustls-no-provider`; `db::connect` installs ring too, but the cache and mailer come first.
+        axa::tls::install_provider();
         crate::handling_marks::init().map_err(Error::Message)?;
         crate::settings::validate().map_err(Error::Message)?;
         let db = axa::db::connect(&config.database).await?;
@@ -274,10 +279,7 @@ impl App {
     ///
     /// When the configuration is refused, or the command fails.
     pub async fn run(cli: Cli) -> Result<()> {
-        let environment = cli
-            .environment
-            .as_deref()
-            .map_or_else(Environment::from_env, Environment::parse);
+        let environment = cli.environment();
         if matches!(cli.command, Command::Check) {
             renamed_settings(|name| std::env::var(name).ok()).map_err(Error::Message)?;
             crate::deployment_id::from_env(&environment).map_err(Error::Message)?;
@@ -292,15 +294,10 @@ impl App {
         if let Command::Health { ready, port } = cli.command {
             return axa::cli::health(&environment, &defaults(), ready, port).await;
         }
-        let mut config = service_config(&environment)?;
-        if let Command::Start { binding, port, .. } = &cli.command {
-            if let Some(binding) = binding {
-                config.server.binding.clone_from(binding);
-            }
-            if let Some(port) = port {
-                config.server.port = *port;
-            }
-        }
+        // A task's configuration leaves out what only a server reads, and `start`'s `--binding` and `--port` apply.
+        let config = service_config_from(&environment, |environment, defaults| {
+            cli.config(environment, defaults)
+        })?;
         let ctx = Self::context(environment, config).await?;
         if !Self::init_logger(&ctx)? {
             axa::logger::init(env!("CARGO_CRATE_NAME"), &ctx.config.logger);
@@ -318,13 +315,8 @@ impl App {
             Command::Task { name, params } => {
                 let mut tasks = Tasks::default();
                 Self::register_tasks(&mut tasks);
-                let Some(name) = name else {
-                    for task in tasks.list() {
-                        println!("{}\t{}", task.name, task.detail);
-                    }
-                    return Ok(());
-                };
-                tasks.run(&name, &ctx, &parse_vars(&params)?).await
+                // With no name, lists the tasks, one to a line, name and description separated by a tab.
+                tasks.run_or_list(name.as_deref(), &ctx, &params).await
             }
         }
     }
@@ -946,10 +938,21 @@ mod tests {
         let defaults = defaults();
         assert_eq!(defaults.port, 1241);
         assert_eq!(defaults.max_connections, 1);
-        install_tls_provider();
-        install_tls_provider();
+        assert_eq!(
+            defaults.request_timeout_seconds,
+            Some(0),
+            "no request limit unless asked"
+        );
+        axa::tls::install_provider();
+        axa::tls::install_provider();
         let environment = Environment::Test;
         let config = ServiceConfig::from_env(&environment, &defaults).unwrap();
+        if std::env::var_os("REQUEST_TIMEOUT_SECONDS").is_none() {
+            assert_eq!(
+                config.http.timeout_seconds, 0,
+                "the live event streams are not cut"
+            );
+        }
         let pool = sqlx::postgres::PgPoolOptions::new()
             .connect_lazy("postgres://nobody:nothing@127.0.0.1:1/none")
             .unwrap();

@@ -9,6 +9,27 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed — axa 0.24.1 (2026-11-27)
+
+- `axa` 0.20.1 → 0.24.1 and `axa-test` 0.11.0 → 0.15.1 (`axa-idempotency-key` 0.3.0, `axa-postgres-job-queue`
+  0.7.0, `axa-transactional-outbox` 0.4.1, `axa-request-rate-limit` 0.3.4, `axa-openapi-docs` 0.1.1 with them).
+  0.24.1 was published inside the two-day cooldown and taken by the maintainer's exception. Nothing failed to compile:
+  the service calls none of the functions 0.22 made fallible, and builds `Defaults` with `..Defaults::default()`.
+- Taken from the new axa: `Cli::environment`; `Cli::config`, so a task's configuration leaves out the settings only a
+  server reads and `start`'s `--binding` and `--port` are applied by axa (`app::service_config_from`);
+  `Tasks::run_or_list` for `task`; `axa::tls::install_provider` in place of `app::install_tls_provider`, which is
+  deleted with the direct `rustls` dependency; `Defaults::request_timeout_seconds: Some(0)` in place of clearing the
+  timeout by hand when `REQUEST_TIMEOUT_SECONDS` is unset.
+- Not taken: `cli::answer` (the service's `check` also checks its own settings, the cache and the mailer);
+  `Settings::retired` (it refuses an old name even when the new one is set too, which the service's
+  `renamed_settings` allows); `Defaults::hsts` and `cors_origins` (a variable would win over them, and both are
+  `http_security`'s whatever the environment says); `AppRoutes::into_app_with` (it would move the service's own
+  layers inside the standard middleware, a change of order this upgrade does not make).
+- Tests: `axa_test::own_process!` (axa 0.21, TST-12) in place of this crate's `tests/own_process.rs`, which is deleted;
+  `tests/main.rs` wraps it under the old name and keeps the list of process-wide state that makes a test need it. One
+  difference: the child's output is shown when it fails, not on every run.
+- Upgrade notes: `operations/upgrade-and-migration.md`, "Upgrading to axa 0.24".
+
 ### Fixed — a page of plans is full while visible plans remain; axa-cursor-pagination 0.1.4 (2026-11-27)
 
 - `axa-cursor-pagination` 0.1.2 → 0.1.4 (the lockfile only; published inside the two-day cooldown, by the maintainer's

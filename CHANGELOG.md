@@ -16,6 +16,15 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (axa 0.24.1)
+
+- The service is on axa 0.24.1 (from 0.20.1) and axa-test 0.15.1, inside the two-day cooldown by the maintainer's
+  exception. Nothing broke; the service now uses axa's command-line environment and configuration (a task no longer
+  reads the settings only a server needs), its task listing, its TLS provider and its own-process test macro, each in
+  place of code of its own, which is deleted. Upgrade notes in `operations/upgrade-and-migration.md`. Not taken:
+  `cli::answer`, `Settings::retired`, `Defaults::hsts`/`cors_origins` and `into_app_with`, each for a stated reason.
+  Not verified: a deploy's `service check` against the newly refused `HTTP_CSP` and `LOCO_ENV`.
+
 ## 27 November (a framework's versions)
 
 - A plan's ways of working and governance framework pages show the version the plan follows, say when it is behind

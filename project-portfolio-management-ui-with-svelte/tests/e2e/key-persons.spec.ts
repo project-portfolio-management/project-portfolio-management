@@ -100,6 +100,8 @@ test.describe("key people", () => {
   for (const locale of ["en-001", "cy-001", "zh-cn"]) {
     test(`passes axe in ${locale}`, async ({ page }) => {
       await page.goto(`/${locale}/key-persons`, { waitUntil: "networkidle" });
+      // The title is set once the page has hydrated; axe before that finds none.
+      await expect(page).toHaveTitle(/\S/);
       const { default: AxeBuilder } = await import("@axe-core/playwright");
       const r = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])

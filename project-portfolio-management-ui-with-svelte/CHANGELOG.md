@@ -9,6 +9,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — an organization's names on `/organizations` (RE-7, 2026-11-27)
+
+- A names form (name, short name, code, national, names in other languages); short name and code columns; a name
+  shown in the reader's language; `src/lib/organization-view.ts`; 27 strings in every locale, machine-written. Not
+  built: organization names shown on other pages; not verified against a real service.
+
+### Fixed — key people's axe check waits for the page title (2026-11-27)
+
+- Test only.
+
 ### Added — translating a product roadmap (RE-6, 2026-11-27)
 
 - A Translations section on `/plans/[pid]/roadmap`; two client methods; `translationChange`, `translationSummary`

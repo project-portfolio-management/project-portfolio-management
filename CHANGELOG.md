@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (an organization's names)
+
+- `/organizations` shows each organization's short name and code, its name in the reader's language, and which one is
+  national, and a form changes its name, short name, code, national scope and names in other languages, sending only
+  what changed and saying every problem first. 27 new strings in every locale, machine-written in 14, none reviewed.
+  Not built: these names on any other page. Not verified: against a real service.
+
 ## 27 November (translating a product roadmap)
 
 - `/plans/[pid]/roadmap` gains a Translations section: the roadmap's own fields and each item's, in a language typed,

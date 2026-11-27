@@ -9364,4 +9364,38 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.product_roadmap.tr_tags_count": "{field}: स्रोत जितने टैग दें, अल्पविराम से अलग।",
   "p.product_roadmap.tr_too_long": "{field}: अनुवाद बहुत लंबा है।",
   "p.product_roadmap.tr_tag_long": "{field}: टैग अधिकतम 50 वर्ण का होता है।",
+  "p.organizations.col_short": "संक्षिप्त नाम",
+  "p.organizations.col_code": "कोड",
+  "p.organizations.name_national": "{name} (राष्ट्रीय)",
+  "p.organizations.names_btn": "नाम",
+  "p.organizations.names_for": "{name} के नाम बदलें",
+  "p.organizations.edit_h": "{name} के नाम",
+  "p.organizations.f_name": "नाम (1 से 200 वर्ण)",
+  "p.organizations.f_short": "संक्षिप्त नाम (वैकल्पिक, 50 वर्ण तक)",
+  "p.organizations.f_code":
+    "कोड (वैकल्पिक: एक अक्षर या अंक, फिर 19 तक अक्षर, अंक या हाइफ़न)",
+  "p.organizations.f_national":
+    "राष्ट्रीय: राष्ट्रीय दायरे वाला एकमात्र संगठन, सबसे पहले सूचीबद्ध",
+  "p.organizations.f_translations":
+    "अन्य भाषाओं में नाम, हर पंक्ति में एक, कोड: नाम | संक्षिप्त नाम के रूप में (संक्षिप्त नाम वैकल्पिक)",
+  "p.organizations.save": "नाम सहेजें",
+  "p.organizations.cancel": "रद्द करें",
+  "p.organizations.saved": "{name} के नाम सहेजे गए।",
+  "p.organizations.unchanged": "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.organizations.taken_409":
+    "किसी अन्य संगठन का यही नाम या कोड है; कोई दूसरा चुनें।",
+  "p.organizations.name_bad": "नाम 1 से 200 वर्ण का होना चाहिए।",
+  "p.organizations.name_taken": "किसी अन्य संगठन का यही नाम है।",
+  "p.organizations.short_bad": "संक्षिप्त नाम अधिकतम 50 वर्ण का है।",
+  "p.organizations.code_bad":
+    "कोड एक अक्षर या अंक है, फिर 19 तक अक्षर, अंक या हाइफ़न।",
+  "p.organizations.code_taken": "किसी अन्य संगठन का यही कोड है।",
+  "p.organizations.national_taken":
+    "कोई अन्य संगठन पहले से राष्ट्रीय है; पहले उससे यह हटाएँ।",
+  "p.organizations.tr_too_many": "अधिकतम 50 भाषाओं में नाम।",
+  "p.organizations.tr_code_bad":
+    "हर पंक्ति cy या zh-cn जैसे भाषा कोड और फिर कोलन से शुरू होती है।",
+  "p.organizations.tr_name_bad": "हर भाषा का नाम 1 से 200 वर्ण का होना चाहिए।",
+  "p.organizations.tr_short_bad": "हर भाषा का संक्षिप्त नाम अधिकतम 50 वर्ण का है।",
+  "p.organizations.tr_code_twice": "हर भाषा केवल एक बार आ सकती है।",
 };

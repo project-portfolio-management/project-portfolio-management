@@ -10082,4 +10082,40 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.product_roadmap.tr_too_long": "{field}: Die Übersetzung ist zu lang.",
   "p.product_roadmap.tr_tag_long":
     "{field}: Ein Schlagwort hat höchstens 50 Zeichen.",
+  "p.organizations.col_short": "Kurzname",
+  "p.organizations.col_code": "Kürzel",
+  "p.organizations.name_national": "{name} (landesweit)",
+  "p.organizations.names_btn": "Namen",
+  "p.organizations.names_for": "Namen von {name} ändern",
+  "p.organizations.edit_h": "Die Namen von {name}",
+  "p.organizations.f_name": "Name (1 bis 200 Zeichen)",
+  "p.organizations.f_short": "Kurzname (optional, bis zu 50 Zeichen)",
+  "p.organizations.f_code":
+    "Kürzel (optional: ein Buchstabe oder eine Ziffer, dann bis zu 19 Buchstaben, Ziffern oder Bindestriche)",
+  "p.organizations.f_national":
+    "National: die eine Organisation mit nationalem Geltungsbereich, zuerst aufgeführt",
+  "p.organizations.f_translations":
+    "Namen in anderen Sprachen, eine pro Zeile als Code: Name | Kurzname (der Kurzname ist optional)",
+  "p.organizations.save": "Namen speichern",
+  "p.organizations.cancel": "Abbrechen",
+  "p.organizations.saved": "Namen von {name} gespeichert.",
+  "p.organizations.unchanged": "Nichts geändert, daher nichts gesendet.",
+  "p.organizations.taken_409":
+    "Eine andere Organisation hat diesen Namen oder dieses Kürzel; wählen Sie ein anderes.",
+  "p.organizations.name_bad": "Der Name muss 1 bis 200 Zeichen lang sein.",
+  "p.organizations.name_taken": "Eine andere Organisation hat diesen Namen.",
+  "p.organizations.short_bad": "Der Kurzname hat höchstens 50 Zeichen.",
+  "p.organizations.code_bad":
+    "Ein Kürzel ist ein Buchstabe oder eine Ziffer, dann bis zu 19 Buchstaben, Ziffern oder Bindestriche.",
+  "p.organizations.code_taken": "Eine andere Organisation hat dieses Kürzel.",
+  "p.organizations.national_taken":
+    "Eine andere Organisation ist bereits national; nehmen Sie es dort zuerst weg.",
+  "p.organizations.tr_too_many": "Namen in höchstens 50 Sprachen.",
+  "p.organizations.tr_code_bad":
+    "Jede Zeile beginnt mit einem Sprachcode wie cy oder zh-cn, dann einem Doppelpunkt.",
+  "p.organizations.tr_name_bad":
+    "Der Name jeder Sprache muss 1 bis 200 Zeichen lang sein.",
+  "p.organizations.tr_short_bad":
+    "Der Kurzname jeder Sprache hat höchstens 50 Zeichen.",
+  "p.organizations.tr_code_twice": "Jede Sprache darf nur einmal vorkommen.",
 };

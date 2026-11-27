@@ -9763,4 +9763,39 @@ export const PAGES_VI: Record<PageKey, string> = {
     "{field}: hãy nhập số thẻ bằng bản gốc, cách nhau bằng dấu phẩy.",
   "p.product_roadmap.tr_too_long": "{field}: bản dịch quá dài.",
   "p.product_roadmap.tr_tag_long": "{field}: một thẻ tối đa 50 ký tự.",
+  "p.organizations.col_short": "Tên ngắn",
+  "p.organizations.col_code": "Mã",
+  "p.organizations.name_national": "{name} (quốc gia)",
+  "p.organizations.names_btn": "Tên",
+  "p.organizations.names_for": "Đổi tên của {name}",
+  "p.organizations.edit_h": "Các tên của {name}",
+  "p.organizations.f_name": "Tên (1 đến 200 ký tự)",
+  "p.organizations.f_short": "Tên ngắn (không bắt buộc, tối đa 50 ký tự)",
+  "p.organizations.f_code":
+    "Mã (không bắt buộc: một chữ cái hoặc chữ số, rồi tối đa 19 chữ cái, chữ số hoặc dấu gạch nối)",
+  "p.organizations.f_national":
+    "Quốc gia: tổ chức duy nhất có phạm vi quốc gia, được liệt kê đầu tiên",
+  "p.organizations.f_translations":
+    "Tên bằng ngôn ngữ khác, mỗi dòng một tên dạng mã: tên | tên ngắn (tên ngắn không bắt buộc)",
+  "p.organizations.save": "Lưu các tên",
+  "p.organizations.cancel": "Hủy",
+  "p.organizations.saved": "Đã lưu các tên của {name}.",
+  "p.organizations.unchanged": "Không có gì thay đổi nên không gửi gì.",
+  "p.organizations.taken_409":
+    "Một tổ chức khác đã có tên hoặc mã đó; hãy chọn cái khác.",
+  "p.organizations.name_bad": "Tên phải từ 1 đến 200 ký tự.",
+  "p.organizations.name_taken": "Một tổ chức khác đã có tên đó.",
+  "p.organizations.short_bad": "Tên ngắn tối đa 50 ký tự.",
+  "p.organizations.code_bad":
+    "Mã là một chữ cái hoặc chữ số, rồi tối đa 19 chữ cái, chữ số hoặc dấu gạch nối.",
+  "p.organizations.code_taken": "Một tổ chức khác đã có mã đó.",
+  "p.organizations.national_taken":
+    "Một tổ chức khác đã là cấp quốc gia; hãy bỏ ở tổ chức đó trước.",
+  "p.organizations.tr_too_many": "Tên bằng tối đa 50 ngôn ngữ.",
+  "p.organizations.tr_code_bad":
+    "Mỗi dòng bắt đầu bằng mã ngôn ngữ như cy hoặc zh-cn, rồi dấu hai chấm.",
+  "p.organizations.tr_name_bad":
+    "Tên của mỗi ngôn ngữ phải từ 1 đến 200 ký tự.",
+  "p.organizations.tr_short_bad": "Tên ngắn của mỗi ngôn ngữ tối đa 50 ký tự.",
+  "p.organizations.tr_code_twice": "Mỗi ngôn ngữ chỉ được xuất hiện một lần.",
 };

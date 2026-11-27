@@ -9317,4 +9317,37 @@ export const PAGES_AR: Record<PageKey, string> = {
     "{field}: أعطِ عدد الوسوم نفسه الذي في المصدر، مفصولة بفواصل.",
   "p.product_roadmap.tr_too_long": "{field}: الترجمة طويلة جدًا.",
   "p.product_roadmap.tr_tag_long": "{field}: الوسم 50 حرفًا على الأكثر.",
+  "p.organizations.col_short": "الاسم المختصر",
+  "p.organizations.col_code": "الرمز",
+  "p.organizations.name_national": "{name} (وطنية)",
+  "p.organizations.names_btn": "الأسماء",
+  "p.organizations.names_for": "تغيير أسماء {name}",
+  "p.organizations.edit_h": "أسماء {name}",
+  "p.organizations.f_name": "الاسم (من 1 إلى 200 حرف)",
+  "p.organizations.f_short": "الاسم المختصر (اختياري، حتى 50 حرفًا)",
+  "p.organizations.f_code":
+    "الرمز (اختياري: حرف أو رقم، ثم حتى 19 حرفًا أو رقمًا أو شرطة)",
+  "p.organizations.f_national":
+    "وطنية: المنظمة الوحيدة ذات النطاق الوطني، تُدرج أولًا",
+  "p.organizations.f_translations":
+    "الأسماء بلغات أخرى، اسم في كل سطر بصيغة الرمز: الاسم | الاسم المختصر (الاسم المختصر اختياري)",
+  "p.organizations.save": "حفظ الأسماء",
+  "p.organizations.cancel": "إلغاء",
+  "p.organizations.saved": "حُفظت أسماء {name}.",
+  "p.organizations.unchanged": "لم يتغيّر شيء، فلم يُرسل شيء.",
+  "p.organizations.taken_409": "لمنظمة أخرى هذا الاسم أو الرمز؛ اختر غيره.",
+  "p.organizations.name_bad": "يجب أن يكون الاسم من 1 إلى 200 حرف.",
+  "p.organizations.name_taken": "لمنظمة أخرى هذا الاسم.",
+  "p.organizations.short_bad": "الاسم المختصر 50 حرفًا على الأكثر.",
+  "p.organizations.code_bad":
+    "الرمز حرف أو رقم، ثم حتى 19 حرفًا أو رقمًا أو شرطة.",
+  "p.organizations.code_taken": "لمنظمة أخرى هذا الرمز.",
+  "p.organizations.national_taken":
+    "منظمة أخرى وطنية بالفعل؛ أزل ذلك عنها أولًا.",
+  "p.organizations.tr_too_many": "أسماء بخمسين لغة على الأكثر.",
+  "p.organizations.tr_code_bad":
+    "يبدأ كل سطر برمز لغة مثل cy أو zh-cn، ثم نقطتين.",
+  "p.organizations.tr_name_bad": "يجب أن يكون اسم كل لغة من 1 إلى 200 حرف.",
+  "p.organizations.tr_short_bad": "الاسم المختصر لكل لغة 50 حرفًا على الأكثر.",
+  "p.organizations.tr_code_twice": "لا يجوز أن تظهر كل لغة إلا مرة واحدة.",
 };

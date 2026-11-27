@@ -9522,4 +9522,38 @@ export const PAGES_KO: Record<PageKey, string> = {
     "{field}: 원문과 같은 수의 태그를 쉼표로 구분해 입력하세요.",
   "p.product_roadmap.tr_too_long": "{field}: 번역이 너무 깁니다.",
   "p.product_roadmap.tr_tag_long": "{field}: 태그는 최대 50자입니다.",
+  "p.organizations.col_short": "약칭",
+  "p.organizations.col_code": "코드",
+  "p.organizations.name_national": "{name}(전국)",
+  "p.organizations.names_btn": "이름",
+  "p.organizations.names_for": "{name}의 이름 변경",
+  "p.organizations.edit_h": "{name}의 이름",
+  "p.organizations.f_name": "이름(1~200자)",
+  "p.organizations.f_short": "약칭(선택, 최대 50자)",
+  "p.organizations.f_code":
+    "코드(선택: 영문자나 숫자 하나 뒤에 영문자, 숫자, 하이픈 최대 19자)",
+  "p.organizations.f_national":
+    "전국: 전국 범위의 유일한 조직으로, 맨 앞에 표시됩니다",
+  "p.organizations.f_translations":
+    "다른 언어의 이름. 한 줄에 하나씩 코드: 이름 | 약칭 형식으로(약칭은 선택)",
+  "p.organizations.save": "이름 저장",
+  "p.organizations.cancel": "취소",
+  "p.organizations.saved": "{name}의 이름을 저장했습니다.",
+  "p.organizations.unchanged": "바뀐 것이 없어 아무것도 보내지 않았습니다.",
+  "p.organizations.taken_409":
+    "다른 조직이 그 이름이나 코드를 쓰고 있습니다. 다른 것을 고르세요.",
+  "p.organizations.name_bad": "이름은 1~200자여야 합니다.",
+  "p.organizations.name_taken": "다른 조직이 그 이름을 쓰고 있습니다.",
+  "p.organizations.short_bad": "약칭은 최대 50자입니다.",
+  "p.organizations.code_bad":
+    "코드는 영문자나 숫자 하나 뒤에 영문자, 숫자, 하이픈 최대 19자입니다.",
+  "p.organizations.code_taken": "다른 조직이 그 코드를 쓰고 있습니다.",
+  "p.organizations.national_taken":
+    "다른 조직이 이미 전국입니다. 먼저 그 조직에서 해제하세요.",
+  "p.organizations.tr_too_many": "이름은 최대 50개 언어입니다.",
+  "p.organizations.tr_code_bad":
+    "각 줄은 cy나 zh-cn 같은 언어 코드와 콜론으로 시작합니다.",
+  "p.organizations.tr_name_bad": "각 언어의 이름은 1~200자여야 합니다.",
+  "p.organizations.tr_short_bad": "각 언어의 약칭은 최대 50자입니다.",
+  "p.organizations.tr_code_twice": "각 언어는 한 번만 쓸 수 있습니다.",
 };

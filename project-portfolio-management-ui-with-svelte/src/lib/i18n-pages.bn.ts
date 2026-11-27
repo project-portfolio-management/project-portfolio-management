@@ -9482,4 +9482,38 @@ export const PAGES_BN: Record<PageKey, string> = {
     "{field}: উৎসে যতগুলো ট্যাগ ততগুলো দিন, কমা দিয়ে আলাদা করে।",
   "p.product_roadmap.tr_too_long": "{field}: অনুবাদটি খুব লম্বা।",
   "p.product_roadmap.tr_tag_long": "{field}: একটি ট্যাগ সর্বোচ্চ ৫০ অক্ষর।",
+  "p.organizations.col_short": "সংক্ষিপ্ত নাম",
+  "p.organizations.col_code": "কোড",
+  "p.organizations.name_national": "{name} (জাতীয়)",
+  "p.organizations.names_btn": "নাম",
+  "p.organizations.names_for": "{name}-এর নাম বদলান",
+  "p.organizations.edit_h": "{name}-এর নাম",
+  "p.organizations.f_name": "নাম (১ থেকে ২০০ অক্ষর)",
+  "p.organizations.f_short": "সংক্ষিপ্ত নাম (ঐচ্ছিক, ৫০ অক্ষর পর্যন্ত)",
+  "p.organizations.f_code":
+    "কোড (ঐচ্ছিক: একটি বর্ণ বা অঙ্ক, তারপর ১৯টি পর্যন্ত বর্ণ, অঙ্ক বা হাইফেন)",
+  "p.organizations.f_national":
+    "জাতীয়: জাতীয় পরিসরের একমাত্র সংস্থা, প্রথমে তালিকাভুক্ত",
+  "p.organizations.f_translations":
+    "অন্য ভাষায় নাম, প্রতি লাইনে একটি, কোড: নাম | সংক্ষিপ্ত নাম আকারে (সংক্ষিপ্ত নাম ঐচ্ছিক)",
+  "p.organizations.save": "নাম সংরক্ষণ করুন",
+  "p.organizations.cancel": "বাতিল",
+  "p.organizations.saved": "{name}-এর নাম সংরক্ষিত হয়েছে।",
+  "p.organizations.unchanged": "কিছুই বদলায়নি, তাই কিছুই পাঠানো হয়নি।",
+  "p.organizations.taken_409":
+    "অন্য একটি সংস্থার এই নাম বা কোড আছে; অন্যটি বেছে নিন।",
+  "p.organizations.name_bad": "নাম ১ থেকে ২০০ অক্ষরের হতে হবে।",
+  "p.organizations.name_taken": "অন্য একটি সংস্থার এই নাম আছে।",
+  "p.organizations.short_bad": "সংক্ষিপ্ত নাম সর্বোচ্চ ৫০ অক্ষর।",
+  "p.organizations.code_bad":
+    "কোড হলো একটি বর্ণ বা অঙ্ক, তারপর ১৯টি পর্যন্ত বর্ণ, অঙ্ক বা হাইফেন।",
+  "p.organizations.code_taken": "অন্য একটি সংস্থার এই কোড আছে।",
+  "p.organizations.national_taken":
+    "অন্য একটি সংস্থা ইতিমধ্যে জাতীয়; আগে সেটি থেকে এটি সরান।",
+  "p.organizations.tr_too_many": "সর্বোচ্চ ৫০টি ভাষায় নাম।",
+  "p.organizations.tr_code_bad":
+    "প্রতিটি লাইন cy বা zh-cn-এর মতো ভাষার কোড, তারপর কোলন দিয়ে শুরু হয়।",
+  "p.organizations.tr_name_bad": "প্রতিটি ভাষার নাম ১ থেকে ২০০ অক্ষরের হতে হবে।",
+  "p.organizations.tr_short_bad": "প্রতিটি ভাষার সংক্ষিপ্ত নাম সর্বোচ্চ ৫০ অক্ষর।",
+  "p.organizations.tr_code_twice": "প্রতিটি ভাষা কেবল একবার থাকতে পারে।",
 };

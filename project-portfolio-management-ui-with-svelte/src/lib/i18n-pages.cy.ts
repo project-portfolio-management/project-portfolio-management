@@ -9854,4 +9854,38 @@ export const PAGES_CY: Record<PageKey, string> = {
     "{field}: rhowch gymaint o dagiau ag sydd gan y ffynhonnell, wedi'u gwahanu gan atalnodau.",
   "p.product_roadmap.tr_too_long": "{field}: mae'r cyfieithiad yn rhy hir.",
   "p.product_roadmap.tr_tag_long": "{field}: mae tag yn 50 nod ar y mwyaf.",
+  "p.organizations.col_short": "Enw byr",
+  "p.organizations.col_code": "Cod",
+  "p.organizations.name_national": "{name} (cenedlaethol)",
+  "p.organizations.names_btn": "Enwau",
+  "p.organizations.names_for": "Newid enwau {name}",
+  "p.organizations.edit_h": "Enwau {name}",
+  "p.organizations.f_name": "Enw (1 i 200 nod)",
+  "p.organizations.f_short": "Enw byr (dewisol, hyd at 50 nod)",
+  "p.organizations.f_code":
+    "Cod (dewisol: llythyren neu ddigid, yna hyd at 19 llythyren, digid neu gysylltnod)",
+  "p.organizations.f_national":
+    "Cenedlaethol: yr un sefydliad â chwmpas cenedlaethol, a restrir gyntaf",
+  "p.organizations.f_translations":
+    "Enwau mewn ieithoedd eraill, un i bob llinell fel cod: enw | enw byr (mae'r enw byr yn ddewisol)",
+  "p.organizations.save": "Cadw'r enwau",
+  "p.organizations.cancel": "Canslo",
+  "p.organizations.saved": "Cadwyd enwau {name}.",
+  "p.organizations.unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.organizations.taken_409":
+    "Mae gan sefydliad arall yr enw neu'r cod hwnnw; dewiswch un arall.",
+  "p.organizations.name_bad": "Rhaid i'r enw fod yn 1 i 200 nod.",
+  "p.organizations.name_taken": "Mae gan sefydliad arall yr enw hwnnw.",
+  "p.organizations.short_bad": "Mae'r enw byr yn 50 nod ar y mwyaf.",
+  "p.organizations.code_bad":
+    "Mae cod yn llythyren neu ddigid, yna hyd at 19 llythyren, digid neu gysylltnod.",
+  "p.organizations.code_taken": "Mae gan sefydliad arall y cod hwnnw.",
+  "p.organizations.national_taken":
+    "Mae sefydliad arall eisoes yn genedlaethol; tynnwch hynny oddi arno yn gyntaf.",
+  "p.organizations.tr_too_many": "Enwau mewn 50 iaith ar y mwyaf.",
+  "p.organizations.tr_code_bad":
+    "Mae pob llinell yn dechrau â chod iaith fel cy neu zh-cn, yna colon.",
+  "p.organizations.tr_name_bad": "Rhaid i enw pob iaith fod yn 1 i 200 nod.",
+  "p.organizations.tr_short_bad": "Mae enw byr pob iaith yn 50 nod ar y mwyaf.",
+  "p.organizations.tr_code_twice": "Gall pob iaith ymddangos unwaith yn unig.",
 };

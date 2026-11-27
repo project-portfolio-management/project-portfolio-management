@@ -9881,4 +9881,41 @@ export const PAGES_ID: Record<PageKey, string> = {
     "{field}: berikan tag sebanyak yang ada di sumber, dipisahkan koma.",
   "p.product_roadmap.tr_too_long": "{field}: terjemahan terlalu panjang.",
   "p.product_roadmap.tr_tag_long": "{field}: tag paling banyak 50 karakter.",
+  "p.organizations.col_short": "Nama singkat",
+  "p.organizations.col_code": "Kode",
+  "p.organizations.name_national": "{name} (nasional)",
+  "p.organizations.names_btn": "Nama",
+  "p.organizations.names_for": "Ubah nama {name}",
+  "p.organizations.edit_h": "Nama-nama {name}",
+  "p.organizations.f_name": "Nama (1 sampai 200 karakter)",
+  "p.organizations.f_short": "Nama singkat (opsional, hingga 50 karakter)",
+  "p.organizations.f_code":
+    "Kode (opsional: huruf atau angka, lalu hingga 19 huruf, angka, atau tanda hubung)",
+  "p.organizations.f_national":
+    "Nasional: satu-satunya organisasi berlingkup nasional, dicantumkan pertama",
+  "p.organizations.f_translations":
+    "Nama dalam bahasa lain, satu per baris sebagai kode: nama | nama singkat (nama singkat opsional)",
+  "p.organizations.save": "Simpan nama",
+  "p.organizations.cancel": "Batal",
+  "p.organizations.saved": "Nama {name} disimpan.",
+  "p.organizations.unchanged":
+    "Tidak ada yang berubah, jadi tidak ada yang dikirim.",
+  "p.organizations.taken_409":
+    "Organisasi lain memiliki nama atau kode itu; pilih yang lain.",
+  "p.organizations.name_bad": "Nama harus 1 sampai 200 karakter.",
+  "p.organizations.name_taken": "Organisasi lain memiliki nama itu.",
+  "p.organizations.short_bad": "Nama singkat paling banyak 50 karakter.",
+  "p.organizations.code_bad":
+    "Kode adalah huruf atau angka, lalu hingga 19 huruf, angka, atau tanda hubung.",
+  "p.organizations.code_taken": "Organisasi lain memiliki kode itu.",
+  "p.organizations.national_taken":
+    "Organisasi lain sudah nasional; lepaskan dari organisasi itu dulu.",
+  "p.organizations.tr_too_many": "Nama dalam paling banyak 50 bahasa.",
+  "p.organizations.tr_code_bad":
+    "Setiap baris diawali kode bahasa seperti cy atau zh-cn, lalu titik dua.",
+  "p.organizations.tr_name_bad":
+    "Nama setiap bahasa harus 1 sampai 200 karakter.",
+  "p.organizations.tr_short_bad":
+    "Nama singkat setiap bahasa paling banyak 50 karakter.",
+  "p.organizations.tr_code_twice": "Setiap bahasa hanya boleh muncul sekali.",
 };

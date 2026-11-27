@@ -9963,4 +9963,41 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.product_roadmap.tr_too_long": "{field}: la traducción es demasiado larga.",
   "p.product_roadmap.tr_tag_long":
     "{field}: una etiqueta tiene como máximo 50 caracteres.",
+  "p.organizations.col_short": "Nombre corto",
+  "p.organizations.col_code": "Código",
+  "p.organizations.name_national": "{name} (nacional)",
+  "p.organizations.names_btn": "Nombres",
+  "p.organizations.names_for": "Cambiar los nombres de {name}",
+  "p.organizations.edit_h": "Los nombres de {name}",
+  "p.organizations.f_name": "Nombre (de 1 a 200 caracteres)",
+  "p.organizations.f_short": "Nombre corto (opcional, hasta 50 caracteres)",
+  "p.organizations.f_code":
+    "Código (opcional: una letra o un dígito, luego hasta 19 letras, dígitos o guiones)",
+  "p.organizations.f_national":
+    "Nacional: la única organización de ámbito nacional, que aparece primero",
+  "p.organizations.f_translations":
+    "Nombres en otros idiomas, uno por línea como código: nombre | nombre corto (el nombre corto es opcional)",
+  "p.organizations.save": "Guardar los nombres",
+  "p.organizations.cancel": "Cancelar",
+  "p.organizations.saved": "Se guardaron los nombres de {name}.",
+  "p.organizations.unchanged": "No cambió nada, así que no se envió nada.",
+  "p.organizations.taken_409":
+    "Otra organización tiene ese nombre o código; elija otro.",
+  "p.organizations.name_bad": "El nombre debe tener de 1 a 200 caracteres.",
+  "p.organizations.name_taken": "Otra organización tiene ese nombre.",
+  "p.organizations.short_bad":
+    "El nombre corto tiene como máximo 50 caracteres.",
+  "p.organizations.code_bad":
+    "Un código es una letra o un dígito, luego hasta 19 letras, dígitos o guiones.",
+  "p.organizations.code_taken": "Otra organización tiene ese código.",
+  "p.organizations.national_taken":
+    "Otra organización ya es nacional; quíteselo primero a esa.",
+  "p.organizations.tr_too_many": "Nombres en 50 idiomas como máximo.",
+  "p.organizations.tr_code_bad":
+    "Cada línea empieza con un código de idioma como cy o zh-cn y dos puntos.",
+  "p.organizations.tr_name_bad":
+    "El nombre de cada idioma debe tener de 1 a 200 caracteres.",
+  "p.organizations.tr_short_bad":
+    "El nombre corto de cada idioma tiene como máximo 50 caracteres.",
+  "p.organizations.tr_code_twice": "Cada idioma puede aparecer una sola vez.",
 };

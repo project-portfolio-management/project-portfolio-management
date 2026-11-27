@@ -9625,6 +9625,42 @@ export const PAGES_EN = {
     "{field}: give as many tags as the source has, separated by commas.",
   "p.product_roadmap.tr_too_long": "{field}: the translation is too long.",
   "p.product_roadmap.tr_tag_long": "{field}: a tag is at most 50 characters.",
+  "p.organizations.col_short": "Short name",
+  "p.organizations.col_code": "Code",
+  "p.organizations.name_national": "{name} (national)",
+  "p.organizations.names_btn": "Names",
+  "p.organizations.names_for": "Change the names of {name}",
+  "p.organizations.edit_h": "The names of {name}",
+  "p.organizations.f_name": "Name (1 to 200 characters)",
+  "p.organizations.f_short": "Short name (optional, up to 50 characters)",
+  "p.organizations.f_code":
+    "Code (optional: a letter or digit, then up to 19 letters, digits or hyphens)",
+  "p.organizations.f_national":
+    "National: the one organization with a national scope, listed first",
+  "p.organizations.f_translations":
+    "Names in other languages, one to a line as code: name | short name (the short name optional)",
+  "p.organizations.save": "Save the names",
+  "p.organizations.cancel": "Cancel",
+  "p.organizations.saved": "Saved the names of {name}.",
+  "p.organizations.unchanged": "Nothing changed, so nothing was sent.",
+  "p.organizations.taken_409":
+    "Another organization has that name or code; choose another.",
+  "p.organizations.name_bad": "The name must be 1 to 200 characters.",
+  "p.organizations.name_taken": "Another organization has that name.",
+  "p.organizations.short_bad": "The short name is at most 50 characters.",
+  "p.organizations.code_bad":
+    "A code is a letter or digit, then up to 19 letters, digits or hyphens.",
+  "p.organizations.code_taken": "Another organization has that code.",
+  "p.organizations.national_taken":
+    "Another organization is already national; take that off it first.",
+  "p.organizations.tr_too_many": "Names in at most 50 languages.",
+  "p.organizations.tr_code_bad":
+    "Each line starts with a language code such as cy or zh-cn, then a colon.",
+  "p.organizations.tr_name_bad":
+    "Each language's name must be 1 to 200 characters.",
+  "p.organizations.tr_short_bad":
+    "Each language's short name is at most 50 characters.",
+  "p.organizations.tr_code_twice": "Each language may appear only once.",
 } as const;
 
 /** A key in the page and component catalogue. */

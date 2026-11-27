@@ -1,4 +1,4 @@
-// The partner organizations screen (EX-3), over stubbed API answers.
+// The partner organizations screen (EX-3) and an organization's names (RE-7), over stubbed API answers.
 import { test, expect } from "./test";
 
 test.describe("organizations", () => {
@@ -173,4 +173,111 @@ test.describe("organizations", () => {
       ).toEqual([]);
     });
   }
+
+  test("an organization's names are changed with only what changed sent; every problem said first; Welsh names shown in Welsh (RE-7)", async ({
+    page,
+  }) => {
+    const named = [
+      {
+        pid: "o4",
+        name: "Digital Health and Care Wales",
+        kind: "delivery",
+        active: true,
+        audience: "org:o4",
+        code: "DHCW",
+        national: true,
+        short_name: null,
+        translations: {},
+      },
+      {
+        pid: "o5",
+        name: "Swansea Bay University Health Board",
+        kind: "delivery",
+        active: true,
+        audience: "org:o5",
+        code: "SBUHB",
+        national: false,
+        short_name: "Swansea Bay",
+        translations: {
+          cy: { name: "Bwrdd Iechyd Prifysgol Bae Abertawe" },
+        },
+      },
+    ];
+    await page.route("**/api/organizations", (r) =>
+      r.fulfill({ json: { organizations: named } }),
+    );
+    await page.goto("/en-001/organizations", { waitUntil: "networkidle" });
+    await expect(
+      page.getByRole("row", {
+        name: /Digital Health and Care Wales \(national\).*DHCW/,
+      }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", {
+        name: "Change the names of Swansea Bay University Health Board",
+      })
+      .click();
+    const form = page.getByRole("form", {
+      name: "The names of Swansea Bay University Health Board",
+    });
+    await expect(form.getByLabel(/^Code/)).toHaveValue("SBUHB");
+    await form.getByRole("button", { name: "Save the names" }).click();
+    await expect(page.getByTestId("org-notice")).toHaveText(
+      "Nothing changed, so nothing was sent.",
+    );
+    await form.getByLabel(/^Code/).fill("dhcw");
+    await form.getByRole("checkbox", { name: /^National/ }).check();
+    await form.getByLabel(/^Names in other languages/).fill("welsh: Bwrdd");
+    await form.getByRole("button", { name: "Save the names" }).click();
+    await expect(
+      page.getByTestId("org-problems").getByRole("listitem"),
+    ).toHaveText([
+      "Another organization has that code.",
+      "Another organization is already national; take that off it first.",
+      "Each line starts with a language code such as cy or zh-cn, then a colon.",
+    ]);
+    expect(changed).toBe("");
+    await form.getByRole("checkbox", { name: /^National/ }).uncheck();
+    await form.getByLabel(/^Code/).fill("SBUHB");
+    await form.getByLabel(/^Short name/).fill("");
+    await form
+      .getByLabel(/^Names in other languages/)
+      .fill(
+        "cy: Bwrdd Iechyd Prifysgol Bae Abertawe | Bae Abertawe\nzh-cn: 斯旺西湾大学卫生局",
+      );
+    await form.getByRole("button", { name: "Save the names" }).click();
+    await expect(page.getByTestId("org-notice")).toHaveText(
+      "Saved the names of Swansea Bay University Health Board.",
+    );
+    expect(JSON.parse(changed.slice(3))).toEqual({
+      short_name: "",
+      translations: {
+        cy: {
+          name: "Bwrdd Iechyd Prifysgol Bae Abertawe",
+          short_name: "Bae Abertawe",
+        },
+        "zh-cn": { name: "斯旺西湾大学卫生局" },
+      },
+    });
+    expect(changed.slice(0, 2)).toBe("o5");
+    const { default: AxeBuilder } = await import("@axe-core/playwright");
+    await page
+      .getByRole("button", {
+        name: "Change the names of Digital Health and Care Wales",
+      })
+      .click();
+    const a = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(
+      a.violations
+        .filter((v) => v.impact === "serious" || v.impact === "critical")
+        .map((v) => v.id),
+    ).toEqual([]);
+
+    await page.goto("/cy-001/organizations", { waitUntil: "networkidle" });
+    await expect(
+      page.getByRole("row", { name: /Bwrdd Iechyd Prifysgol Bae Abertawe/ }),
+    ).toBeVisible();
+  });
 });

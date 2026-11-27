@@ -9684,4 +9684,38 @@ export const PAGES_JA: Record<PageKey, string> = {
     "{field}: 原文と同じ数のタグをカンマ区切りで入力してください。",
   "p.product_roadmap.tr_too_long": "{field}: 翻訳が長すぎます。",
   "p.product_roadmap.tr_tag_long": "{field}: タグは 50 文字までです。",
+  "p.organizations.col_short": "略称",
+  "p.organizations.col_code": "コード",
+  "p.organizations.name_national": "{name}（全国）",
+  "p.organizations.names_btn": "名称",
+  "p.organizations.names_for": "{name} の名称を変更",
+  "p.organizations.edit_h": "{name} の名称",
+  "p.organizations.f_name": "名称（1〜200 文字）",
+  "p.organizations.f_short": "略称（任意、50 文字まで）",
+  "p.organizations.f_code":
+    "コード（任意: 英字か数字 1 文字のあと、英字・数字・ハイフンを 19 文字まで）",
+  "p.organizations.f_national":
+    "全国: 全国を対象とする唯一の組織。最初に表示されます",
+  "p.organizations.f_translations":
+    "他の言語での名称。1 行に 1 つ、コード: 名称 | 略称 の形で（略称は任意）",
+  "p.organizations.save": "名称を保存",
+  "p.organizations.cancel": "キャンセル",
+  "p.organizations.saved": "{name} の名称を保存しました。",
+  "p.organizations.unchanged": "変更がないため、何も送信しませんでした。",
+  "p.organizations.taken_409":
+    "その名称またはコードは別の組織が使っています。別のものを選んでください。",
+  "p.organizations.name_bad": "名称は 1〜200 文字にしてください。",
+  "p.organizations.name_taken": "その名称は別の組織が使っています。",
+  "p.organizations.short_bad": "略称は 50 文字までです。",
+  "p.organizations.code_bad":
+    "コードは英字か数字 1 文字のあと、英字・数字・ハイフンを 19 文字までです。",
+  "p.organizations.code_taken": "そのコードは別の組織が使っています。",
+  "p.organizations.national_taken":
+    "別の組織がすでに全国です。先にそちらから外してください。",
+  "p.organizations.tr_too_many": "名称は 50 言語までです。",
+  "p.organizations.tr_code_bad":
+    "各行は cy や zh-cn などの言語コードとコロンで始めます。",
+  "p.organizations.tr_name_bad": "各言語の名称は 1〜200 文字にしてください。",
+  "p.organizations.tr_short_bad": "各言語の略称は 50 文字までです。",
+  "p.organizations.tr_code_twice": "各言語は 1 回だけ指定できます。",
 };

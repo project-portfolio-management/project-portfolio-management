@@ -9830,4 +9830,42 @@ export const PAGES_RU: Record<PageKey, string> = {
     "{field}: укажите столько меток, сколько в источнике, через запятую.",
   "p.product_roadmap.tr_too_long": "{field}: перевод слишком длинный.",
   "p.product_roadmap.tr_tag_long": "{field}: метка — не длиннее 50 символов.",
+  "p.organizations.col_short": "Краткое название",
+  "p.organizations.col_code": "Код",
+  "p.organizations.name_national": "{name} (национальная)",
+  "p.organizations.names_btn": "Названия",
+  "p.organizations.names_for": "Изменить названия {name}",
+  "p.organizations.edit_h": "Названия {name}",
+  "p.organizations.f_name": "Название (от 1 до 200 символов)",
+  "p.organizations.f_short": "Краткое название (необязательно, до 50 символов)",
+  "p.organizations.f_code":
+    "Код (необязательно: буква или цифра, затем до 19 букв, цифр или дефисов)",
+  "p.organizations.f_national":
+    "Национальная: единственная организация национального уровня, идёт первой",
+  "p.organizations.f_translations":
+    "Названия на других языках, по одному в строке в виде код: название | краткое название (краткое необязательно)",
+  "p.organizations.save": "Сохранить названия",
+  "p.organizations.cancel": "Отмена",
+  "p.organizations.saved": "Названия {name} сохранены.",
+  "p.organizations.unchanged":
+    "Ничего не изменилось, поэтому ничего не отправлено.",
+  "p.organizations.taken_409":
+    "У другой организации уже есть такое название или код; выберите другое.",
+  "p.organizations.name_bad": "Название должно содержать от 1 до 200 символов.",
+  "p.organizations.name_taken": "У другой организации уже есть такое название.",
+  "p.organizations.short_bad": "Краткое название — не длиннее 50 символов.",
+  "p.organizations.code_bad":
+    "Код — это буква или цифра, затем до 19 букв, цифр или дефисов.",
+  "p.organizations.code_taken": "У другой организации уже есть такой код.",
+  "p.organizations.national_taken":
+    "Другая организация уже национальная; сначала снимите это с неё.",
+  "p.organizations.tr_too_many": "Названия не более чем на 50 языках.",
+  "p.organizations.tr_code_bad":
+    "Каждая строка начинается с кода языка, например cy или zh-cn, и двоеточия.",
+  "p.organizations.tr_name_bad":
+    "Название на каждом языке должно содержать от 1 до 200 символов.",
+  "p.organizations.tr_short_bad":
+    "Краткое название на каждом языке — не длиннее 50 символов.",
+  "p.organizations.tr_code_twice":
+    "Каждый язык может встречаться только один раз.",
 };

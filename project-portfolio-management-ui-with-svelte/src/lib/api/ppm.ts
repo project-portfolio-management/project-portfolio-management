@@ -5,6 +5,7 @@
 //
 // The strings these views show come from the page catalogues: English and
 // Welsh (machine-written, unreviewed); the other locales fall back to English.
+import type { OrgChange, OrgNames } from "#lib/organization-view.js";
 import { API_BASE_URL } from "#lib/config.js";
 import { ApiClient, ApiError } from "./client";
 import type { Collection, Goal } from "./types";
@@ -1090,10 +1091,10 @@ export class PpmClient {
   addOrganization(name: string, kind: string): Promise<unknown> {
     return this.http.post("/api/organizations", { body: { name, kind } });
   }
-  /** Rename, change kind, retire (`active: false`) or restore an organization. */
+  /** Rename, change kind, retire (`active: false`) or restore an organization, or change its names (RE-7). */
   changeOrganization(
     pid: string,
-    change: { name?: string; kind?: string; active?: boolean },
+    change: OrgChange & { kind?: string; active?: boolean },
   ): Promise<unknown> {
     return this.http.put(`/api/organizations/${pid}`, { body: change });
   }
@@ -4172,6 +4173,14 @@ export interface Organization {
   active: boolean;
   /** The pack audience that addresses this organization (`org:<pid>`). */
   audience: string;
+  /** Its short code (RE-7), unique ignoring case. */
+  code?: string | null;
+  /** Whether it is the one organization with a national scope (RE-7). */
+  national?: boolean;
+  /** Its short name (RE-7). */
+  short_name?: string | null;
+  /** Its names in other languages (RE-7), by language code. */
+  translations?: Record<string, OrgNames>;
 }
 
 export interface KeyPersons {

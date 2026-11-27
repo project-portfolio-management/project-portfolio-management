@@ -3601,5 +3601,14 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   `PUT …/roadmap/items/{ipid}/translations/{lang}`), an emptied field as `""` (which removes it), tags as one
   comma-separated line as many as the source's; a bad code, a text too long and a tag over 50 characters are said
   first. Rules in `src/lib/product-roadmap-view.ts`.
+- **An organization's names** (on `/organizations`, RE-7, 2026-11-27): each organization's name is shown in the
+  reader's language where it has one (the national organization marked), with its short name and code. "Names" opens
+  a form for its name (1 to 200 characters), short name (at most 50), code (a letter or digit, then up to 19 letters,
+  digits or hyphens), whether it is the one national organization, and its names in other languages, written one to a
+  line as `code: name | short name` (at most 50 languages). A save sends only what changed
+  (`PUT /api/organizations/{pid}`: an emptied short name or code clears it, the names replace the set); every problem
+  is said first, a name, code or national scope another organization holds among them, and a 409 meanwhile has its
+  own sentence. Rules in `src/lib/organization-view.ts`; `tests/e2e/organizations.spec.ts`.
 - **Not built** in part l: gathering several edits into one pending change set (each edit above is saved at once),
-  an item's details (and their translations) and organizations, and organizations' short and translated names.
+  an item's details (and their translations) and organizations, and organization names shown on any page but
+  `/organizations`.

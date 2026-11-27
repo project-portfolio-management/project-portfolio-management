@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — the import review queue on `/jobs` (2026-11-27)
+
+- Held rows are listed with the plans each looks like and created or discarded after a question; three client methods.
+  Not offered: merging a held row into its match.
+
 ### Added — `/jobs`, bulk imports and exports (NC-1 slice 12 part k, in part; 2026-11-27)
 
 - `/jobs` lists the bulk jobs (state in words and a symbol, every count, whether they add up, the error report and an

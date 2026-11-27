@@ -8788,8 +8788,7 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.jobs.rows":
     "{total}행: 생성 {created}, 갱신 {updated}, 변경 없음 {unchanged}, 검토 대기 {review}, 실패 {failed}.",
   "p.jobs.not_reconciled": "이 개수들의 합이 전체와 맞지 않습니다.",
-  "p.jobs.held":
-    "검토 대기 행은 검토 대기열에서 기다리며, 그 화면은 아직 없습니다.",
+  "p.jobs.held": "검토 대기 행은 아래 “검토 대기”에 나열됩니다.",
   "p.jobs.stopping":
     "중지 요청됨: 처리 중인 행을 마치고 처리한 내용을 유지합니다.",
   "p.jobs.errors": "오류 보고서(CSV)",
@@ -8829,4 +8828,33 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.jobs.could_not_import": "가져오기를 시작할 수 없습니다.",
   "p.jobs.queued_ok": "시작됨: 작업이 목록 맨 위에 있습니다.",
   "p.jobs.replayed": "이 파일은 이미 보냈습니다. 해당 작업이 목록에 있습니다.",
+  "p.jobs.review_h": "검토 대기",
+  "p.jobs.review_intro":
+    "이미 있는 계획처럼 보인 행은 생성되지 않고 보류됩니다. 각 행을 결정하세요: 새 계획으로 만들거나, 중복으로 버리세요. 비슷한 계획에 병합하는 것은 여기서 제공하지 않습니다: 버린 뒤 계획 목록에서 계획을 병합하세요.",
+  "p.jobs.review_none": "검토 대기 중인 것이 없습니다.",
+  "p.jobs.could_not_load_review": "검토 대기 행을 불러올 수 없습니다.",
+  "p.jobs.review_line": "파일의 {line}번째 줄",
+  "p.jobs.review_matches": "비슷한 계획:",
+  "p.jobs.review_match": "유사도 {score}, 신뢰도 {confidence}",
+  "p.jobs.confidence_high": "높음",
+  "p.jobs.confidence_medium": "보통",
+  "p.jobs.confidence_low": "낮음",
+  "p.jobs.confidence_unknown": "알 수 없음",
+  "p.jobs.review_unnamed": "(이름 없음)",
+  "p.jobs.review_create": "새 것: 만들기",
+  "p.jobs.review_discard": "중복: 버리기",
+  "p.jobs.review_create_ask": "“{name}”을(를) 새 계획으로 만들까요?",
+  "p.jobs.review_discard_ask":
+    "“{name}”을(를) 버릴까요? 이것으로 만들어진 것은 없습니다.",
+  "p.jobs.review_created": "“{name}”을(를) 만들었습니다.",
+  "p.jobs.review_discarded": "“{name}”을(를) 버렸습니다.",
+  "p.jobs.review_already": "그 행은 이미 결정되었습니다.",
+  "p.jobs.review_invalid":
+    "보류된 행이 더 이상 유효한 계획이 아니어서 만들 수 없습니다.",
+  "p.jobs.review_gone": "그 행은 더 이상 없습니다.",
+  "p.jobs.could_not_decide": "결정을 기록할 수 없습니다.",
+  "p.jobs.review_show": "이 작업의 보류 행 보기",
+  "p.jobs.review_all": "모든 보류 행 보기",
+  "p.jobs.review_one_job": "가져오기 한 건이 보류한 행을 보여 줍니다.",
+  "p.jobs.review_more": "처음 500개만 나열됩니다.",
 };

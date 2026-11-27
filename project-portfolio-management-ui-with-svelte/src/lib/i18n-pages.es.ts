@@ -9179,7 +9179,7 @@ export const PAGES_ES: Record<PageKey, string> = {
     "{total} filas: {created} creadas, {updated} actualizadas, {unchanged} sin cambios, {review} retenidas para revisión, {failed} fallidas.",
   "p.jobs.not_reconciled": "Estos recuentos no suman el total.",
   "p.jobs.held":
-    "Las filas retenidas para revisión esperan en la cola de revisión, que aún no tiene pantalla.",
+    "Las filas retenidas para revisión aparecen abajo en «Retenidas para revisión».",
   "p.jobs.stopping":
     "Se le pidió que se detuviera: termina la fila en la que está y conserva lo procesado.",
   "p.jobs.errors": "Informe de errores (CSV)",
@@ -9220,4 +9220,35 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.jobs.could_not_import": "No se pudo iniciar la importación.",
   "p.jobs.queued_ok": "Iniciado: el trabajo está al principio de la lista.",
   "p.jobs.replayed": "Este archivo ya se envió; su trabajo está en la lista.",
+  "p.jobs.review_h": "Retenidas para revisión",
+  "p.jobs.review_intro":
+    "Las filas que parecían un plan que ya existe se retienen, no se crean. Decida cada una: crearla como plan nuevo o descartarla como duplicado. Aquí no se ofrece fusionarla con el plan al que se parece: descártela y luego fusione los planes desde la lista de planes.",
+  "p.jobs.review_none": "No hay nada retenido para revisión.",
+  "p.jobs.could_not_load_review":
+    "No se pudieron cargar las filas retenidas para revisión.",
+  "p.jobs.review_line": "Línea {line} del archivo",
+  "p.jobs.review_matches": "Se parece a:",
+  "p.jobs.review_match": "{score} de parecido, confianza {confidence}",
+  "p.jobs.confidence_high": "alta",
+  "p.jobs.confidence_medium": "media",
+  "p.jobs.confidence_low": "baja",
+  "p.jobs.confidence_unknown": "desconocida",
+  "p.jobs.review_unnamed": "(sin nombre)",
+  "p.jobs.review_create": "Es nueva: crearla",
+  "p.jobs.review_discard": "Es un duplicado: descartarla",
+  "p.jobs.review_create_ask": "¿Crear «{name}» como plan nuevo?",
+  "p.jobs.review_discard_ask":
+    "¿Descartar «{name}»? No se creó nada a partir de ella.",
+  "p.jobs.review_created": "Se creó «{name}».",
+  "p.jobs.review_discarded": "Se descartó «{name}».",
+  "p.jobs.review_already": "Esa fila ya se decidió.",
+  "p.jobs.review_invalid":
+    "La fila retenida ya no es un plan válido, así que no se puede crear.",
+  "p.jobs.review_gone": "Esa fila ya no está.",
+  "p.jobs.could_not_decide": "No se pudo registrar la decisión.",
+  "p.jobs.review_show": "Mostrar sus filas retenidas",
+  "p.jobs.review_all": "Mostrar todas las filas retenidas",
+  "p.jobs.review_one_job":
+    "Se muestran las filas retenidas por una importación.",
+  "p.jobs.review_more": "Solo se muestran las 500 primeras.",
 };

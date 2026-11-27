@@ -4,8 +4,13 @@
  */
 
 import { t, tDynamic } from "./i18n.svelte.js";
-import { formatInteger } from "./locale-format.js";
-import type { BulkJob, BulkJobStatus, StartExportBody } from "./api/ppm";
+import { formatInteger, formatPercent } from "./locale-format.js";
+import type {
+  BulkJob,
+  BulkJobStatus,
+  ReviewQueueItem,
+  StartExportBody,
+} from "./api/ppm";
 
 /** Every state, in the order the filter offers them. */
 export const STATUSES: readonly BulkJobStatus[] = [
@@ -99,4 +104,29 @@ export function refusalKey(
     return `p.jobs.${action}_refused`;
   if (action === "cancel" && status === 404) return "p.jobs.gone";
   return `p.jobs.could_not_${action}`;
+}
+
+/** How alike a held row and a plan are, in the reader's words: the matcher's score as a percentage and its band. */
+export function matchText(m: ReviewQueueItem["matches"][number]): string {
+  const band = ["High", "Medium", "Low"].includes(m.confidence)
+    ? tDynamic(`p.jobs.confidence_${m.confidence.toLowerCase()}`)
+    : t("p.jobs.confidence_unknown");
+  return t("p.jobs.review_match", {
+    score: formatPercent(m.score),
+    confidence: band,
+  });
+}
+
+/** A held row's name for a question or a notice; a row with none is said to have none. */
+export function heldName(i: ReviewQueueItem): string {
+  const n = typeof i.candidate.name === "string" ? i.candidate.name.trim() : "";
+  return n || t("p.jobs.review_unnamed");
+}
+
+/** The catalogue key for a refused decision on a held row. */
+export function decisionRefusalKey(status: number | undefined): string {
+  if (status === 409) return "p.jobs.review_already";
+  if (status === 422) return "p.jobs.review_invalid";
+  if (status === 404) return "p.jobs.review_gone";
+  return "p.jobs.could_not_decide";
 }

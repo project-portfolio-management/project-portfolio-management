@@ -3426,7 +3426,13 @@ first, every problem at once; each refusal is the catalogue's sentence by action
 - Refusals are the catalogue's sentences: a full export without the right (403), an export or a file the service
   refuses (422), a file over the deployment's limit (413), a job that is gone (404). The service's `note` and
   `failure_reason` are English and never shown.
+- **Held for review** (2026-11-27): the rows an import held because they looked like a plan already here, all of them
+  or one job's ("Show its held rows" on the job). Each shows the name and kind it would have, its line in the file, and
+  each plan it looks like (linked, the matcher's score as a percentage and its band in words); it is created as a new
+  plan or discarded as a duplicate, each after a question. Merging into the match is not offered and the page says so
+  (discard it, then merge from the plan list). A row decided elsewhere (409), no longer a valid plan (422) or gone (404)
+  has its own sentence, and the list is read again.
 - Rules in `src/lib/jobs-view.ts` (`tests/unit/jobs-view.test.ts`); `tests/e2e/jobs.spec.ts` (stubbed service, axe,
-  Welsh). **Not built:** the review queue (`GET /api/plans/review-queue`, confirm and reject), `POST /api/plans/match`,
+  Welsh). **Not built:** `POST /api/plans/match`,
   a single plan's export (`GET /api/plans/{pid}/export`), templates' revise, plans and sync, and the MSPDI batch import,
   which are the rest of part k; a kept file's expiry, which the list does not carry.

@@ -9086,7 +9086,7 @@ export const PAGES_CY: Record<PageKey, string> = {
     "{total} rhes: {created} wedi'u creu, {updated} wedi'u diweddaru, {unchanged} heb newid, {review} wedi'u dal i'w hadolygu, {failed} wedi methu.",
   "p.jobs.not_reconciled": "Nid yw'r cyfrifon hyn yn adio i'r cyfanswm.",
   "p.jobs.held":
-    "Mae rhesi a ddaliwyd i'w hadolygu yn aros yn y ciw adolygu, nad oes sgrin iddo eto.",
+    "Rhestrir rhesi a ddaliwyd i'w hadolygu o dan “Wedi'u dal i'w hadolygu” isod.",
   "p.jobs.stopping":
     "Gofynnwyd iddi stopio: mae'n gorffen y rhes y mae arni ac yn cadw'r hyn a broseswyd.",
   "p.jobs.errors": "Adroddiad gwallau (CSV)",
@@ -9127,4 +9127,33 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.jobs.could_not_import": "Methu dechrau'r mewnforio.",
   "p.jobs.queued_ok": "Wedi dechrau: mae'r swydd ar frig y rhestr.",
   "p.jobs.replayed": "Anfonwyd y ffeil hon eisoes; mae ei swydd yn y rhestr.",
+  "p.jobs.review_h": "Wedi'u dal i'w hadolygu",
+  "p.jobs.review_intro":
+    "Mae rhesi a oedd yn edrych fel cynllun sydd yma eisoes yn cael eu dal, nid eu creu. Penderfynwch ar bob un: ei chreu fel cynllun newydd, neu ei thaflu fel dyblygiad. Ni chynigir ei huno â'r cynllun y mae'n edrych fel: taflwch hi, yna unwch y cynlluniau o'r rhestr gynlluniau.",
+  "p.jobs.review_none": "Nid oes dim wedi'i ddal i'w adolygu.",
+  "p.jobs.could_not_load_review":
+    "Methu llwytho'r rhesi a ddaliwyd i'w hadolygu.",
+  "p.jobs.review_line": "Llinell {line} o'r ffeil",
+  "p.jobs.review_matches": "Mae'n edrych fel:",
+  "p.jobs.review_match": "{score} yn debyg, hyder {confidence}",
+  "p.jobs.confidence_high": "uchel",
+  "p.jobs.confidence_medium": "canolig",
+  "p.jobs.confidence_low": "isel",
+  "p.jobs.confidence_unknown": "anhysbys",
+  "p.jobs.review_unnamed": "(dim enw)",
+  "p.jobs.review_create": "Mae'n newydd: ei chreu",
+  "p.jobs.review_discard": "Mae'n ddyblygiad: ei thaflu",
+  "p.jobs.review_create_ask": "Creu “{name}” fel cynllun newydd?",
+  "p.jobs.review_discard_ask": "Taflu “{name}”? Ni chrëwyd dim ohoni.",
+  "p.jobs.review_created": "Crëwyd “{name}”.",
+  "p.jobs.review_discarded": "Taflwyd “{name}”.",
+  "p.jobs.review_already": "Mae penderfyniad eisoes ar y rhes honno.",
+  "p.jobs.review_invalid":
+    "Nid yw'r rhes a ddaliwyd yn gynllun dilys mwyach, felly ni ellir ei chreu.",
+  "p.jobs.review_gone": "Nid yw'r rhes honno yno mwyach.",
+  "p.jobs.could_not_decide": "Methu cofnodi'r penderfyniad.",
+  "p.jobs.review_show": "Dangos ei rhesi a ddaliwyd",
+  "p.jobs.review_all": "Dangos pob rhes a ddaliwyd",
+  "p.jobs.review_one_job": "Yn dangos y rhesi a ddaliwyd gan un mewnforyn.",
+  "p.jobs.review_more": "Dim ond y 500 cyntaf a restrir.",
 };

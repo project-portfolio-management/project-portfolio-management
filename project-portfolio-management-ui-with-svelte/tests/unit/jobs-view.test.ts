@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   STATUSES,
   cancellable,
+  decisionRefusalKey,
+  heldName,
+  matchText,
   exportBody,
   formatOfName,
   orderJobs,
@@ -131,5 +134,39 @@ describe("jobs-view (T-8, NC-1 slice 12 part k)", () => {
     expect(refusalKey("cancel", 404)).toBe("p.jobs.gone");
     expect(refusalKey("cancel", 500)).toBe("p.jobs.could_not_cancel");
     expect(refusalKey("load", undefined)).toBe("p.jobs.could_not_load");
+  });
+
+  it("says a match's likeness as a percentage and its band, and names a held row", () => {
+    expect(
+      matchText({ pid: "p", name: "Apollo", score: 0.825, confidence: "High" }),
+    ).toBe("83% alike, high confidence");
+    expect(
+      matchText({ pid: "p", name: "Apollo", score: 0.5, confidence: "Weird" }),
+    ).toBe("50% alike, unknown confidence");
+    const item = (name: unknown) => ({
+      pid: "x",
+      status: "pending" as const,
+      provenance: "import",
+      candidate: { name } as never,
+      matches: [],
+      job_pid: null,
+      source_line: 1,
+      resolved_by: null,
+      resolved_at: null,
+      resolution_pid: null,
+      resolution_comment: null,
+      created_at: "",
+      updated_at: "",
+    });
+    expect(heldName(item(" Apollo 2 "))).toBe("Apollo 2");
+    expect(heldName(item(""))).toBe("(no name)");
+    expect(heldName(item(undefined))).toBe("(no name)");
+  });
+
+  it("has a sentence of its own for each refused decision", () => {
+    expect(decisionRefusalKey(409)).toBe("p.jobs.review_already");
+    expect(decisionRefusalKey(422)).toBe("p.jobs.review_invalid");
+    expect(decisionRefusalKey(404)).toBe("p.jobs.review_gone");
+    expect(decisionRefusalKey(500)).toBe("p.jobs.could_not_decide");
   });
 });

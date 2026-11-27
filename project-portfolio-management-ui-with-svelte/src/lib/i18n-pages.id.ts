@@ -9109,7 +9109,7 @@ export const PAGES_ID: Record<PageKey, string> = {
     "{total} baris: {created} dibuat, {updated} diperbarui, {unchanged} tidak berubah, {review} ditahan untuk ditinjau, {failed} gagal.",
   "p.jobs.not_reconciled": "Hitungan ini tidak berjumlah total.",
   "p.jobs.held":
-    "Baris yang ditahan untuk ditinjau menunggu di antrean tinjauan, yang belum memiliki layar.",
+    "Baris yang ditahan untuk ditinjau tercantum di bawah pada “Ditahan untuk ditinjau”.",
   "p.jobs.stopping":
     "Diminta berhenti: pekerjaan menyelesaikan baris saat ini dan menyimpan yang sudah diproses.",
   "p.jobs.errors": "Laporan galat (CSV)",
@@ -9150,4 +9150,33 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.jobs.could_not_import": "Tidak dapat memulai impor.",
   "p.jobs.queued_ok": "Dimulai: pekerjaan ada di atas daftar.",
   "p.jobs.replayed": "Berkas ini sudah dikirim; pekerjaannya ada di daftar.",
+  "p.jobs.review_h": "Ditahan untuk ditinjau",
+  "p.jobs.review_intro":
+    "Baris yang tampak seperti rencana yang sudah ada ditahan, tidak dibuat. Putuskan masing-masing: buat sebagai rencana baru, atau buang sebagai duplikat. Menggabungkannya ke rencana yang mirip tidak ditawarkan di sini: buang, lalu gabungkan rencana dari daftar rencana.",
+  "p.jobs.review_none": "Tidak ada yang ditahan untuk ditinjau.",
+  "p.jobs.could_not_load_review":
+    "Tidak dapat memuat baris yang ditahan untuk ditinjau.",
+  "p.jobs.review_line": "Baris {line} berkas",
+  "p.jobs.review_matches": "Mirip dengan:",
+  "p.jobs.review_match": "{score} mirip, keyakinan {confidence}",
+  "p.jobs.confidence_high": "tinggi",
+  "p.jobs.confidence_medium": "sedang",
+  "p.jobs.confidence_low": "rendah",
+  "p.jobs.confidence_unknown": "tidak diketahui",
+  "p.jobs.review_unnamed": "(tanpa nama)",
+  "p.jobs.review_create": "Ini baru: buat",
+  "p.jobs.review_discard": "Ini duplikat: buang",
+  "p.jobs.review_create_ask": "Buat “{name}” sebagai rencana baru?",
+  "p.jobs.review_discard_ask": "Buang “{name}”? Tidak ada yang dibuat darinya.",
+  "p.jobs.review_created": "“{name}” dibuat.",
+  "p.jobs.review_discarded": "“{name}” dibuang.",
+  "p.jobs.review_already": "Baris itu sudah diputuskan.",
+  "p.jobs.review_invalid":
+    "Baris yang ditahan bukan lagi rencana yang sah, jadi tidak dapat dibuat.",
+  "p.jobs.review_gone": "Baris itu sudah tidak ada.",
+  "p.jobs.could_not_decide": "Tidak dapat mencatat keputusan.",
+  "p.jobs.review_show": "Tampilkan baris yang ditahannya",
+  "p.jobs.review_all": "Tampilkan semua baris yang ditahan",
+  "p.jobs.review_one_job": "Menampilkan baris yang ditahan oleh satu impor.",
+  "p.jobs.review_more": "Hanya 500 yang pertama yang dicantumkan.",
 };

@@ -9243,7 +9243,7 @@ export const PAGES_FR: Record<PageKey, string> = {
     "{total} lignes : {created} créées, {updated} mises à jour, {unchanged} inchangées, {review} retenues pour examen, {failed} en échec.",
   "p.jobs.not_reconciled": "Ces nombres ne font pas le total.",
   "p.jobs.held":
-    "Les lignes retenues pour examen attendent dans la file d'examen, qui n'a pas encore d'écran.",
+    "Les lignes retenues pour examen figurent plus bas sous « Retenues pour examen ».",
   "p.jobs.stopping":
     "Arrêt demandé : elle termine la ligne en cours et garde ce qui a été traité.",
   "p.jobs.errors": "Rapport d'erreurs (CSV)",
@@ -9285,4 +9285,34 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.jobs.queued_ok": "Lancée : la tâche est en haut de la liste.",
   "p.jobs.replayed":
     "Ce fichier a déjà été envoyé ; sa tâche est dans la liste.",
+  "p.jobs.review_h": "Retenues pour examen",
+  "p.jobs.review_intro":
+    "Les lignes qui ressemblaient à un plan déjà présent sont retenues, pas créées. Décidez pour chacune : la créer comme nouveau plan ou l'écarter comme doublon. La fusion avec le plan auquel elle ressemble n'est pas proposée ici : écartez-la, puis fusionnez les plans depuis la liste des plans.",
+  "p.jobs.review_none": "Rien n'est retenu pour examen.",
+  "p.jobs.could_not_load_review":
+    "Impossible de charger les lignes retenues pour examen.",
+  "p.jobs.review_line": "Ligne {line} du fichier",
+  "p.jobs.review_matches": "Elle ressemble à :",
+  "p.jobs.review_match": "{score} de ressemblance, confiance {confidence}",
+  "p.jobs.confidence_high": "élevée",
+  "p.jobs.confidence_medium": "moyenne",
+  "p.jobs.confidence_low": "faible",
+  "p.jobs.confidence_unknown": "inconnue",
+  "p.jobs.review_unnamed": "(sans nom)",
+  "p.jobs.review_create": "Elle est nouvelle : la créer",
+  "p.jobs.review_discard": "C'est un doublon : l'écarter",
+  "p.jobs.review_create_ask": "Créer « {name} » comme nouveau plan ?",
+  "p.jobs.review_discard_ask":
+    "Écarter « {name} » ? Rien n'a été créé à partir d'elle.",
+  "p.jobs.review_created": "« {name} » créé.",
+  "p.jobs.review_discarded": "« {name} » écarté.",
+  "p.jobs.review_already": "Cette ligne a déjà été tranchée.",
+  "p.jobs.review_invalid":
+    "La ligne retenue n'est plus un plan valide, elle ne peut donc pas être créée.",
+  "p.jobs.review_gone": "Cette ligne n'existe plus.",
+  "p.jobs.could_not_decide": "Impossible d'enregistrer la décision.",
+  "p.jobs.review_show": "Afficher ses lignes retenues",
+  "p.jobs.review_all": "Afficher toutes les lignes retenues",
+  "p.jobs.review_one_job": "Lignes retenues par un seul import.",
+  "p.jobs.review_more": "Seules les 500 premières sont listées.",
 };

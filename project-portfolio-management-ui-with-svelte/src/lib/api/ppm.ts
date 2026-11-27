@@ -359,6 +359,7 @@ import type {
   BulkJobKind,
   BulkJobStarted,
   BulkJobStatus,
+  ReviewQueueItem,
   StartExportBody,
   SkillGap,
   SprintCeremonies,
@@ -2182,6 +2183,27 @@ export class PpmClient {
     return this.http.post(
       `/api/plans/import?format=${format}&on_keyless=${onKeyless}`,
       { rawBody: file, headers: { "content-type": "text/plain" } },
+    );
+  }
+
+  /** Rows held for a decision (pending ones, at most 500), all or one job's. */
+  reviewQueue(job?: string): Promise<ReviewQueueItem[]> {
+    return this.http.get(
+      `/api/plans/review-queue${job ? `?job=${encodeURIComponent(job)}` : ""}`,
+    );
+  }
+  /** A held row is new after all: create the plan. */
+  confirmQueueItem(pid: string): Promise<ReviewQueueItem> {
+    return this.http.post(
+      `/api/plans/review-queue/${encodeURIComponent(pid)}/confirm`,
+      { body: {} },
+    );
+  }
+  /** A held row is a duplicate: discard it (nothing was created from it). */
+  rejectQueueItem(pid: string): Promise<ReviewQueueItem> {
+    return this.http.post(
+      `/api/plans/review-queue/${encodeURIComponent(pid)}/reject`,
+      { body: {} },
     );
   }
 

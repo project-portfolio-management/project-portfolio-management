@@ -9006,7 +9006,7 @@ export const PAGES_VI: Record<PageKey, string> = {
     "{total} dòng: {created} đã tạo, {updated} đã cập nhật, {unchanged} không đổi, {review} được giữ lại để xem xét, {failed} thất bại.",
   "p.jobs.not_reconciled": "Các số đếm này không cộng thành tổng.",
   "p.jobs.held":
-    "Các dòng được giữ lại để xem xét đang chờ trong hàng đợi xem xét, chưa có màn hình.",
+    "Các dòng được giữ lại để xem xét có ở mục “Được giữ lại để xem xét” bên dưới.",
   "p.jobs.stopping":
     "Đã yêu cầu dừng: nó hoàn tất dòng đang làm và giữ lại những gì đã xử lý.",
   "p.jobs.errors": "Báo cáo lỗi (CSV)",
@@ -9048,4 +9048,33 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.jobs.queued_ok": "Đã bắt đầu: công việc ở đầu danh sách.",
   "p.jobs.replayed":
     "Tệp này đã được gửi; công việc của nó có trong danh sách.",
+  "p.jobs.review_h": "Được giữ lại để xem xét",
+  "p.jobs.review_intro":
+    "Các dòng trông giống một kế hoạch đã có được giữ lại, không được tạo. Quyết định từng dòng: tạo thành kế hoạch mới, hoặc loại bỏ vì trùng lặp. Ở đây không có tùy chọn gộp vào kế hoạch giống nó: hãy loại bỏ rồi gộp các kế hoạch từ danh sách kế hoạch.",
+  "p.jobs.review_none": "Không có gì được giữ lại để xem xét.",
+  "p.jobs.could_not_load_review":
+    "Không thể tải các dòng được giữ lại để xem xét.",
+  "p.jobs.review_line": "Dòng {line} của tệp",
+  "p.jobs.review_matches": "Nó giống với:",
+  "p.jobs.review_match": "giống {score}, độ tin cậy {confidence}",
+  "p.jobs.confidence_high": "cao",
+  "p.jobs.confidence_medium": "trung bình",
+  "p.jobs.confidence_low": "thấp",
+  "p.jobs.confidence_unknown": "không rõ",
+  "p.jobs.review_unnamed": "(không có tên)",
+  "p.jobs.review_create": "Đây là mới: tạo nó",
+  "p.jobs.review_discard": "Đây là trùng lặp: loại bỏ",
+  "p.jobs.review_create_ask": "Tạo “{name}” thành kế hoạch mới?",
+  "p.jobs.review_discard_ask": "Loại bỏ “{name}”? Không có gì được tạo từ nó.",
+  "p.jobs.review_created": "Đã tạo “{name}”.",
+  "p.jobs.review_discarded": "Đã loại bỏ “{name}”.",
+  "p.jobs.review_already": "Dòng đó đã được quyết định.",
+  "p.jobs.review_invalid":
+    "Dòng được giữ lại không còn là kế hoạch hợp lệ nên không thể tạo.",
+  "p.jobs.review_gone": "Dòng đó không còn nữa.",
+  "p.jobs.could_not_decide": "Không thể ghi lại quyết định.",
+  "p.jobs.review_show": "Hiện các dòng được giữ lại của nó",
+  "p.jobs.review_all": "Hiện mọi dòng được giữ lại",
+  "p.jobs.review_one_job": "Đang hiện các dòng được giữ lại bởi một lần nhập.",
+  "p.jobs.review_more": "Chỉ liệt kê 500 dòng đầu tiên.",
 };

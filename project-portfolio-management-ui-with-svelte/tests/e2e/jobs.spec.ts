@@ -84,7 +84,35 @@ const JOBS = [
 ];
 
 type Sent = { method: string; url: string; body: string; type: string | null };
-async function stub(page: Page, opts: { exportStatus?: number } = {}) {
+const HELD = [
+  {
+    pid: "22222222-0000-4000-8000-000000000001",
+    status: "pending",
+    provenance: "import",
+    candidate: { name: "Apollo 2", kind: "Project" },
+    matches: [
+      {
+        pid: "33333333-0000-4000-8000-000000000001",
+        name: "Apollo",
+        score: 0.82,
+        confidence: "Medium",
+      },
+    ],
+    job_pid: "11111111-0000-4000-8000-000000000001",
+    source_line: 2,
+    resolved_by: null,
+    resolved_at: null,
+    resolution_pid: null,
+    resolution_comment: null,
+    created_at: "2026-11-20T09:00:30Z",
+    updated_at: "2026-11-20T09:00:30Z",
+  },
+];
+
+async function stub(
+  page: Page,
+  opts: { exportStatus?: number; decideStatus?: number } = {},
+) {
   const sent: Sent[] = [];
   await page.route("**/api/proxy/api/plans/**", async (r) => {
     const req = r.request();
@@ -101,6 +129,22 @@ async function stub(page: Page, opts: { exportStatus?: number } = {}) {
       const kind = url.searchParams.get("kind");
       return r.fulfill({ json: JOBS.filter((j) => !kind || j.kind === kind) });
     }
+    if (req.method() === "GET" && path === "/api/plans/review-queue")
+      return r.fulfill({
+        json: sent.some((s) => s.url.includes("/review-queue/")) ? [] : HELD,
+      });
+    if (req.method() === "POST" && path.includes("/review-queue/"))
+      return opts.decideStatus
+        ? r.fulfill({
+            status: opts.decideStatus,
+            json: { code: "conflict", detail: "service text" },
+          })
+        : r.fulfill({
+            json: {
+              ...HELD[0],
+              status: path.endsWith("/confirm") ? "confirmed" : "rejected",
+            },
+          });
     if (req.method() === "POST" && path.endsWith("/cancel"))
       return r.fulfill({
         json: {
@@ -159,7 +203,7 @@ test("lists the jobs newest first, each state in words, with its links", async (
     "3 rows: 1 created, 0 updated, 0 unchanged, 1 held for review, 1 failed.",
   );
   await expect(items.nth(2)).toContainText(
-    "the review queue, which has no screen yet",
+    "listed under “Held for review” below",
   );
   await expect(
     items.nth(2).getByRole("link", { name: "Error report (CSV)" }),
@@ -278,4 +322,61 @@ test("reads in Welsh", async ({ page }) => {
   await expect(
     page.getByTestId("jobs").getByRole("listitem").nth(0),
   ).toContainText("yn rhedeg");
+});
+
+test("a held row is decided after a question: created as new, or discarded", async ({
+  page,
+}) => {
+  const sent = await stub(page);
+  await page.goto("/en-001/jobs");
+  const held = page.getByTestId("held");
+  await expect(held).toContainText("Apollo 2 · Project");
+  await expect(held).toContainText("Line 2 of the file");
+  await expect(held.getByRole("link", { name: "Apollo" })).toHaveAttribute(
+    "href",
+    "/en-001/plans/33333333-0000-4000-8000-000000000001",
+  );
+  await expect(held).toContainText("82% alike, medium confidence");
+  const ask = page.getByRole("alertdialog");
+  await held
+    .getByRole("button", { name: "It is a duplicate: discard it" })
+    .click();
+  await expect(ask).toContainText("Nothing was created from it.");
+  await ask.getByRole("button", { name: "Cancel" }).click();
+  expect(sent).toEqual([]);
+  await held.getByRole("button", { name: "It is new: create it" }).click();
+  await ask.getByRole("button", { name: "OK" }).click();
+  await expect(page.getByTestId("jobs-notice")).toHaveText(
+    "Created “Apollo 2”.",
+  );
+  expect(sent.map((s) => `${s.method} ${s.url}`)).toEqual([
+    "POST /api/plans/review-queue/22222222-0000-4000-8000-000000000001/confirm",
+  ]);
+  await expect(page.getByTestId("held-none")).toHaveText(
+    "Nothing is held for review.",
+  );
+  await audit(page);
+});
+
+test("a row decided elsewhere says so; a job shows only its held rows", async ({
+  page,
+}) => {
+  await stub(page, { decideStatus: 409 });
+  await page.goto("/en-001/jobs");
+  await page.getByRole("button", { name: "Show its held rows" }).click();
+  await expect(page.getByTestId("held")).toContainText(
+    "Showing the rows held by one import.",
+  );
+  await page
+    .getByTestId("held")
+    .getByRole("button", { name: "It is a duplicate: discard it" })
+    .click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "OK" })
+    .click();
+  await expect(page.getByTestId("held").getByRole("alert")).toHaveText(
+    "That row has already been decided.",
+  );
+  await expect(page.getByText("service text")).toHaveCount(0);
 });

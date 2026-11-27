@@ -8929,8 +8929,7 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.jobs.rows":
     "{total} 行：作成 {created}、更新 {updated}、変更なし {unchanged}、確認待ち {review}、失敗 {failed}。",
   "p.jobs.not_reconciled": "これらの件数は合計と一致しません。",
-  "p.jobs.held":
-    "確認待ちの行は確認キューで待機しますが、その画面はまだありません。",
+  "p.jobs.held": "確認待ちの行は下の「確認待ち」に一覧があります。",
   "p.jobs.stopping":
     "停止を依頼済み：処理中の行を終えて、処理済みの分を残します。",
   "p.jobs.errors": "エラーレポート（CSV）",
@@ -8971,4 +8970,33 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.jobs.queued_ok": "開始しました：ジョブはリストの先頭にあります。",
   "p.jobs.replayed":
     "このファイルはすでに送信済みです。そのジョブはリストにあります。",
+  "p.jobs.review_h": "確認待ち",
+  "p.jobs.review_intro":
+    "既存の計画に似ていた行は作成されずに保留されます。1 行ずつ決めてください：新しい計画として作成するか、重複として破棄するか。似ている計画への統合はここでは提供していません。破棄してから、計画一覧で計画を統合してください。",
+  "p.jobs.review_none": "確認待ちのものはありません。",
+  "p.jobs.could_not_load_review": "確認待ちの行を読み込めませんでした。",
+  "p.jobs.review_line": "ファイルの {line} 行目",
+  "p.jobs.review_matches": "似ている計画：",
+  "p.jobs.review_match": "類似度 {score}、確信度 {confidence}",
+  "p.jobs.confidence_high": "高",
+  "p.jobs.confidence_medium": "中",
+  "p.jobs.confidence_low": "低",
+  "p.jobs.confidence_unknown": "不明",
+  "p.jobs.review_unnamed": "（名前なし）",
+  "p.jobs.review_create": "新しいもの：作成する",
+  "p.jobs.review_discard": "重複：破棄する",
+  "p.jobs.review_create_ask": "「{name}」を新しい計画として作成しますか？",
+  "p.jobs.review_discard_ask":
+    "「{name}」を破棄しますか？これから作成されたものはありません。",
+  "p.jobs.review_created": "「{name}」を作成しました。",
+  "p.jobs.review_discarded": "「{name}」を破棄しました。",
+  "p.jobs.review_already": "その行はすでに決定済みです。",
+  "p.jobs.review_invalid":
+    "保留中の行は有効な計画ではなくなったため、作成できません。",
+  "p.jobs.review_gone": "その行はもうありません。",
+  "p.jobs.could_not_decide": "決定を記録できませんでした。",
+  "p.jobs.review_show": "この保留行を表示",
+  "p.jobs.review_all": "保留行をすべて表示",
+  "p.jobs.review_one_job": "1 件のインポートで保留された行を表示しています。",
+  "p.jobs.review_more": "最初の 500 件のみ表示しています。",
 };

@@ -9266,7 +9266,7 @@ export const PAGES_DE: Record<PageKey, string> = {
     "{total} Zeilen: {created} angelegt, {updated} aktualisiert, {unchanged} unverändert, {review} zur Prüfung zurückgehalten, {failed} fehlgeschlagen.",
   "p.jobs.not_reconciled": "Diese Zahlen ergeben nicht die Gesamtzahl.",
   "p.jobs.held":
-    "Zur Prüfung zurückgehaltene Zeilen warten in der Prüfwarteschlange, für die es noch keine Ansicht gibt.",
+    "Zur Prüfung zurückgehaltene Zeilen stehen unten unter „Zur Prüfung zurückgehalten“.",
   "p.jobs.stopping":
     "Zum Anhalten aufgefordert: Er beendet die aktuelle Zeile und behält, was verarbeitet wurde.",
   "p.jobs.errors": "Fehlerbericht (CSV)",
@@ -9310,4 +9310,35 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.jobs.queued_ok": "Gestartet: Der Auftrag steht oben in der Liste.",
   "p.jobs.replayed":
     "Diese Datei wurde bereits gesendet; ihr Auftrag steht in der Liste.",
+  "p.jobs.review_h": "Zur Prüfung zurückgehalten",
+  "p.jobs.review_intro":
+    "Zeilen, die wie ein vorhandener Plan aussahen, werden zurückgehalten, nicht angelegt. Entscheiden Sie jede: als neuen Plan anlegen oder als Duplikat verwerfen. Das Zusammenführen mit dem ähnlichen Plan wird hier nicht angeboten: Verwerfen Sie sie und führen Sie die Pläne dann aus der Planliste zusammen.",
+  "p.jobs.review_none": "Nichts ist zur Prüfung zurückgehalten.",
+  "p.jobs.could_not_load_review":
+    "Die zurückgehaltenen Zeilen konnten nicht geladen werden.",
+  "p.jobs.review_line": "Zeile {line} der Datei",
+  "p.jobs.review_matches": "Sie ähnelt:",
+  "p.jobs.review_match": "{score} ähnlich, Zuverlässigkeit {confidence}",
+  "p.jobs.confidence_high": "hoch",
+  "p.jobs.confidence_medium": "mittel",
+  "p.jobs.confidence_low": "niedrig",
+  "p.jobs.confidence_unknown": "unbekannt",
+  "p.jobs.review_unnamed": "(ohne Namen)",
+  "p.jobs.review_create": "Sie ist neu: anlegen",
+  "p.jobs.review_discard": "Sie ist ein Duplikat: verwerfen",
+  "p.jobs.review_create_ask": "„{name}“ als neuen Plan anlegen?",
+  "p.jobs.review_discard_ask":
+    "„{name}“ verwerfen? Daraus wurde nichts angelegt.",
+  "p.jobs.review_created": "„{name}“ angelegt.",
+  "p.jobs.review_discarded": "„{name}“ verworfen.",
+  "p.jobs.review_already": "Über diese Zeile wurde bereits entschieden.",
+  "p.jobs.review_invalid":
+    "Die zurückgehaltene Zeile ist kein gültiger Plan mehr und kann nicht angelegt werden.",
+  "p.jobs.review_gone": "Diese Zeile ist nicht mehr vorhanden.",
+  "p.jobs.could_not_decide":
+    "Die Entscheidung konnte nicht gespeichert werden.",
+  "p.jobs.review_show": "Ihre zurückgehaltenen Zeilen zeigen",
+  "p.jobs.review_all": "Alle zurückgehaltenen Zeilen zeigen",
+  "p.jobs.review_one_job": "Es werden die Zeilen eines Imports gezeigt.",
+  "p.jobs.review_more": "Nur die ersten 500 werden aufgeführt.",
 };

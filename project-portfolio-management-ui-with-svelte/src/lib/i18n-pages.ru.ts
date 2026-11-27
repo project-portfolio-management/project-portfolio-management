@@ -9061,8 +9061,7 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.jobs.rows":
     "Строк: {total}; создано {created}, обновлено {updated}, без изменений {unchanged}, на проверке {review}, с ошибкой {failed}.",
   "p.jobs.not_reconciled": "Эти числа не складываются в итог.",
-  "p.jobs.held":
-    "Строки, отложенные на проверку, ждут в очереди проверки, для которой ещё нет экрана.",
+  "p.jobs.held": "Строки на проверке перечислены ниже в разделе «На проверке».",
   "p.jobs.stopping":
     "Запрошена остановка: задание завершит текущую строку и сохранит обработанное.",
   "p.jobs.errors": "Отчёт об ошибках (CSV)",
@@ -9102,4 +9101,32 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.jobs.could_not_import": "Не удалось начать импорт.",
   "p.jobs.queued_ok": "Начато: задание вверху списка.",
   "p.jobs.replayed": "Этот файл уже отправлен; его задание в списке.",
+  "p.jobs.review_h": "На проверке",
+  "p.jobs.review_intro":
+    "Строки, похожие на уже существующий план, откладываются, а не создаются. Решите по каждой: создать её как новый план или отбросить как дубликат. Объединение с похожим планом здесь не предлагается: отбросьте строку, затем объедините планы из списка планов.",
+  "p.jobs.review_none": "На проверке ничего нет.",
+  "p.jobs.could_not_load_review": "Не удалось загрузить строки на проверке.",
+  "p.jobs.review_line": "Строка {line} файла",
+  "p.jobs.review_matches": "Похоже на:",
+  "p.jobs.review_match": "сходство {score}, уверенность {confidence}",
+  "p.jobs.confidence_high": "высокая",
+  "p.jobs.confidence_medium": "средняя",
+  "p.jobs.confidence_low": "низкая",
+  "p.jobs.confidence_unknown": "неизвестна",
+  "p.jobs.review_unnamed": "(без названия)",
+  "p.jobs.review_create": "Это новое: создать",
+  "p.jobs.review_discard": "Это дубликат: отбросить",
+  "p.jobs.review_create_ask": "Создать «{name}» как новый план?",
+  "p.jobs.review_discard_ask": "Отбросить «{name}»? Из неё ничего не создано.",
+  "p.jobs.review_created": "«{name}» создан.",
+  "p.jobs.review_discarded": "«{name}» отброшен.",
+  "p.jobs.review_already": "По этой строке уже есть решение.",
+  "p.jobs.review_invalid":
+    "Отложенная строка больше не является допустимым планом, поэтому её нельзя создать.",
+  "p.jobs.review_gone": "Этой строки больше нет.",
+  "p.jobs.could_not_decide": "Не удалось записать решение.",
+  "p.jobs.review_show": "Показать её строки на проверке",
+  "p.jobs.review_all": "Показать все строки на проверке",
+  "p.jobs.review_one_job": "Показаны строки, отложенные одним импортом.",
+  "p.jobs.review_more": "Показаны только первые 500.",
 };

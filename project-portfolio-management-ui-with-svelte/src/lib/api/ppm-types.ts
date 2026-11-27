@@ -5650,3 +5650,28 @@ export interface BulkJobCancel {
   /** English; not shown. */
   note: string;
 }
+
+/** A row an import held because it looked like a plan already here (`GET /api/plans/review-queue`). */
+export interface ReviewQueueItem {
+  pid: string;
+  status: "pending" | "confirmed" | "rejected";
+  provenance: string;
+  /** The plan the row would create, as it was read. */
+  candidate: { name?: string; kind?: string | null } & Record<string, unknown>;
+  /** The plans it looked like, best first; plans the reader cannot see are left out. */
+  matches: {
+    pid: string;
+    name: string;
+    score: number;
+    confidence: "High" | "Medium" | "Low" | string;
+  }[];
+  job_pid: string | null;
+  source_line: number;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  /** The plan created when it was confirmed. */
+  resolution_pid: string | null;
+  resolution_comment: string | null;
+  created_at: string;
+  updated_at: string;
+}

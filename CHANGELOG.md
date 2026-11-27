@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (the import review queue on `/jobs`)
+
+- `/jobs` lists the rows an import held because they looked like a plan already here, with the plans each looks like
+  (score and confidence), and creates each as a new plan or discards it as a duplicate after a question. 26 new strings
+  in every locale (machine-written in 14, none reviewed). Not offered: merging a held row into its match (the service
+  has no such route). Not verified: against a real service.
+
 ## 27 November (NC-1 slice 12 part k in part: bulk imports and exports)
 
 - A new `/jobs` page ("Imports and exports") lists the bulk import and export jobs with each state in words and a

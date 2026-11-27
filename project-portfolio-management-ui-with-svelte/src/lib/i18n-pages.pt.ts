@@ -9174,7 +9174,7 @@ export const PAGES_PT: Record<PageKey, string> = {
     "{total} linhas: {created} criadas, {updated} atualizadas, {unchanged} inalteradas, {review} retidas para revisão, {failed} falharam.",
   "p.jobs.not_reconciled": "Estas contagens não somam o total.",
   "p.jobs.held":
-    "As linhas retidas para revisão esperam na fila de revisão, que ainda não tem ecrã.",
+    "As linhas retidas para revisão aparecem abaixo em «Retidas para revisão».",
   "p.jobs.stopping":
     "Pedido para parar: termina a linha em que está e mantém o que processou.",
   "p.jobs.errors": "Relatório de erros (CSV)",
@@ -9216,4 +9216,34 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.jobs.queued_ok": "Iniciado: o trabalho está no topo da lista.",
   "p.jobs.replayed":
     "Este ficheiro já foi enviado; o seu trabalho está na lista.",
+  "p.jobs.review_h": "Retidas para revisão",
+  "p.jobs.review_intro":
+    "As linhas que pareciam um plano que já existe ficam retidas, não são criadas. Decida cada uma: criá-la como plano novo ou descartá-la como duplicado. Fundi-la no plano a que se assemelha não é oferecido aqui: descarte-a e depois funda os planos a partir da lista de planos.",
+  "p.jobs.review_none": "Não há nada retido para revisão.",
+  "p.jobs.could_not_load_review":
+    "Não foi possível carregar as linhas retidas para revisão.",
+  "p.jobs.review_line": "Linha {line} do ficheiro",
+  "p.jobs.review_matches": "Assemelha-se a:",
+  "p.jobs.review_match": "{score} de semelhança, confiança {confidence}",
+  "p.jobs.confidence_high": "alta",
+  "p.jobs.confidence_medium": "média",
+  "p.jobs.confidence_low": "baixa",
+  "p.jobs.confidence_unknown": "desconhecida",
+  "p.jobs.review_unnamed": "(sem nome)",
+  "p.jobs.review_create": "É nova: criá-la",
+  "p.jobs.review_discard": "É um duplicado: descartá-la",
+  "p.jobs.review_create_ask": "Criar «{name}» como plano novo?",
+  "p.jobs.review_discard_ask":
+    "Descartar «{name}»? Nada foi criado a partir dela.",
+  "p.jobs.review_created": "«{name}» criado.",
+  "p.jobs.review_discarded": "«{name}» descartado.",
+  "p.jobs.review_already": "Essa linha já foi decidida.",
+  "p.jobs.review_invalid":
+    "A linha retida já não é um plano válido, por isso não pode ser criada.",
+  "p.jobs.review_gone": "Essa linha já não existe.",
+  "p.jobs.could_not_decide": "Não foi possível registar a decisão.",
+  "p.jobs.review_show": "Mostrar as suas linhas retidas",
+  "p.jobs.review_all": "Mostrar todas as linhas retidas",
+  "p.jobs.review_one_job": "A mostrar as linhas retidas por uma importação.",
+  "p.jobs.review_more": "Só são listadas as primeiras 500.",
 };

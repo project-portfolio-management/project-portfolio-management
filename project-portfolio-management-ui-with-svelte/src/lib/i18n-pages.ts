@@ -8872,7 +8872,7 @@ export const PAGES_EN = {
     "{total} rows: {created} created, {updated} updated, {unchanged} unchanged, {review} held for review, {failed} failed.",
   "p.jobs.not_reconciled": "These counts do not add up to the total.",
   "p.jobs.held":
-    "Rows held for review wait in the review queue, which has no screen yet.",
+    "Rows held for review are listed under “Held for review” below.",
   "p.jobs.stopping":
     "Asked to stop: it finishes the row it is on and keeps what it processed.",
   "p.jobs.errors": "Error report (CSV)",
@@ -8912,6 +8912,34 @@ export const PAGES_EN = {
   "p.jobs.could_not_import": "Could not start the import.",
   "p.jobs.queued_ok": "Started: the job is at the top of the list.",
   "p.jobs.replayed": "This file was already sent; its job is in the list.",
+  "p.jobs.review_h": "Held for review",
+  "p.jobs.review_intro":
+    "Rows that looked like a plan already here are held, not created. Decide each one: create it as a new plan, or discard it as a duplicate. Merging it into the plan it looks like is not offered here: discard it, then merge the plans from the plan list.",
+  "p.jobs.review_none": "Nothing is held for review.",
+  "p.jobs.could_not_load_review": "Could not load the rows held for review.",
+  "p.jobs.review_line": "Line {line} of the file",
+  "p.jobs.review_matches": "It looks like:",
+  "p.jobs.review_match": "{score} alike, {confidence} confidence",
+  "p.jobs.confidence_high": "high",
+  "p.jobs.confidence_medium": "medium",
+  "p.jobs.confidence_low": "low",
+  "p.jobs.confidence_unknown": "unknown",
+  "p.jobs.review_unnamed": "(no name)",
+  "p.jobs.review_create": "It is new: create it",
+  "p.jobs.review_discard": "It is a duplicate: discard it",
+  "p.jobs.review_create_ask": "Create “{name}” as a new plan?",
+  "p.jobs.review_discard_ask": "Discard “{name}”? Nothing was created from it.",
+  "p.jobs.review_created": "Created “{name}”.",
+  "p.jobs.review_discarded": "Discarded “{name}”.",
+  "p.jobs.review_already": "That row has already been decided.",
+  "p.jobs.review_invalid":
+    "The held row is no longer a valid plan, so it cannot be created.",
+  "p.jobs.review_gone": "That row is no longer there.",
+  "p.jobs.could_not_decide": "Could not record the decision.",
+  "p.jobs.review_show": "Show its held rows",
+  "p.jobs.review_all": "Show every held row",
+  "p.jobs.review_one_job": "Showing the rows held by one import.",
+  "p.jobs.review_more": "Only the first 500 are listed.",
 } as const;
 
 /** A key in the page and component catalogue. */

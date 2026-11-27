@@ -9483,6 +9483,43 @@ export const PAGES_EN = {
     "The roadmap or the item is no longer there; the page has been read again.",
   "p.product_roadmap.could_not_save": "Could not save the roadmap.",
   "p.product_roadmap.could_not_change_item": "Could not change the item.",
+  "p.product_roadmap.publish": "Publish it…",
+  "p.product_roadmap.unpublish": "Take it off the public reader…",
+  "p.product_roadmap.preview_h": "What publishing would do",
+  "p.product_roadmap.preview_nothing":
+    "This changes nothing: the roadmap is already as asked.",
+  "p.product_roadmap.preview_conflicts":
+    "Someone else changed these since this page read them, so nothing can be published:",
+  "p.product_roadmap.preview_problems":
+    "The service would refuse this change set:",
+  "p.product_roadmap.publish_now": "Publish the change set",
+  "p.product_roadmap.published_done": "Published the change set.",
+  "p.product_roadmap.conflict_refused":
+    "Someone else changed the roadmap meanwhile, so nothing was published. The page has been read again.",
+  "p.product_roadmap.change_line": "{field}: from {from} to {to}",
+  "p.product_roadmap.item_change_line":
+    "“{title}”, {field}: from {from} to {to}",
+  "p.product_roadmap.new_item_line": "A new item: “{title}”",
+  "p.product_roadmap.conflict_line":
+    "{field}: now {current}, where you asked for {value}",
+  "p.product_roadmap.conflict_gone": "“{title}” is no longer there",
+  "p.product_roadmap.yes": "yes",
+  "p.product_roadmap.no": "no",
+  "p.product_roadmap.none": "none",
+  "p.product_roadmap.field.title": "Title",
+  "p.product_roadmap.field.vision": "Vision",
+  "p.product_roadmap.field.service_description": "What the product is",
+  "p.product_roadmap.field.category_pid": "Category",
+  "p.product_roadmap.field.published": "Published on the public reader",
+  "p.product_roadmap.field.description": "Description",
+  "p.product_roadmap.field.expected_outcome": "Expected outcome",
+  "p.product_roadmap.field.phase": "Phase",
+  "p.product_roadmap.field.tags": "Tags",
+  "p.product_roadmap.field.organization_pids": "Organizations",
+  "p.product_roadmap.field.details": "Details",
+  "p.product_roadmap.field.placement": "Placement",
+  "p.product_roadmap.field.item": "The item",
+  "p.product_roadmap.could_not_publish": "Could not publish the change set.",
 } as const;
 
 /** A key in the page and component catalogue. */

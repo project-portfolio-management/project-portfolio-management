@@ -9928,4 +9928,43 @@ export const PAGES_DE: Record<PageKey, string> = {
     "Die Roadmap konnte nicht gespeichert werden.",
   "p.product_roadmap.could_not_change_item":
     "Der Eintrag konnte nicht geändert werden.",
+  "p.product_roadmap.publish": "Veröffentlichen…",
+  "p.product_roadmap.unpublish": "Aus der öffentlichen Ansicht nehmen…",
+  "p.product_roadmap.preview_h": "Was die Veröffentlichung bewirken würde",
+  "p.product_roadmap.preview_nothing":
+    "Das ändert nichts: Die Roadmap ist bereits so.",
+  "p.product_roadmap.preview_conflicts":
+    "Jemand anderes hat dies geändert, seit diese Seite es gelesen hat, daher kann nichts veröffentlicht werden:",
+  "p.product_roadmap.preview_problems":
+    "Der Dienst würde diesen Änderungssatz ablehnen:",
+  "p.product_roadmap.publish_now": "Änderungssatz veröffentlichen",
+  "p.product_roadmap.published_done": "Änderungssatz veröffentlicht.",
+  "p.product_roadmap.conflict_refused":
+    "Jemand anderes hat die Roadmap inzwischen geändert, daher wurde nichts veröffentlicht. Die Seite wurde neu gelesen.",
+  "p.product_roadmap.change_line": "{field}: von {from} zu {to}",
+  "p.product_roadmap.item_change_line":
+    "„{title}“, {field}: von {from} zu {to}",
+  "p.product_roadmap.new_item_line": "Ein neuer Eintrag: „{title}“",
+  "p.product_roadmap.conflict_line":
+    "{field}: jetzt {current}, gewünscht war {value}",
+  "p.product_roadmap.conflict_gone": "„{title}“ ist nicht mehr vorhanden",
+  "p.product_roadmap.yes": "ja",
+  "p.product_roadmap.no": "nein",
+  "p.product_roadmap.none": "keine",
+  "p.product_roadmap.field.title": "Titel",
+  "p.product_roadmap.field.vision": "Leitbild",
+  "p.product_roadmap.field.service_description": "Was das Produkt ist",
+  "p.product_roadmap.field.category_pid": "Kategorie",
+  "p.product_roadmap.field.published":
+    "In der öffentlichen Ansicht veröffentlicht",
+  "p.product_roadmap.field.description": "Beschreibung",
+  "p.product_roadmap.field.expected_outcome": "Erwartetes Ergebnis",
+  "p.product_roadmap.field.phase": "Projektphase",
+  "p.product_roadmap.field.tags": "Schlagwörter",
+  "p.product_roadmap.field.organization_pids": "Organisationen",
+  "p.product_roadmap.field.details": "Einzelheiten",
+  "p.product_roadmap.field.placement": "Einordnung",
+  "p.product_roadmap.field.item": "Der Eintrag",
+  "p.product_roadmap.could_not_publish":
+    "Der Änderungssatz konnte nicht veröffentlicht werden.",
 };

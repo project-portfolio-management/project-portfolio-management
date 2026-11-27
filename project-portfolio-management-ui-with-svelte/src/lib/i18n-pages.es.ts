@@ -9814,4 +9814,41 @@ export const PAGES_ES: Record<PageKey, string> = {
     "La hoja de ruta o el elemento ya no está; se ha vuelto a leer la página.",
   "p.product_roadmap.could_not_save": "No se pudo guardar la hoja de ruta.",
   "p.product_roadmap.could_not_change_item": "No se pudo cambiar el elemento.",
+  "p.product_roadmap.publish": "Publicarla…",
+  "p.product_roadmap.unpublish": "Retirarla del lector público…",
+  "p.product_roadmap.preview_h": "Lo que haría la publicación",
+  "p.product_roadmap.preview_nothing":
+    "Esto no cambia nada: la hoja de ruta ya está como se pide.",
+  "p.product_roadmap.preview_conflicts":
+    "Otra persona cambió esto desde que esta página lo leyó, así que no se puede publicar nada:",
+  "p.product_roadmap.preview_problems":
+    "El servicio rechazaría este conjunto de cambios:",
+  "p.product_roadmap.publish_now": "Publicar el conjunto de cambios",
+  "p.product_roadmap.published_done": "Se publicó el conjunto de cambios.",
+  "p.product_roadmap.conflict_refused":
+    "Otra persona cambió la hoja de ruta mientras tanto, así que no se publicó nada. Se ha vuelto a leer la página.",
+  "p.product_roadmap.change_line": "{field}: de {from} a {to}",
+  "p.product_roadmap.item_change_line": "«{title}», {field}: de {from} a {to}",
+  "p.product_roadmap.new_item_line": "Un elemento nuevo: «{title}»",
+  "p.product_roadmap.conflict_line":
+    "{field}: ahora {current}, cuando usted pidió {value}",
+  "p.product_roadmap.conflict_gone": "«{title}» ya no está",
+  "p.product_roadmap.yes": "sí",
+  "p.product_roadmap.no": "no",
+  "p.product_roadmap.none": "ninguno",
+  "p.product_roadmap.field.title": "Título",
+  "p.product_roadmap.field.vision": "Visión",
+  "p.product_roadmap.field.service_description": "Qué es el producto",
+  "p.product_roadmap.field.category_pid": "Categoría",
+  "p.product_roadmap.field.published": "Publicada en el lector público",
+  "p.product_roadmap.field.description": "Descripción",
+  "p.product_roadmap.field.expected_outcome": "Resultado esperado",
+  "p.product_roadmap.field.phase": "Fase",
+  "p.product_roadmap.field.tags": "Etiquetas",
+  "p.product_roadmap.field.organization_pids": "Organizaciones",
+  "p.product_roadmap.field.details": "Detalles",
+  "p.product_roadmap.field.placement": "Ubicación",
+  "p.product_roadmap.field.item": "El elemento",
+  "p.product_roadmap.could_not_publish":
+    "No se pudo publicar el conjunto de cambios.",
 };

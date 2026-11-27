@@ -22,6 +22,9 @@ import type { CapacityHeatmap } from "#lib/capacity-heatmap-view.js";
 import type { DefBody } from "#lib/custom-field-view.js";
 import type { ApprovalRequestBody } from "#lib/approvals-view.js";
 import type {
+  ChangeLine,
+  ChangeSet,
+  ConflictLine,
   ItemBody,
   Placement,
   RoadmapForm,
@@ -2601,6 +2604,31 @@ export class PpmClient {
     return this.http.post(
       `/api/plans/${encodeURIComponent(pid)}/roadmap/items/${encodeURIComponent(ipid)}/move`,
       { body },
+    );
+  }
+  /** What publishing a change set would change, and what conflicts; writes nothing (RE-2). */
+  previewRoadmapPublish(
+    pid: string,
+    set: ChangeSet,
+  ): Promise<{
+    changes: ChangeLine[];
+    conflicts: ConflictLine[];
+    problems: string[];
+    would_publish: boolean;
+  }> {
+    return this.http.post(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap/publish/preview`,
+      { body: set },
+    );
+  }
+  /** Publish a change set: all of it in one transaction, or none (409 names the conflicts). */
+  publishRoadmap(
+    pid: string,
+    set: ChangeSet,
+  ): Promise<{ applied: ChangeLine[]; roadmap: ProductRoadmap }> {
+    return this.http.post(
+      `/api/plans/${encodeURIComponent(pid)}/roadmap/publish`,
+      { body: set },
     );
   }
   /** Remove an item; its public id is never given to another. */

@@ -218,3 +218,78 @@ export function step(
   if (at < 0 || to < 0 || to >= same.length) return null;
   return { placement: item.placement ?? null, index: to };
 }
+
+// ---- publishing as one change set (`POST …/roadmap/publish/preview`, then `…/publish`; RE-2) ----
+
+/** One field of a change set: what the editor first saw, and what it wants. */
+export interface FieldChange {
+  base: unknown;
+  value: unknown;
+}
+
+/** A change set: the roadmap's own fields, existing items' fields, and new items. */
+export interface ChangeSet {
+  roadmap?: Record<string, FieldChange>;
+  items?: { pid: string; fields: Record<string, FieldChange> }[];
+  new?: ItemBody[];
+}
+
+/** One line of a preview or of what was applied. */
+export interface ChangeLine {
+  subject: "roadmap" | "item" | "new_item";
+  field?: string | null;
+  item?: string;
+  from?: unknown;
+  to?: unknown;
+  title?: string | null;
+}
+
+/** One conflict: someone else changed the field to something else, or the item is gone. */
+export interface ConflictLine {
+  subject: "roadmap" | "item";
+  field?: string | null;
+  item?: string;
+  base?: unknown;
+  value?: unknown;
+  current?: unknown;
+  gone?: boolean;
+}
+
+/** The change set that publishes the roadmap (`true`) or takes it off the public reader, from what was read. */
+export const publishSet = (
+  publishedNow: boolean,
+  publish: boolean,
+): ChangeSet => ({
+  roadmap: { published: { base: publishedNow, value: publish } },
+});
+
+/**
+ * A field's value in words for a preview line: yes or no for `published`, a placement by name, a list joined, a text as
+ * written, and `null` (or an empty list) as none.
+ */
+export function valueWords(
+  field: string | null | undefined,
+  v: unknown,
+  words: {
+    yes: string;
+    no: string;
+    none: string;
+    placement: (p: string) => string;
+  },
+): string {
+  if (v === null || v === undefined || (Array.isArray(v) && v.length === 0))
+    return words.none;
+  if (field === "published") return v ? words.yes : words.no;
+  if (field === "placement" && typeof v === "string") return words.placement(v);
+  if (Array.isArray(v))
+    return v
+      .map((x) =>
+        typeof x === "object" && x && "text" in x ? String(x.text) : String(x),
+      )
+      .join(", ");
+  return String(v);
+}
+
+/** The catalogue key naming a field of the roadmap or of an item. */
+export const fieldKey = (field: string | null | undefined) =>
+  `p.product_roadmap.field.${field ?? "item"}`;

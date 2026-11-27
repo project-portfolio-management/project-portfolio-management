@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (publishing a product roadmap)
+
+- `/plans/[pid]/roadmap` publishes a roadmap, or takes it off the public reader, as one change set: previewed first
+  (what would change, what conflicts), then published; a conflict meanwhile is named and nothing is published.
+  Gathering several edits into one change set is not built. 31 new strings in every locale, machine-written in 14,
+  none reviewed. Not verified: against a real service.
+
 ## 27 November (a product plan's public roadmap)
 
 - A new `/plans/[pid]/roadmap` ("Product roadmap") makes a Product plan's public roadmap, saves its own fields, marks

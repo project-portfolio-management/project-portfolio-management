@@ -6,6 +6,9 @@ import {
   TITLE_MAX,
   groups,
   isSlug,
+  fieldKey,
+  publishSet,
+  valueWords,
   itemChange,
   itemFormOf,
   roadmapChange,
@@ -159,5 +162,32 @@ describe("groups and step", () => {
     expect(step(list, list[2]!, 1)).toEqual({ placement: "now", index: 1 });
     expect(step(list, list[2]!, -1)).toBeNull();
     expect(step(list, list[1]!, 1)).toBeNull();
+  });
+});
+
+describe("publishing (RE-2)", () => {
+  const words = {
+    yes: "Yes",
+    no: "No",
+    none: "none",
+    placement: (p: string) => p.toUpperCase(),
+  };
+  it("publishes or withdraws through one change set, the base being what was read", () => {
+    expect(publishSet(false, true)).toEqual({
+      roadmap: { published: { base: false, value: true } },
+    });
+    expect(publishSet(true, false)).toEqual({
+      roadmap: { published: { base: true, value: false } },
+    });
+  });
+  it("says a value in words", () => {
+    expect(valueWords("published", true, words)).toBe("Yes");
+    expect(valueWords("placement", "now", words)).toBe("NOW");
+    expect(valueWords("tags", ["a", "b"], words)).toBe("a, b");
+    expect(valueWords("details", [{ text: "x", level: 0 }], words)).toBe("x");
+    expect(valueWords("vision", null, words)).toBe("none");
+    expect(valueWords("tags", [], words)).toBe("none");
+    expect(fieldKey("vision")).toBe("p.product_roadmap.field.vision");
+    expect(fieldKey(null)).toBe("p.product_roadmap.field.item");
   });
 });

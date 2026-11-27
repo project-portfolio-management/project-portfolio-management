@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — publishing a product roadmap as one change set (RE-2, 2026-11-27)
+
+- Preview, then publish, on `/plans/[pid]/roadmap`; two client methods; `publishSet`, `valueWords` and `fieldKey` in
+  `src/lib/product-roadmap-view.ts`; 31 strings in every locale.
+
 ### Added — `/plans/[pid]/roadmap` (RE-1, RE-3, 2026-11-27)
 
 - Seven client methods; `src/lib/product-roadmap-view.ts`; a plan workspace link (module `roadmap`); 72 strings in

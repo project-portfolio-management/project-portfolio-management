@@ -9709,4 +9709,41 @@ export const PAGES_CY: Record<PageKey, string> = {
     "Nid yw'r map ffordd na'r eitem yno mwyach; darllenwyd y dudalen eto.",
   "p.product_roadmap.could_not_save": "Methu cadw'r map ffordd.",
   "p.product_roadmap.could_not_change_item": "Methu newid yr eitem.",
+  "p.product_roadmap.publish": "Ei gyhoeddi…",
+  "p.product_roadmap.unpublish": "Ei dynnu oddi ar y darllenydd cyhoeddus…",
+  "p.product_roadmap.preview_h": "Beth fyddai cyhoeddi yn ei wneud",
+  "p.product_roadmap.preview_nothing":
+    "Nid yw hyn yn newid dim: mae'r map ffordd eisoes fel y gofynnwyd.",
+  "p.product_roadmap.preview_conflicts":
+    "Newidiodd rhywun arall y rhain ers i'r dudalen hon eu darllen, felly ni ellir cyhoeddi dim:",
+  "p.product_roadmap.preview_problems":
+    "Byddai'r gwasanaeth yn gwrthod y set newidiadau hon:",
+  "p.product_roadmap.publish_now": "Cyhoeddi'r set newidiadau",
+  "p.product_roadmap.published_done": "Cyhoeddwyd y set newidiadau.",
+  "p.product_roadmap.conflict_refused":
+    "Newidiodd rhywun arall y map ffordd yn y cyfamser, felly ni chyhoeddwyd dim. Darllenwyd y dudalen eto.",
+  "p.product_roadmap.change_line": "{field}: o {from} i {to}",
+  "p.product_roadmap.item_change_line": "“{title}”, {field}: o {from} i {to}",
+  "p.product_roadmap.new_item_line": "Eitem newydd: “{title}”",
+  "p.product_roadmap.conflict_line":
+    "{field}: {current} nawr, lle gofynnoch am {value}",
+  "p.product_roadmap.conflict_gone": "Nid yw “{title}” yno mwyach",
+  "p.product_roadmap.yes": "ydy",
+  "p.product_roadmap.no": "nac ydy",
+  "p.product_roadmap.none": "dim",
+  "p.product_roadmap.field.title": "Teitl",
+  "p.product_roadmap.field.vision": "Gweledigaeth",
+  "p.product_roadmap.field.service_description": "Beth yw'r cynnyrch",
+  "p.product_roadmap.field.category_pid": "Categori",
+  "p.product_roadmap.field.published":
+    "Wedi'i gyhoeddi ar y darllenydd cyhoeddus",
+  "p.product_roadmap.field.description": "Disgrifiad",
+  "p.product_roadmap.field.expected_outcome": "Canlyniad disgwyliedig",
+  "p.product_roadmap.field.phase": "Cam",
+  "p.product_roadmap.field.tags": "Tagiau",
+  "p.product_roadmap.field.organization_pids": "Sefydliadau",
+  "p.product_roadmap.field.details": "Manylion",
+  "p.product_roadmap.field.placement": "Lleoliad",
+  "p.product_roadmap.field.item": "Yr eitem",
+  "p.product_roadmap.could_not_publish": "Methu cyhoeddi'r set newidiadau.",
 };

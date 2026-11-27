@@ -9884,4 +9884,42 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Impossible d'enregistrer la feuille de route.",
   "p.product_roadmap.could_not_change_item":
     "Impossible de modifier l'élément.",
+  "p.product_roadmap.publish": "La publier…",
+  "p.product_roadmap.unpublish": "La retirer du lecteur public…",
+  "p.product_roadmap.preview_h": "Ce que ferait la publication",
+  "p.product_roadmap.preview_nothing":
+    "Cela ne change rien : la feuille de route est déjà ainsi.",
+  "p.product_roadmap.preview_conflicts":
+    "Quelqu'un d'autre a modifié ceci depuis que cette page l'a lu : rien ne peut être publié :",
+  "p.product_roadmap.preview_problems":
+    "Le service refuserait cet ensemble de changements :",
+  "p.product_roadmap.publish_now": "Publier l'ensemble de changements",
+  "p.product_roadmap.published_done": "Ensemble de changements publié.",
+  "p.product_roadmap.conflict_refused":
+    "Quelqu'un d'autre a modifié la feuille de route entre-temps : rien n'a été publié. La page a été relue.",
+  "p.product_roadmap.change_line": "{field} : de {from} à {to}",
+  "p.product_roadmap.item_change_line":
+    "« {title} », {field} : de {from} à {to}",
+  "p.product_roadmap.new_item_line": "Un nouvel élément : « {title} »",
+  "p.product_roadmap.conflict_line":
+    "{field} : maintenant {current}, alors que vous demandiez {value}",
+  "p.product_roadmap.conflict_gone": "« {title} » n'existe plus",
+  "p.product_roadmap.yes": "oui",
+  "p.product_roadmap.no": "non",
+  "p.product_roadmap.none": "aucun",
+  "p.product_roadmap.field.title": "Titre",
+  "p.product_roadmap.field.vision": "Ambition",
+  "p.product_roadmap.field.service_description": "Ce qu'est le produit",
+  "p.product_roadmap.field.category_pid": "Catégorie",
+  "p.product_roadmap.field.published": "Publiée sur le lecteur public",
+  "p.product_roadmap.field.description": "Descriptif",
+  "p.product_roadmap.field.expected_outcome": "Résultat attendu",
+  "p.product_roadmap.field.phase": "Étape",
+  "p.product_roadmap.field.tags": "Étiquettes",
+  "p.product_roadmap.field.organization_pids": "Organisations",
+  "p.product_roadmap.field.details": "Détails",
+  "p.product_roadmap.field.placement": "Emplacement",
+  "p.product_roadmap.field.item": "L'élément",
+  "p.product_roadmap.could_not_publish":
+    "Impossible de publier l'ensemble de changements.",
 };

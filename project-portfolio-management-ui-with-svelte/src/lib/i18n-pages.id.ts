@@ -9734,4 +9734,42 @@ export const PAGES_ID: Record<PageKey, string> = {
     "Peta jalan atau butir itu sudah tidak ada; halaman telah dibaca ulang.",
   "p.product_roadmap.could_not_save": "Tidak dapat menyimpan peta jalan.",
   "p.product_roadmap.could_not_change_item": "Tidak dapat mengubah butir.",
+  "p.product_roadmap.publish": "Terbitkan…",
+  "p.product_roadmap.unpublish": "Tarik dari pembaca publik…",
+  "p.product_roadmap.preview_h": "Apa yang akan dilakukan penerbitan",
+  "p.product_roadmap.preview_nothing":
+    "Ini tidak mengubah apa pun: peta jalan sudah seperti yang diminta.",
+  "p.product_roadmap.preview_conflicts":
+    "Orang lain mengubah ini sejak halaman ini membacanya, jadi tidak ada yang dapat diterbitkan:",
+  "p.product_roadmap.preview_problems":
+    "Layanan akan menolak kumpulan perubahan ini:",
+  "p.product_roadmap.publish_now": "Terbitkan kumpulan perubahan",
+  "p.product_roadmap.published_done": "Kumpulan perubahan diterbitkan.",
+  "p.product_roadmap.conflict_refused":
+    "Orang lain mengubah peta jalan sementara itu, jadi tidak ada yang diterbitkan. Halaman telah dibaca ulang.",
+  "p.product_roadmap.change_line": "{field}: dari {from} menjadi {to}",
+  "p.product_roadmap.item_change_line":
+    "“{title}”, {field}: dari {from} menjadi {to}",
+  "p.product_roadmap.new_item_line": "Butir baru: “{title}”",
+  "p.product_roadmap.conflict_line":
+    "{field}: kini {current}, padahal Anda meminta {value}",
+  "p.product_roadmap.conflict_gone": "“{title}” sudah tidak ada",
+  "p.product_roadmap.yes": "ya",
+  "p.product_roadmap.no": "tidak",
+  "p.product_roadmap.none": "tidak ada",
+  "p.product_roadmap.field.title": "Judul",
+  "p.product_roadmap.field.vision": "Visi",
+  "p.product_roadmap.field.service_description": "Apa produk ini",
+  "p.product_roadmap.field.category_pid": "Kategori",
+  "p.product_roadmap.field.published": "Terbit di pembaca publik",
+  "p.product_roadmap.field.description": "Deskripsi",
+  "p.product_roadmap.field.expected_outcome": "Hasil yang diharapkan",
+  "p.product_roadmap.field.phase": "Fase",
+  "p.product_roadmap.field.tags": "Tag",
+  "p.product_roadmap.field.organization_pids": "Organisasi",
+  "p.product_roadmap.field.details": "Rincian",
+  "p.product_roadmap.field.placement": "Penempatan",
+  "p.product_roadmap.field.item": "Butir ini",
+  "p.product_roadmap.could_not_publish":
+    "Tidak dapat menerbitkan kumpulan perubahan.",
 };

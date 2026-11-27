@@ -9681,4 +9681,42 @@ export const PAGES_RU: Record<PageKey, string> = {
     "Дорожной карты или пункта больше нет; страница прочитана заново.",
   "p.product_roadmap.could_not_save": "Не удалось сохранить дорожную карту.",
   "p.product_roadmap.could_not_change_item": "Не удалось изменить пункт.",
+  "p.product_roadmap.publish": "Опубликовать…",
+  "p.product_roadmap.unpublish": "Убрать из публичного просмотра…",
+  "p.product_roadmap.preview_h": "Что сделает публикация",
+  "p.product_roadmap.preview_nothing":
+    "Это ничего не меняет: дорожная карта уже такая.",
+  "p.product_roadmap.preview_conflicts":
+    "Кто-то другой изменил это после того, как страница это прочитала, поэтому опубликовать ничего нельзя:",
+  "p.product_roadmap.preview_problems":
+    "Сервис отклонил бы этот набор изменений:",
+  "p.product_roadmap.publish_now": "Опубликовать набор изменений",
+  "p.product_roadmap.published_done": "Набор изменений опубликован.",
+  "p.product_roadmap.conflict_refused":
+    "Кто-то другой тем временем изменил дорожную карту, поэтому ничего не опубликовано. Страница прочитана заново.",
+  "p.product_roadmap.change_line": "{field}: с «{from}» на «{to}»",
+  "p.product_roadmap.item_change_line":
+    "«{title}», {field}: с «{from}» на «{to}»",
+  "p.product_roadmap.new_item_line": "Новый пункт: «{title}»",
+  "p.product_roadmap.conflict_line":
+    "{field}: сейчас {current}, а вы просили {value}",
+  "p.product_roadmap.conflict_gone": "«{title}» больше нет",
+  "p.product_roadmap.yes": "да",
+  "p.product_roadmap.no": "нет",
+  "p.product_roadmap.none": "нет значения",
+  "p.product_roadmap.field.title": "Название",
+  "p.product_roadmap.field.vision": "Видение",
+  "p.product_roadmap.field.service_description": "Что это за продукт",
+  "p.product_roadmap.field.category_pid": "Категория",
+  "p.product_roadmap.field.published": "Опубликована в публичном просмотре",
+  "p.product_roadmap.field.description": "Описание",
+  "p.product_roadmap.field.expected_outcome": "Ожидаемый результат",
+  "p.product_roadmap.field.phase": "Этап",
+  "p.product_roadmap.field.tags": "Метки",
+  "p.product_roadmap.field.organization_pids": "Организации",
+  "p.product_roadmap.field.details": "Подробности",
+  "p.product_roadmap.field.placement": "Место",
+  "p.product_roadmap.field.item": "Пункт",
+  "p.product_roadmap.could_not_publish":
+    "Не удалось опубликовать набор изменений.",
 };

@@ -3566,6 +3566,12 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   Every limit is said first; a slug another roadmap has or had (409) and a roadmap or item gone (404) have their own
   sentences. Rules in `src/lib/product-roadmap-view.ts` (the `/roadmap` ideas page keeps `roadmap-view.ts`);
   `tests/e2e/product-roadmap.spec.ts`.
-- **Not built** in part l: publishing as one change set (preview and publish), translations, an item's details and
+- **Publishing as one change set** (the same page, RE-2, 2026-11-27): "Publish it…" or "Take it off the public
+  reader…" builds the change set that sets `published` from what was read (its `base`) to what is asked (its `value`),
+  previews it (`POST …/publish/preview`: each change in words, every conflict, every problem), and publishes it with
+  one more press (`POST …/publish`). A conflict meanwhile (409) is said in the page's words, the conflicts named, and
+  nothing is published; the page is read again.
+- **Not built** in part l: gathering several edits into one pending change set (each edit above is saved at once),
+  translations, an item's details and
   organizations, the roadmap's category and family, `/roadmaps`, `/roadmap-categories`, and organizations' short and
   translated names.

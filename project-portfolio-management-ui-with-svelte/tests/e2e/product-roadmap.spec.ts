@@ -92,6 +92,48 @@ async function stub(
         json: { code: "conflict", detail: "service text" },
       });
     const items = (roadmap?.items ?? []) as ReturnType<typeof item>[];
+    if (path.endsWith("/publish/preview")) {
+      const b = body as {
+        roadmap: { published: { base: boolean; value: boolean } };
+      };
+      return route.fulfill({
+        json: {
+          changes: [
+            {
+              subject: "roadmap",
+              field: "published",
+              from: b.roadmap.published.base,
+              to: b.roadmap.published.value,
+            },
+          ],
+          conflicts: [],
+          problems: [],
+          would_publish: true,
+        },
+      });
+    }
+    if (path.endsWith("/publish")) {
+      if (opts.publishConflict)
+        return route.fulfill({
+          status: 409,
+          json: {
+            error: "conflict",
+            description: "service text",
+            conflicts: [
+              {
+                subject: "roadmap",
+                field: "title",
+                base: "Payments",
+                value: "Payments",
+                current: "Pay",
+              },
+            ],
+          },
+        });
+      const b = body as { roadmap: { published: { value: boolean } } };
+      roadmap = { ...roadmap, published: b.roadmap.published.value };
+      return route.fulfill({ json: { applied: [], roadmap } });
+    }
     if (path.endsWith("/roadmap") && method === "PUT") {
       roadmap = {
         ...(roadmap ?? {
@@ -349,4 +391,60 @@ test("a plan of another kind is told it has no roadmap; the page reads in Welsh"
   await expect(
     page.getByRole("heading", { level: 1, name: "Map ffordd y cynnyrch" }),
   ).toBeVisible();
+});
+
+test("publishing goes as one change set: previewed, then published; a conflict meanwhile is said and nothing published (RE-2)", async ({
+  page,
+}) => {
+  const sent = await stub(page);
+  await page.goto(`/en-001/plans/${PID}/roadmap`);
+  await settle(page);
+  await page.getByRole("button", { name: "Publish it…" }).click();
+  const preview = page.getByTestId("publish-preview");
+  await expect(preview.getByTestId("preview-changes")).toHaveText(
+    "Published on the public reader: from no to yes",
+  );
+  expect(sent.at(-1)).toEqual({
+    method: "POST",
+    path: `/api/plans/${PID}/roadmap/publish/preview`,
+    body: { roadmap: { published: { base: false, value: true } } },
+  });
+  await preview.getByRole("button", { name: "Publish the change set" }).click();
+  await expect(page.getByTestId("roadmap-notice")).toHaveText(
+    "Published the change set.",
+  );
+  await expect(page.getByTestId("roadmap-state")).toContainText("Published");
+  expect(sent.at(-1)).toEqual({
+    method: "POST",
+    path: `/api/plans/${PID}/roadmap/publish`,
+    body: { roadmap: { published: { base: false, value: true } } },
+  });
+  await expect(
+    page.getByRole("button", { name: "Take it off the public reader…" }),
+  ).toBeVisible();
+});
+
+test("a change set refused for a conflict names it in the page's words", async ({
+  page,
+}) => {
+  await stub(page, { publishConflict: true });
+  await page.goto(`/en-001/plans/${PID}/roadmap`);
+  await settle(page);
+  await page.getByRole("button", { name: "Publish it…" }).click();
+  await page
+    .getByTestId("publish-preview")
+    .getByRole("button", { name: "Publish the change set" })
+    .click();
+  await expect(page.getByTestId("roadmap-error")).toHaveText(
+    /^Someone else changed the roadmap meanwhile/,
+  );
+  await expect(page.getByTestId("preview-conflicts")).toHaveText(
+    "Title: now Pay, where you asked for Payments",
+  );
+  await expect(page.getByText("service text")).toHaveCount(0);
+  await expect(
+    page
+      .getByTestId("publish-preview")
+      .getByRole("button", { name: "Publish the change set" }),
+  ).toHaveCount(0);
 });

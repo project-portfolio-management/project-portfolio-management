@@ -9179,4 +9179,8 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.jobs.review_all": "Tampilkan semua baris yang ditahan",
   "p.jobs.review_one_job": "Menampilkan baris yang ditahan oleh satu impor.",
   "p.jobs.review_more": "Hanya 500 yang pertama yang dicantumkan.",
+  "p.plan_export.record_heading": "Catatan rencana (JSON)",
+  "p.plan_export.record_intro":
+    "Semua yang tersimpan tentang rencana, sebagai JSON, untuk permintaan catatan atau akses. Bila akses Anda menyamarkan orang, siapa yang memimpin dan memilikinya disamarkan dan berkas menyatakannya. Setiap ekspor seperti ini dicatat di jejak audit rencana.",
+  "p.plan_export.record_download": "Unduh catatan rencana",
 };

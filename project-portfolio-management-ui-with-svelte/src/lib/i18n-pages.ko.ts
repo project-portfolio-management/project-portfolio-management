@@ -8857,4 +8857,8 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.jobs.review_all": "모든 보류 행 보기",
   "p.jobs.review_one_job": "가져오기 한 건이 보류한 행을 보여 줍니다.",
   "p.jobs.review_more": "처음 500개만 나열됩니다.",
+  "p.plan_export.record_heading": "계획의 기록(JSON)",
+  "p.plan_export.record_intro":
+    "계획에 대해 저장된 모든 것을 JSON으로, 기록 또는 열람 요청을 위해 제공합니다. 접근 권한이 사람을 가리는 경우 책임자와 소유자가 가려지며 파일에 그렇게 적힙니다. 이러한 내보내기는 매번 계획의 감사 기록에 남습니다.",
+  "p.plan_export.record_download": "계획의 기록 다운로드",
 };

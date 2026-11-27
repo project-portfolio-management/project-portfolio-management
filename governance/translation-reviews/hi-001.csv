@@ -7594,3 +7594,6 @@ p.jobs.review_show,Show its held rows,इसकी रोकी गई पंक
 p.jobs.review_all,Show every held row,सभी रोकी गई पंक्तियाँ दिखाएँ,,,
 p.jobs.review_one_job,Showing the rows held by one import.,एक आयात द्वारा रोकी गई पंक्तियाँ दिखाई जा रही हैं।,,,
 p.jobs.review_more,Only the first 500 are listed.,केवल पहली 500 सूचीबद्ध हैं।,,,
+p.plan_export.record_heading,The plan's record (JSON),योजना का रिकॉर्ड (JSON),,,
+p.plan_export.record_intro,"Everything stored about the plan, as JSON, for a records or access request. Where your access masks people, who leads and owns it is masked and the file says so. Every such export is written to the plan's audit trail.","योजना के बारे में संग्रहीत सब कुछ, JSON के रूप में, रिकॉर्ड या पहुँच अनुरोध के लिए। जहाँ आपकी पहुँच लोगों को छिपाती है, वहाँ कौन इसका नेतृत्व करता है और कौन स्वामी है यह छिपा रहता है और फ़ाइल यह बताती है। ऐसा हर निर्यात योजना के ऑडिट लॉग में लिखा जाता है।",,,
+p.plan_export.record_download,Download the plan's record,योजना का रिकॉर्ड डाउनलोड करें,,,

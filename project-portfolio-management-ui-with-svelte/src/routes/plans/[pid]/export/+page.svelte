@@ -3,7 +3,8 @@
   Microsoft Project and other scheduling tools read. The file is the service's own download (`Content-Disposition:
   attachment`), so following the link saves it and the page never draws it. No `download` attribute: the
   service's header names the file, as for attachments. The page says what the file carries and what it does
-  not, as the service writes into the file itself, and the limit on its size.
+  not, as the service writes into the file itself, and the limit on its size. Below it, the plan's record as JSON
+  (`GET /api/plans/{pid}/export`, masked where the reader's access masks people; every one audited), named by the link.
 -->
 <script lang="ts">
   import { page } from "$app/state";
@@ -34,6 +35,13 @@
   </a>
 </p>
 <p class="small"><a href={localeHref(`/plans/${pid}/import`)}>{t("p.plan_export.to_import")}</a></p>
+
+<section aria-labelledby="record-h">
+  <h2 id="record-h">{t("p.plan_export.record_heading")}</h2>
+  <p>{t("p.plan_export.record_intro")}</p>
+  <!-- The service answers JSON with no Content-Disposition, so the link names the file itself (same origin). -->
+  <a class="button" href={`${API_BASE_URL}/api/plans/${pid}/export`} download={`plan-${pid}.json`}>{t("p.plan_export.record_download")}</a>
+</section>
 
 <style>
   section {

@@ -7594,3 +7594,6 @@ p.jobs.review_show,Show its held rows,Hiện các dòng được giữ lại c�
 p.jobs.review_all,Show every held row,Hiện mọi dòng được giữ lại,,,
 p.jobs.review_one_job,Showing the rows held by one import.,Đang hiện các dòng được giữ lại bởi một lần nhập.,,,
 p.jobs.review_more,Only the first 500 are listed.,Chỉ liệt kê 500 dòng đầu tiên.,,,
+p.plan_export.record_heading,The plan's record (JSON),Hồ sơ của kế hoạch (JSON),,,
+p.plan_export.record_intro,"Everything stored about the plan, as JSON, for a records or access request. Where your access masks people, who leads and owns it is masked and the file says so. Every such export is written to the plan's audit trail.","Mọi thứ được lưu về kế hoạch, dưới dạng JSON, cho yêu cầu hồ sơ hoặc yêu cầu truy cập. Khi quyền truy cập của bạn che người, người dẫn dắt và chủ sở hữu bị che và tệp có ghi rõ. Mỗi lần xuất như vậy được ghi vào nhật ký kiểm tra của kế hoạch.",,,
+p.plan_export.record_download,Download the plan's record,Tải hồ sơ của kế hoạch,,,

@@ -9,6 +9,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — a plan's record as JSON on `/plans/[pid]/export` (2026-11-27)
+
+- A download link for `GET /api/plans/{pid}/export`, named by the link; three strings in every locale.
+
 ### Added — the import review queue on `/jobs` (2026-11-27)
 
 - Held rows are listed with the plans each looks like and created or discarded after a question; three client methods.

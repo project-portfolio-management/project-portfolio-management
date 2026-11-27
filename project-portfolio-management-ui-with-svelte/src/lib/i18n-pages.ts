@@ -8940,6 +8940,10 @@ export const PAGES_EN = {
   "p.jobs.review_all": "Show every held row",
   "p.jobs.review_one_job": "Showing the rows held by one import.",
   "p.jobs.review_more": "Only the first 500 are listed.",
+  "p.plan_export.record_heading": "The plan's record (JSON)",
+  "p.plan_export.record_intro":
+    "Everything stored about the plan, as JSON, for a records or access request. Where your access masks people, who leads and owns it is masked and the file says so. Every such export is written to the plan's audit trail.",
+  "p.plan_export.record_download": "Download the plan's record",
 } as const;
 
 /** A key in the page and component catalogue. */

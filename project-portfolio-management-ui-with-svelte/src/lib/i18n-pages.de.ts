@@ -9341,4 +9341,8 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.jobs.review_all": "Alle zurückgehaltenen Zeilen zeigen",
   "p.jobs.review_one_job": "Es werden die Zeilen eines Imports gezeigt.",
   "p.jobs.review_more": "Nur die ersten 500 werden aufgeführt.",
+  "p.plan_export.record_heading": "Der Datensatz des Plans (JSON)",
+  "p.plan_export.record_intro":
+    "Alles, was über den Plan gespeichert ist, als JSON, für eine Akten- oder Auskunftsanfrage. Wo Ihr Zugriff Personen maskiert, sind Leitung und Eigentümer maskiert, und die Datei sagt es. Jeder solche Export wird im Prüfprotokoll des Plans vermerkt.",
+  "p.plan_export.record_download": "Datensatz des Plans herunterladen",
 };

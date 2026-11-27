@@ -9315,4 +9315,8 @@ export const PAGES_FR: Record<PageKey, string> = {
   "p.jobs.review_all": "Afficher toutes les lignes retenues",
   "p.jobs.review_one_job": "Lignes retenues par un seul import.",
   "p.jobs.review_more": "Seules les 500 premières sont listées.",
+  "p.plan_export.record_heading": "Le dossier du plan (JSON)",
+  "p.plan_export.record_intro":
+    "Tout ce qui est enregistré sur le plan, en JSON, pour une demande de dossier ou d'accès. Là où votre accès masque les personnes, qui le dirige et qui le possède sont masqués, et le fichier le dit. Chaque export de ce type est inscrit dans la piste d'audit du plan.",
+  "p.plan_export.record_download": "Télécharger le dossier du plan",
 };

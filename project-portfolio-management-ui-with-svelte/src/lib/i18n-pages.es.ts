@@ -9251,4 +9251,8 @@ export const PAGES_ES: Record<PageKey, string> = {
   "p.jobs.review_one_job":
     "Se muestran las filas retenidas por una importación.",
   "p.jobs.review_more": "Solo se muestran las 500 primeras.",
+  "p.plan_export.record_heading": "El registro del plan (JSON)",
+  "p.plan_export.record_intro":
+    "Todo lo guardado sobre el plan, en JSON, para una solicitud de registros o de acceso. Donde su acceso enmascara a las personas, quién lo dirige y quién es su propietario quedan enmascarados y el archivo lo indica. Cada exportación así queda en el registro de auditoría del plan.",
+  "p.plan_export.record_download": "Descargar el registro del plan",
 };

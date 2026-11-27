@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 27 November (a plan's record as JSON)
+
+- `/plans/[pid]/export` also downloads the plan's record as JSON (`GET /api/plans/{pid}/export`: masked where the
+  reader's access masks people; the service audits every export). Three new strings in every locale, machine-written in
+  14, none reviewed. `POST /api/plans/match` is recorded as having no screen on purpose (an integration utility).
+  Not verified: against a real service.
+
 ## 27 November (a flaky accessibility test made to wait)
 
 - `tests/e2e/email-deliveries.spec.ts`'s axe test now waits for the page's title before running axe; on a CI runner axe

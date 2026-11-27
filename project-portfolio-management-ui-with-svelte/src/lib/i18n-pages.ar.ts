@@ -8660,4 +8660,8 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.jobs.review_all": "اعرض كل الصفوف المحجوزة",
   "p.jobs.review_one_job": "تُعرض الصفوف التي حجزها استيراد واحد.",
   "p.jobs.review_more": "لا تُدرج إلا أول 500.",
+  "p.plan_export.record_heading": "سجل الخطة (JSON)",
+  "p.plan_export.record_intro":
+    "كل ما هو محفوظ عن الخطة، بصيغة JSON، لطلب سجلات أو وصول. حيث تُخفي صلاحيتك الأشخاص، يُخفى من يقودها ومن يملكها ويذكر الملف ذلك. كل تصدير من هذا النوع يُكتب في سجل تدقيق الخطة.",
+  "p.plan_export.record_download": "نزّل سجل الخطة",
 };

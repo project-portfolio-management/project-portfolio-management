@@ -9077,4 +9077,8 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.jobs.review_all": "Hiện mọi dòng được giữ lại",
   "p.jobs.review_one_job": "Đang hiện các dòng được giữ lại bởi một lần nhập.",
   "p.jobs.review_more": "Chỉ liệt kê 500 dòng đầu tiên.",
+  "p.plan_export.record_heading": "Hồ sơ của kế hoạch (JSON)",
+  "p.plan_export.record_intro":
+    "Mọi thứ được lưu về kế hoạch, dưới dạng JSON, cho yêu cầu hồ sơ hoặc yêu cầu truy cập. Khi quyền truy cập của bạn che người, người dẫn dắt và chủ sở hữu bị che và tệp có ghi rõ. Mỗi lần xuất như vậy được ghi vào nhật ký kiểm tra của kế hoạch.",
+  "p.plan_export.record_download": "Tải hồ sơ của kế hoạch",
 };

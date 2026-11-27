@@ -70,3 +70,31 @@ test("the export page reads in Welsh and passes axe", async ({ page }) => {
     ),
   ).toEqual([]);
 });
+
+test("the plan's record downloads as JSON, named by the link (NC-1 slice 12 part k)", async ({
+  page,
+}) => {
+  await stubPlansApi(page);
+  await page.route(`**/api/plans/${PID}/export`, (route) =>
+    route.fulfill({
+      json: { pid: PID, masked: true, plan: { name: "Website replatform" } },
+    }),
+  );
+  await page.goto(`/en-001/plans/${PID}/export`);
+  await settle(page);
+  await expect(
+    page.getByRole("heading", { level: 2, name: "The plan's record (JSON)" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/written to the plan's audit trail/),
+  ).toBeVisible();
+  const link = page.getByRole("link", { name: "Download the plan's record" });
+  // A download is not seen by page.route here; the link's address is the check that it asks the right route.
+  await expect(link).toHaveAttribute(
+    "href",
+    new RegExp(`/api/proxy/api/plans/${PID}/export$`),
+  );
+  const download = page.waitForEvent("download");
+  await link.click();
+  expect((await download).suggestedFilename()).toBe(`plan-${PID}.json`);
+});

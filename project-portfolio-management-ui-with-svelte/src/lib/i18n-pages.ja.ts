@@ -8999,4 +8999,8 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.jobs.review_all": "保留行をすべて表示",
   "p.jobs.review_one_job": "1 件のインポートで保留された行を表示しています。",
   "p.jobs.review_more": "最初の 500 件のみ表示しています。",
+  "p.plan_export.record_heading": "計画の記録（JSON）",
+  "p.plan_export.record_intro":
+    "計画について保存されているすべてを JSON で、記録や開示の請求のために。アクセス権で人物が伏せられる場合は、責任者と所有者が伏せられ、ファイルにその旨が記されます。このエクスポートは毎回、計画の監査記録に残ります。",
+  "p.plan_export.record_download": "計画の記録をダウンロード",
 };

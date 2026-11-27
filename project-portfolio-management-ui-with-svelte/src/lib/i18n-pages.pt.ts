@@ -9246,4 +9246,8 @@ export const PAGES_PT: Record<PageKey, string> = {
   "p.jobs.review_all": "Mostrar todas as linhas retidas",
   "p.jobs.review_one_job": "A mostrar as linhas retidas por uma importação.",
   "p.jobs.review_more": "Só são listadas as primeiras 500.",
+  "p.plan_export.record_heading": "O registo do plano (JSON)",
+  "p.plan_export.record_intro":
+    "Tudo o que está guardado sobre o plano, em JSON, para um pedido de registos ou de acesso. Onde o seu acesso mascara pessoas, quem o lidera e quem é o dono ficam mascarados e o ficheiro di-lo. Cada exportação destas fica no registo de auditoria do plano.",
+  "p.plan_export.record_download": "Transferir o registo do plano",
 };

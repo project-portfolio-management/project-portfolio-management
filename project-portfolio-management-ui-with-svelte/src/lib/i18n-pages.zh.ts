@@ -8300,4 +8300,8 @@ export const PAGES_ZH: Record<PageKey, string> = {
   "p.jobs.review_all": "显示所有待审核的行",
   "p.jobs.review_one_job": "正在显示一次导入保留的行。",
   "p.jobs.review_more": "仅列出前 500 行。",
+  "p.plan_export.record_heading": "计划记录（JSON）",
+  "p.plan_export.record_intro":
+    "以 JSON 提供计划的全部存储内容，用于记录或查阅请求。若你的权限会遮盖人员，负责人和所有者会被遮盖，文件中会注明。每次此类导出都会写入计划的审计记录。",
+  "p.plan_export.record_download": "下载计划记录",
 };

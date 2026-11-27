@@ -9156,4 +9156,8 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.jobs.review_all": "Dangos pob rhes a ddaliwyd",
   "p.jobs.review_one_job": "Yn dangos y rhesi a ddaliwyd gan un mewnforyn.",
   "p.jobs.review_more": "Dim ond y 500 cyntaf a restrir.",
+  "p.plan_export.record_heading": "Cofnod y cynllun (JSON)",
+  "p.plan_export.record_intro":
+    "Popeth sy'n cael ei storio am y cynllun, fel JSON, ar gyfer cais am gofnodion neu fynediad. Lle mae eich mynediad yn cuddio pobl, mae pwy sy'n ei arwain a'i berchen wedi'u cuddio ac mae'r ffeil yn dweud hynny. Mae pob allforyn o'r fath yn cael ei ysgrifennu i lwybr archwilio'r cynllun.",
+  "p.plan_export.record_download": "Lawrlwytho cofnod y cynllun",
 };

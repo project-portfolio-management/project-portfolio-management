@@ -16,6 +16,13 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 28 November (backup archive validation)
+
+- Backups now check gzip integrity and read the artifact archive before encryption and publication.
+  The publication tests cover a damaged gzip footer, unreadable tar data, and valid empty and populated
+  archives. Local PostgreSQL 18 drills restored a plain backup and an encrypted streamed backup and
+  verified the attachment against the digest in its restored database row. Hosted recovery remains unverified.
+
 ## 28 November (who can see a plan)
 
 - A new `/plans/[pid]/access` ("Who can see it") makes a plan private with its members, given as user ids, and grants

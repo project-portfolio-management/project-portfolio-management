@@ -24,7 +24,9 @@ ARTIFACT_DIR=/var/lib/ppm/artifacts \
 
 The script builds in a private directory on the backup filesystem and publishes
 the uniquely named directory only after every expected file and checksum is
-complete. Concurrent runs in the same second therefore keep separate outputs.
+complete. Before encryption, it checks gzip integrity and reads the tar archive for
+both local and streamed artifact stores. An empty archive is valid. Concurrent runs
+in the same second keep separate outputs.
 A failed run removes its own private directory and leaves every published backup
 alone. A configured local artifact directory that is missing refuses the run
 before `pg_dump`. Copy a completed directory **off the machine** (object storage,

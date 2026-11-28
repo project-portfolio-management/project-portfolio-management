@@ -109,11 +109,30 @@ ARTIFACT_NOTE="skipped (no ARTIFACT_DIR or ARTIFACT_TAR_CMD set)"
 if [ -n "$ARTIFACT_TAR_CMD" ]; then
   echo "archiving the artifact store with ARTIFACT_TAR_CMD ..."
   sh -c "$ARTIFACT_TAR_CMD" > "$WORK/artifacts.tar.gz"
-  ARTIFACT_NOTE="$(tar -tzf "$WORK/artifacts.tar.gz" | grep -vc '/$' || true) files via ARTIFACT_TAR_CMD"
 elif [ -n "$ARTIFACT_DIR" ]; then
   echo "archiving the artifact store $ARTIFACT_DIR ..."
   tar -czf "$WORK/artifacts.tar.gz" -C "$ARTIFACT_DIR" .
   ARTIFACT_NOTE="$(find "$ARTIFACT_DIR" -type f -print0 | LC_ALL=C tr -cd '\000' | wc -c | tr -d ' ') files from $ARTIFACT_DIR"
+fi
+
+if [ -f "$WORK/artifacts.tar.gz" ]; then
+  # A tar reader can stop at the end-of-archive marker before checking the gzip footer.
+  # Keep both exit statuses independent of the manifest's file count.
+  if ! gzip -t "$WORK/artifacts.tar.gz" || ! tar -tzf "$WORK/artifacts.tar.gz" > "$WORK/artifact-members"; then
+    echo "backup: cannot read the artifact archive as a complete gzip tar" >&2
+    exit 1
+  fi
+  # GNU tar can report an empty listing for arbitrary input shorter than one header.
+  # Even an empty tar has two 512-byte end-of-archive blocks.
+  if [ ! -s "$WORK/artifact-members" ] && [ "$(gzip -dc "$WORK/artifacts.tar.gz" | wc -c)" -lt 1024 ]; then
+    echo "backup: empty artifact archive is missing its end-of-archive blocks" >&2
+    exit 1
+  fi
+  if [ -n "$ARTIFACT_TAR_CMD" ]; then
+    count=$(awk '!/\/$/ { n++ } END { print n+0 }' "$WORK/artifact-members")
+    ARTIFACT_NOTE="$count files via ARTIFACT_TAR_CMD"
+  fi
+  rm "$WORK/artifact-members"
 fi
 
 encrypt "$WORK/db.dump"

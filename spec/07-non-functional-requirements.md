@@ -162,7 +162,10 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   A configured store that yielded no archive fails the drill. A database-only drill is valid
   when no store was configured. A backup is assembled in a private directory on the destination
   filesystem and renamed to its public, uniquely suffixed name only after the dump, expected artifact
-  archive, manifest and checksums are complete. A configured local artifact directory that is missing
+  archive, manifest and checksums are complete. Before encryption and publication, the backup script
+  verifies gzip integrity and reads the tar member list for each artifact archive. A valid archive
+  with zero files is accepted. An unreadable archive fails the backup even if its producer exited
+  successfully. A configured local artifact directory that is missing
   refuses the run before the dump. Concurrent runs in the same second publish separate backups, and a
   failed run removes only its own private directory. RG-20 proposes a separate deployment exercise using
   a retained off-host backup and a downloaded attachment's recorded digest.

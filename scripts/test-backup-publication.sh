@@ -26,7 +26,7 @@ SH
 
 cat > "$WORK/bin/pg-dump" <<'SH'
 #!/bin/sh
-sleep 2
+case "$*" in *concurrent*) sleep 2 ;; esac
 case "$*" in
   *fail*) exit 7 ;;
   *) printf 'mock database dump\n' ;;
@@ -69,9 +69,9 @@ fi
 
 # All three begin in the same second. Until their complete archives are ready,
 # monitoring can see only the retained backup.
-run_backup mock-success-a > "$WORK/a.log" 2>&1 & a=$!
-run_backup mock-success-b > "$WORK/b.log" 2>&1 & b=$!
-run_backup mock-fail > "$WORK/fail.log" 2>&1 & bad=$!
+run_backup mock-concurrent-a > "$WORK/a.log" 2>&1 & a=$!
+run_backup mock-concurrent-b > "$WORK/b.log" 2>&1 & b=$!
+run_backup mock-concurrent-fail > "$WORK/fail.log" 2>&1 & bad=$!
 sleep 1
 [ "$(find "$WORK/backups" -mindepth 1 -maxdepth 1 -type d -name 'ppm-backup-*' | wc -l | tr -d ' ')" = 1 ] ||
   fail "an incomplete backup became visible"
@@ -101,5 +101,43 @@ done
   fail "a private partial directory was left behind"
 PATH="$WORK/bin:$PATH" "$HERE/check-backup-age.sh" "$WORK/backups" 1 >/dev/null ||
   fail "backup-age monitoring did not accept the newest published backup"
+
+# A producer can exit successfully after writing an unusable archive.
+export STREAM_FIXTURE="$WORK/stream.tar.gz"
+# The backup producer expands this variable in its own shell.
+# shellcheck disable=SC2016
+export ARTIFACT_TAR_CMD='cat "$STREAM_FIXTURE"'
+reject_stream() {
+  if run_backup mock > "$WORK/stream.log" 2>&1; then
+    fail "published $1"
+  fi
+  [ "$(find "$WORK/backups" -mindepth 1 -maxdepth 1 | wc -l | tr -d ' ')" = 3 ] ||
+    fail "failed stream changed the set of backup directories"
+  [ -f "$first/SHA256SUMS" ] && [ -f "$second/SHA256SUMS" ] &&
+    [ "$(cat "$WORK/backups/ppm-backup-20261118T120000Z-retained/MANIFEST")" = retained ] ||
+    fail "failed stream damaged a previously published backup"
+}
+printf 'invalid tar contents\n' | gzip -c > "$STREAM_FIXTURE"
+reject_stream "a valid gzip stream containing invalid tar data"
+gzip -c < /dev/null > "$STREAM_FIXTURE"
+reject_stream "a gzip stream with no tar data"
+
+# Cut just the gzip footer so that a reader can still see the tar members.
+size=$(wc -c < "$first/artifacts.tar.gz")
+dd if="$first/artifacts.tar.gz" of="$STREAM_FIXTURE" bs=1 count=$((size - 8)) 2>/dev/null
+reject_stream "a truncated gzip stream"
+
+tar -czf "$STREAM_FIXTURE" -T /dev/null
+run_backup mock > "$WORK/empty.log"
+empty=$(tail -1 "$WORK/empty.log")
+grep -Fx 'artifacts=0 files via ARTIFACT_TAR_CMD' "$empty/MANIFEST" >/dev/null ||
+  fail "empty archive did not publish with a zero file count"
+
+cp "$first/artifacts.tar.gz" "$STREAM_FIXTURE"
+run_backup mock > "$WORK/normal.log"
+normal=$(tail -1 "$WORK/normal.log")
+grep -Fx 'artifacts=1 files via ARTIFACT_TAR_CMD' "$normal/MANIFEST" >/dev/null ||
+  fail "normal archive did not publish with the expected file count"
+cmp "$STREAM_FIXTURE" "$normal/artifacts.tar.gz" || fail "published archive differs from the stream"
 
 echo "BACKUP PUBLICATION TEST PASSED"

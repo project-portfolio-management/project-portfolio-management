@@ -403,6 +403,113 @@ async fn risks_score_and_escalate() {
 #[tokio::test]
 #[serial]
 #[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
+async fn concurrent_risk_edits_preserve_omitted_scores() {
+    use project_portfolio_management::db;
+    use std::time::Duration;
+
+    super::isolate_search_index();
+    request::<App, _, _>(|request, ctx| async move {
+        let plan: Value = request
+            .post("/api/plans")
+            .json(&json!({ "name": "Concurrent edits" }))
+            .await
+            .json();
+        let base = format!("/api/plans/{}/risks", plan["pid"].as_str().unwrap());
+        let risk: Value = request
+            .post(&base)
+            .json(&json!({ "title": "Late delivery", "probability": 1, "impact": 2 }))
+            .await
+            .json();
+        let risk_pid = risk["pid"].as_str().unwrap();
+        let path = format!("{base}/{risk_pid}");
+
+        // The service's test pool has one connection. A second session holds an uncommitted rescore.
+        let writer = App::context(ctx.environment.clone(), (*ctx.config).clone()).await.unwrap();
+        for (probability, edit, expected_impact) in [
+            (3, json!({"mitigation": "Add a supplier"}), 2),
+            (4, json!({"impact": 5, "reason": "Revised cost"}), 5),
+        ] {
+            let mut tx = db::begin(&writer).await.unwrap();
+            sqlx::query(
+                "SELECT set_config('ppm.actor', 'assessor', true),
+                        set_config('ppm.reason', 'Reforecast', true)",
+            )
+            .execute(tx.conn())
+            .await
+            .unwrap();
+            sqlx::query("UPDATE risks SET probability = $1 WHERE pid = $2::uuid")
+                .bind(probability)
+                .bind(risk_pid)
+                .execute(tx.conn())
+                .await
+                .unwrap();
+
+            let release_after_contention = async {
+                tokio::time::timeout(Duration::from_secs(10), async {
+                    loop {
+                        let waiting: bool = sqlx::query_scalar(
+                            "SELECT EXISTS (SELECT FROM pg_locks WHERE NOT granted
+                             AND pg_backend_pid() = ANY(pg_blocking_pids(pid)))",
+                        )
+                        .fetch_one(tx.conn())
+                        .await
+                        .unwrap();
+                        if waiting {
+                            break;
+                        }
+                        tokio::time::sleep(Duration::from_millis(10)).await;
+                    }
+                })
+                .await
+                .expect("the request must reach the row lock before the rescore commits");
+                tx.commit().await.unwrap();
+            };
+            let (response, ()) = tokio::join!(
+                async { request.put(&path).json(&edit).await },
+                release_after_contention
+            );
+            response.assert_status_ok();
+            let row: Value = response.json();
+            assert_eq!(row["probability"], probability);
+            assert_eq!(row["impact"], expected_impact);
+            assert_eq!(row["mitigation"], "Add a supplier");
+        }
+
+        let rejected = request
+            .put(&path)
+            .json(&json!({ "impact": 6, "mitigation": "Invalid change" }))
+            .await;
+        assert_eq!(rejected.status_code(), 422);
+        let stored: (i32, i32, String) = sqlx::query_as(
+            "SELECT probability, impact, mitigation FROM risks WHERE pid = $1::uuid"
+        )
+        .bind(risk_pid)
+        .fetch_one(db::pool(&ctx))
+        .await
+        .unwrap();
+        assert_eq!(stored, (4, 5, "Add a supplier".into()));
+        let history: Value = request.get(&format!("{path}/scores")).await.json();
+        let scores: Vec<_> = history["scores"].as_array().unwrap().iter()
+            .map(|row| json!([row["score"], row["actor"], row["reason"]]))
+            .collect();
+        assert_eq!(scores, [
+            json!([2, null, null]), json!([6, "assessor", "Reforecast"]),
+            json!([8, "assessor", "Reforecast"]), json!([20, null, "Revised cost"])
+        ]);
+        let audits: i64 = sqlx::query_scalar(
+            "SELECT count(*) FROM audit_logs WHERE entity_pid = $1::uuid AND action = 'risk_updated'"
+        )
+        .bind(risk_pid)
+        .fetch_one(db::pool(&ctx))
+        .await
+        .unwrap();
+        assert_eq!(audits, 2, "one audit per accepted HTTP edit");
+    }).await;
+}
+
+#[tokio::test]
+#[serial]
+#[ignore = "requires PostgreSQL (DB_URL); run with `cargo test -- --ignored`"]
 // Budgets: minor-unit arithmetic, per-currency variance, currency
 // shape validation, and the governance summary tying it together.
 async fn budgets_track_variance_and_the_summary_aggregates() {

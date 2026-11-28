@@ -1077,18 +1077,26 @@ async fn update_risk(
     Json(payload): Json<RiskUpdate>,
 ) -> Result<Response> {
     let item = find_item(&ctx, &pid).await?;
-    let risk = find_risk(&ctx, gov::parse_pid(&risk_pid)?).await?;
-    if risk.plan_pid != item.pid {
-        return Err(Error::NotFound);
-    }
+    let risk_pid = gov::parse_pid(&risk_pid)?;
+    let mut tx = crate::db::begin(&ctx).await?;
+    // Validate partial edits against the scores this transaction will update.
+    let (current_probability, current_impact): (i32, i32) = sqlx::query_as(
+        "SELECT probability, impact FROM risks
+         WHERE pid = $1 AND plan_pid = $2 AND deleted_at IS NULL FOR UPDATE",
+    )
+    .bind(risk_pid)
+    .bind(item.pid)
+    .fetch_optional(tx.conn())
+    .await?
+    .ok_or(Error::NotFound)?;
     let mut problems = Vec::new();
     if let Some(status) = payload.status.as_deref()
         && !rules::is_token(rules::RISK_STATUSES, status)
     {
         problems.push(format!("status must be one of {:?}", rules::RISK_STATUSES));
     }
-    let probability = payload.probability.unwrap_or(risk.probability);
-    let impact = payload.impact.unwrap_or(risk.impact);
+    let probability = payload.probability.unwrap_or(current_probability);
+    let impact = payload.impact.unwrap_or(current_impact);
     if let Err(e) = rules::risk_exposure(probability, impact) {
         problems.push(e);
     }
@@ -1103,42 +1111,28 @@ async fn update_risk(
     if !problems.is_empty() {
         return Err(unprocessable(&problems));
     }
-    let risk_row_pid = risk.pid;
-    let payload_reason = payload.reason.clone();
-    // The update names only what changes: the scores always, the rest when the body carries them.
-    let mut update = sqlx::QueryBuilder::<sqlx::Postgres>::new("UPDATE risks SET probability = ");
-    update.push_bind(probability);
-    update.push(", impact = ").push_bind(impact);
-    if let Some(status) = payload.status {
-        update.push(", status = ").push_bind(status);
-    }
-    if let Some(mitigation) = payload.mitigation {
-        update.push(", mitigation = ").push_bind(mitigation);
-    }
-    if let Some(review_date) = payload.review_date {
-        update.push(", review_date = ").push_bind(review_date);
-    }
-    update
-        .push(" WHERE id = ")
-        .push_bind(risk.id)
-        .push(" RETURNING *");
-    let mut tx = crate::db::begin(&ctx).await?;
     // The score history trigger reads who and why from the transaction (OF-3).
     sqlx::query("SELECT set_config('ppm.actor', $1, true), set_config('ppm.reason', $2, true)")
         .bind(caller.actor().unwrap_or_default())
-        .bind(payload_reason.unwrap_or_default())
+        .bind(payload.reason.as_deref().unwrap_or_default())
         .fetch_one(tx.conn())
         .await?;
-    let row: risks::Model = update.build_query_as().fetch_one(tx.conn()).await?;
-    AuditModel::record_on(
-        tx.conn(),
-        risk_row_pid,
-        "risk_updated",
-        caller.actor(),
-        None,
+    let row: risks::Model = sqlx::query_as(
+        "UPDATE risks SET probability = $2, impact = $3, status = COALESCE($4, status),
+         mitigation = COALESCE($5, mitigation), review_date = COALESCE($6, review_date)
+         WHERE pid = $1 RETURNING *",
     )
-    .await
-    .map_err(super::audit_failed)?;
+    .bind(risk_pid)
+    .bind(probability)
+    .bind(impact)
+    .bind(payload.status)
+    .bind(payload.mitigation)
+    .bind(payload.review_date)
+    .fetch_one(tx.conn())
+    .await?;
+    AuditModel::record_on(tx.conn(), risk_pid, "risk_updated", caller.actor(), None)
+        .await
+        .map_err(super::audit_failed)?;
     tx.commit().await?;
     format::json(row)
 }

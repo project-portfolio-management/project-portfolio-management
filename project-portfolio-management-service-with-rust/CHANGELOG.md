@@ -9,6 +9,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed — concurrent edits to a risk
+
+- A mitigation or impact edit could restore an old probability after a concurrent rescore and record
+  that reversal in the score history. The update now locks the risk before validating the merged scores.
+  The regression test overlaps two PostgreSQL sessions and checks the stored risk, history and audit.
+  Production contention and latency remain unmeasured.
+
 ### Changed — axa 0.24.1 (2026-11-27)
 
 - `axa` 0.20.1 → 0.24.1 and `axa-test` 0.11.0 → 0.15.1 (`axa-idempotency-key` 0.3.0, `axa-postgres-job-queue`

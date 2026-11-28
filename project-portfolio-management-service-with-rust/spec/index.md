@@ -607,10 +607,15 @@ is audited (even zero-row).
 | GET | `/api/proposals/{pid}/duplicates` | Matcher-backed duplicate-demand check vs live plans + sibling proposals |
 | POST / GET | `/api/plans/{pid}/gate-reviews` | Strictly-ordered g0–g5 stage gates |
 | POST / GET | `/api/plans/{pid}/risks` | 1–5×1–5 exposure-ranked risks |
-| PUT | `/api/plans/{pid}/risks/{risk_pid}` | Update / `escalate` |
+| PUT | `/api/plans/{pid}/risks/{risk_pid}` | Edit the supplied fields of a live risk on this plan. Concurrent edits to different fields both take effect. |
+| POST | `/api/plans/{pid}/risks/{risk_pid}/escalate` | Escalate an open or mitigating risk |
 | POST / GET | `/api/plans/{pid}/budget-lines` | ISO-4217 minor-unit planned/actual/variance |
 | POST | `/api/plans/{pid}/budget-lines/{line_pid}/actual` · `/release` | Accumulate actual; release a stage-gated tranche |
 | GET | `/api/plans/{pid}/governance` | Per-plan governance summary |
+
+A risk edit validates the resulting probability and impact against the latest committed row.
+The edit, its audit entry and any score-history entry commit together. A mitigation-only edit
+preserves a concurrent rescore and its original attribution.
 
 Record-level ABAC (`auth::plan_resource_attrs` exposes `resource.stage`)
 gates plan `PUT` and gate-review `POST`, so gate-locking is policy, not

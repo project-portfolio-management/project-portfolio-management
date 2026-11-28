@@ -3624,3 +3624,19 @@ first, every problem at once; each refusal is the catalogue's sentence by action
   reviews are still saved at once. Gathering cannot be turned off while changes are pending.
 - **Not built** in part l: translating an item's details; moves and removals in a change set; organization names on
   pages other than `/organizations` and this one.
+
+## A plan's access, privacy and records (NC-1 slice 12 part m)
+
+- **`/plans/[pid]/access`** ("Who can see it", a plan workspace link under `governance`, RM-8, PL-7, 2026-11-28):
+  whether the plan is private, and a private plan's members as user ids, one to a line (at most 200; a repeat once;
+  any case); `PUT /api/plans/{pid}/access` takes the whole setting and is sent only when the privacy or the set of
+  members changed. The service adds the person saving as a member when making a plan private, said beside the field;
+  a sign-in with no user id (422 `sub_not_addressable`) has its own sentence. Its guests: each grant's guest id,
+  access (read, or read and comment), state (live, revoked, ended), end or none, and who granted it, live first
+  (`GET /api/plans/{pid}/guests`); one is granted with a user id, an access and an optional end in the future
+  (`datetime-local`, read in the browser's zone; `POST`), and a live one revoked after a question
+  (`POST …/guests/{grant}/revoke`). Every problem is said first. Rules in `src/lib/plan-access-view.ts`;
+  `tests/e2e/plan-access.spec.ts`.
+- **Not built** in part m: the handling mark, the masked view and the plan's audit on the plan page; the data-subject
+  requests, the audit and records checks, the recent audit and event feeds and the deployment's "today" zone on
+  `/security`; members and guests by name (the service stores user ids only).

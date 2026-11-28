@@ -9579,4 +9579,57 @@ export const PAGES_KO: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "대기 중인 변경을 버렸습니다.",
   "p.product_roadmap.pending_slug":
     "주소는 변경 세트에 포함되지 않습니다. 모으기를 끄고 저장하세요.",
+  "p.plan_access.link": "볼 수 있는 사람",
+  "p.plan_access.title": "이 계획을 볼 수 있는 사람",
+  "p.plan_access.title_ppm": "이 계획을 볼 수 있는 사람 — PPM",
+  "p.plan_access.intro":
+    "계획이 비공개인지, 구성원은 누구인지, 어떤 외부 게스트가 읽거나 댓글을 달 수 있는지.",
+  "p.plan_access.could_not_load":
+    "이 계획을 볼 수 있는 사람을 불러오지 못했습니다.",
+  "p.plan_access.could_not_save": "저장하지 못했습니다.",
+  "p.plan_access.not_addressable":
+    "비공개 계획에는 본인이 구성원이어야 하는데, 로그인에 서비스가 식별할 수 있는 사용자 ID가 없습니다. 관리자에게 문의하세요.",
+  "p.plan_access.who_h": "비공개 여부",
+  "p.plan_access.is_private":
+    "이 계획은 비공개입니다. 구성원과 관리자만 볼 수 있습니다.",
+  "p.plan_access.is_open":
+    "이 계획은 비공개가 아닙니다. 계획을 읽을 수 있는 모든 사람이 볼 수 있습니다.",
+  "p.plan_access.f_private": "비공개: 구성원과 관리자만 볼 수 있음",
+  "p.plan_access.f_members": "구성원(사용자 ID, 한 줄에 하나; 최대 200)",
+  "p.plan_access.members_note":
+    "계획을 비공개로 하면 본인이 구성원으로 추가되므로 잠겨서 못 보는 일이 없습니다. 관리자는 항상 볼 수 있습니다.",
+  "p.plan_access.save": "볼 수 있는 사람 저장",
+  "p.plan_access.unchanged": "바뀐 것이 없어 아무것도 보내지 않았습니다.",
+  "p.plan_access.saved_private": "이제 계획은 비공개입니다.",
+  "p.plan_access.saved_open": "이제 계획은 비공개가 아닙니다.",
+  "p.plan_access.member_bad":
+    "구성원은 각각 사용자 ID입니다(예: 3f2c6b7e-0000-4000-8000-000000000001).",
+  "p.plan_access.members_many": "계획의 구성원은 최대 200명입니다.",
+  "p.plan_access.guests_h": "게스트",
+  "p.plan_access.guests_intro":
+    "이 계획을 읽거나 댓글을 달 수 있는 외부 협력자로, 그 밖의 일은 할 수 없습니다. 게스트에게는 사람 이름이 빠진 계획이 보입니다.",
+  "p.plan_access.no_guests": "접근 권한을 받은 게스트가 없습니다.",
+  "p.plan_access.access_read": "읽기 가능",
+  "p.plan_access.access_comment": "읽기와 댓글 가능",
+  "p.plan_access.state_live": "유효",
+  "p.plan_access.state_revoked": "취소됨",
+  "p.plan_access.state_expired": "만료",
+  "p.plan_access.until": "{date}까지",
+  "p.plan_access.no_end": "취소할 때까지",
+  "p.plan_access.granted_by": "부여: {who}",
+  "p.plan_access.revoke": "취소",
+  "p.plan_access.revoke_ask":
+    "게스트 {guest}의 접근 권한을 취소할까요? 다음 요청부터 끝납니다.",
+  "p.plan_access.revoked": "게스트 {guest}의 접근 권한을 취소했습니다.",
+  "p.plan_access.grant_h": "게스트에게 접근 권한 부여",
+  "p.plan_access.f_guest": "게스트의 사용자 ID",
+  "p.plan_access.f_access": "접근 권한",
+  "p.plan_access.f_expires": "종료(선택)",
+  "p.plan_access.grant": "접근 권한 부여",
+  "p.plan_access.granted": "게스트 {guest}에게 접근 권한을 부여했습니다.",
+  "p.plan_access.guest_bad":
+    "게스트는 사용자 ID입니다(예: 3f2c6b7e-0000-4000-8000-000000000001).",
+  "p.plan_access.access_bad": "접근 권한은 읽기, 또는 읽기와 댓글입니다.",
+  "p.plan_access.expires_bad": "종료를 날짜와 시간으로 입력하세요.",
+  "p.plan_access.expires_past": "종료는 미래여야 합니다.",
 };

@@ -9373,4 +9373,57 @@ export const PAGES_AR: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "تم تجاهل التغييرات المعلّقة.",
   "p.product_roadmap.pending_slug":
     "العنوان ليس جزءًا من مجموعة تغييرات: احفظه والجمع متوقف.",
+  "p.plan_access.link": "من يمكنه رؤيتها",
+  "p.plan_access.title": "من يمكنه رؤية هذه الخطة",
+  "p.plan_access.title_ppm": "من يمكنه رؤية هذه الخطة — PPM",
+  "p.plan_access.intro":
+    "هل الخطة خاصة، ومن أعضاؤها، وأي ضيوف من الخارج يمكنهم قراءتها أو التعليق عليها.",
+  "p.plan_access.could_not_load": "تعذّر تحميل من يمكنه رؤية هذه الخطة.",
+  "p.plan_access.could_not_save": "تعذّر الحفظ.",
+  "p.plan_access.not_addressable":
+    "تحتاج الخطة الخاصة إلى أن تكون عضوًا فيها، وليس لتسجيل دخولك معرّف مستخدم تستطيع الخدمة تسميته؛ اسأل مسؤولًا.",
+  "p.plan_access.who_h": "خاصة أم لا",
+  "p.plan_access.is_private":
+    "هذه الخطة خاصة: لا يراها إلا أعضاؤها والمسؤولون.",
+  "p.plan_access.is_open":
+    "هذه الخطة ليست خاصة: يراها كل من يمكنه قراءة الخطط.",
+  "p.plan_access.f_private": "خاصة: لا يراها إلا أعضاؤها والمسؤولون",
+  "p.plan_access.f_members":
+    "الأعضاء (معرّفات المستخدمين، واحد في كل سطر؛ 200 على الأكثر)",
+  "p.plan_access.members_note":
+    "عندما تجعل الخطة خاصة تُضاف عضوًا، فلا تُغلق عنك أبدًا. يراها المسؤولون دائمًا.",
+  "p.plan_access.save": "حفظ من يمكنه رؤيتها",
+  "p.plan_access.unchanged": "لم يتغيّر شيء، فلم يُرسل شيء.",
+  "p.plan_access.saved_private": "الخطة خاصة الآن.",
+  "p.plan_access.saved_open": "الخطة لم تعد خاصة.",
+  "p.plan_access.member_bad":
+    "كل عضو معرّف مستخدم، مثل 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.members_many": "للخطة 200 عضو على الأكثر.",
+  "p.plan_access.guests_h": "الضيوف",
+  "p.plan_access.guests_intro":
+    "متعاونون من الخارج يمكنهم قراءة هذه الخطة أو التعليق عليها، لا أكثر. يرى الضيف الخطة دون أسماء الأشخاص.",
+  "p.plan_access.no_guests": "لم يُمنح أي ضيف وصولًا.",
+  "p.plan_access.access_read": "يمكنه القراءة",
+  "p.plan_access.access_comment": "يمكنه القراءة والتعليق",
+  "p.plan_access.state_live": "سارٍ",
+  "p.plan_access.state_revoked": "مُلغى",
+  "p.plan_access.state_expired": "منتهٍ",
+  "p.plan_access.until": "حتى {date}",
+  "p.plan_access.no_end": "حتى الإلغاء",
+  "p.plan_access.granted_by": "منحه {who}",
+  "p.plan_access.revoke": "إلغاء الوصول",
+  "p.plan_access.revoke_ask":
+    "إلغاء وصول الضيف {guest}؟ ينتهي عند طلبه التالي.",
+  "p.plan_access.revoked": "أُلغي وصول الضيف {guest}.",
+  "p.plan_access.grant_h": "منح ضيف وصولًا",
+  "p.plan_access.f_guest": "معرّف مستخدم الضيف",
+  "p.plan_access.f_access": "الوصول",
+  "p.plan_access.f_expires": "ينتهي (اختياري)",
+  "p.plan_access.grant": "منح الوصول",
+  "p.plan_access.granted": "مُنح الضيف {guest} وصولًا.",
+  "p.plan_access.guest_bad":
+    "الضيف معرّف مستخدم، مثل 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.access_bad": "الوصول قراءة، أو قراءة وتعليق.",
+  "p.plan_access.expires_bad": "أدخل النهاية تاريخًا ووقتًا.",
+  "p.plan_access.expires_past": "يجب أن تكون النهاية في المستقبل.",
 };

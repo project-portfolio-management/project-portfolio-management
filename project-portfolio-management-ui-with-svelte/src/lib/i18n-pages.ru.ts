@@ -9892,4 +9892,59 @@ export const PAGES_RU: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "Ожидающие изменения отброшены.",
   "p.product_roadmap.pending_slug":
     "Адрес не входит в набор изменений: сохраните его при выключенном сборе.",
+  "p.plan_access.link": "Кто видит",
+  "p.plan_access.title": "Кто видит этот план",
+  "p.plan_access.title_ppm": "Кто видит этот план — PPM",
+  "p.plan_access.intro":
+    "Закрыт ли план, кто его участники и какие внешние гости могут его читать или комментировать.",
+  "p.plan_access.could_not_load": "Не удалось загрузить, кто видит этот план.",
+  "p.plan_access.could_not_save": "Не удалось сохранить.",
+  "p.plan_access.not_addressable":
+    "Чтобы план был закрытым, вы должны быть участником, а у вашего входа нет идентификатора пользователя, который служба может назвать; обратитесь к администратору.",
+  "p.plan_access.who_h": "Закрытый или нет",
+  "p.plan_access.is_private":
+    "Этот план закрыт: его видят только участники и администраторы.",
+  "p.plan_access.is_open":
+    "Этот план не закрыт: его видят все, кто может читать планы.",
+  "p.plan_access.f_private":
+    "Закрытый: его видят только участники и администраторы",
+  "p.plan_access.f_members":
+    "Участники (идентификаторы пользователей, по одному в строке; не более 200)",
+  "p.plan_access.members_note":
+    "Когда вы закрываете план, вы становитесь участником, так что он никогда не закроется от вас. Администраторы видят его всегда.",
+  "p.plan_access.save": "Сохранить, кто видит",
+  "p.plan_access.unchanged":
+    "Ничего не изменилось, поэтому ничего не отправлено.",
+  "p.plan_access.saved_private": "Теперь план закрыт.",
+  "p.plan_access.saved_open": "Теперь план не закрыт.",
+  "p.plan_access.member_bad":
+    "Каждый участник — это идентификатор пользователя, например 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.members_many": "У плана не более 200 участников.",
+  "p.plan_access.guests_h": "Гости",
+  "p.plan_access.guests_intro":
+    "Внешние участники, которые могут читать этот план или комментировать его, и только. Гость видит план без имён людей.",
+  "p.plan_access.no_guests": "Гостям доступ не выдан.",
+  "p.plan_access.access_read": "Может читать",
+  "p.plan_access.access_comment": "Может читать и комментировать",
+  "p.plan_access.state_live": "действует",
+  "p.plan_access.state_revoked": "отозван",
+  "p.plan_access.state_expired": "истёк",
+  "p.plan_access.until": "до {date}",
+  "p.plan_access.no_end": "до отзыва",
+  "p.plan_access.granted_by": "выдал(а) {who}",
+  "p.plan_access.revoke": "Отозвать",
+  "p.plan_access.revoke_ask":
+    "Отозвать доступ гостя {guest}? Он закончится при следующем запросе.",
+  "p.plan_access.revoked": "Доступ гостя {guest} отозван.",
+  "p.plan_access.grant_h": "Выдать доступ гостю",
+  "p.plan_access.f_guest": "Идентификатор пользователя гостя",
+  "p.plan_access.f_access": "Доступ",
+  "p.plan_access.f_expires": "Окончание (необязательно)",
+  "p.plan_access.grant": "Выдать доступ",
+  "p.plan_access.granted": "Гостю {guest} выдан доступ.",
+  "p.plan_access.guest_bad":
+    "Гость — это идентификатор пользователя, например 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.access_bad": "Доступ — чтение или чтение и комментарии.",
+  "p.plan_access.expires_bad": "Укажите окончание датой и временем.",
+  "p.plan_access.expires_past": "Окончание должно быть в будущем.",
 };

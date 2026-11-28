@@ -9822,4 +9822,58 @@ export const PAGES_VI: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "Đã bỏ các thay đổi đang chờ.",
   "p.product_roadmap.pending_slug":
     "Địa chỉ không thuộc bộ thay đổi: hãy lưu nó khi tắt gom.",
+  "p.plan_access.link": "Ai có thể xem",
+  "p.plan_access.title": "Ai có thể xem kế hoạch này",
+  "p.plan_access.title_ppm": "Ai có thể xem kế hoạch này — PPM",
+  "p.plan_access.intro":
+    "Kế hoạch có riêng tư không, thành viên là ai, và khách bên ngoài nào được đọc hoặc bình luận.",
+  "p.plan_access.could_not_load": "Không tải được ai có thể xem kế hoạch này.",
+  "p.plan_access.could_not_save": "Không lưu được.",
+  "p.plan_access.not_addressable":
+    "Kế hoạch riêng tư cần bạn là thành viên, mà phiên đăng nhập của bạn không có mã người dùng mà dịch vụ có thể xác định; hãy hỏi quản trị viên.",
+  "p.plan_access.who_h": "Riêng tư hay không",
+  "p.plan_access.is_private":
+    "Kế hoạch này riêng tư: chỉ thành viên và quản trị viên xem được.",
+  "p.plan_access.is_open":
+    "Kế hoạch này không riêng tư: ai được đọc kế hoạch đều xem được.",
+  "p.plan_access.f_private":
+    "Riêng tư: chỉ thành viên và quản trị viên xem được",
+  "p.plan_access.f_members":
+    "Thành viên (mã người dùng, mỗi dòng một mã; tối đa 200)",
+  "p.plan_access.members_note":
+    "Khi bạn đặt kế hoạch thành riêng tư, bạn được thêm làm thành viên nên không bao giờ bị khóa ngoài. Quản trị viên luôn xem được.",
+  "p.plan_access.save": "Lưu ai có thể xem",
+  "p.plan_access.unchanged": "Không có gì thay đổi nên không gửi gì.",
+  "p.plan_access.saved_private": "Kế hoạch giờ là riêng tư.",
+  "p.plan_access.saved_open": "Kế hoạch giờ không còn riêng tư.",
+  "p.plan_access.member_bad":
+    "Mỗi thành viên là một mã người dùng, như 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.members_many": "Một kế hoạch có tối đa 200 thành viên.",
+  "p.plan_access.guests_h": "Khách",
+  "p.plan_access.guests_intro":
+    "Cộng tác viên bên ngoài được đọc hoặc bình luận kế hoạch này, không gì khác. Khách thấy kế hoạch mà không có tên người.",
+  "p.plan_access.no_guests": "Chưa có khách nào được cấp quyền.",
+  "p.plan_access.access_read": "Được đọc",
+  "p.plan_access.access_comment": "Được đọc và bình luận",
+  "p.plan_access.state_live": "còn hiệu lực",
+  "p.plan_access.state_revoked": "đã thu hồi",
+  "p.plan_access.state_expired": "đã hết hạn",
+  "p.plan_access.until": "đến {date}",
+  "p.plan_access.no_end": "đến khi thu hồi",
+  "p.plan_access.granted_by": "cấp bởi {who}",
+  "p.plan_access.revoke": "Thu hồi",
+  "p.plan_access.revoke_ask":
+    "Thu hồi quyền của khách {guest}? Quyền kết thúc ở yêu cầu tiếp theo của họ.",
+  "p.plan_access.revoked": "Đã thu hồi quyền của khách {guest}.",
+  "p.plan_access.grant_h": "Cấp quyền cho khách",
+  "p.plan_access.f_guest": "Mã người dùng của khách",
+  "p.plan_access.f_access": "Quyền",
+  "p.plan_access.f_expires": "Kết thúc (không bắt buộc)",
+  "p.plan_access.grant": "Cấp quyền",
+  "p.plan_access.granted": "Đã cấp quyền cho khách {guest}.",
+  "p.plan_access.guest_bad":
+    "Khách là một mã người dùng, như 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.access_bad": "Quyền là đọc, hoặc đọc và bình luận.",
+  "p.plan_access.expires_bad": "Hãy nhập thời điểm kết thúc là ngày và giờ.",
+  "p.plan_access.expires_past": "Thời điểm kết thúc phải ở tương lai.",
 };

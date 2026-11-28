@@ -9,6 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added — `/plans/[pid]/access` (RM-8, PL-7, 2026-11-28)
+
+- Five client methods; `src/lib/plan-access-view.ts`; a plan workspace link (module `governance`); 43 strings in
+  every locale, machine-written. Not built: members and guests by name; not verified against a real service.
+
 ### Added — a roadmap's pending change set (RE-2, RE-13, 2026-11-27)
 
 - Gathering on `/plans/[pid]/roadmap`: `gatherRoadmap`, `gatherItem`, `gatherNew`, `pendingSet`, `pendingLines` and

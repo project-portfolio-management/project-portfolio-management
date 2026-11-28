@@ -10100,4 +10100,60 @@ export const PAGES_FR: Record<PageKey, string> = {
     "Modifications en attente abandonnées.",
   "p.product_roadmap.pending_slug":
     "L'adresse ne fait pas partie d'un lot : enregistrez-la avec le regroupement désactivé.",
+  "p.plan_access.link": "Qui peut le voir",
+  "p.plan_access.title": "Qui peut voir ce plan",
+  "p.plan_access.title_ppm": "Qui peut voir ce plan — PPM",
+  "p.plan_access.intro":
+    "Si le plan est privé, qui sont ses membres, et quels invités externes peuvent le lire ou le commenter.",
+  "p.plan_access.could_not_load":
+    "Impossible de charger qui peut voir ce plan.",
+  "p.plan_access.could_not_save": "Impossible d'enregistrer.",
+  "p.plan_access.not_addressable":
+    "Un plan privé exige que vous en soyez membre, et votre connexion n'a pas d'identifiant d'utilisateur que le service puisse nommer ; demandez à un administrateur.",
+  "p.plan_access.who_h": "Privé ou non",
+  "p.plan_access.is_private":
+    "Ce plan est privé : seuls ses membres et les administrateurs le voient.",
+  "p.plan_access.is_open":
+    "Ce plan n'est pas privé : quiconque peut lire les plans le voit.",
+  "p.plan_access.f_private":
+    "Privé : seuls ses membres et les administrateurs le voient",
+  "p.plan_access.f_members":
+    "Membres (identifiants d'utilisateur, un par ligne ; 200 au plus)",
+  "p.plan_access.members_note":
+    "En rendant le plan privé, vous en devenez membre, pour qu'il ne vous soit jamais fermé. Les administrateurs le voient toujours.",
+  "p.plan_access.save": "Enregistrer qui peut le voir",
+  "p.plan_access.unchanged": "Rien n'a changé, donc rien n'a été envoyé.",
+  "p.plan_access.saved_private": "Le plan est désormais privé.",
+  "p.plan_access.saved_open": "Le plan n'est plus privé.",
+  "p.plan_access.member_bad":
+    "Chaque membre est un identifiant d'utilisateur, comme 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.members_many": "Un plan compte au plus 200 membres.",
+  "p.plan_access.guests_h": "Invités",
+  "p.plan_access.guests_intro":
+    "Des collaborateurs externes qui peuvent lire ce plan ou le commenter, et rien d'autre. Un invité voit le plan sans les noms des personnes.",
+  "p.plan_access.no_guests": "Aucun invité n'a reçu d'accès.",
+  "p.plan_access.access_read": "Peut lire",
+  "p.plan_access.access_comment": "Peut lire et commenter",
+  "p.plan_access.state_live": "actif",
+  "p.plan_access.state_revoked": "révoqué",
+  "p.plan_access.state_expired": "terminé",
+  "p.plan_access.until": "jusqu'au {date}",
+  "p.plan_access.no_end": "jusqu'à révocation",
+  "p.plan_access.granted_by": "accordé par {who}",
+  "p.plan_access.revoke": "Révoquer",
+  "p.plan_access.revoke_ask":
+    "Révoquer l'accès de l'invité {guest} ? Il prend fin à sa prochaine requête.",
+  "p.plan_access.revoked": "Accès de l'invité {guest} révoqué.",
+  "p.plan_access.grant_h": "Donner accès à un invité",
+  "p.plan_access.f_guest": "Identifiant d'utilisateur de l'invité",
+  "p.plan_access.f_access": "Accès",
+  "p.plan_access.f_expires": "Fin (facultatif)",
+  "p.plan_access.grant": "Donner l'accès",
+  "p.plan_access.granted": "Accès donné à l'invité {guest}.",
+  "p.plan_access.guest_bad":
+    "L'invité est un identifiant d'utilisateur, comme 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.access_bad":
+    "L'accès est la lecture, ou la lecture et les commentaires.",
+  "p.plan_access.expires_bad": "Indiquez la fin par une date et une heure.",
+  "p.plan_access.expires_past": "La fin doit être dans le futur.",
 };

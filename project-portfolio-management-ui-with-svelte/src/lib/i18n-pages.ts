@@ -9684,6 +9684,59 @@ export const PAGES_EN = {
   "p.product_roadmap.pending_discarded": "Discarded the pending changes.",
   "p.product_roadmap.pending_slug":
     "The address is not part of a change set: save it with gathering off.",
+  "p.plan_access.link": "Who can see it",
+  "p.plan_access.title": "Who can see this plan",
+  "p.plan_access.title_ppm": "Who can see this plan — PPM",
+  "p.plan_access.intro":
+    "Whether the plan is private, who its members are, and which outside guests may read it or comment on it.",
+  "p.plan_access.could_not_load": "Could not load who can see this plan.",
+  "p.plan_access.could_not_save": "Could not save that.",
+  "p.plan_access.not_addressable":
+    "A private plan needs you to be a member, and your sign-in has no user id the service can name; ask an administrator.",
+  "p.plan_access.who_h": "Private or not",
+  "p.plan_access.is_private":
+    "This plan is private: only its members and administrators see it.",
+  "p.plan_access.is_open":
+    "This plan is not private: everyone who may read plans sees it.",
+  "p.plan_access.f_private":
+    "Private: only its members and administrators see it",
+  "p.plan_access.f_members": "Members (user ids, one to a line; at most 200)",
+  "p.plan_access.members_note":
+    "When you make the plan private you are added as a member, so it is never locked away from you. Administrators always see it.",
+  "p.plan_access.save": "Save who can see it",
+  "p.plan_access.unchanged": "Nothing changed, so nothing was sent.",
+  "p.plan_access.saved_private": "The plan is private now.",
+  "p.plan_access.saved_open": "The plan is not private now.",
+  "p.plan_access.member_bad":
+    "Each member is a user id, such as 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.members_many": "A plan has at most 200 members.",
+  "p.plan_access.guests_h": "Guests",
+  "p.plan_access.guests_intro":
+    "Outside collaborators who may read this plan or comment on it, and nothing else. A guest sees the plan without people's names.",
+  "p.plan_access.no_guests": "No guests have been granted access.",
+  "p.plan_access.access_read": "May read",
+  "p.plan_access.access_comment": "May read and comment",
+  "p.plan_access.state_live": "live",
+  "p.plan_access.state_revoked": "revoked",
+  "p.plan_access.state_expired": "ended",
+  "p.plan_access.until": "until {date}",
+  "p.plan_access.no_end": "until revoked",
+  "p.plan_access.granted_by": "granted by {who}",
+  "p.plan_access.revoke": "Revoke",
+  "p.plan_access.revoke_ask":
+    "Revoke the access of guest {guest}? It ends on their next request.",
+  "p.plan_access.revoked": "Revoked the access of guest {guest}.",
+  "p.plan_access.grant_h": "Grant a guest access",
+  "p.plan_access.f_guest": "The guest's user id",
+  "p.plan_access.f_access": "Access",
+  "p.plan_access.f_expires": "Ends (optional)",
+  "p.plan_access.grant": "Grant access",
+  "p.plan_access.granted": "Granted guest {guest} access.",
+  "p.plan_access.guest_bad":
+    "The guest is a user id, such as 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.access_bad": "Access is read, or read and comment.",
+  "p.plan_access.expires_bad": "Give the end as a date and time.",
+  "p.plan_access.expires_past": "The end must be in the future.",
 } as const;
 
 /** A key in the page and component catalogue. */

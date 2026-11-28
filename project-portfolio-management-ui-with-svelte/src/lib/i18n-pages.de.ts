@@ -10144,4 +10144,59 @@ export const PAGES_DE: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "Ausstehende Änderungen verworfen.",
   "p.product_roadmap.pending_slug":
     "Die Adresse gehört nicht zu einem Änderungssatz: Speichern Sie sie mit ausgeschaltetem Sammeln.",
+  "p.plan_access.link": "Wer es sehen kann",
+  "p.plan_access.title": "Wer diesen Plan sehen kann",
+  "p.plan_access.title_ppm": "Wer diesen Plan sehen kann — PPM",
+  "p.plan_access.intro":
+    "Ob der Plan privat ist, wer seine Mitglieder sind und welche externen Gäste ihn lesen oder kommentieren dürfen.",
+  "p.plan_access.could_not_load":
+    "Konnte nicht laden, wer diesen Plan sehen kann.",
+  "p.plan_access.could_not_save": "Konnte das nicht speichern.",
+  "p.plan_access.not_addressable":
+    "Für einen privaten Plan müssen Sie Mitglied sein, und Ihre Anmeldung hat keine Benutzer-ID, die der Dienst benennen kann; fragen Sie eine Administratorin oder einen Administrator.",
+  "p.plan_access.who_h": "Privat oder nicht",
+  "p.plan_access.is_private":
+    "Dieser Plan ist privat: Nur seine Mitglieder und Administratoren sehen ihn.",
+  "p.plan_access.is_open":
+    "Dieser Plan ist nicht privat: Alle, die Pläne lesen dürfen, sehen ihn.",
+  "p.plan_access.f_private":
+    "Privat: Nur seine Mitglieder und Administratoren sehen ihn",
+  "p.plan_access.f_members":
+    "Mitglieder (Benutzer-IDs, eine pro Zeile; höchstens 200)",
+  "p.plan_access.members_note":
+    "Wenn Sie den Plan privat machen, werden Sie als Mitglied hinzugefügt, sodass er Ihnen nie verschlossen ist. Administratoren sehen ihn immer.",
+  "p.plan_access.save": "Speichern, wer ihn sehen kann",
+  "p.plan_access.unchanged": "Nichts geändert, daher nichts gesendet.",
+  "p.plan_access.saved_private": "Der Plan ist jetzt privat.",
+  "p.plan_access.saved_open": "Der Plan ist jetzt nicht mehr privat.",
+  "p.plan_access.member_bad":
+    "Jedes Mitglied ist eine Benutzer-ID, etwa 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.members_many": "Ein Plan hat höchstens 200 Mitglieder.",
+  "p.plan_access.guests_h": "Gäste",
+  "p.plan_access.guests_intro":
+    "Externe, die diesen Plan lesen oder kommentieren dürfen, sonst nichts. Ein Gast sieht den Plan ohne Namen von Personen.",
+  "p.plan_access.no_guests": "Noch keine Gäste mit Zugang.",
+  "p.plan_access.access_read": "Darf lesen",
+  "p.plan_access.access_comment": "Darf lesen und kommentieren",
+  "p.plan_access.state_live": "aktiv",
+  "p.plan_access.state_revoked": "widerrufen",
+  "p.plan_access.state_expired": "abgelaufen",
+  "p.plan_access.until": "bis {date}",
+  "p.plan_access.no_end": "bis zum Widerruf",
+  "p.plan_access.granted_by": "erteilt von {who}",
+  "p.plan_access.revoke": "Widerrufen",
+  "p.plan_access.revoke_ask":
+    "Den Zugang von Gast {guest} widerrufen? Er endet bei der nächsten Anfrage.",
+  "p.plan_access.revoked": "Zugang von Gast {guest} widerrufen.",
+  "p.plan_access.grant_h": "Einem Gast Zugang geben",
+  "p.plan_access.f_guest": "Benutzer-ID des Gastes",
+  "p.plan_access.f_access": "Zugang",
+  "p.plan_access.f_expires": "Endet (optional)",
+  "p.plan_access.grant": "Zugang geben",
+  "p.plan_access.granted": "Gast {guest} hat Zugang erhalten.",
+  "p.plan_access.guest_bad":
+    "Der Gast ist eine Benutzer-ID, etwa 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.access_bad": "Zugang ist Lesen oder Lesen und Kommentieren.",
+  "p.plan_access.expires_bad": "Geben Sie das Ende als Datum und Uhrzeit an.",
+  "p.plan_access.expires_past": "Das Ende muss in der Zukunft liegen.",
 };

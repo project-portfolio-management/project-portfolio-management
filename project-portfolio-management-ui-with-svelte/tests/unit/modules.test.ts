@@ -34,6 +34,7 @@ describe("visiblePlanLinks (RM-7)", () => {
       "governance",
       "goals",
       "fields",
+      "access",
       "confidence",
       "programme",
       "status",

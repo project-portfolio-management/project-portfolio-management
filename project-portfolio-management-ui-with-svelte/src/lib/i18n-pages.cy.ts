@@ -9912,4 +9912,60 @@ export const PAGES_CY: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "Taflwyd y newidiadau sy'n aros.",
   "p.product_roadmap.pending_slug":
     "Nid yw'r cyfeiriad yn rhan o set newidiadau: cadwch ef gyda chasglu i ffwrdd.",
+  "p.plan_access.link": "Pwy sy'n gallu ei weld",
+  "p.plan_access.title": "Pwy sy'n gallu gweld y cynllun hwn",
+  "p.plan_access.title_ppm": "Pwy sy'n gallu gweld y cynllun hwn — PPM",
+  "p.plan_access.intro":
+    "A yw'r cynllun yn breifat, pwy yw ei aelodau, a pha westeion allanol a gaiff ei ddarllen neu roi sylwadau arno.",
+  "p.plan_access.could_not_load":
+    "Methu llwytho pwy sy'n gallu gweld y cynllun hwn.",
+  "p.plan_access.could_not_save": "Methu cadw hynny.",
+  "p.plan_access.not_addressable":
+    "Mae cynllun preifat angen i chi fod yn aelod, ac nid oes gan eich mewngofnodi ddynodwr defnyddiwr y gall y gwasanaeth ei enwi; gofynnwch i weinyddwr.",
+  "p.plan_access.who_h": "Preifat neu beidio",
+  "p.plan_access.is_private":
+    "Mae'r cynllun hwn yn breifat: dim ond ei aelodau a gweinyddwyr sy'n ei weld.",
+  "p.plan_access.is_open":
+    "Nid yw'r cynllun hwn yn breifat: mae pawb a gaiff ddarllen cynlluniau yn ei weld.",
+  "p.plan_access.f_private":
+    "Preifat: dim ond ei aelodau a gweinyddwyr sy'n ei weld",
+  "p.plan_access.f_members":
+    "Aelodau (dynodwyr defnyddwyr, un i bob llinell; 200 ar y mwyaf)",
+  "p.plan_access.members_note":
+    "Pan fyddwch yn gwneud y cynllun yn breifat cewch eich ychwanegu fel aelod, felly nid yw byth wedi'i gloi oddi wrthych. Mae gweinyddwyr bob amser yn ei weld.",
+  "p.plan_access.save": "Cadw pwy sy'n gallu ei weld",
+  "p.plan_access.unchanged": "Ni newidiodd dim, felly ni anfonwyd dim.",
+  "p.plan_access.saved_private": "Mae'r cynllun yn breifat nawr.",
+  "p.plan_access.saved_open": "Nid yw'r cynllun yn breifat nawr.",
+  "p.plan_access.member_bad":
+    "Mae pob aelod yn ddynodwr defnyddiwr, fel 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.members_many": "Mae gan gynllun 200 aelod ar y mwyaf.",
+  "p.plan_access.guests_h": "Gwesteion",
+  "p.plan_access.guests_intro":
+    "Cydweithwyr allanol a gaiff ddarllen y cynllun hwn neu roi sylwadau arno, a dim arall. Mae gwestai'n gweld y cynllun heb enwau pobl.",
+  "p.plan_access.no_guests": "Nid oes unrhyw westai wedi cael mynediad.",
+  "p.plan_access.access_read": "Caiff ddarllen",
+  "p.plan_access.access_comment": "Caiff ddarllen a rhoi sylwadau",
+  "p.plan_access.state_live": "yn fyw",
+  "p.plan_access.state_revoked": "wedi'i ddirymu",
+  "p.plan_access.state_expired": "wedi dod i ben",
+  "p.plan_access.until": "tan {date}",
+  "p.plan_access.no_end": "tan ei ddirymu",
+  "p.plan_access.granted_by": "rhoddwyd gan {who}",
+  "p.plan_access.revoke": "Dirymu",
+  "p.plan_access.revoke_ask":
+    "Dirymu mynediad gwestai {guest}? Daw i ben ar eu cais nesaf.",
+  "p.plan_access.revoked": "Dirymwyd mynediad gwestai {guest}.",
+  "p.plan_access.grant_h": "Rhoi mynediad i westai",
+  "p.plan_access.f_guest": "Dynodwr defnyddiwr y gwestai",
+  "p.plan_access.f_access": "Mynediad",
+  "p.plan_access.f_expires": "Yn dod i ben (dewisol)",
+  "p.plan_access.grant": "Rhoi mynediad",
+  "p.plan_access.granted": "Rhoddwyd mynediad i westai {guest}.",
+  "p.plan_access.guest_bad":
+    "Mae'r gwestai'n ddynodwr defnyddiwr, fel 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.access_bad":
+    "Mynediad yw darllen, neu ddarllen a rhoi sylwadau.",
+  "p.plan_access.expires_bad": "Rhowch y diwedd fel dyddiad ac amser.",
+  "p.plan_access.expires_past": "Rhaid i'r diwedd fod yn y dyfodol.",
 };

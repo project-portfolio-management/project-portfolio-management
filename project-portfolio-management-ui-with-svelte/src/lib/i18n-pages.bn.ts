@@ -9539,4 +9539,57 @@ export const PAGES_BN: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "অপেক্ষমাণ বদলগুলো বাতিল হয়েছে।",
   "p.product_roadmap.pending_slug":
     "ঠিকানা বদল-সেটের অংশ নয়: জড়ো করা বন্ধ রেখে এটি সংরক্ষণ করুন।",
+  "p.plan_access.link": "কে দেখতে পারে",
+  "p.plan_access.title": "এই পরিকল্পনা কে দেখতে পারে",
+  "p.plan_access.title_ppm": "এই পরিকল্পনা কে দেখতে পারে — PPM",
+  "p.plan_access.intro":
+    "পরিকল্পনাটি ব্যক্তিগত কি না, এর সদস্য কারা, এবং কোন বাইরের অতিথিরা এটি পড়তে বা মন্তব্য করতে পারেন।",
+  "p.plan_access.could_not_load": "এই পরিকল্পনা কে দেখতে পারে তা লোড করা যায়নি।",
+  "p.plan_access.could_not_save": "সংরক্ষণ করা যায়নি।",
+  "p.plan_access.not_addressable":
+    "ব্যক্তিগত পরিকল্পনার জন্য আপনাকে সদস্য হতে হবে, আর আপনার সাইন-ইনে এমন কোনো ব্যবহারকারী আইডি নেই যা পরিষেবা চিনতে পারে; একজন প্রশাসককে জিজ্ঞেস করুন।",
+  "p.plan_access.who_h": "ব্যক্তিগত কি না",
+  "p.plan_access.is_private":
+    "এই পরিকল্পনা ব্যক্তিগত: শুধু এর সদস্য ও প্রশাসকেরা দেখেন।",
+  "p.plan_access.is_open":
+    "এই পরিকল্পনা ব্যক্তিগত নয়: পরিকল্পনা পড়তে পারা সবাই দেখেন।",
+  "p.plan_access.f_private": "ব্যক্তিগত: শুধু এর সদস্য ও প্রশাসকেরা দেখেন",
+  "p.plan_access.f_members":
+    "সদস্য (ব্যবহারকারী আইডি, প্রতি লাইনে একটি; সর্বোচ্চ ২০০)",
+  "p.plan_access.members_note":
+    "পরিকল্পনাটি ব্যক্তিগত করলে আপনাকে সদস্য করা হয়, তাই এটি কখনো আপনার কাছে বন্ধ হয় না। প্রশাসকেরা সবসময় দেখেন।",
+  "p.plan_access.save": "কে দেখতে পারে সংরক্ষণ করুন",
+  "p.plan_access.unchanged": "কিছুই বদলায়নি, তাই কিছুই পাঠানো হয়নি।",
+  "p.plan_access.saved_private": "পরিকল্পনাটি এখন ব্যক্তিগত।",
+  "p.plan_access.saved_open": "পরিকল্পনাটি এখন আর ব্যক্তিগত নয়।",
+  "p.plan_access.member_bad":
+    "প্রতিটি সদস্য একটি ব্যবহারকারী আইডি, যেমন 3f2c6b7e-0000-4000-8000-000000000001।",
+  "p.plan_access.members_many": "একটি পরিকল্পনায় সর্বোচ্চ ২০০ জন সদস্য।",
+  "p.plan_access.guests_h": "অতিথি",
+  "p.plan_access.guests_intro":
+    "বাইরের সহযোগী যাঁরা এই পরিকল্পনা পড়তে বা এতে মন্তব্য করতে পারেন, আর কিছু নয়। অতিথি মানুষের নাম ছাড়া পরিকল্পনাটি দেখেন।",
+  "p.plan_access.no_guests": "কোনো অতিথিকে প্রবেশাধিকার দেওয়া হয়নি।",
+  "p.plan_access.access_read": "পড়তে পারেন",
+  "p.plan_access.access_comment": "পড়তে ও মন্তব্য করতে পারেন",
+  "p.plan_access.state_live": "চালু",
+  "p.plan_access.state_revoked": "প্রত্যাহৃত",
+  "p.plan_access.state_expired": "শেষ",
+  "p.plan_access.until": "{date} পর্যন্ত",
+  "p.plan_access.no_end": "প্রত্যাহার না হওয়া পর্যন্ত",
+  "p.plan_access.granted_by": "দিয়েছেন {who}",
+  "p.plan_access.revoke": "প্রত্যাহার",
+  "p.plan_access.revoke_ask":
+    "অতিথি {guest}-এর প্রবেশাধিকার প্রত্যাহার করবেন? তাঁর পরের অনুরোধে এটি শেষ হবে।",
+  "p.plan_access.revoked": "অতিথি {guest}-এর প্রবেশাধিকার প্রত্যাহার করা হয়েছে।",
+  "p.plan_access.grant_h": "অতিথিকে প্রবেশাধিকার দিন",
+  "p.plan_access.f_guest": "অতিথির ব্যবহারকারী আইডি",
+  "p.plan_access.f_access": "প্রবেশাধিকার",
+  "p.plan_access.f_expires": "শেষ (ঐচ্ছিক)",
+  "p.plan_access.grant": "প্রবেশাধিকার দিন",
+  "p.plan_access.granted": "অতিথি {guest}-কে প্রবেশাধিকার দেওয়া হয়েছে।",
+  "p.plan_access.guest_bad":
+    "অতিথি একটি ব্যবহারকারী আইডি, যেমন 3f2c6b7e-0000-4000-8000-000000000001।",
+  "p.plan_access.access_bad": "প্রবেশাধিকার মানে পড়া, অথবা পড়া ও মন্তব্য করা।",
+  "p.plan_access.expires_bad": "শেষটি তারিখ ও সময় হিসেবে দিন।",
+  "p.plan_access.expires_past": "শেষটি ভবিষ্যতে হতে হবে।",
 };

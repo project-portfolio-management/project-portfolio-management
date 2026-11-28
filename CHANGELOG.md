@@ -16,6 +16,14 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 28 November (who can see a plan)
+
+- A new `/plans/[pid]/access` ("Who can see it") makes a plan private with its members, given as user ids, and grants
+  outside guests read or comment access with an optional end, lists the grants and revokes one after a question. The
+  first of slice 12's part (m). 43 new strings in every locale, machine-written in 14, none reviewed. Not built:
+  members and guests by name, the handling mark, the masked view, the plan's audit, and the `/security` records. Not
+  verified: against a real service.
+
 ## 27 November (a roadmap's pending change set)
 
 - On a product roadmap, edits can be gathered instead of saved one by one: changes to the roadmap, changes to items

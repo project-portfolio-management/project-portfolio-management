@@ -15,6 +15,9 @@ export const PLAN_LINKS = [
   { key: "goals", module: "governance" },
   // `custom-fields` is owned by no module in the service (always on); a plan's own fields sit beside its goals (RM-1).
   { key: "fields", module: "governance" },
+  // `access` and `guests` are owned by no module in the service (always on); who may see a plan is governance
+  // (RM-8, PL-7, NC-1 slice 12 part m).
+  { key: "access", module: "governance" },
   // `delivery-confidence` is owned by no module in the service (always on); it is a governance reading.
   { key: "confidence", module: "governance" },
   // `planned-gates` and `programme-status` are owned by no module (always on); they are governance.

@@ -9741,4 +9741,57 @@ export const PAGES_JA: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "保留中の変更を破棄しました。",
   "p.product_roadmap.pending_slug":
     "アドレスは変更セットに含められません。まとめる設定をオフにして保存してください。",
+  "p.plan_access.link": "閲覧できる人",
+  "p.plan_access.title": "この計画を閲覧できる人",
+  "p.plan_access.title_ppm": "この計画を閲覧できる人 — PPM",
+  "p.plan_access.intro":
+    "計画が非公開かどうか、メンバーは誰か、どの外部ゲストが閲覧やコメントをできるか。",
+  "p.plan_access.could_not_load":
+    "この計画を閲覧できる人を読み込めませんでした。",
+  "p.plan_access.could_not_save": "保存できませんでした。",
+  "p.plan_access.not_addressable":
+    "非公開の計画にはあなたがメンバーである必要がありますが、あなたのサインインにはサービスが識別できるユーザー ID がありません。管理者に問い合わせてください。",
+  "p.plan_access.who_h": "非公開かどうか",
+  "p.plan_access.is_private":
+    "この計画は非公開です。メンバーと管理者だけが閲覧できます。",
+  "p.plan_access.is_open":
+    "この計画は非公開ではありません。計画を閲覧できる人は誰でも閲覧できます。",
+  "p.plan_access.f_private": "非公開: メンバーと管理者だけが閲覧できます",
+  "p.plan_access.f_members": "メンバー（ユーザー ID を 1 行に 1 つ。200 まで）",
+  "p.plan_access.members_note":
+    "計画を非公開にすると、あなたはメンバーに追加されるため、締め出されることはありません。管理者は常に閲覧できます。",
+  "p.plan_access.save": "閲覧できる人を保存",
+  "p.plan_access.unchanged": "変更がないため、何も送信しませんでした。",
+  "p.plan_access.saved_private": "計画は非公開になりました。",
+  "p.plan_access.saved_open": "計画は非公開ではなくなりました。",
+  "p.plan_access.member_bad":
+    "メンバーはそれぞれユーザー ID です（例: 3f2c6b7e-0000-4000-8000-000000000001）。",
+  "p.plan_access.members_many": "計画のメンバーは 200 人までです。",
+  "p.plan_access.guests_h": "ゲスト",
+  "p.plan_access.guests_intro":
+    "この計画を閲覧またはコメントできる外部の協力者で、それ以外はできません。ゲストには人の名前を除いた計画が表示されます。",
+  "p.plan_access.no_guests": "アクセスを付与したゲストはいません。",
+  "p.plan_access.access_read": "閲覧可",
+  "p.plan_access.access_comment": "閲覧とコメント可",
+  "p.plan_access.state_live": "有効",
+  "p.plan_access.state_revoked": "取り消し済み",
+  "p.plan_access.state_expired": "終了",
+  "p.plan_access.until": "{date} まで",
+  "p.plan_access.no_end": "取り消すまで",
+  "p.plan_access.granted_by": "付与: {who}",
+  "p.plan_access.revoke": "取り消す",
+  "p.plan_access.revoke_ask":
+    "ゲスト {guest} のアクセスを取り消しますか？次のリクエストで終了します。",
+  "p.plan_access.revoked": "ゲスト {guest} のアクセスを取り消しました。",
+  "p.plan_access.grant_h": "ゲストにアクセスを付与",
+  "p.plan_access.f_guest": "ゲストのユーザー ID",
+  "p.plan_access.f_access": "アクセス",
+  "p.plan_access.f_expires": "終了日時（任意）",
+  "p.plan_access.grant": "アクセスを付与",
+  "p.plan_access.granted": "ゲスト {guest} にアクセスを付与しました。",
+  "p.plan_access.guest_bad":
+    "ゲストはユーザー ID です（例: 3f2c6b7e-0000-4000-8000-000000000001）。",
+  "p.plan_access.access_bad": "アクセスは閲覧、または閲覧とコメントです。",
+  "p.plan_access.expires_bad": "終了を日付と時刻で指定してください。",
+  "p.plan_access.expires_past": "終了は未来の日時にしてください。",
 };

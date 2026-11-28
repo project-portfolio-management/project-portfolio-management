@@ -9421,4 +9421,56 @@ export const PAGES_HI: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "लंबित बदलाव छोड़ दिए गए।",
   "p.product_roadmap.pending_slug":
     "पता बदलाव-समूह का हिस्सा नहीं है: इकट्ठा करना बंद करके उसे सहेजें।",
+  "p.plan_access.link": "कौन देख सकता है",
+  "p.plan_access.title": "यह योजना कौन देख सकता है",
+  "p.plan_access.title_ppm": "यह योजना कौन देख सकता है — PPM",
+  "p.plan_access.intro":
+    "योजना निजी है या नहीं, इसके सदस्य कौन हैं, और कौन से बाहरी अतिथि इसे पढ़ या इस पर टिप्पणी कर सकते हैं।",
+  "p.plan_access.could_not_load": "यह योजना कौन देख सकता है, यह लोड नहीं हो सका।",
+  "p.plan_access.could_not_save": "सहेजा नहीं जा सका।",
+  "p.plan_access.not_addressable":
+    "निजी योजना के लिए आपका सदस्य होना ज़रूरी है, और आपके साइन-इन में ऐसी कोई उपयोगकर्ता आईडी नहीं है जिसे सेवा पहचान सके; किसी व्यवस्थापक से पूछें।",
+  "p.plan_access.who_h": "निजी या नहीं",
+  "p.plan_access.is_private":
+    "यह योजना निजी है: केवल इसके सदस्य और व्यवस्थापक इसे देखते हैं।",
+  "p.plan_access.is_open":
+    "यह योजना निजी नहीं है: योजनाएँ पढ़ सकने वाले सभी इसे देखते हैं।",
+  "p.plan_access.f_private": "निजी: केवल इसके सदस्य और व्यवस्थापक इसे देखते हैं",
+  "p.plan_access.f_members": "सदस्य (उपयोगकर्ता आईडी, हर पंक्ति में एक; अधिकतम 200)",
+  "p.plan_access.members_note":
+    "जब आप योजना को निजी बनाते हैं तो आपको सदस्य जोड़ा जाता है, ताकि यह आपसे कभी बंद न हो। व्यवस्थापक इसे हमेशा देखते हैं।",
+  "p.plan_access.save": "कौन देख सकता है, सहेजें",
+  "p.plan_access.unchanged": "कुछ नहीं बदला, इसलिए कुछ नहीं भेजा गया।",
+  "p.plan_access.saved_private": "योजना अब निजी है।",
+  "p.plan_access.saved_open": "योजना अब निजी नहीं है।",
+  "p.plan_access.member_bad":
+    "हर सदस्य एक उपयोगकर्ता आईडी है, जैसे 3f2c6b7e-0000-4000-8000-000000000001।",
+  "p.plan_access.members_many": "एक योजना में अधिकतम 200 सदस्य होते हैं।",
+  "p.plan_access.guests_h": "अतिथि",
+  "p.plan_access.guests_intro":
+    "बाहरी सहयोगी जो इस योजना को पढ़ सकते हैं या इस पर टिप्पणी कर सकते हैं, और कुछ नहीं। अतिथि योजना को लोगों के नामों के बिना देखता है।",
+  "p.plan_access.no_guests": "किसी अतिथि को पहुँच नहीं दी गई है।",
+  "p.plan_access.access_read": "पढ़ सकता है",
+  "p.plan_access.access_comment": "पढ़ और टिप्पणी कर सकता है",
+  "p.plan_access.state_live": "सक्रिय",
+  "p.plan_access.state_revoked": "रद्द",
+  "p.plan_access.state_expired": "समाप्त",
+  "p.plan_access.until": "{date} तक",
+  "p.plan_access.no_end": "रद्द होने तक",
+  "p.plan_access.granted_by": "{who} द्वारा दी गई",
+  "p.plan_access.revoke": "रद्द करें",
+  "p.plan_access.revoke_ask":
+    "अतिथि {guest} की पहुँच रद्द करें? यह उनके अगले अनुरोध पर समाप्त होगी।",
+  "p.plan_access.revoked": "अतिथि {guest} की पहुँच रद्द की गई।",
+  "p.plan_access.grant_h": "अतिथि को पहुँच दें",
+  "p.plan_access.f_guest": "अतिथि की उपयोगकर्ता आईडी",
+  "p.plan_access.f_access": "पहुँच",
+  "p.plan_access.f_expires": "समाप्ति (वैकल्पिक)",
+  "p.plan_access.grant": "पहुँच दें",
+  "p.plan_access.granted": "अतिथि {guest} को पहुँच दी गई।",
+  "p.plan_access.guest_bad":
+    "अतिथि एक उपयोगकर्ता आईडी है, जैसे 3f2c6b7e-0000-4000-8000-000000000001।",
+  "p.plan_access.access_bad": "पहुँच पढ़ना है, या पढ़ना और टिप्पणी करना।",
+  "p.plan_access.expires_bad": "समाप्ति तारीख़ और समय के रूप में दें।",
+  "p.plan_access.expires_past": "समाप्ति भविष्य में होनी चाहिए।",
 };

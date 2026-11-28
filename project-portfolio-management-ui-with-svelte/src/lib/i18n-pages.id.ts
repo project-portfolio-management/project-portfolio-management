@@ -9942,4 +9942,61 @@ export const PAGES_ID: Record<PageKey, string> = {
   "p.product_roadmap.pending_discarded": "Perubahan tertunda dibuang.",
   "p.product_roadmap.pending_slug":
     "Alamat bukan bagian dari set perubahan: simpan dengan pengumpulan nonaktif.",
+  "p.plan_access.link": "Siapa yang bisa melihatnya",
+  "p.plan_access.title": "Siapa yang bisa melihat rencana ini",
+  "p.plan_access.title_ppm": "Siapa yang bisa melihat rencana ini — PPM",
+  "p.plan_access.intro":
+    "Apakah rencana bersifat pribadi, siapa anggotanya, dan tamu luar mana yang boleh membaca atau mengomentarinya.",
+  "p.plan_access.could_not_load":
+    "Tidak dapat memuat siapa yang bisa melihat rencana ini.",
+  "p.plan_access.could_not_save": "Tidak dapat menyimpan.",
+  "p.plan_access.not_addressable":
+    "Rencana pribadi mengharuskan Anda menjadi anggota, dan proses masuk Anda tidak memiliki ID pengguna yang dapat dikenali layanan; tanyakan administrator.",
+  "p.plan_access.who_h": "Pribadi atau tidak",
+  "p.plan_access.is_private":
+    "Rencana ini pribadi: hanya anggota dan administrator yang melihatnya.",
+  "p.plan_access.is_open":
+    "Rencana ini tidak pribadi: semua yang boleh membaca rencana melihatnya.",
+  "p.plan_access.f_private":
+    "Pribadi: hanya anggota dan administrator yang melihatnya",
+  "p.plan_access.f_members":
+    "Anggota (ID pengguna, satu per baris; paling banyak 200)",
+  "p.plan_access.members_note":
+    "Saat Anda membuat rencana pribadi, Anda ditambahkan sebagai anggota sehingga rencana tidak pernah terkunci dari Anda. Administrator selalu melihatnya.",
+  "p.plan_access.save": "Simpan siapa yang bisa melihatnya",
+  "p.plan_access.unchanged":
+    "Tidak ada yang berubah, jadi tidak ada yang dikirim.",
+  "p.plan_access.saved_private": "Rencana sekarang pribadi.",
+  "p.plan_access.saved_open": "Rencana sekarang tidak pribadi.",
+  "p.plan_access.member_bad":
+    "Setiap anggota adalah ID pengguna, misalnya 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.members_many": "Rencana memiliki paling banyak 200 anggota.",
+  "p.plan_access.guests_h": "Tamu",
+  "p.plan_access.guests_intro":
+    "Kolaborator luar yang boleh membaca atau mengomentari rencana ini, tidak lebih. Tamu melihat rencana tanpa nama orang.",
+  "p.plan_access.no_guests": "Belum ada tamu yang diberi akses.",
+  "p.plan_access.access_read": "Boleh membaca",
+  "p.plan_access.access_comment": "Boleh membaca dan berkomentar",
+  "p.plan_access.state_live": "aktif",
+  "p.plan_access.state_revoked": "dicabut",
+  "p.plan_access.state_expired": "berakhir",
+  "p.plan_access.until": "hingga {date}",
+  "p.plan_access.no_end": "hingga dicabut",
+  "p.plan_access.granted_by": "diberikan oleh {who}",
+  "p.plan_access.revoke": "Cabut",
+  "p.plan_access.revoke_ask":
+    "Cabut akses tamu {guest}? Berakhir pada permintaan berikutnya.",
+  "p.plan_access.revoked": "Akses tamu {guest} dicabut.",
+  "p.plan_access.grant_h": "Beri tamu akses",
+  "p.plan_access.f_guest": "ID pengguna tamu",
+  "p.plan_access.f_access": "Akses",
+  "p.plan_access.f_expires": "Berakhir (opsional)",
+  "p.plan_access.grant": "Beri akses",
+  "p.plan_access.granted": "Tamu {guest} diberi akses.",
+  "p.plan_access.guest_bad":
+    "Tamu adalah ID pengguna, misalnya 3f2c6b7e-0000-4000-8000-000000000001.",
+  "p.plan_access.access_bad":
+    "Akses adalah membaca, atau membaca dan berkomentar.",
+  "p.plan_access.expires_bad": "Berikan akhir sebagai tanggal dan waktu.",
+  "p.plan_access.expires_past": "Akhir harus di masa depan.",
 };

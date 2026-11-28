@@ -6,6 +6,12 @@
 // The strings these views show come from the page catalogues: English and
 // Welsh (machine-written, unreviewed); the other locales fall back to English.
 import type { OrgChange, OrgNames } from "#lib/organization-view.js";
+import type {
+  AccessBody,
+  GrantBody,
+  GuestGrant,
+  PlanAccess,
+} from "#lib/plan-access-view.js";
 import { API_BASE_URL } from "#lib/config.js";
 import { ApiClient, ApiError } from "./client";
 import type { Collection, Goal } from "./types";
@@ -1083,6 +1089,26 @@ export class PpmClient {
     return this.http.put("/api/key-persons/contingent", {
       body: { person_ref: personRef, contingent },
     });
+  }
+  /** A plan's privacy and members (RM-8). */
+  planAccess(pid: string): Promise<PlanAccess> {
+    return this.http.get(`/api/plans/${pid}/access`);
+  }
+  /** Make a plan private with its members, or not; the whole setting each time. */
+  setPlanAccess(pid: string, body: AccessBody): Promise<unknown> {
+    return this.http.put(`/api/plans/${pid}/access`, { body });
+  }
+  /** A plan's guest grants, live and not (PL-7). */
+  planGuests(pid: string): Promise<GuestGrant[]> {
+    return this.http.get(`/api/plans/${pid}/guests`);
+  }
+  /** Grant a guest read or comment access to a plan. */
+  grantGuest(pid: string, body: GrantBody): Promise<unknown> {
+    return this.http.post(`/api/plans/${pid}/guests`, { body });
+  }
+  /** Revoke a guest grant, effective on the guest's next request. */
+  revokeGuest(pid: string, grant: string): Promise<unknown> {
+    return this.http.post(`/api/plans/${pid}/guests/${grant}/revoke`);
   }
   /** The partner organizations. */
   organizations(): Promise<{ organizations: Organization[] }> {

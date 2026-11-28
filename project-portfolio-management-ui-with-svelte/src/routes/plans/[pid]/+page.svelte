@@ -78,6 +78,7 @@
     get components() { return t("p.components.link"); },
     get goals() { return t("p.goals.link"); },
     get fields() { return t("p.custom_fields.link"); },
+    get access() { return t("p.plan_access.link"); },
     get roadmap() { return t("p.product_roadmap.title"); },
     get family() { return t("p.roadmap_family.link"); },
     get benefits() { return t("p.benefits.title"); },

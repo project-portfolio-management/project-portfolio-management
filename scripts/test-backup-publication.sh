@@ -102,6 +102,37 @@ done
 PATH="$WORK/bin:$PATH" "$HERE/check-backup-age.sh" "$WORK/backups" 1 >/dev/null ||
   fail "backup-age monitoring did not accept the newest published backup"
 
+# The monitor reads this published manifest with the same fixed clock as backup.sh.
+age_root="$WORK/age"
+age_backup="$age_root/ppm-backup-age-fixture"
+mkdir -p "$age_backup"
+check_age() {
+  PATH="$WORK/bin:$PATH" "$HERE/check-backup-age.sh" "$age_root" "$1" > "$WORK/age.log" 2>&1
+}
+limit_epoch=$((1795089600 - 24 * 3600))
+echo "created_epoch=$limit_epoch" > "$age_backup/MANIFEST"
+check_age 24 || fail "a backup exactly 24 hours old was rejected"
+echo "created_epoch=$((limit_epoch - 1))" > "$age_backup/MANIFEST"
+if check_age 24; then fail "a backup one second over the 24-hour limit was accepted"; fi
+grep -F 'TOO OLD' "$WORK/age.log" >/dev/null || fail "the overdue backup was not reported as stale"
+
+for manifest in 'no_timestamp' 'created_epoch=' 'created_epoch=12x' 'created_epoch=-1' \
+  'created_epoch=1795089601' 'created_epoch=18446744073709551616' \
+  "$(printf 'created_epoch=1795089600\ncreated_epoch=1795089600')"; do
+  printf '%s\n' "$manifest" > "$age_backup/MANIFEST"
+  if check_age 24; then fail "an invalid backup timestamp was accepted: $manifest"; fi
+  grep -F 'created_epoch' "$WORK/age.log" >/dev/null || fail "the timestamp error was not reported"
+done
+
+# A zero-hour limit accepts only the current second. Decimal fields can have leading zeros.
+echo 'created_epoch=01795089600' > "$age_backup/MANIFEST"
+check_age 0 || fail "a current backup was rejected with a zero-hour limit"
+echo 'created_epoch=1795089599' > "$age_backup/MANIFEST"
+if check_age 0; then fail "a one-second-old backup passed a zero-hour limit"; fi
+if check_age 1.5; then fail "a fractional hour limit was accepted"; else
+  [ "$?" -eq 2 ] || fail "an invalid hour limit must report a usage error"
+fi
+
 # A producer can exit successfully after writing an unusable archive.
 export STREAM_FIXTURE="$WORK/stream.tar.gz"
 # The backup producer expands this variable in its own shell.

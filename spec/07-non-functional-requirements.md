@@ -167,7 +167,10 @@ Main X Index aims at. The entity is **spec-only; no code exists yet**
   with zero files is accepted. An unreadable archive fails the backup even if its producer exited
   successfully. A configured local artifact directory that is missing
   refuses the run before the dump. Concurrent runs in the same second publish separate backups, and a
-  failed run removes only its own private directory. RG-20 proposes a separate deployment exercise using
+  failed run removes only its own private directory. The age monitor compares elapsed seconds with
+  the configured whole-hour limit. The exact limit passes and the first second beyond it fails.
+  The newest backup must have exactly one `created_epoch` entry containing a non-negative decimal
+  Unix timestamp no later than the monitoring clock. RG-20 proposes a separate deployment exercise using
   a retained off-host backup and a downloaded attachment's recorded digest.
 - **NFR-17 — Information governance pack.** The repository ships documents a
   buyer's information governance lead can adapt rather than write from scratch:

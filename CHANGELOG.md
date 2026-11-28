@@ -16,6 +16,12 @@ It is pre-1.0; the first release cut from the root release workflow is
 [0.2.0](#020---2026-10-21) (tag `v0.2.0`). Dates are 2026.
 
 
+## 28 November (backup age monitoring)
+
+- The backup-age check now fails on the first second beyond the configured recovery limit and
+  reports unusable manifest timestamps. Fixed-clock tests cover the boundary and invalid manifests.
+  Alert delivery through an operator's monitoring system remains unverified.
+
 ## 28 November (backup archive validation)
 
 - Backups now check gzip integrity and read the artifact archive before encryption and publication.

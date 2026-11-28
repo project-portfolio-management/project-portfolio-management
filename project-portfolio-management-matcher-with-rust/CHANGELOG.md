@@ -10,6 +10,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- The matcher now scores identical plans as `1.0` when their combined custom weights overflow.
+  It also preserves fractional scores when the total weight is subnormal. Verification covers the
+  public Rust API. Service integration with a published crate is unverified.
+
 ### Added — mutation testing (2026-11-17)
 
 - `cargo-mutants` found 36 of 261 viable mutants surviving; each was a missing test, and now has one (unit tests in

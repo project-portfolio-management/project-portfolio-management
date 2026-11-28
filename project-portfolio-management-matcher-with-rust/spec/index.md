@@ -330,8 +330,10 @@ project's months vs. a portfolio's years)?
 
 ## 17. Renormalization
 
-Weighted average over `Some` components only; divisor is the sum of
-contributing weights.
+The score is the weighted average of the present components. Only their
+relative weights matter, including when their sum exceeds the largest
+finite `f64` or all their positive weights are subnormal. If no present
+component has a positive weight, the score is zero.
 
 ## 18. Confidence classification
 
@@ -543,6 +545,8 @@ this crate has no cap of its own (§23).
     lib + 6 property tests — 5 new unit tests plus the 1 new proptest),
     `cargo clippy --all-targets -- -D warnings`, `cargo fmt --check`,
     `cargo doc --no-deps` all clean.
+- [x] Keep the probabilistic score finite for extreme validated weights (§17).
+  The public API regression covers identical plans and partial tag overlap.
 
 ## 24. Testing strategy
 

@@ -102,20 +102,33 @@ pub struct MatchBreakdown {
 /// Compute a renormalized weighted average over `Some` components only.
 /// Skipped (`None`) components don't pull the score down: the divisor is
 /// the sum of the weights that actually contributed. Returns `0.0` when
-/// no component is present.
-///
-/// `components` pairs each component's optional score with its weight.
-/// Returns the renormalized average, or `0.0` when every component is
-/// `None` (avoiding a divide-by-zero).
+/// no present component has a positive weight.
 #[must_use]
 pub fn weighted_average(components: &[(Option<f64>, f64)]) -> f64 {
-    let mut weighted_sum = 0.0_f64;
-    let mut weight_sum = 0.0_f64;
-    for (score, weight) in components {
-        if let Some(s) = score {
-            weighted_sum += s * weight;
+    let present = components
+        .iter()
+        .filter_map(|&(score, weight)| score.map(|s| (s, weight)));
+    let sums = |scale: f64| {
+        let mut weighted_sum = 0.0;
+        let mut weight_sum = 0.0;
+        for (score, weight) in present.clone() {
+            let weight = weight / scale;
+            weighted_sum += score * weight;
             weight_sum += weight;
         }
+        (weighted_sum, weight_sum)
+    };
+
+    let (mut weighted_sum, mut weight_sum) = sums(1.0);
+    if weight_sum.is_infinite() || weight_sum.is_subnormal() {
+        // Recompute with relative weights to avoid overflow or loss of
+        // fractional scores in subnormal products. A missing component
+        // can have an arbitrarily large weight and must not set the scale.
+        let largest = present
+            .clone()
+            .map(|(_, weight)| weight)
+            .fold(0.0, f64::max);
+        (weighted_sum, weight_sum) = sums(largest);
     }
     if weight_sum > 0.0 {
         weighted_sum / weight_sum

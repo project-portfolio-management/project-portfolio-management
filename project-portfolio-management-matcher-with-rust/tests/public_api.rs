@@ -17,6 +17,40 @@ fn project(name: &str) -> Plan {
     Plan::new(name)
 }
 
+#[test]
+fn extreme_weights_preserve_probabilistic_scores() {
+    let mut plan = project("Apollo");
+    plan.tags = vec!["delivery".into()];
+    let mut other = plan.clone();
+    other.tags.push("phase one".into());
+
+    let smallest = f64::from_bits(1);
+    for (name_weight, tags_weight, expected_partial) in [
+        (f64::MAX, f64::MAX, 0.75),
+        (smallest, smallest, 0.75),
+        (f64::MAX / 2.0, f64::MAX, 2.0 / 3.0),
+        (smallest, f64::MAX, 0.5),
+        (0.0, smallest, 0.5),
+    ] {
+        let config = MatchConfig {
+            name_weight,
+            tags_weight,
+            parent_weight: f64::MAX, // Neither plan has a parent.
+            ..MatchConfig::default()
+        };
+        let engine = MatchingEngine::new(config.validated().unwrap());
+        let identical = engine.match_plans(&plan, &plan);
+        assert_eq!(identical.score, 1.0);
+        assert!(identical.is_match);
+        assert_eq!(identical.confidence, Confidence::High);
+
+        // The name matches exactly and half the tags overlap.
+        let partial = engine.match_plans(&plan, &other);
+        assert_eq!(partial.score, expected_partial);
+        assert!(!partial.is_match);
+    }
+}
+
 // Pins the unified model across every kind pairing: `kind` is optional
 // descriptive metadata and never gates matching — identical names match
 // regardless of kind, and `kind_gate_blocked` is never set.

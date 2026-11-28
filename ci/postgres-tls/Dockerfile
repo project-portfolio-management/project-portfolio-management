@@ -3,7 +3,7 @@
 # `openssl`, and an entrypoint that makes a self-signed certificate on first start. The service uses sslmode=require:
 # the connection is encrypted, but the certificate is not checked, which is enough on the stack's own network and no
 # more. A database elsewhere should have a certificate the service can verify (sslmode=verify-full).
-FROM docker.io/library/postgres:18-alpine@sha256:10a5c69a83035ab5239f5620d708520e8b28f5aa1f2b20143e6024532edadfb5
+FROM docker.io/library/postgres:18-alpine@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71
 
 RUN apk add --no-cache openssl
 
